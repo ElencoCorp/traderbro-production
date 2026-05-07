@@ -343,19 +343,30 @@
 
 			// Market timing logic (9:15 - 3:30)
 			function getMarketStartDate() {
+
 				let now = new Date();
 
-				// Always move to next day
-				now.setDate(now.getDate() + 1);
+				let currentMinutes =
+					(now.getHours() * 60) + now.getMinutes();
 
-				// Skip weekends
-				while (now.getDay() === 0 || now.getDay() === 6) {
+				// 12 PM MARKET CLOSE
+				let marketClose = (12 * 60);
+
+				// AFTER MARKET CLOSE
+				if (currentMinutes > marketClose) {
+
 					now.setDate(now.getDate() + 1);
 				}
 
-				// SET TIME → 9:00 AM
+				// SKIP WEEKENDS
+				while (now.getDay() === 0 || now.getDay() === 6) {
+
+					now.setDate(now.getDate() + 1);
+				}
+
+				// MARKET START TIME
 				now.setHours(9);
-				now.setMinutes(0);
+				now.setMinutes(16);
 				now.setSeconds(0);
 
 				return now;
@@ -407,16 +418,19 @@
 
 			if (user.planExpiry) {
 				let expiry = new Date(user.planExpiry);
-				document.getElementById("currentExpiry").innerText = expiry.toLocaleString();
+				document.getElementById("currentExpiry").innerText =
+    				expiry.toLocaleString("en-IN");
 
 				// FIXED: calculate start correctly
 				if (user.planStart) {
 					let start = new Date(user.planStart);
-					document.getElementById("currentStart").innerText = start.toLocaleDateString();
+					document.getElementById("currentStart").innerText =
+    					start.toLocaleString("en-IN");
 				}
 				if (user.planStart) {
 					let start = new Date(user.planStart);
-					document.getElementById("currentStart").innerText = start.toLocaleDateString();
+					document.getElementById("currentStart").innerText =
+    					start.toLocaleString("en-IN");
 				}
 			}
 			/* ===============================
@@ -438,8 +452,16 @@
 
 			// If user already has active plan → start after expiry
 			if (user.planExpiry && new Date(user.planExpiry) > new Date()) {
+
 				newStart = new Date(user.planExpiry);
+
+				// FORCE NEXT SESSION START TIME
+				newStart.setHours(9);
+				newStart.setMinutes(16);
+				newStart.setSeconds(0);
+
 			} else {
+
 				newStart = getMarketStartDate();
 			}
 
@@ -468,7 +490,7 @@
 }
 
 			// Set market close
-			newExpiry.setHours(15, 30, 0);
+			newExpiry.setHours(12, 0, 0);
 
 			// SET VALUES
 			document.getElementById("newStart").innerText = newStart.toLocaleString();

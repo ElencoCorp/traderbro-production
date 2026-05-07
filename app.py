@@ -13,14 +13,10 @@ import os
 import math
 import sqlite3
 from passlib.context import CryptContext
+from dotenv import load_dotenv
+load_dotenv()
 CONFIG_FILE = "config.json"
 import json
-
-with open("token_data.json", "r") as f:
-
-    token_data = json.load(f)
-
-ACCESS_TOKEN = token_data["access_token"]
 
 def get_interval():
 
@@ -128,8 +124,8 @@ LOGIN_ATTEMPTS = {}
 app = FastAPI()
 app.add_middleware(
     SessionMiddleware,
-    secret_key="your_secret",
-    https_only=False,   # 🔥 CHANGE THIS
+    secret_key="TraderBro@2026#Secure$FastAPI",
+    https_only=True,  
     same_site="lax"
 )
 
@@ -477,12 +473,15 @@ def login_page():
         return HTMLResponse(f"LOGIN PAGE ERROR: {str(e)}", status_code=500)
 
 @app.post("/user-login")
-def login(request: Request, identifier: str = Form(...), password: str = Form(...)):
+def login(request: Request, username: str = Form(...), password: str = Form(...)):
 
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
 
-    c.execute("SELECT username, password FROM users WHERE username=? OR email=?", (identifier, identifier))
+    c.execute(
+        "SELECT username, password FROM users WHERE username=? OR email=?",
+        (username, username)
+    )
     user = c.fetchone()
 
     if not user or not verify_password(password, user[1]):
@@ -637,16 +636,37 @@ async def activate_plan(request: Request):
     from datetime import datetime, timedelta
 
     plan_days = {
-        "basic": 30,
-        "essential": 90,
-        "pro": 180,
-        "premium": 365
+        "basic": 1,
+        "essential": 5,
+        "pro": 22,
+        "premium": 250
     }
 
     days = plan_days.get(plan, 30)
 
-    start_date = datetime.now()
-    expiry = start_date + timedelta(days=days)
+    start_date = get_subscription_start_date()
+
+    expiry = start_date
+
+    added = 1
+
+    while added < days:
+
+        expiry += timedelta(days=1)
+
+        # Skip weekends
+        if expiry.weekday() >= 5:
+            continue
+
+        added += 1
+
+    # MARKET END TIME → 12 PM
+    expiry = expiry.replace(
+        hour=12,
+        minute=0,
+        second=0,
+        microsecond=0
+    )
     c.execute("""
         UPDATE users
         SET plan=?,
@@ -819,7 +839,8 @@ def build_df_from_oc(ltp, oc, expiry, dt_label):
 
         # Delta ratio — only compute if both deltas are valid and non-zero
         try:
-            if ce_delta and pe_delta and ce_delta != 0:
+            # if ce_delta and pe_delta and ce_delta != 0:
+            if ce_delta is not None and pe_delta is not None and ce_delta != 0:
                 ratio = round((pe_delta / ce_delta) * -1, 5)
                 if math.isnan(ratio) or math.isinf(ratio):
                     ratio = None
@@ -928,13 +949,14 @@ def is_market_open():
     ) + now.minute
 
     start_minutes = (9 * 60) + 16
-    end_minutes   = (12 * 60)
+    end_minutes   = (24 * 60)
 
     return (
         current_minutes >= start_minutes
         and
         current_minutes <= end_minutes
     )
+
 
 def get_live_chain(expiry):
     print("🔥 FETCHING NEW DATA FROM API")
@@ -1243,6 +1265,7 @@ def api_live_data():
     return JSONResponse({
         "rows": rows
     })
+
 # ═══════════════════════════════════════════════════════════════════════
 # API — FULL CHAIN (all columns, all rows) — used by admin AJAX refresh
 # ═══════════════════════════════════════════════════════════════════════
@@ -1317,41 +1340,81 @@ def api_full_chain(expiry: str = ""):
 
 @app.get("/api/simple-data")
 def api_simple_data(expiry: str = ""):
-    try:
-                # MARKET CLOSED
-        if not is_market_open():
 
-            return JSONResponse({
-                "error": "Market closed"
-            })
+    try:
+
+        # if not is_market_open():
+
+        #     return JSONResponse({
+        #         "error": "Market closed"
+        #     })
+
         expiries = get_expiries()
 
         if not expiry:
             expiry = expiries[0] if expiries else ""
 
         if not expiry:
-            return JSONResponse({"error": "No expiry"})
+            return JSONResponse({
+                "error": "No expiry"
+            })
 
         ltp, df, atm = get_live_chain(expiry)
+        print(df.head())
+        print("ATM =", atm)
+        print("LTP =", ltp)
 
         if df.empty or atm is None:
-            return JSONResponse({"error": "No live data"})
+            return JSONResponse({
+                "error": "No live data"
+            })
 
         atm_row = df[df["Strike"] == atm]
 
         if atm_row.empty:
-            return JSONResponse({"error": "ATM not found"})
+            return JSONResponse({
+                "error": "ATM not found"
+            })
 
         r = atm_row.iloc[0]
 
         return JSONResponse({
+
             "datetime": str(r["DateTime"]),
-            "difference": r["Difference"]   # ✅ only valid column
+            "expiry": str(r["Expiry"]),
+
+            "ce_ltp": r["CE_LTP"],
+            "ce_delta": r["CE_Delta"],
+            "ce_gamma": r["CE_Gamma"],
+            "ce_theta": r["CE_Theta"],
+            "ce_vega": r["CE_Vega"],
+
+            "strike": int(r["Strike"]),
+
+            "pe_ltp": r["PE_LTP"],
+            "pe_delta": r["PE_Delta"],
+            "pe_gamma": r["PE_Gamma"],
+            "pe_theta": r["PE_Theta"],
+            "pe_vega": r["PE_Vega"],
+
+            "delta_ratio": r["Delta_Ratio"],
+            "index_ltp": ltp,
+
+            "reference": r["Reference"],
+            "stretched": r["Stretched"],
+
+            "difference": r["Difference"]
+
         })
 
     except Exception as e:
+
         print("ERROR:", e)
-        return JSONResponse({"error": str(e)})
+
+        return JSONResponse({
+            "error": str(e)
+        })
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # API — CSV UPLOAD / DOWNLOAD
@@ -1419,6 +1482,42 @@ async def save_running(req: Request):
 
 
 from datetime import datetime, timedelta
+import pytz
+
+IST = pytz.timezone("Asia/Kolkata")
+
+def get_subscription_start_date():
+
+    now = datetime.now(IST)
+
+    current_minutes = (now.hour * 60) + now.minute
+
+    # MARKET CLOSE = 12 PM
+    market_close = (12 * 60)
+
+    # BEFORE OR DURING MARKET
+    if current_minutes <= market_close:
+
+        start_date = now
+
+    else:
+
+        # AFTER MARKET CLOSE → NEXT TRADING DAY
+        start_date = now + timedelta(days=1)
+
+        # SKIP WEEKENDS
+        while start_date.weekday() >= 5:
+            start_date += timedelta(days=1)
+
+    # FORCE MARKET START TIME
+    start_date = start_date.replace(
+        hour=9,
+        minute=16,
+        second=0,
+        microsecond=0
+    )
+
+    return start_date
 
 @app.get("/api/get-running")
 def get_running():

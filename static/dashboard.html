@@ -521,6 +521,106 @@
       margin-bottom: 6px;
     }
 
+    .market-closed-box{
+
+    width:95%;
+    margin:auto;
+
+    background:
+        linear-gradient(
+            135deg,
+            #fff7ed,
+            #fffbeb
+        );
+
+    border:1px solid #fed7aa;
+
+    border-radius:18px;
+
+    padding:28px 20px;
+
+    text-align:center;
+
+    box-shadow:
+        0 10px 25px rgba(217,119,6,0.08);
+
+    animation: fadeIn 0.5s ease;
+}
+
+.market-icon{
+
+    font-size:42px;
+
+    margin-bottom:10px;
+}
+
+.market-title{
+
+    font-size:20px;
+
+    font-weight:800;
+
+    color:#b45309;
+
+    margin-bottom:8px;
+}
+
+.market-desc{
+
+    font-size:13px;
+
+    color:#92400e;
+
+    margin-bottom:18px;
+
+    line-height:1.6;
+}
+
+.market-time{
+
+    display:inline-block;
+
+    background:#d97706;
+
+    color:white;
+
+    padding:10px 22px;
+
+    border-radius:30px;
+
+    font-size:18px;
+
+    font-weight:700;
+
+    font-family:'Roboto Mono', monospace;
+
+    margin-bottom:16px;
+}
+
+.market-sub{
+
+    font-size:12px;
+
+    color:#78716c;
+
+    font-weight:600;
+
+    letter-spacing:0.3px;
+}
+
+@keyframes fadeIn{
+
+    from{
+        opacity:0;
+        transform:translateY(10px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
     @keyframes shimmer {
       0% {
         background-position: 200% 0
@@ -593,7 +693,9 @@
         <div class="atm-hero">
           <div class="atm-dt-box">
             <div class="atm-dt-label">ATM STRIKE &amp; TIMESTAMP</div>
-            <div class="atm-dt-val" id="atm-dt">Loading...</div>
+            <div class="atm-dt-val" id="atm-dt">
+              Waiting for market session...
+            </div>
           </div>
           <div class="atm-run-box atm-run-zero" id="atm-run-box">
             <span id="atm-run-val">—</span>
@@ -605,12 +707,29 @@
       </div>
       <div class="rows-scroll">
         <div class="rows-grid" id="rows-grid">
-          <div class="shimmer"></div>
-          <div class="shimmer"></div>
-          <div class="shimmer"></div>
-          <div class="shimmer"></div>
-          <div class="shimmer"></div>
-          <div class="shimmer"></div>
+          <div class="market-closed-box">
+
+              <div class="market-icon">
+                  ⏰
+              </div>
+
+              <div class="market-title">
+                  Market Insight Window Closed
+              </div>
+
+              <div class="market-desc">
+                  Live Black Box values are generated during active market analysis hours.
+              </div>
+
+              <div class="market-time">
+                  9:16 AM → 12:00 PM
+              </div>
+
+              <div class="market-sub">
+                  Previous values remain visible till next trading day 8:30 AM
+              </div>
+
+          </div>
         </div>
       </div>
     </div>
@@ -708,7 +827,37 @@
             return after916 && before12;
           });
           
-          if (rows.length === 0) return;
+          if (rows.length === 0) {
+
+            document.getElementById("rows-grid").innerHTML = `
+
+                <div class="market-closed-box">
+
+                    <div class="market-icon">
+                        ⏰
+                    </div>
+
+                    <div class="market-title">
+                        Market Insight Window Closed
+                    </div>
+
+                    <div class="market-desc">
+                        Live Black Box values are generated during active market analysis hours.
+                    </div>
+
+                    <div class="market-time">
+                        9:16 AM → 12:00 PM
+                    </div>
+
+                    <div class="market-sub">
+                        Previous values remain visible till next trading day 8:30 AM
+                    </div>
+
+                </div>
+            `;
+
+            return;
+        }
 
           // Latest row is the current/tail row
           const top = rows[rows.length - 1];

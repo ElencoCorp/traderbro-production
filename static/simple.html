@@ -42,13 +42,18 @@ body{
 
 /* CARD */
 .card{
-    background:rgba(255,255,255,0.04);
+    background:rgba(15,23,42,0.75);
     border:1px solid rgba(255,255,255,0.08);
-    backdrop-filter:blur(14px);
-    border-radius:18px;
-    padding:20px;
+    backdrop-filter:blur(18px);
+
+    border-radius:24px;
+
+    padding:22px;
+
     box-shadow:
-        0 10px 30px rgba(0,0,0,0.35);
+        0 10px 40px rgba(0,0,0,0.45);
+
+    overflow:hidden;
 }
 
 /* CONTROLS */
@@ -117,7 +122,7 @@ button:hover{
 table{
     width:100%;
     border-collapse:collapse;
-    min-width:1500px;
+    min-width:1000px;
 }
 
 /* HEADERS */
@@ -126,7 +131,11 @@ thead th{
     top:0;
     z-index:5;
 
-    background:#101d35;
+    background:linear-gradient(
+        135deg,
+        #0f172a,
+        #132238
+    );
 
     color:#dbeafe;
 
@@ -262,10 +271,10 @@ th:nth-child(8){
 <!-- <button onclick="stopRecording()" style="background:#c62828;">⛔ Stop</button> -->
 <!-- <button onclick="resetAll()" style="background:#e65100;">🗑 Reset</button> -->
 
-<div id="loading" class="market-note" style="display:none;">
+<div id="loading" class="market-note">
     ⏰ Values are generated from 9:16 AM to 12:00 PM and remain visible till 8:30 AM next trading day.
 </div>
-<div class="table-wrap"></div>
+<div class="table-wrap">
 <table>
 <thead>
 <tr>
@@ -280,7 +289,6 @@ th:nth-child(8){
 </thead>
 <tbody id="tbl"></tbody>
 </table>
-</div>
 </div>
 
 <script>
