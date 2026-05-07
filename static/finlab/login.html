@@ -80,13 +80,13 @@
 					<form method="POST" action="/user-login">
 						<div class="mb-4">
 							<label class="mb-1 form-label required">Username or Email</label>
-							<input type="text" name="identifier" class="form-control" placeholder="Enter username or email" required>
+							<input type="text" id="identifier" name="identifier" class="form-control" placeholder="Enter username or email"
+								required>
 						</div>
 					
 						<div class="mb-4 position-relative">
 							<label class="mb-1 form-label required">Password</label>
-							<input type="password" name="password" class="form-control" placeholder="Enter password" required>
-							<span class="show-pass eye">
+							<input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>							<span class="show-pass eye">
 					
 								<i class="fa fa-eye-slash"></i>
 								<i class="fa fa-eye"></i>
@@ -104,9 +104,20 @@
 								<a href="page-forgot-password.html" class="btn-link text-primary">Forgot Password?</a>
 							</div>
 						</div>
-						<div id="errorBox" style="color:red; margin-bottom:15px; display:none;"></div>
+						<div id="errorBox" style="
+						        display:none;
+						        background:#fee2e2;
+						        color:#b91c1c;
+						        border:1px solid #fecaca;
+						        padding:14px 16px;
+						        border-radius:12px;
+						        margin-bottom:18px;
+						        font-size:14px;
+						        font-weight:600;
+						    ">
+						</div>
 						<div class="text-center mb-4">
-							<button type="submit" class="btn btn-primary btn-block">Sign Me In</button>
+							<button type="submit" class="btn btn-primary btn-block">Login</button>
 						</div>
 						<p class="text-center">Not registered?
 							<a class="btn-link text-primary" href="/register">Register</a>
@@ -128,12 +139,12 @@
 function handleLogin(event) {
   event.preventDefault();
 
-  const email = document.getElementById("email").value.trim();
+  const identifier = document.getElementById("identifier").value.trim();
   const password = document.getElementById("password").value.trim();
 
   console.log("Users:", users); // debug
 
-  const user = users.find(u => u.email === email && u.password === password);
+  const user = users.find(u => (u.email === identifier || u.username === identifier) && u.password === password);
 
   if (!user) {
     alert("Invalid credentials");
@@ -143,6 +154,64 @@ function handleLogin(event) {
 }
 </script>
 	
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const passwordInput =
+        document.getElementById("password");
+
+    const toggle =
+        document.querySelector(".show-pass");
+
+    if (!passwordInput || !toggle) return;
+
+    toggle.addEventListener("click", function () {
+
+        if (passwordInput.type === "password") {
+
+            passwordInput.type = "text";
+
+        } else {
+
+            passwordInput.type = "password";
+
+        }
+
+    });
+
+});
+
+</script>
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const params =
+        new URLSearchParams(window.location.search);
+
+    const error =
+        params.get("error");
+
+    const errorBox =
+        document.getElementById("errorBox");
+
+    if (!errorBox) return;
+
+    if (error === "invalid") {
+
+        errorBox.innerText =
+            "Invalid username/email or password";
+
+        errorBox.style.display = "block";
+    }
+
+});
+
+</script>
    
 </body>
 

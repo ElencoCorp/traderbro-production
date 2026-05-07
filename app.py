@@ -473,23 +473,52 @@ def login_page():
         return HTMLResponse(f"LOGIN PAGE ERROR: {str(e)}", status_code=500)
 
 @app.post("/user-login")
-def login(request: Request, username: str = Form(...), password: str = Form(...)):
+async def login(request: Request):
+
+    form = await request.form()
+
+    identifier = form.get("identifier")
+    password = form.get("password")
 
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
 
     c.execute(
-        "SELECT username, password FROM users WHERE username=? OR email=?",
-        (username, username)
+        """
+        SELECT username, password
+        FROM users
+        WHERE username=? OR email=?
+        """,
+        (identifier, identifier)
     )
+
     user = c.fetchone()
 
-    if not user or not verify_password(password, user[1]):
-        return RedirectResponse("/user-login?error=invalid", status_code=303)
+    conn.close()
 
+    # INVALID LOGIN
+    if not user:
+        return RedirectResponse(
+            url="/user-login?error=invalid",
+            status_code=303
+        )
+
+    # PASSWORD CHECK
+    if not verify_password(password, user[1]):
+
+        return RedirectResponse(
+            url="/user-login?error=invalid",
+            status_code=303
+        )
+
+    # SUCCESS LOGIN
     request.session["user"] = user[0]
 
-    return RedirectResponse("/", status_code=302)
+    return RedirectResponse(
+        url="/dashboard",
+        status_code=303
+    )
+
 @app.post("/register-user")
 async def register_user(
     request: Request,

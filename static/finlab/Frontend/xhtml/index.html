@@ -736,12 +736,12 @@
 						</div>
 						<div class="col-lg-2 col-md-3 col-6">
 							<div class="widget widget_links wow fadeInUp" data-wow-delay="0.8s">
-								<h6 class="footer-title">Learn Trading</h6>
+								<h6 class="footer-title">Trading Plans</h6>
 								<ul>
-									<li><a href="blog-list.html">Nifty 50 Basics</a></li>
-									<li><a href="blog-list.html">Bank Nifty Strategies</a></li>
-									<li><a href="blog-list.html">FinNifty Guide</a></li>
-									<li><a href="blog-list.html">Sensex Analysis</a></li>
+									<li><a href="trading-plan.html">Basic</a></li>
+									<li><a href="trading-plan.html">Essential</a></li>
+									<li><a href="trading-plan.html">Advance</a></li>
+									<li><a href="trading-plan.html">Pro</a></li>
 								</ul>
 							</div>
 						</div>
@@ -750,7 +750,7 @@
 								<h6 class="footer-title">Support</h6>
 								<ul>
 									<li><a href="javascript:void(0);">FAQ</a></li>
-									<li><a href="contact-us.html">Contact Us</a></li>
+									<li><a href="static/finlab/Frontend/xhtml/contact-us.html">Contact Us</a></li>
 								</ul>
 							</div>
 						</div>
@@ -777,11 +777,76 @@
 							</div>
 						</div>
 					</div>
-					<p style="font-size:12px; color:#aaa; margin-top:10px;" class="text-center">
-						TraderBro is an <span class="text-danger"> educational platform. We are not SEBI registered as a
-							Research Analyst (RA) or Investment Adviser (IA).
-							No investment or trading advice is provided.</span>
-					</p>
+					<div class="ticker-wrapper">
+						<div class="ticker-track">
+
+							<!-- ORIGINAL CONTENT -->
+							<div class="ticker-content">
+								<span class="ticker-item bg-warning text-dark">
+									Educational Platform (Not SEBI Registered)
+								</span>
+
+								<span class="ticker-item text-danger">
+									TraderBro is an educational platform. We are not SEBI registered as a Research
+									Analyst (RA) or Investment Adviser (IA). No investment or trading advice is
+									provided.
+								</span>
+							</div>
+
+							<!-- DUPLICATE CONTENT (IMPORTANT FOR LOOP) -->
+							<div class="ticker-content">
+								<span class="ticker-item bg-warning text-dark">
+									Educational Platform (Not SEBI Registered)
+								</span>
+
+								<span class="ticker-item text-danger">
+									TraderBro is an educational platform. We are not SEBI registered as a Research
+									Analyst (RA) or Investment Adviser (IA). No investment or trading advice is
+									provided.
+								</span>
+							</div>
+
+						</div>
+					</div>
+					<style>
+						.ticker-wrapper {
+  width: 100%;
+  overflow: hidden;
+  background: #000;
+  padding: 8px 0;
+}
+
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: tickerScroll 20s linear infinite;
+}
+
+.ticker-content {
+  display: flex;
+  white-space: nowrap;
+}
+
+.ticker-item {
+  margin-right: 50px;
+  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes tickerScroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+					</style>
 				</div>
 			</div>
 			<div class="footer-bottom">
