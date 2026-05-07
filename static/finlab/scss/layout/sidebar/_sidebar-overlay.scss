@@ -1,0 +1,135 @@
+[data-sidebar-style="overlay"] {
+	&[data-layout="vertical"]{
+
+		--dz-side-sub_nav-padding : .5rem .5rem .5rem 3.5rem;
+		--dz-side-nav-padding : .85rem 1.5rem;
+
+	}
+    .dlabnav {
+        left: -100%;
+        @include transitionMedium;
+		box-shadow: 0 0 0.625rem rgba(0, 0, 0, 0.2);
+		.metismenu{
+			& > li {
+				padding: 0 0.5rem;
+				& > a {
+					color: var(--text);
+					border-radius: $radius;
+					-webkit-transition: all 0.5s;
+					-ms-transition: all 0.5s;
+					transition: all 0.5s;
+					i{
+						line-height:1;
+					}
+				}
+				&:hover > a{
+					color:var(--primary);
+					i{
+						color:var(--primary);
+					}
+				}
+				&.mm-active > a {
+					color:$white;
+					i{
+						color:$white;
+					}
+				}
+				
+			}
+			
+		}
+		
+    }
+    .content-body {
+        margin-left: 0;
+    }
+    .nav-header {
+        position: absolute;
+        .hamburger.is-active {
+            left: 0;
+            .line {
+                background-color: var(--primary);
+				opacity: 1;
+            }
+        }
+    }
+    .menu-toggle {
+        .nav-header {
+            position: absolute;
+            left: auto;
+        }
+        .dlabnav {
+            left: 0;
+        }
+    }
+    .footer {
+        width:calc(100% - 3.525rem);
+
+	}
+	.wallet-open{
+		&.active{
+		   .footer{
+				&.outer-footer{
+					width: calc(100% - 28.725rem);
+					margin-right: 26.775rem;
+					margin-left: auto;   
+					@include respond ('phone-land'){
+						width: calc(100% - 3.325rem) !important;
+						margin-right: 1.775rem!important;
+						
+					}	
+					@include respond ('phone'){
+						margin-right:auto!important;
+					}
+					
+				}
+	
+			} 
+		}
+	}
+}
+
+[data-sidebar-style="overlay"][data-header-position="fixed"] {
+    .nav-header {
+        position: fixed;
+    }
+}
+[data-container="wide-boxed"][data-sidebar-position="fixed"][data-sidebar-style="overlay"][data-layout="vertical"],
+[data-container="boxed"][data-sidebar-position="fixed"][data-sidebar-style="overlay"][data-layout="vertical"]{ 
+	.dlabnav {
+        position: fixed;
+		left: auto;
+		width:0;
+		overflow: hidden;
+		transition: all 0.3s cubic-bezier(0.77, 0, 0.175, 1) 0s;
+		& > div{
+			width: var(--dz-sidebar-width);
+			min-width: var(--dz-sidebar-width);
+			right: var(--dz-sidebar-width);
+			transition: all 0.3s cubic-bezier(0.77, 0, 0.175, 1) 0s;
+		}
+    }
+	.menu-toggle{
+		.dlabnav {
+			width:var(--dz-sidebar-width);
+			& > div{
+				left: 0;
+			}
+		}
+	}	
+	.wallet-open{
+		&.active{
+		   .footer{
+				&.outer-footer{
+					width: calc(100% - 5.625rem);
+					margin-right:2.775rem;
+					margin-left: auto;   
+								
+					
+					
+				}
+	
+			} 
+		}
+	}
+}

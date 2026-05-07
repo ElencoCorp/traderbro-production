@@ -1,0 +1,32 @@
+.bootstrap-select{
+    margin-bottom: 0;
+   .btn {
+		background-color: transparent !important;
+		font-weight:400;
+        color:var(--text);
+       &:active,
+       &:focus,
+       &:hover {
+			outline: none !important;
+			outline-offset: 0;
+			
+       }
+   }
+    .dropdown-menu{
+		border-color: var(--border) !important;
+		box-shadow:$shadow;
+		
+		.dropdown-item{
+			font-size: 0.875rem;
+		}
+	}
+   
+}
+.input-group > .bootstrap-select:not(:first-child) .dropdown-toggle{
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+.input-group > .bootstrap-select:not(:last-child) .dropdown-toggle{
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}

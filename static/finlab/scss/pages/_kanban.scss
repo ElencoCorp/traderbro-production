@@ -1,0 +1,325 @@
+
+.bread-star {
+    margin-right: 1rem
+}
+.page-titles{
+	.progress {
+		height: 0.5rem;
+		width: 16.125rem;
+		background-color: var(--rgba-primary-1);
+	}
+}
+.right-title{
+	.title-content{
+		display: flex;
+		justify-content: flex-end;
+		align-items: center;
+		flex-wrap: wrap;
+		@include respond('phone'){
+			justify-content: flex-start;
+		}
+	}
+}
+.kanbanimg{
+	display:flex;	
+	li{
+		margin-right: -1.263rem;	
+		transition: all ease 0.5s;
+		cursor: pointer;
+		&:hover{
+			transform:translateY(-0.188rem);
+		}
+		span{
+			height:2.5rem;
+			width:2.5rem;
+			border-radius:50px;
+			background:var(--primary);
+			color:$white;
+			line-height:2.5rem;
+			display:block;
+			text-align:center;
+			border:2px solid var(--card);	
+			
+		}
+	}
+	@include respond('tab-port'){
+		margin-bottom: 0.5rem;
+	}
+	@include respond('phone'){
+		margin-bottom: 0;
+	}
+}
+.invite{
+	a{
+		font-size:1rem!important
+	}
+}
+.bread-drop {
+	@include respond('tab-land'){
+		margin-bottom: 0.5rem;
+	}
+	@include respond('phone'){
+		margin-bottom: 0;
+	}
+}
+
+
+.flex-1{
+	flex:1;
+}
+.kanban-user{
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 0.5rem;
+	flex-wrap: wrap;
+	.users{
+		display:flex;
+		margin-bottom: 0.5rem;
+		
+		
+		li{
+			margin-right:-10px;
+			transition: all ease 0.5s;
+			cursor: pointer;
+			&:hover{
+				transform:translateY(-0.188rem);
+			}
+			
+			span{
+				height: 2rem;
+				width: 2rem;
+				border-radius: 50%;
+				background: var(--primary);
+				color: white;
+				line-height: 1.75rem;
+				display: block;
+				font-size: 0.875rem;
+				font-weight: 600;
+				text-align: center;
+				border: 2px solid #fff;
+			}	
+		}	
+	}	
+}
+.bg-design{
+	background:#FFA7D7;
+}
+
+.kanban-bx {
+    display: flex;
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+	margin-bottom: 3rem;
+	.col {
+		width: 360px;
+		min-width: 360px;
+		flex-grow: unset;
+		flex-basis: unset;
+		.card {
+			height: auto;
+			cursor: all-scroll;	
+		}
+	}
+	&::-webkit-scrollbar {
+		background-color: #ECECEC;
+		width: 8px;
+		height: 8px;
+	}
+	&::-webkit-scrollbar-thumb {
+		background-color: #7e7e7e;
+		border-radius: 10px;
+	}
+}
+.kanbanPreview-bx {
+    padding: 1rem 2rem 2rem;
+	background: linear-gradient(to right,rgba(102, 102, 102,0.2) 50%, rgba(255, 255, 255, 0) 0%), linear-gradient(rgba(102, 102, 102,0.2) 50%, rgba(255, 255, 255, 0) 0%), linear-gradient(to right, rgba(102, 102, 102,0.2) 50%, rgba(255, 255, 255, 0) 0%), linear-gradient(rgba(102, 102, 102,0.2) 50%, rgba(255, 255, 255, 0) 0%);
+    background-position: top, right, bottom, left;
+    background-repeat: repeat-x, repeat-y;
+    background-size: 10px 1px, 1px 10px;
+	@include respond ('phone'){
+		padding: 1rem 1rem 1rem;
+	}
+	
+}
+
+.bread-drop {
+	@include custommq($max:86.063rem){
+		margin-bottom: 0rem;
+	}
+	@include custommq($max:35.938rem){
+		margin-bottom: 0;
+	}
+}
+
+/////message-box
+
+.chat-bx{
+	padding:12px 20px;
+	&.active{
+		background:var(--rgba-primary-1);	
+		position:relative;
+		&:before{
+			position:absolute;
+			background:var(--primary);
+			height:100%;
+			width:7px;
+			top:0;
+			left:0;
+			content:"";
+			
+		}
+	}
+}
+.chat-img{
+	img{
+		height:50px;
+		width:50px;
+		border-radius:50px;
+		margin-right:15px;
+	}	
+}
+.fillow-design{
+	a{
+		height:60px;
+		width:60px;
+		border-radius:60px;
+		text-align:center;
+		background:#3E3452;
+		display: block;
+		color: white;
+		font-size: 30px;
+		line-height: 60px;
+		
+	}	
+}
+
+
+.image-box{
+	position: relative;
+	display: inline-block;	
+	.img-1{
+		width: 58px;
+		height: 58px;	
+	}
+	span{
+		&.active1{
+			position: absolute;
+			bottom: -5px;
+			right: -5px;
+			height: 24px;
+			width: 24px;
+			background: #43DC80;
+			border: 4px solid #fff;
+			border-radius: 3rem;	
+		}	
+	}
+}	
+.message-received {
+	width: 62%;
+    text-align: left;	
+	p{
+		background: rgba(110,110,110,0.14);
+		text-align: left;
+		font-size: 14px;
+		border-radius: 0 20px 20px 20px;
+		padding: 10px 20px;
+		color: #000;
+		font-weight: 400;	
+	}
+	@include respond('phone'){
+		width:100%;	
+	}
+}
+.media{
+	display: flex;
+    align-items: flex-start;	
+}
+.message-sent{
+	width: 62%;
+    text-align: right;	
+	@include respond('phone'){
+		width:100%;	
+	}
+}
+.message-sent p {
+	background: #717579;
+    text-align: left;
+    border-radius: 20px 20px 0 20px;
+    padding: 10px 20px;
+    color: #fff;
+    font-weight: 300;	
+}
+.group-pic{
+	margin-right: 15px;
+	img{
+		height: 25px;
+		width: 25px;
+		border-radius: 25px;
+		object-fit: cover;	
+		margin: 2px 2px;
+	}	
+}
+.type-massage{
+	.input-group{
+		textarea{
+			border:0;
+			line-height: 1.5;
+		}	
+	}	
+	.input-group-append{
+		button{
+			margin: 15px 0;
+			@include respond('phone'){
+				padding: 0px;	
+			}
+		}	
+	}
+}
+
+.chat-sidebar{
+	height:700px;
+}
+.message-tab{
+	.card-tabs .nav-tabs .nav-link{
+		padding: 12px 15px;	
+	}		
+}
+.share-tp{
+	li{
+		padding-right:1rem;
+	}
+}
+.task-status2{
+	small{
+		font-size:14px;
+	}
+}
+
+.kanban-header{
+	display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding:1.325rem 1.875rem;
+    background:var(--card);
+    margin-bottom: 1.875rem;
+    border-radius: 0.625rem;
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+}
+.plus-bx a {
+    background:var(--card);
+    line-height: 3.125rem;
+    text-align: center;
+    display: block;
+    border-radius: $radius;
+    margin-bottom: 1.025rem;
+    color: #2A353A;
+}
+
+.draggable.card {
+    transition: none;
+    cursor: grab;
+}

@@ -1,0 +1,197 @@
+.dashboard-select{
+	&.style-1{
+		background: transparent;
+		border-color:#A098AE;
+		font-weight: 500;
+		color:$headings-color;
+		margin: 0 1rem;
+		
+		&:after{
+			border-color:#A098AE;
+			right:0;
+
+		}
+		@include respond ('phone'){
+			height: 2.5rem;
+			padding-left: .75rem;
+			line-height: 2.8;
+			font-size: .85rem;
+		}
+	}
+}
+.page-titles{
+	.btn-group{
+		height: 2.5rem;
+		button{
+			line-height: 1.1;
+		}
+		@include custommq($max:25.125rem){
+			margin-top: 0.625rem;
+			margin-bottom: 0.625rem;
+		}
+	}
+}
+	
+
+.timeline-active{
+	li{
+		position:relative;
+		padding:1.25rem 0;
+		
+		&:before{
+			top: 4.275rem;
+			bottom: 0;
+			position: absolute;
+			content: " ";
+			width: 0.125rem;
+			height: calc(100% - 1.875rem);
+			left: 1.4625rem;
+			margin-right: -0.0938rem;
+			background:var(--border);
+		}
+		&:last-child{
+			&:before{
+				content:none;
+			}
+		}
+		@include respond ('phone'){
+			padding: 0.5rem 0;
+			flex-wrap: wrap;
+			&:before{
+				top: 3.5rem;
+			}
+		}		
+		
+	}
+	.panel{
+		margin-left:1.875rem;
+		flex: 1;
+		@include respond ('phone'){
+			margin-left:1rem;
+		}
+		.badge{
+			margin-right:0.625rem;
+			height: 3rem;
+			width: 3rem;
+			min-width: 3rem;
+			padding: 0;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			@include respond ('phone'){
+				height:2.5rem;
+				width:2.5rem;
+				min-width:2.5rem;
+				font-size:1rem;
+			}
+		}
+		.timeline-panel{
+			h4{
+				font-weight: 500;
+				margin-right: 0.625rem;
+				font-size:1rem;
+				@include respond ('phone'){
+					font-size: 0.875rem;
+				}
+				strong{
+					font-weight:500 ;
+				}
+			}
+		}
+	}
+	.modulel{
+		display: inline-flex;
+		@include respond ('phone'){
+			padding: 0.5rem 0.5rem;
+			&>div{
+				align-items:center;
+			}
+			
+		}
+		
+	}
+	
+}
+.widget-timeline{
+	.side-border{
+		position:relative;
+		&:after{
+			position: absolute;
+			content: "";
+			width: 100%;
+			border-top:0.0625rem solid #DBDBDB;
+			top: 0.75rem;
+			left: 0;
+		}
+		h4{
+			background: white;
+			position: relative;
+			z-index: 2;
+			padding-right: 1.25rem;
+		}
+		.custom-dropdown{
+			background: white;
+			position: relative;
+			z-index: 2;
+			padding-left: 1.25rem;
+			margin-top: -7px;
+		}
+	}
+	.loadmore-btn{
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		button{
+			width: 12.5rem;
+		}
+	}
+	
+}
+.timeline-panel{
+	margin-bottom: $radius;
+}
+
+.timeline-list{
+	.modulel{
+		.dz-media{
+			width: 16.875rem;
+			height:10.5rem;
+			margin-right: 1.5rem;
+			margin-bottom: 1.5rem;
+			img{
+				width: 100%;
+				height: 100%;
+				object-fit: cover;
+			}
+			@include respond('tab-land'){
+				width: 14rem;
+				height:10.5rem;
+				margin-right: 1rem;
+				margin-bottom: 1rem;
+			}
+			@include respond('tab-port'){
+				width: 15rem;
+				margin-right: 1rem;
+				margin-bottom: 1rem;
+			}
+			@include respond('phone-land'){
+				width: 14rem;
+    			height: 9rem;
+			}
+			@include respond('phone'){
+				width: 12rem;
+    			height: 8rem;
+			}
+		}
+	}
+}
+.acti-space{
+	@include respond ('phone'){
+		.heading,
+		.btn,
+		.default-select,
+		.dropdown{
+			margin-bottom:8px;
+		}
+	}
+}

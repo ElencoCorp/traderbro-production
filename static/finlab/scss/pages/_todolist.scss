@@ -1,0 +1,126 @@
+
+.box-2 {
+	padding: 30px;
+	.flow {
+		border: 1px dashed var(--border);
+		padding: 30px;
+		position: relative;
+		border-radius: $radius;
+		transition: all 0.5s;
+		cursor: pointer;
+		&:hover{
+			border-color:var(--primary);
+		}
+		@include respond('laptop'){
+			padding: 15px;
+		}
+		
+		.dz-info{
+			display: flex;
+			justify-content: space-between;
+		}
+		.side {
+			position: absolute;
+			height: 130px;
+			width: 5px;
+			top: 50%;
+			left: -3px;
+			border-radius: 10px;
+			transform: translateY(-50%);
+		}
+	}
+}
+
+.box-3 {
+	.accordion-body-text{
+		padding: 0;
+	}
+	.bootstrap-datetimepicker-widget .picker-switch td{
+		display: none;
+	}
+	.task {
+		padding: 30px;
+		.fl-1 {
+			display: flex;
+			align-items: center;
+			
+			.fl-2 {
+				ul {
+					display: flex;
+				}
+			}
+			.fl-2 h4 {
+				margin-bottom: 0;
+			}
+		}
+	}
+}
+.datepicker-days{
+	.table-condensed{
+		td.day{
+			margin-bottom: 0;
+			width: 30px;
+			height: 30px;
+			line-height: 30px;
+			border-radius: $radius
+		}
+		td.today{
+			&::before{
+				content: '';
+				display: block;
+				top: 0;
+    			right: 0;
+				border-radius: 50%;
+				border: none;
+				background-color:var(--text-dark);
+				width: 12px;
+				height: 12px;
+				border: 2px solid var(--card);
+				position: absolute;
+				border-bottom-color: var(--card)!important;
+			}
+		}
+	}
+}
+
+.webinar-bx{
+	position: relative;
+	video {
+		position:relative;
+		z-index:0;
+		width: 100%;
+	}
+	.overlay {
+		position: absolute;
+		bottom: 30px;
+		left: 21px;
+		z-index: 1;
+		.item{
+			li{
+				img{
+					margin-right:-2px;
+				}
+			}
+		}
+	}
+	&:after{
+		position: absolute;
+		content:"";
+		width:100%;
+		height:98%;
+		top:0;
+		left:0;
+		background-color: var(--primary);
+		opacity: 0.8;
+	}
+	.dropdown{
+		position: absolute;
+		top: 1rem;
+		z-index: 1;
+		right: 1rem;
+	}
+}
+.max-2{
+	padding:10px 20px;
+}
+

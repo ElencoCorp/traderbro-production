@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TraderBro — Sensex Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   RESET & BASE
+══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #f0f4f8;
+  --white:     #ffffff;
+  --border:    #d1dce8;
+  --text:      #1a2a3a;
+  --dim:       #6b7f96;
+  --accent:    #1a56db;
+  --green:     #16a34a;
+  --green-bg:  #dcfce7;
+  --green-brd: #86efac;
+  --red:       #dc2626;
+  --red-bg:    #fee2e2;
+  --red-brd:   #fca5a5;
+  --gold:      #d97706;
+  --gold-bg:   #fef3c7;
+  --purple:    #7c3aed;
+  --header-h:  72px;
+  --ctrl-h:    52px;
+}
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ══════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════ */
+.header {
+  height: var(--header-h);
+  background: var(--white);
+  border-bottom: 2px solid var(--accent);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  box-shadow: 0 2px 12px rgba(26,86,219,0.08);
+  position: relative;
+  z-index: 10;
+}
+
+.logo-block { display: flex; flex-direction: column; }
+.logo-title {
+  font-size: 22px; font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+.logo-sub {
+  font-size: 10px; color: var(--dim);
+  letter-spacing: 2px; font-weight: 600;
+}
+
+.header-divider {
+  width: 2px; height: 40px;
+  background: var(--border);
+  margin: 0 8px;
+}
+
+.header-indices {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.idx-item { display: flex; flex-direction: column; }
+.idx-label { font-size: 10px; color: var(--dim); letter-spacing: 1px; font-weight: 600; }
+.idx-val   { font-size: 16px; font-weight: 700; font-family: 'Roboto Mono', monospace; color: var(--text); }
+.idx-val.loading { color: var(--border); }
+
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.live-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: #f0fdf4; border: 1px solid var(--green-brd);
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; color: var(--green);
+}
+.live-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green);
+  animation: blink 1.4s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+.ts-block { text-align: right; }
+.ts-label { font-size: 10px; color: var(--dim); letter-spacing: 1px; }
+.ts-val   { font-size: 12px; font-weight: 600; font-family: 'Roboto Mono', monospace; color: var(--text); }
+
+.admin-btn {
+  padding: 7px 16px;
+  background: var(--accent); color: white;
+  border: none; border-radius: 6px;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer; text-decoration: none;
+  letter-spacing: 0.5px;
+}
+.admin-btn:hover { background: #1740b0; }
+
+/* ══════════════════════════════════════════
+   CONTROL STRIP
+══════════════════════════════════════════ */
+.ctrl-strip {
+  height: var(--ctrl-h);
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+}
+
+.ctrl-label { font-size: 11px; color: var(--dim); font-weight: 600; letter-spacing: 1px; }
+
+.ctrl-select {
+  padding: 6px 10px;
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 6px;
+  font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600;
+  cursor: pointer; min-width: 130px;
+}
+
+.ctrl-num {
+  width: 70px; padding: 6px 10px;
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 6px;
+  font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600;
+  text-align: center;
+}
+
+.ctrl-btn {
+  padding: 7px 18px;
+  background: var(--accent); color: white;
+  border: none; border-radius: 6px;
+  font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700;
+  cursor: pointer; letter-spacing: 1px;
+}
+.ctrl-btn:hover { background: #1740b0; }
+
+.countdown {
+  font-size: 11px; color: var(--dim);
+  font-family: 'Roboto Mono', monospace;
+}
+
+/* ══════════════════════════════════════════
+   MAIN GRID
+══════════════════════════════════════════ */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+  height: calc(100vh - var(--header-h) - var(--ctrl-h));
+  gap: 0;
+}
+
+/* ══════════════════════════════════════════
+   LEFT PANEL — Running Values (scrollable)
+══════════════════════════════════════════ */
+.left-panel {
+  background: var(--white);
+  border-right: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, #f8faff, #eef2ff);
+  flex-shrink: 0;
+}
+.panel-header-top {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.panel-title {
+  font-size: 14px; font-weight: 700;
+  color: var(--purple); letter-spacing: 0.5px;
+}
+
+/* ATM Hero — shows current ATM strike + running */
+.atm-hero {
+  display: flex; align-items: center;
+  gap: 12px; margin-top: 10px;
+}
+.atm-dt-box {
+  flex: 1;
+  border: 2px solid var(--red);
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: var(--white);
+}
+.atm-dt-label { font-size: 9px; color: var(--dim); letter-spacing: 1px; margin-bottom: 2px; }
+.atm-dt-val   { font-size: 15px; font-weight: 700; font-family: 'Roboto Mono', monospace; color: var(--text); }
+
+.atm-run-box {
+  min-width: 90px; min-height: 60px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 800;
+  font-family: 'Roboto Mono', monospace;
+  flex-shrink: 0;
+}
+.atm-run-pos { background: var(--green); color: white; }
+.atm-run-neg { background: var(--red);   color: white; }
+.atm-run-zero{ background: var(--gold);  color: white; }
+
+.rows-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+.rows-scroll::-webkit-scrollbar { width: 5px; }
+.rows-scroll::-webkit-scrollbar-track { background: var(--bg); }
+.rows-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ══════════════════════════════════════════
+   DATA ROW (grid layout like reference image)
+══════════════════════════════════════════ */
+.rows-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  align-content: start;
+}
+
+.data-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  gap: 8px;
+  transition: box-shadow .15s;
+}
+.data-row:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+.row-dt {
+  font-size: 12px;
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.val-pill {
+  min-width: 64px;
+  text-align: center;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Roboto Mono', monospace;
+  flex-shrink: 0;
+}
+.val-pos  { background: var(--green); color: white; }
+.val-neg  { background: var(--red);   color: white; }
+.val-zero { background: var(--gold);  color: white; }
+
+/* ══════════════════════════════════════════
+   RIGHT PANEL
+══════════════════════════════════════════ */
+.right-panel {
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* GAUGE CARD */
+.gauge-card {
+  background: var(--white);
+  border-bottom: 2px solid var(--border);
+  padding: 16px 20px;
+  flex-shrink: 0;
+}
+.gauge-card-title {
+  font-size: 14px; font-weight: 700;
+  color: var(--purple); letter-spacing: 0.5px;
+  margin-bottom: 12px; text-align: center;
+}
+
+.gauge-wrapper {
+  position: relative;
+  width: 300px;
+  margin: 0 auto;
+}
+
+canvas#gauge { display: block; width: 300px; height: 165px; }
+
+.gauge-value-display {
+  position: absolute;
+  bottom: 22px; left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 26px; font-weight: 700;
+  text-align: center;
+}
+
+.gauge-ticks {
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: var(--dim);
+  font-family: 'Roboto Mono', monospace;
+  padding: 0 4px; margin-top: 2px;
+}
+
+.sentiment-text {
+  text-align: center;
+  font-size: 13px; font-weight: 700;
+  letter-spacing: 1px;
+  margin-top: 6px;
+}
+
+/* DOWNLOAD CARD */
+.download-card {
+  background: var(--white);
+  flex: 1;
+  overflow-y: auto;
+  margin: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 14px;
+}
+.download-card::-webkit-scrollbar { width: 5px; }
+.download-card::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.dl-title {
+  font-size: 13px; font-weight: 700;
+  color: var(--text); margin-bottom: 10px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 6px;
+}
+
+.dl-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px; margin-bottom: 6px;
+  background: var(--bg);
+  transition: all .15s;
+}
+.dl-item:hover { border-color: var(--accent); background: var(--white); }
+
+.dl-name {
+  font-size: 13px; font-weight: 600;
+  color: var(--text); font-family: 'Roboto Mono', monospace;
+}
+.dl-date { font-size: 10px; color: var(--dim); margin-top: 1px; }
+
+.dl-btn {
+  padding: 5px 14px;
+  background: var(--accent); color: white;
+  border: none; border-radius: 6px;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer; text-decoration: none;
+  transition: background .15s; white-space: nowrap;
+}
+.dl-btn:hover { background: #1740b0; }
+
+.no-files {
+  text-align: center; padding: 24px;
+  color: var(--dim); font-size: 13px;
+}
+
+/* SHIMMER */
+.shimmer {
+  background: linear-gradient(90deg, var(--bg) 25%, var(--border) 50%, var(--bg) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 8px; height: 42px; margin-bottom: 6px;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* ERROR STATE */
+.error-state {
+  text-align: center; padding: 40px 20px;
+  color: var(--red); font-size: 14px;
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .main-grid { grid-template-columns: 1fr; height: auto; overflow-y: auto; }
+  html, body { overflow: auto; }
+  .header-indices { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header class="header">
+  <div class="logo-block">
+    <div class="logo-title">📈 TraderBro Dashboard</div>
+    <div class="logo-sub">SENSEX SENTIMENT LIVE</div>
+  </div>
+
+  <div class="header-divider"></div>
+
+  <div class="header-indices">
+    <div class="idx-item">
+      <div class="idx-label">SENSEX</div>
+      <div class="idx-val" id="h-ltp">—</div>
+    </div>
+    <div class="idx-item">
+      <div class="idx-label">EXPIRY</div>
+      <div class="idx-val" id="h-expiry" style="font-size:13px">—</div>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <div class="live-badge">
+      <span class="live-dot"></span>
+      LIVE
+    </div>
+    <div class="ts-block">
+      <div class="ts-label">LAST UPDATED</div>
+      <div class="ts-val" id="h-ts">—</div>
+    </div>
+    <a href="/admin" class="admin-btn">⚙ Admin</a>
+  </div>
+</header>
+
+<!-- ═══════════════ CONTROLS ═══════════════ -->
+<!-- <div class="ctrl-strip">
+  <span class="ctrl-label">EXPIRY</span>
+  <select class="ctrl-select" id="expiry-sel" onchange="loadData()">
+    <option>Loading...</option>
+  </select>
+
+  <span class="ctrl-label" style="margin-left:12px">REFRESH EVERY</span>
+  <input type="number" class="ctrl-num" id="interval-inp" value="20" min="5" max="300" step="5">
+  <span class="ctrl-label">SEC</span>
+  <button class="ctrl-btn" onclick="applyInterval()">SET</button>
+
+  <span class="countdown" id="countdown">next in —</span>
+</div> -->
+
+<!-- ═══════════════ MAIN GRID ═══════════════ -->
+<div class="main-grid">
+
+  <!-- LEFT: Running Values -->
+  <div class="left-panel">
+    <div class="panel-header">
+      <div class="panel-header-top">
+        <div class="panel-title">📊 Running Values</div>
+      </div>
+      <!-- ATM Hero row -->
+      <div class="atm-hero">
+        <div class="atm-dt-box">
+          <div class="atm-dt-label">ATM STRIKE &amp; TIMESTAMP</div>
+          <div class="atm-dt-val" id="atm-dt">Loading...</div>
+        </div>
+        <div class="atm-run-box atm-run-zero" id="atm-run-box">
+          <span id="atm-run-val">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rows-scroll">
+      <div class="rows-grid" id="rows-grid">
+        <!-- shimmer placeholders -->
+        <div class="shimmer"></div><div class="shimmer"></div>
+        <div class="shimmer"></div><div class="shimmer"></div>
+        <div class="shimmer"></div><div class="shimmer"></div>
+        <div class="shimmer"></div><div class="shimmer"></div>
+        <div class="shimmer"></div><div class="shimmer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Gauge + Downloads -->
+  <div class="right-panel">
+
+    <!-- Gauge -->
+    <div class="gauge-card">
+      <div class="gauge-card-title">Sentimental Dial Gauge</div>
+      <div class="gauge-wrapper">
+        <canvas id="gauge" width="600" height="330"></canvas>
+        <div class="gauge-value-display" id="gauge-val">0</div>
+      </div>
+      <div class="gauge-ticks">
+        <span>-180</span><span>-120</span><span>-60</span>
+        <span>0</span>
+        <span>+60</span><span>+120</span><span>+180</span>
+      </div>
+      <div class="sentiment-text" id="sentiment-text">◆ </div>
+    </div>
+
+    <!-- Downloads -->
+    <div class="download-card">
+      <div class="dl-title">📥 Historical Data Downloads</div>
+      <div id="dl-list"><div class="no-files">Loading...</div></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+
+// =====================
+// SAFE DATA LOADER (NO FLICKER)
+// =====================
+
+let refreshTimer = null;
+let lastHTML = "";
+
+// 🔥 MAIN FUNCTION
+function loadData() {
+
+fetch('/api/live-data')
+.then(r => r.json())
+.then(d => {
+
+    let rows = d.rows || [];
+
+    if (rows.length === 0) return;
+
+    // latest row = last inserted
+    const top = rows[rows.length - 1];
+
+    // top box
+    document.getElementById("atm-dt").textContent =
+      top.datetime + " | Strike: " + top.strike;
+
+    let rv = parseFloat(top.running || 0);
+
+    document.getElementById("atm-run-val").textContent =
+      rv.toFixed(2);
+
+    const box = document.getElementById("atm-run-box");
+
+    box.className = "atm-run-box " +
+      (rv > 0 ? "atm-run-pos" :
+      rv < 0 ? "atm-run-neg" :
+      "atm-run-zero");
+
+    // next 50 rows only
+    let previousRows = rows.slice(0, rows.length - 1).reverse();
+
+    let html = "";
+
+    previousRows.forEach(r => {
+
+        let val = parseFloat(r.running || 0);
+
+        let cls = "val-zero";
+
+        if (val > 0) cls = "val-pos";
+        else if (val < 0) cls = "val-neg";
+
+        html += `
+        <div class="data-row">
+            <div class="row-dt">${r.datetime}</div>
+            <div class="val-pill ${cls}">
+              ${val.toFixed(2)}
+            </div>
+        </div>
+        `;
+    });
+
+    document.getElementById("rows-grid").innerHTML = html;
+
+    const avg6 = getAverageLast6(rows);
+    updateGauge(avg6);
+
+});
+}
+
+function getAverageLast6(rows) {
+
+    if (!rows || rows.length === 0) return 0;
+
+    // latest 6 rows
+    const last6 = rows.slice(-6);
+
+    let total = 0;
+    let count = 0;
+
+    last6.forEach(r => {
+        let val = parseFloat(r.running || 0);
+
+        if (!isNaN(val)) {
+            total += val;
+            count++;
+        }
+    });
+
+    if (count === 0) return 0;
+
+    return total / count;
+}
+
+
+// =====================
+// SMOOTH AUTO REFRESH
+// =====================
+function startAutoRefresh(interval = 8000) {
+
+  if (refreshTimer) clearInterval(refreshTimer);
+
+  loadData(); // first load
+
+  refreshTimer = setInterval(() => {
+    loadData();
+  }, interval);
+}
+
+// =====================
+// INIT
+// =====================
+drawGauge(0);
+updateGauge(0);
+
+loadDownloads();
+
+// 🔥 IMPORTANT: use 8 sec (avoid API block)
+loadData(); // FIRST CALL IMMEDIATELY
+startAutoRefresh(3000);
+
+// refresh downloads
+setInterval(loadDownloads, 30000);
+
+// 🔥 FORMAT DATE
+function fmtDT(dt) {
+  if (!dt) return "-";
+  return dt;
+}
+
+// 🔥 BUILD ROW UI
+function buildRow(r) {
+
+  let cls = "val-zero";
+  if (r.running > 0) cls = "val-pos";
+  else if (r.running < 0) cls = "val-neg";
+
+  return `
+    <div class="data-row">
+      <div class="row-dt">${r.datetime}</div>
+      <div class="val-pill ${cls}">
+        ${r.running ?? ""}
+      </div>
+    </div>
+  `;
+}
+
+// 🔥 SIMPLE GAUGE (NO ERROR)
+// 🎯 DRAW STATIC GAUGE (background)
+function drawGauge() {
+
+  const canvas = document.getElementById("gauge");
+  const ctx = canvas.getContext("2d");
+
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const cx = w / 2;
+  const cy = h * 0.9;
+  const radius = w * 0.4;
+
+  // 🔴 RED (left)
+  ctx.beginPath();
+  ctx.strokeStyle = "#dc2626";
+  ctx.lineWidth = 30;
+  ctx.arc(cx, cy, radius, Math.PI, Math.PI * 1.5);
+  ctx.stroke();
+
+  // 🟡 YELLOW (middle)
+  ctx.beginPath();
+  ctx.strokeStyle = "#d97706";
+  ctx.lineWidth = 30;
+  ctx.arc(cx, cy, radius, Math.PI * 1.5, Math.PI * 1.75);
+  ctx.stroke();
+
+  // 🟢 GREEN (right)
+  ctx.beginPath();
+  ctx.strokeStyle = "#16a34a";
+  ctx.lineWidth = 30;
+  ctx.arc(cx, cy, radius, Math.PI * 1.75, Math.PI * 2);
+  ctx.stroke();
+}
+
+
+// 🎯 UPDATE NEEDLE
+function updateGauge(val) {
+
+    val = parseFloat(val || 0);
+
+    if (isNaN(val)) val = 0;
+
+    val = Math.max(-180, Math.min(180, val));
+
+    drawGauge();
+
+    const canvas = document.getElementById("gauge");
+    const ctx = canvas.getContext("2d");
+
+    const w = canvas.width;
+    const h = canvas.height;
+
+    const cx = w / 2;
+    const cy = h * 0.9;
+    const radius = w * 0.35;
+
+    const angle = Math.PI + ((val + 180) / 360) * Math.PI;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(
+      cx + radius * Math.cos(angle),
+      cy + radius * Math.sin(angle)
+    );
+    ctx.strokeStyle = "#111";
+    ctx.lineWidth = 4;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+    ctx.fillStyle = "#333";
+    ctx.fill();
+
+    document.getElementById("gauge-val").textContent =
+      Math.round(val);
+
+    const s = document.getElementById("sentiment-text");
+
+    if (val > 0) {
+        // s.innerHTML = "🟢 BULLISH";
+        s.style.color = "#16a34a";
+    } else if (val < 0) {
+        // s.innerHTML = "🔴 BEARISH";
+        s.style.color = "#dc2626";
+    } else {
+        // s.innerHTML = "◆ NEUTRAL";
+        s.style.color = "#d97706";
+    }
+}
+// 🔥 DOWNLOAD LIST (SAFE)
+function loadDownloads() {
+
+  fetch('/api/downloads')
+    .then(res => res.json())
+    .then(files => {
+
+      const container = document.getElementById("dl-list");
+
+      if (!files.length) {
+        container.innerHTML = `<div class="no-files">No historical files</div>`;
+        return;
+      }
+
+      container.innerHTML = files.map(f => `
+        <div class="dl-item">
+          <div>
+            <div class="dl-name">${f.name}</div>
+            <div class="dl-date">${f.date}</div>
+          </div>
+          <a href="${f.url}" class="dl-btn">⬇ Download</a>
+        </div>
+      `).join('');
+
+    })
+    .catch(() => {
+      document.getElementById("dl-list").innerHTML =
+        `<div class="no-files">Error loading</div>`;
+    });
+}
+
+
+</script>
+</body>
+</html>

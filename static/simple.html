@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Running Tracker</title>
+    <style>
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:
+        radial-gradient(circle at top left,#132238,#050816 60%);
+    color:#fff;
+    font-family:'Poppins',sans-serif;
+    padding:24px;
+}
+
+/* HEADER */
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+}
+
+.title{
+    font-size:34px;
+    font-weight:700;
+    letter-spacing:0.5px;
+}
+
+.subtitle{
+    color:#9db0c7;
+    margin-top:5px;
+    font-size:14px;
+}
+
+/* CARD */
+.card{
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.08);
+    backdrop-filter:blur(14px);
+    border-radius:18px;
+    padding:20px;
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.35);
+}
+
+/* CONTROLS */
+.controls{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+}
+
+input{
+    width:90px;
+    padding:10px 12px;
+    border:none;
+    border-radius:10px;
+    background:#0f172a;
+    color:#fff;
+    font-size:15px;
+    outline:none;
+    border:1px solid rgba(255,255,255,0.08);
+}
+
+button{
+    border:none;
+    border-radius:10px;
+    padding:10px 18px;
+    cursor:pointer;
+    color:white;
+    font-weight:600;
+    transition:0.25s;
+    font-size:14px;
+}
+
+button:hover{
+    transform:translateY(-2px);
+    opacity:0.92;
+}
+
+.btn-primary{
+    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+}
+
+.btn-download{
+    background:linear-gradient(135deg,#0f766e,#0d9488);
+}
+
+/* STATUS */
+#loading{
+    margin-top:10px;
+    margin-bottom:16px;
+    padding:14px;
+    border-radius:12px;
+    background:rgba(255,255,255,0.05);
+    color:#ffe082;
+    font-size:15px;
+    border:1px solid rgba(255,255,255,0.08);
+}
+
+/* TABLE */
+.table-wrap{
+    overflow:auto;
+    border-radius:16px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:1500px;
+}
+
+/* HEADERS */
+thead th{
+    position:sticky;
+    top:0;
+    z-index:5;
+
+    background:#101d35;
+
+    color:#dbeafe;
+
+    font-size:13px;
+    font-weight:700;
+
+    padding:14px 10px;
+
+    border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+/* BODY */
+tbody td{
+    padding:12px 10px;
+    text-align:center;
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    font-size:13px;
+}
+
+/* ROW COLORS */
+tbody tr:nth-child(even){
+    background:rgba(255,255,255,0.02);
+}
+
+tbody tr:hover{
+    background:rgba(37,99,235,0.08);
+}
+
+/* STRIKE COLUMN */
+td:nth-child(8),
+th:nth-child(8){
+    background:#0f172a;
+    color:#60a5fa;
+    font-weight:700;
+}
+
+/* POSITIVE */
+.green{
+    background:#166534 !important;
+    color:white;
+    font-weight:700;
+}
+
+/* NEGATIVE */
+.red{
+    background:#b91c1c !important;
+    color:white;
+    font-weight:700;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{
+    height:10px;
+    width:10px;
+}
+
+::-webkit-scrollbar-thumb{
+    background:#1e3a5f;
+    border-radius:20px;
+}
+
+::-webkit-scrollbar-track{
+    background:#08101f;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+
+    .title{
+        font-size:24px;
+    }
+
+    body{
+        padding:14px;
+    }
+
+    button{
+        width:100%;
+    }
+
+    input{
+        width:100%;
+    }
+
+    .controls{
+        flex-direction:column;
+        align-items:stretch;
+    }
+}
+
+</style>
+    <link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+
+    <div>
+        <div class="title">📊 Live Running (ATM)</div>
+        <div class="subtitle">
+            TraderBro Live Market Recorder
+        </div>
+    </div>
+
+</div>
+<div class="card">
+
+<div class="controls">
+
+<input
+    type="number"
+    id="interval"
+    value="15"
+/>
+
+<button
+    class="btn-primary"
+    onclick="setIntervalTime()"
+>
+    ⚡ Set Interval
+</button>
+
+<button
+    class="btn-download"
+    onclick="downloadCSV()"
+>
+    ⬇ Download CSV
+</button>
+
+</div>
+<!-- <button onclick="startRecording()">▶ Start</button> -->
+<!-- <button onclick="stopRecording()" style="background:#c62828;">⛔ Stop</button> -->
+<!-- <button onclick="resetAll()" style="background:#e65100;">🗑 Reset</button> -->
+
+<div id="loading" class="market-note" style="display:none;">
+    ⏰ Values are generated from 9:16 AM to 12:00 PM and remain visible till 8:30 AM next trading day.
+</div>
+<div class="table-wrap"></div>
+<table>
+<thead>
+<tr>
+    <th>Date Time</th><th>Expiry</th>
+    <th>CE LTP</th><th>Δ</th><th>Γ</th><th>Θ</th><th>V</th>
+    <th>STRIKE</th>
+    <th>PE LTP</th><th>Δ</th><th>Γ</th><th>Θ</th><th>V</th>
+    <th>Delta Ratio</th><th>Index LTP</th>
+    <th>Reference</th><th>Stretched</th><th>Difference</th>
+    <th>Diff Prev</th><th>Cumulative</th>
+</tr>
+</thead>
+<tbody id="tbl"></tbody>
+</table>
+</div>
+</div>
+
+<script>
+/*
+  FLOW:
+    Admin API → fetchData() → calculate diff_prev + cumulative → save to DB → dashboard reads DB
+
+  FORMULA:
+    diff_prev[N]  = difference[N+1] - difference[N]     ← set when next row arrives
+    cumulative[N] = cumulative[N-1] + diff_prev[N]      ← prev cumulative + THIS row's diff_prev
+
+  SAVE ORDER (critical for dashboard correctness):
+    When row N arrives:
+      1. Fix prev row (N-1): set diff_prev & cumulative
+      2. Save prev row (N-1) to DB FIRST  ← dashboard now sees correct prev values
+      3. Then compute & save current row N to DB
+*/
+
+let records     = [];
+let intervalSec = 15;
+
+// ── RESET ──────────────────────────────────────────────────────────────────
+
+
+// ── INTERVAL ───────────────────────────────────────────────────────────────
+async function setIntervalTime() {
+
+    const btn = event.target;
+
+    const val = parseInt(
+        document.getElementById("interval").value
+    );
+
+    if (val <= 0) {
+        alert("Invalid interval");
+        return;
+    }
+
+    // DISABLE BUTTON TEMPORARILY
+    btn.disabled = true;
+    btn.innerText = "Updating...";
+
+    try {
+
+        const res = await fetch("/api/set-interval", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                interval: val
+            })
+
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+
+            // FAST POPUP
+            alert(
+                "Interval updated to " +
+                val +
+                " sec"
+            );
+
+            // BACKGROUND TIMER RESET
+            setTimeout(() => {
+
+                startAutoRefresh();
+
+            }, 100);
+
+        } else {
+
+            alert("Update failed");
+
+        }
+
+    } catch (e) {
+
+        console.log(e);
+
+        alert("Failed");
+
+    }
+
+    // ENABLE BUTTON AGAIN
+    btn.disabled = false;
+    btn.innerText = "Set Interval";
+}
+// ── SAVE ROW TO DB ─────────────────────────────────────────────────────────
+// Returns a Promise so we can await it and control save order
+
+
+// const TEST_MODE = true;
+// ── MAIN FETCH ─────────────────────────────────────────────────────────────
+async function fetchData() {
+
+    try {
+
+        const res = await fetch("/api/simple-data");
+
+        const data = await res.json();
+
+        if (
+            data.error ||
+            !data.ce_ltp ||
+            !data.pe_ltp
+        ) {
+
+        document.getElementById("loading").innerHTML =
+            "⏰ Values are generated from 9:16 AM to 12:00 PM and remain visible till 8:30 AM next trading day.";
+            return;
+        }
+
+        document.getElementById("loading").style.display = "none";
+        const currentDifference =
+            parseFloat(data.difference || 0);
+
+        const row = {
+
+            datetime: data.datetime,
+            expiry: data.expiry || "-",
+
+            ce_ltp: data.ce_ltp || 0,
+            ce_delta: data.ce_delta || 0,
+            ce_gamma: data.ce_gamma || 0,
+            ce_theta: data.ce_theta || 0,
+            ce_vega: data.ce_vega || 0,
+
+            strike: data.strike || 0,
+
+            pe_ltp: data.pe_ltp || 0,
+            pe_delta: data.pe_delta || 0,
+            pe_gamma: data.pe_gamma || 0,
+            pe_theta: data.pe_theta || 0,
+            pe_vega: data.pe_vega || 0,
+
+            delta_ratio: data.delta_ratio || 0,
+            index_ltp: data.index_ltp || 0,
+
+            reference: data.reference || 0,
+            stretched: data.stretched || 0,
+
+            difference: currentDifference,
+
+            diff_prev: 0,
+            running: 0
+        };
+
+        // PREVIOUS ROW CALCULATION
+        if (records.length > 0) {
+
+            const prev = records[records.length - 1];
+
+            const diffPrev =
+                currentDifference - prev.difference;
+
+            row.diff_prev = diffPrev;
+
+            row.running =
+                prev.running + diffPrev;
+        }
+
+        records.push(row);
+
+        appendRow(row, records.length - 1);
+
+        // SAVE TO VPS
+        await fetch("/api/save-running", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify(row)
+
+        });
+
+    } catch (e) {
+
+        console.log("FETCH ERROR", e);
+
+    }
+}
+// ── BUILD ROW HTML ─────────────────────────────────────────────────────────
+function buildRowHTML(r) {
+    const color = r.running > 0 ? "#1b5e20" : r.running < 0 ? "#b71c1c" : "#555";
+    return `
+        <td>${r.datetime}</td>
+        <td>${r.expiry}</td>
+        <td>${r.ce_ltp}</td>
+        <td>${r.ce_delta}</td>
+        <td>${r.ce_gamma}</td>
+        <td>${r.ce_theta}</td>
+        <td>${r.ce_vega}</td>
+        <td><b>${r.strike}</b></td>
+        <td>${r.pe_ltp}</td>
+        <td>${r.pe_delta}</td>
+        <td>${r.pe_gamma}</td>
+        <td>${r.pe_theta}</td>
+        <td>${r.pe_vega}</td>
+        <td>${r.delta_ratio}</td>
+        <td>${r.index_ltp}</td>
+        <td>${r.reference}</td>
+        <td>${r.stretched}</td>
+        <td>${r.difference}</td>
+        <td>${r.diff_prev.toFixed(2)}</td>
+        <td style="background:${color};color:white;">${r.running.toFixed(2)}</td>
+    `;
+}
+
+// ── APPEND NEW ROW ─────────────────────────────────────────────────────────
+function appendRow(r, idx) {
+    const tbody = document.getElementById("tbl");
+    const tr    = document.createElement("tr");
+    tr.setAttribute("data-idx", idx);
+    tr.innerHTML = buildRowHTML(r);
+    tbody.appendChild(tr);
+    tr.scrollIntoView({ behavior: "smooth" });
+}
+
+// ── RE-RENDER A ROW IN DOM ─────────────────────────────────────────────────
+function rerenderRow(idx, r) {
+    const tr = document.querySelector(`tr[data-idx="${idx}"]`);
+    if (tr) tr.innerHTML = buildRowHTML(r);
+}
+
+// ── CSV ────────────────────────────────────────────────────────────────────
+function downloadCSV() {
+    let csv = "DateTime,Expiry,Difference,DiffPrev,Cumulative\n";
+    records.forEach(r => {
+        csv += `${r.datetime},${r.expiry},${r.difference},${r.diff_prev.toFixed(2)},${r.running.toFixed(2)}\n`;
+    });
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a    = document.createElement("a");
+    a.href     = URL.createObjectURL(blob);
+    a.download = "running_data.csv";
+    a.click();
+}
+
+async function loadLiveData() {
+
+    try {
+
+        const res = await fetch("/api/get-running");
+
+        const data = await res.json();
+
+        const tbody = document.getElementById("tbl");
+
+        tbody.innerHTML = "";
+
+        records = data.rows || [];
+
+        records.forEach((r, idx) => {
+            appendRow(r, idx);
+        });
+
+    } catch (e) {
+
+        console.log("LIVE LOAD ERROR", e);
+
+    }
+}
+
+async function loadInterval() {
+
+    try {
+
+        const res = await fetch("/api/get-interval");
+
+        const data = await res.json();
+
+        document.getElementById("interval").value =
+            data.interval;
+
+    } catch (e) {
+
+        console.log(e);
+
+    }
+}
+
+// INITIAL LOAD
+// INITIAL LOAD
+// AUTO REFRESH TIMER
+let autoRefreshTimer = null;
+
+async function startAutoRefresh() {
+
+    if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+    }
+
+    try {
+
+        const res = await fetch("/api/get-interval");
+
+        const data = await res.json();
+
+        const interval = data.interval || 15;
+
+        autoRefreshTimer = setInterval(async () => {
+
+            const now = new Date();
+
+            const currentMinutes =
+                now.getHours() * 60 + now.getMinutes();
+
+            // 9:16 AM
+            const startMinutes = 9 * 60 + 16;
+
+            // 12:00 PM
+            const endMinutes = 12 * 60;
+
+            // ONLY DURING MARKET HOURS
+            if (
+                currentMinutes >= startMinutes &&
+                currentMinutes <= endMinutes
+            ) {
+
+                fetchData();
+
+            } else {
+
+                document.getElementById("loading").style.display =
+                    "block";
+
+                document.getElementById("loading").innerHTML =
+                    "⏰ Values are generated from 9:16 AM to 12:00 PM and remain visible till 8:30 AM next trading day.";
+            }
+
+            // ALWAYS LOAD SAVED ROWS
+            loadLiveData();
+
+        }, interval * 1000);
+
+    } catch (e) {
+
+        console.log(e);
+
+    }
+}
+
+// INITIAL LOAD
+loadInterval();
+
+loadLiveData();
+
+const now = new Date();
+
+const currentMinutes =
+    now.getHours() * 60 + now.getMinutes();
+
+const startMinutes = 9 * 60 + 16;
+const endMinutes   = 12 * 60;
+
+if (
+    currentMinutes >= startMinutes &&
+    currentMinutes <= endMinutes
+) {
+
+    fetchData();
+
+} else {
+
+    document.getElementById("loading").innerHTML =
+        "⏰ Values are generated from 9:16 AM to 12:00 PM and remain visible till 8:30 AM next trading day."
+}
+
+startAutoRefresh();
+</script>
+
+
+</body>
+</html>

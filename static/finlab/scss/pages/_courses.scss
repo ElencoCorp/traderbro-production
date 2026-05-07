@@ -1,0 +1,839 @@
+.widget-heading{
+	margin-bottom: 1rem;
+	flex-flow: wrap;
+	a{
+		font-size: 1.125rem;
+		font-weight: 400;
+	}
+}
+.widget-courses{
+	.schedule-icon{
+		height: 4rem;
+	    width: 4rem;
+	    display: block;
+	    text-align: center;
+	    line-height: 4rem;
+	    border-radius: 50%;
+	    color: #374557;
+	    font-size: 1.125rem;
+	    font-weight: 600;
+		margin-right: 1.25rem;
+		@include respond ('phone'){
+			margin-bottom: 0.625rem;
+			height: 3.125rem;
+			width: 3.125rem;
+			line-height: 3.125rem;
+			font-size: 0.875rem;
+			
+		}
+	}
+	i{
+		transform: scale(1.2);
+	}
+	
+	&.style-1{
+		h4{
+			font-size:1.5rem;
+			font-weight:700;
+			margin-bottom:0;
+			@include respond ('phone-land'){
+				font-size:1.125rem;
+			}
+		}
+		img{
+			width:3.125rem;
+		}
+		span{
+			font-size: 1.125rem;
+			@include respond ('phone-land'){
+				font-size: 0.875rem;
+			}
+		}
+		@include custommq($max: 106.25rem) {
+			img{
+				width:3.125rem;
+			}
+		}
+	}
+	&.style-2{
+		h4{
+			color:$white;
+		}
+		span{
+			color:$white;
+		}
+		&:hover{
+			.peity{
+				transform: scale(1.3);
+				@include transitionMedium;
+			}
+		}
+	}
+}
+.courses-bx{
+	position: relative;
+	height: 100%;
+	.dlab-info{
+		margin-bottom: 40px;
+		.dlab-title{
+			margin: 1.25rem 0;
+			
+			p{
+				span{
+					padding: 0 0.375rem;
+					align-items:center;
+					svg{
+						margin-left: 0.3125rem;
+						margin-top: -0.3125rem;
+					}
+				}
+			}
+		}
+	}
+	.content{
+		font-size: 0.875rem;
+		font-weight: 400;
+		flex-flow: wrap;
+		margin-top:auto;
+		position: absolute;
+		bottom: 0;
+		width: 100%;
+	}
+}
+
+/* course details */
+ 
+.course-dedails-bx{
+	h2{
+		font-size: 1.5rem;
+		width: 70%;
+		@include respond ('phone'){
+			font-size: 1.125rem;
+		}
+	}
+	.description{
+		p{
+			font-weight: 400;
+			margin: 0;
+			@include respond ('phone'){
+				font-size: 0.875rem;
+			}
+		}
+		.user-pic{
+			display: flex;
+			align-items:center;	
+			img{
+				height: 2.5rem;
+				width: 2.5rem;
+				border-radius: 0.5rem;
+				margin-right: 0.9375rem;
+			}
+			span{
+				font-size: 1rem;
+				font-weight: 400;
+				color:$headings-color;
+			}
+		}
+	}
+	
+
+}
+.star-orange{
+	color: #FFD687;
+}
+.course-details-tab{
+	padding: 1.5625rem 0;	
+	h4{
+		font-size: 1.125rem;
+	}
+	p{
+		@include respond ('phone'){
+			font-size: 0.875rem;
+		}
+	}
+	.nav-tabs{
+		border-bottom: 1px solid var(--border);
+		.nav-link{
+			font-size: 1.125rem;
+			background: transparent;
+			padding: 1rem 0.875rem;
+			border: 0;
+			
+			&:first-child{
+				margin-left: 0;
+			}
+			&.active{
+				color: var(--primary);
+				border-bottom: 0.1875rem solid var(--primary)!important;
+				padding-bottom: 0.875rem;
+			}
+
+		}
+	}
+	.about-content{
+		margin-top: 1.875rem;
+	}
+	.user-pic2{
+		padding: 1rem 2.375rem;
+		border-bottom: 1px solid var(--border);
+		margin-left: -1.938rem;
+		margin-right: -1.938rem;
+	
+		img{
+			height: 3.75rem;
+			width: 3.75rem;
+			border-radius: 0.5rem;
+		}
+		
+	}
+	&.style-2{
+		padding:0;
+		.nav-tabs{
+			.nav-link{
+				font-size:0.875rem;
+				color:var(--text);
+				margin-bottom:0;
+				border:0!important;
+				flex:1;
+				position:relative;
+				padding: 0.75rem 1rem;
+				&:after{
+					content:"";
+					position:absolute;
+					left:50%;
+					transform:translateX(-50%);
+					bottom:-0.125rem;
+					height:0.1875rem;
+					width:0;
+					background:var(--primary);
+					border-radius:0.1875rem;
+					@include transitionFast;
+				}
+				&.active{
+					color:var(--primary);
+					&:after{
+						width:100%;
+					}
+				}
+				@include custommq($max: 106.25rem) {
+					padding: 1rem 1rem;
+				}
+				
+				
+			}
+		}
+	}
+	
+	
+	
+	
+}
+ .raiting{
+	margin: 1.25rem 0;	
+	li{
+		padding: 0 1.125rem;
+	    padding-left: 1.125rem;
+	    border-right: 0.125rem solid var(--border);
+		display: inline-flex;
+		align-items: center;
+		@include respond ('phone'){
+			padding: 0 0.8125rem;
+		}
+	    &:first-child{
+			padding-left: 0;
+
+		}
+		&:last-child{
+	  		border-right: 0;
+			@include respond ('phone'){
+				padding-left:6px;
+			}
+	  	}
+	}
+
+} 
+ .video-img{
+	.view-demo{
+		position: relative;	
+		overflow: hidden;
+		img{
+			width: 100%;
+			border-radius: $radius;
+			object-fit: cover;
+			height: 25rem;
+			@include respond ('phone'){
+				height: 12rem;
+			}
+		}
+		&:after{
+			content: "";
+			position: absolute;
+			top: 0;
+			left: 0;
+			height: 100%;
+			width:100%;
+			background:rgba(84, 124, 175, 0.25);
+			z-index: 1;
+			border-radius: $radius;
+		}
+		a{
+			height: 4.375rem;
+		    width: 4.375rem;
+		    display: block;
+		    position: relative;
+		    z-index: 2;
+		    margin: auto;
+		    svg{
+		    	path{
+		    		fill{
+		    			fill: #fff;
+		    		}
+		    	}
+		    }
+		}
+		.play-button{
+			position: absolute;
+		    top: 50%;
+		    left: 0;
+		 	transform: translate(0, -3.125rem);
+		    z-index: 2;
+		    width: 100%;
+			h4{
+				font-size: 1.5rem;
+				color: white;
+				position: relative;
+				z-index: 2;
+				margin-top: 0.625rem;
+			}
+			@include respond ('phone'){
+				svg{
+					width:3.125rem;
+				}
+				h4{
+					font-size: 1rem;
+				}
+			}
+			
+		}
+	}
+	&.style-1{
+		.view-demo{
+			img{
+				height:35rem;
+				@include respond ('phone'){
+					height:13.125rem;
+				}
+			}
+		}
+	}
+	
+} 
+ .course-prise{
+	padding: 2.1875rem 0;
+	h4{
+		font-size: 1.5rem;
+		align-items: center;
+    	display: flex;
+    	
+		small{
+			font-size: 1.125rem;
+			font-weight: 400;
+			color:$body-color;
+			margin-left: 0.625rem;
+		}
+	}
+	span{
+		font-size: 0.875rem;
+		font-weight: 500;
+		&:hover{
+			svg{
+				transform: scale(1.2);
+				@include transitionMedium;
+			}
+		}
+	}
+} 
+ .course-learn{
+	h4{
+		font-size: 1.125rem;
+		margin-bottom: 0.875rem;
+	}
+	ul{
+		li{
+			width: 50%;
+		    display: flex;
+		    float: left;
+			color:$headings-color;
+		    padding: 0.5625rem 0rem;
+		    svg{
+		    	margin-right: 0.625rem;
+				margin-top: .1rem;
+		    }
+			@include respond ('phone'){
+				width:100%;
+			}
+		}
+	}
+} 
+
+/* Course-details 2 */
+
+ .course-content{
+	margin-bottom: 1rem;
+	svg{
+		margin: 00 0.225rem;
+		cursor: pointer;
+		&:hover{
+			path{
+				fill:var(--primary);
+				@include transitionMedium;
+			}
+		}
+	}
+}
+.progress-box{
+	h4{
+		font-size: 1.5rem;
+	}
+	.progress{
+		height: 0.75rem;
+		border-radius: 0.25rem;
+		margin: 0.5625rem 0;
+	}
+} 
+
+.students1{
+	display:flex;
+	align-items:center;
+	@include respond ('laptop'){
+		display:block;
+	}
+	@include respond ('tab-land'){
+		display:flex;
+	}
+}
+.course-details-tab.style-2 .nav-tabs.tab-auto{
+	.nav-link{
+		flex:unset;
+	}
+}
+.profile-widget{
+	&:hover{
+		transform: translateY(-10px);
+	}
+	
+} 
+.all-crs-wid{
+	&:hover{
+		.courses-bx{
+			h4{
+				a{
+					color:var(--primary);
+					@include transitionMedium;
+				}
+			}
+		}
+		.overlay-main{
+			&:before{
+				opacity:0.8;
+			}
+			.overlay-bx{
+				opacity: 1;
+				visibility: visible;
+			}
+		}
+	}
+}
+.course-slider{
+	.swiper-slide{
+		.card{
+			&:hover{
+				box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+				.widget-courses{
+					img{
+						-webkit-animation-name: bounce;
+						opacity:1;
+						animation-duration: 1.5s;
+					}
+					
+				}
+			}
+		}
+	}
+}
+.custome-accordion{
+	background-color:var(--card);
+	border-radius:$radius;
+}
+.overlay-main{
+	position:relative;
+	
+	&:before{
+		    content: "";
+			background: #000;
+			position: absolute;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 100%;
+			opacity: 0;
+			z-index: 1;
+			-webkit-transition: all 0.3s linear;
+			-moz-transition: all 0.3s linear;
+			-ms-transition: all 0.3s linear;
+			-o-transition: all 0.3s linear;
+			transition: all 0.3s linear;
+			border-radius:$radius;
+			
+			
+	}
+	
+
+	.overlay-bx{
+		position: absolute;
+		left: 0;
+		bottom: 0;
+		width: 100%;
+		height: 100%;
+		text-align: center;
+		z-index: 2;
+		opacity: 0;
+		border-radius:$radius;
+		visibility:hidden;
+		
+		
+	}
+	.overlay-icon{
+		height: auto;
+		left: 50%;
+		list-style: outside none none;
+		margin: 0;
+		position: absolute;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		-o-transform: translate(-50%, -50%);
+		-moz-transform: translate(-50%, -50%);
+		-webkit-transform: translate(-50%, -50%);
+		width: 100%;
+		padding: 0 10px;
+		i{
+			font-size:40px;
+			color:var(--primary);
+			
+		}
+		
+	}
+}
+.popular-bx{
+	display:flex;
+	align-items:center;
+	.popular-media{
+		position:relative;
+		.video-icon{
+			    width: 40px;
+				height: 40px;
+				display: inline-block;
+				text-align: center;
+				line-height: 40px;
+				background-color: var(--primary);
+				border-radius: 100%;
+				position: absolute;
+				top: 30px;
+				left: 33px;
+		
+		}
+		img{
+			width:100px;
+			border-radius:$radius-sm;
+			margin-right:10px;
+		}
+	}
+}
+.modal-dialog-center {
+    min-height: calc(100% - 3.5rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.dlab-info{
+	display:flex;
+	flex-direction: column;
+}
+.comment-media{
+	img{
+		width:50px;
+		border-radius:$radius-sm;
+		margin-right:1rem;
+	}
+}
+
+
+
+// animation button
+@-webkit-keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+@-webkit-keyframes triangleStroke {
+	from {
+		stroke-dashoffset: 90;
+	}
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+@keyframes triangleStroke {
+	from {
+		stroke-dashoffset: 90;
+	}
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+@-webkit-keyframes smallScale {
+	from {
+		transform: scale(1);
+		opacity: 1;
+	}
+	to {
+		transform: scale(1.5);
+		opacity: 0;
+	}
+}
+@keyframes smallScale {
+	from {
+		transform: scale(1);
+		opacity: 1;
+	}
+	to {
+		transform: scale(1.5);
+		opacity: 0;
+	}
+}
+
+.popup-youtube{
+	&.button{
+		display: inline-block;
+		position: relative;
+	}
+	&.button.is-play{
+		background-color: var(--card);
+		border-radius: 50%;
+		width: 100px;
+		height: 100px;
+		.button-outer-circle {
+			background: rgba(255,255,255,0.2);
+			border-radius: 50%;
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			height: 100%;
+			width: 100%;
+		}
+		.button-icon {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: 30px;
+			height: 30px;
+			transform: translate(-50%, -50%);
+			.triangle {
+				-webkit-animation: fadeIn 7s ease;
+				animation: fadeIn 7s ease;
+			}
+			.path {
+				stroke-dasharray: 90;
+				stroke-dashoffset: 0;
+				-webkit-animation: triangleStroke 5s;
+				animation: triangleStroke 5s;
+				-webkit-animation-timing-function: ease;
+				animation-timing-function: ease;
+			}
+		}
+	}
+}
+
+.has-scale-animation {
+	-webkit-animation: smallScale 3s infinite;
+	animation: smallScale 3s infinite;
+}
+.has-delay-short {
+	-webkit-animation-delay: 0.5s;
+	animation-delay: 0.5s;
+}
+
+.popup-youtube{
+	display: inline-block;
+    height: 70px;
+    width: 70px;
+    line-height: 72px;
+    text-align: center;
+    font-size: 18px;
+    border-radius: 50%;
+    min-width: 70px;
+   background-color: $white;
+    color: var(--primary);
+
+	i{
+		color:var(--primary);
+	}
+
+	&:before{
+		content: "";
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		display: block;
+		border: 1px solid var(--primary);
+		-webkit-border-radius: 50%;
+		-khtml-border-radius: 50%;
+		-moz-border-radius: 50%;
+		-ms-border-radius: 50%;
+		-o-border-radius: 50%;
+		border-radius: 100%;
+		animation: animationSignal1;
+		animation-iteration-count: infinite;
+		animation-duration: 3s;
+		-webkit-animation: animationSignal1;
+		-webkit-animation-iteration-count: infinite;
+		-webkit-animation-duration: 3s;
+		z-index: -1;
+		transform: scale(1);
+		-moz-transform: scale(1);
+		-webkit-transform: scale(1);
+		-ms-transform: scale(1);
+		-o-transform: scale(1);
+		-moz-transition: all 0.5;
+		-o-transition: all 0.5;
+		-webkit-transition: all 0.5;
+		-ms-transition: all 0.5;
+		transition: all 0.5;
+	}
+	&:after{
+
+		content: "";
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		display: block;
+		border: 1px solid var(--primary);
+		-webkit-border-radius: 100%;
+		-khtml-border-radius: 100%;
+		-moz-border-radius: 100%;
+		-ms-border-radius: 100%;
+		-o-border-radius: 100%;
+		border-radius: 100%;
+		animation: animationSignal2;
+		animation-iteration-count: infinite;
+		animation-duration: 3s;
+		-webkit-animation: animationSignal2;
+		-webkit-animation-iteration-count: infinite;
+		-webkit-animation-duration: 3s;
+		z-index: -1;
+		transform: scale(1);
+		-moz-transform: scale(1);
+		-webkit-transform: scale(1);
+		-ms-transform: scale(1);
+		-o-transform: scale(1);
+		-moz-transition: all 0.5;
+		-o-transition: all 0.5;
+		-webkit-transition: all 0.5;
+		-ms-transition: all 0.5;
+		transition: all 0.5;
+	}
+}
+@keyframes animationSignal1 {
+	/*Video Popup*/
+	  0% {
+		  opacity: 0.8;
+		  transform: scale(0.9);
+		  -moz-transform: scale(0.9);
+		  -ms-transform: scale(0.9);
+		  -o-transform: scale(0.9);
+		  -webkit-transform: scale(0.9);
+	  }
+	  100% {
+		  transform:  scale(1.5);
+		  -moz-transform:  scale(1.5);
+		  -ms-transform:  scale(1.5);
+		  -o-transform:  scale(1.5);
+		  -webkit-transform:  scale(1.5);
+		  opacity: 0;
+	  }
+  }
+  @-webkit-keyframes animationSignal1 {
+	/*Video Popup*/
+	  0% {
+		  //opacity: 0.8;
+		  transform: scale(0.9);
+		  -moz-transform: scale(0.9);
+		  -ms-transform: scale(0.9);
+		  -o-transform: scale(0.9);
+		  -webkit-transform: scale(0.9);
+	  }
+	  100% {
+		  transform:  scale(1.5);
+		  -moz-transform:  scale(1.5);
+		  -ms-transform:  scale(1.5);
+		  -o-transform:  scale(1.5);
+		  -webkit-transform:  scale(1.5);
+		  opacity: 0;
+	  }
+  }
+  @keyframes animationSignal2 {
+	/*Video Popup*/
+	  0% {
+		  //opacity: 0.8;
+		  transform: scale(0.9);
+		  -moz-transform: scale(0.9);
+		  -webkit-transform: scale(0.9);
+		  -ms-transform: scale(0.9);
+		  -o-transform: scale(0.9);
+	  }
+	  100% {
+		  transform:  scale(1.9);
+		  -moz-transform:  scale(1.9);
+		  -webkit-transform:  scale(1.9);
+		  -ms-transform:  scale(1.9);
+		  -o-transform:  scale(1.9);
+		  opacity: 0;
+	  }
+  }
+  @-webkit-keyframes animationSignal2 {
+	/*Video Popup*/
+	  0% {
+		  //opacity: 0.8;
+		  transform: scale(0.9);
+		  -moz-transform: scale(0.9);
+		  -webkit-transform: scale(0.9);
+		  -ms-transform: scale(0.9);
+		  -o-transform: scale(0.9);
+	  }
+	  100% {
+		  transform:  scale(1.9);
+		  -moz-transform:  scale(1.9);
+		  -webkit-transform:  scale(1.9);
+		  -ms-transform:  scale(1.9);
+		  -o-transform:  scale(1.9);
+		  opacity: 0;
+	  }
+  }
+

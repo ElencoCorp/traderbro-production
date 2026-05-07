@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>TraderBro - Account</title>
+
+	<!-- Favicon icon -->
+	<link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png">
+
+	<!-- FINLAB CSS -->
+	<link href="/static/finlab/Frontend/xhtml/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link href="/static/finlab/Frontend/xhtml/css/style.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+
+	<div class="page-wraper">
+
+		<!-- Header -->
+		<header class="site-header mo-left header header-transparent ">
+			<!-- Main Header -->
+			<div class="sticky-header main-bar-wraper navbar-expand-lg">
+				<div class="main-bar clearfix ">
+					<div class="container clearfix">
+
+						<!-- Website Logo -->
+						<div class="logo-header">
+							<a href="/" class="logo-light"><img
+									src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
+									alt="TraderBro"></a>
+							<a href="/" class="logo-dark"><img
+									src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
+									alt="TraderBro"></a>
+						</div>
+
+						<!-- Nav Toggle Button -->
+						<button class="navbar-toggler collapsed navicon justify-content-end" type="button"
+							data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
+							aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+							<span></span>
+							<span></span>
+							<span></span>
+						</button>
+
+						<!-- Extra Nav -->
+						<div class="extra-nav">
+							<div class="extra-cell" id="navAuth">
+							</div>
+						</div>
+
+						<!-- Header Nav -->
+						<div class="header-nav navbar-collapse collapse justify-content-end" id="navbarNavDropdown">
+							<div class="logo-header">
+								<a href="index.html" class="logo-dark"><img
+										src="/static/finlab/images/logotraderbro.png" alt="TraderBro"></a>
+							</div>
+							<ul class="nav navbar-nav navbar navbar-left">
+								<!-- <li><a href="/">Home</a></li> -->
+								<li><a href="/about-us">About Us</a></li>
+								<li><a href="/static/finlab/Frontend/xhtml//trading-plan.html">Trading Plans</a></li>
+								<!-- <li class="sub-menu-down"><a href="javascript:void(0);">Our Blogs</a>
+								<ul class="sub-menu">
+									<li><a href="/static/finlab/Frontend/xhtml//blog-list.html">Blog List</a></li>
+									<li><a href="/static/finlab/Frontend/xhtml//blog-grid.html">Blog Grid</a></li>
+									<li><a href="/static/finlab/Frontend/xhtml//blog-details.html">Blog Details</a></li>
+								</ul>
+							</li> -->
+								<li><a href="/static/finlab/Frontend/xhtml//contact-us.html">Contact Us</a></li>
+								<li><a href="/account">My Account</a></li>
+
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- Main Header End -->
+		</header>
+		<!-- Header End -->
+
+
+		<div class="page-content">
+
+			<!-- Banner  -->
+			<div class="dz-bnr-inr dz-bnr-inr-sm text-center position-relative"
+				style="background-image:url('/static/finlab/Frontend/xhtml/images/background/bg2.jpg');">
+				<div class="container">
+					<div class="dz-bnr-inr-entry">
+						<h1>Checkout</h1>
+						<!-- Breadcrumb Row -->
+						<nav aria-label="breadcrumb" class="breadcrumb-row m-t15">
+							<ul class="breadcrumb">
+								<li class="breadcrumb-item"><a href="index.html">Home</a></li>
+								<li class="breadcrumb-item active" aria-current="page">Checkout</li>
+							</ul>
+						</nav>
+						<!-- Breadcrumb Row End -->
+					</div>
+				</div>
+				<img class="shape1" src="/static/finlab/Frontend/xhtml/images/home-banner/shape1.svg" alt="">
+			</div>
+			<!-- Banner End -->
+
+			<div class="container mt-5 mb-5">
+
+				<div class="row g-4">
+
+					<!-- LEFT SIDE -->
+					<div class="col-xl-8">
+
+						<div class="row g-4">
+
+							<!-- CURRENT PLAN -->
+							<div class="col-12">
+								<div class="card">
+									<div class="card-header">
+										<h4 class="card-title">📊 Current Subscription</h4>
+									</div>
+
+									<div class="card-body">
+										<div class="row">
+
+											<div class="col-md-3">
+												<p class="text-muted">Plan</p>
+												<h5 id="currentPlan"></h5>
+											</div>
+
+											<div class="col-md-3">
+												<p class="text-muted">Start</p>
+												<h6 id="currentStart"></h6>
+											</div>
+
+											<div class="col-md-3">
+												<p class="text-muted">Expiry</p>
+												<h6 id="currentExpiry"></h6>
+											</div>
+
+											<div class="col-md-3">
+												<p class="text-muted">Status</p>
+												<h6 id="planStatus"></h6>
+											</div>
+
+											<div class="col-md-6 mt-3">
+												<p class="text-muted">Trading Days Remaining</p>
+												<h6 id="daysRemaining"></h6>
+											</div>
+
+										</div>
+
+										<!-- PROGRESS BAR -->
+										<div class="mt-3">
+											<div class="progress">
+												<div id="planProgress" class="progress-bar bg-success"
+													style="width: 0%"></div>
+											</div>
+										</div>
+									</div>
+
+									<div class="card-body">
+										<div class="row">
+
+											<div class="col-md-4">
+												<p class="text-muted">Plan</p>
+												<h5 id="currentPlan"></h5>
+											</div>
+
+											<div class="col-md-4">
+												<p class="text-muted">Start</p>
+												<h6 id="currentStart"></h6>
+											</div>
+
+											<div class="col-md-4">
+												<p class="text-muted">Expiry</p>
+												<h6 id="currentExpiry"></h6>
+											</div>
+											<div class="col-md-4">
+												<p class="text-muted">Days Remaining</p>
+												<h6 id="daysRemaining"></h6>
+											</div>
+
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- NEW PLAN -->
+							<div class="col-12">
+								<div class="card">
+									<div class="card-header">
+										<h4 class="card-title">🚀 Upgrade Plan</h4>
+									</div>
+
+									<div class="card-body">
+
+										<div class="row">
+
+											<div class="col-md-3">
+												<p class="text-muted">Plan</p>
+												<h6 id="planName"></h6>
+											</div>
+
+											<div class="col-md-3">
+												<p class="text-muted">Duration</p>
+												<h6 id="planDays"></h6>
+											</div>
+
+											<div class="col-md-3">
+												<p class="text-muted">Start</p>
+												<h6 id="newStart"></h6>
+											</div>
+
+											<div class="col-md-3">
+												<p class="text-muted">Expiry</p>
+												<h6 id="newExpiry"></h6>
+											</div>
+											<div class="col-md-4">
+												<p class="text-muted">Next Activation</p>
+												<h6 id="nextStart"></h6>
+											</div>
+
+										</div>
+
+										<hr>
+										<div class="mt-2">
+											<p id="planBreakdown" style="font-size:13px; color:#666;"></p>
+										</div>
+
+										<div class="d-flex justify-content-between align-items-center">
+											<h5>Total</h5>
+											<h4 class="text-success" id="totalPrice"></h4>
+										</div>
+
+									</div>
+								</div>
+							</div>
+
+						</div>
+
+					</div>
+
+					<!-- RIGHT SIDE -->
+					<div class="col-xl-4">
+
+						<div class="card">
+							<div class="card-header">
+								<h4 class="card-title">👤 User Details</h4>
+							</div>
+
+							<div class="card-body">
+
+								<p><strong>Name:</strong> <span id="userName"></span></p>
+								<p><strong>Email:</strong> <span id="userEmail"></span></p>
+
+								<hr>
+								<p style="font-size:12px; color:#888;">
+									This platform is for <span class="text-danger">educational purposes only. We are not
+										SEBI registered.
+										No investment advice is provided.</span>
+								</p>
+								<input type="checkbox" required>
+								I understand this is an educational platform and not SEBI registered
+
+								<button class="btn btn-primary w-100" onclick="startPayment()">
+									Pay & Upgrade 💳
+								</button>
+
+							</div>
+						</div>
+
+					</div>
+
+				</div>
+
+			</div>
+		</div>
+
+		<!-- JS -->
+
+
+
+		<script>
+
+			function loadCheckout(){
+				const marketHolidays = [
+				"2026-01-26", // Republic Day
+				"2026-03-07", // Holi
+				"2026-03-25", // Ram Navami
+				"2026-04-14", // Ambedkar Jayanti
+				"2026-04-18", // Good Friday
+				"2026-05-01", // Maharashtra Day
+				"2026-08-15", // Independence Day
+				"2026-08-27", // Ganesh Chaturthi
+				"2026-10-02", // Gandhi Jayanti
+				"2026-10-24", // Diwali
+				"2026-11-12", // Guru Nanak Jayanti
+				"2026-12-25"  // Christmas
+			];
+
+			/* ===============================
+			   MARKET LOGIC FUNCTIONS
+			================================= */
+
+			// Skip weekends (Trading days only)
+			function addTradingDaysWithHolidays(startDate, days) {
+				let date = new Date(startDate);
+				let added = 0;
+				let skippedHolidays = 0;
+				let skippedWeekends = 0;
+
+				while (added < days) {
+					date.setDate(date.getDate() + 1);
+
+					let day = date.getDay();
+					let formatted = date.toISOString().split("T")[0];
+
+					// Weekend
+					if (day === 0 || day === 6) {
+						skippedWeekends++;
+						continue;
+					}
+
+					// Holiday
+					if (marketHolidays.includes(formatted)) {
+						skippedHolidays++;
+						continue;
+					}
+
+					added++;
+				}
+
+				return {
+					expiryDate: date,
+					holidays: skippedHolidays,
+					weekends: skippedWeekends
+				};
+			}
+			document.getElementById("userEmail").innerText = user.email || "N/A";
+
+			// Market timing logic (9:15 - 3:30)
+			function getMarketStartDate() {
+				let now = new Date();
+
+				// Always move to next day
+				now.setDate(now.getDate() + 1);
+
+				// Skip weekends
+				while (now.getDay() === 0 || now.getDay() === 6) {
+					now.setDate(now.getDate() + 1);
+				}
+
+				// SET TIME → 9:00 AM
+				now.setHours(9);
+				now.setMinutes(0);
+				now.setSeconds(0);
+
+				return now;
+			}
+
+			// Normalize plan
+			if (user.plan) {
+				user.plan = user.plan.toLowerCase();
+			}
+
+			const params = new URLSearchParams(window.location.search);
+			const plan = params.get("plan");
+			const type = params.get("type");
+
+			/* ===============================
+			   2. PLAN CONFIG
+			================================= */
+			const planData = {
+				basic: { name: "basic", tradingDays: 1, price: 49 },
+				essential: { name: "essential", tradingDays: 5, price: 499 },
+				pro: { name: "pro", tradingDays: 22, price: 1499 },
+				premium: { name: "premium", tradingDays: 250, price: 14499 }
+			};
+
+			let selected = planData[plan];
+
+			if (!selected) {
+				alert("Invalid plan selected");
+				window.location.href = "/";
+			}
+			const planHierarchy = {
+				basic: 1,
+				essential: 2,
+				pro: 3,
+				premium: 4
+			};
+
+			/* ===============================
+			   3. USER DETAILS
+			================================= */
+			document.getElementById("userName").innerText = user.username || "User";
+			document.getElementById("userEmail").innerText = user.email || "-";
+
+			/* ===============================
+			   4. CURRENT PLAN
+			================================= */
+			document.getElementById("currentPlan").innerText =
+				user.plan ? user.plan.toUpperCase() : "FREE";
+
+			if (user.planExpiry) {
+				let expiry = new Date(user.planExpiry);
+				document.getElementById("currentExpiry").innerText = expiry.toLocaleString();
+
+				// FIXED: calculate start correctly
+				if (user.planStart) {
+					let start = new Date(user.planStart);
+					document.getElementById("currentStart").innerText = start.toLocaleDateString();
+				}
+				if (user.planStart) {
+					let start = new Date(user.planStart);
+					document.getElementById("currentStart").innerText = start.toLocaleDateString();
+				}
+			}
+			/* ===============================
+			   5. NEW PLAN DETAILS
+			================================= */
+			/* ===============================
+			   5. NEW PLAN DETAILS
+			================================= */
+
+			document.getElementById("planName").innerText = selected.name.toUpperCase();
+			let dayText = selected.tradingDays === 1 ? "Trading Day" : "Trading Days";
+
+			document.getElementById("planDays").innerText =
+				selected.tradingDays === 1
+					? "1 Trading Day"
+					: selected.tradingDays + " Trading Days";
+
+			let newStart;
+
+			// If user already has active plan → start after expiry
+			if (user.planExpiry && new Date(user.planExpiry) > new Date()) {
+				newStart = new Date(user.planExpiry);
+			} else {
+				newStart = getMarketStartDate();
+			}
+
+			// Calculate expiry
+			let daysToAdd = selected.tradingDays - 1;
+
+			let result = addTradingDaysWithHolidays(newStart, daysToAdd);
+
+			let newExpiry = result.expiryDate;
+			// ===============================
+			// CALCULATE FULL BREAKDOWN
+			// ===============================
+
+			// Total calendar days
+			let totalDays = Math.ceil((newExpiry - newStart) / (1000 * 60 * 60 * 24)) + 1;
+
+			// Show breakdown
+			document.getElementById("planBreakdown").innerHTML =
+				`<b>${selected.tradingDays}</b> Trading Days • 
+					<b>${totalDays}</b> Total Days • 
+					Weekends: ${result.weekends} • 
+					Holidays: ${result.holidays}`;
+			if (user.plan && planHierarchy[selected.name] < planHierarchy[user.plan]) {
+    document.getElementById("planBreakdown").innerHTML +=
+        "<br><span style='color:red;'>⚠️ Downgrade will apply after expiry</span>";
+}
+
+			// Set market close
+			newExpiry.setHours(15, 30, 0);
+
+			// SET VALUES
+			document.getElementById("newStart").innerText = newStart.toLocaleString();
+			document.getElementById("newExpiry").innerText = newExpiry.toLocaleString();
+			document.getElementById("nextStart").innerText = newStart.toLocaleString();
+
+			// Total Price
+			document.getElementById("totalPrice").innerHTML =
+				"₹" + selected.price + " <small style='color:gray'>incl. GST</small>";
+
+			/* ===============================
+			   6. CHECKOUT TITLE
+			================================= */
+			let title = "Buy Plan 💳";
+
+			if (type === "upgrade") title = "Upgrade Plan 🚀";
+			if (type === "renew") title = "Renew Plan 🔄";
+
+			let titleEl = document.getElementById("checkoutTitle");
+			if (titleEl) titleEl.innerText = title;
+
+			/* ===============================
+			   7. PAYMENT FLOW
+			================================= */
+			/* ===============================
+			   MARKET TIME VALIDATION
+			================================= */
+
+			function isAfterMarketClose() {
+				let now = new Date();
+				let hour = now.getHours();
+				let minutes = now.getMinutes();
+
+				return (hour > 15 || (hour === 15 && minutes >= 31));
+			}
+			}
+		</script>
+
+		<script>
+			function startPayment() {
+
+				const checkbox = document.querySelector("input[type='checkbox']");
+				if (!confirm("Proceed with payment?")) return;
+
+				completePayment();
+			}
+		</script>
+
+		<script>
+async function completePayment() {
+
+    try {
+
+        const params = new URLSearchParams(window.location.search);
+
+        const selectedPlan = params.get("plan");
+
+        const response = await fetch("/activate-plan", {
+            method: "POST",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                plan: selectedPlan
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+
+            alert("Payment Successful 🚀");
+
+            window.location.href = "/dashboard";
+
+        } else {
+
+            alert("Plan activation failed");
+
+        }
+
+    } catch (err) {
+
+        console.log(err);
+
+        alert("Something went wrong");
+
+    }
+}
+</script>
+
+		<script src="/static/finlab/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+<script>
+let user = null;
+
+async function initCheckout() {
+    const res = await fetch("/api/me", {
+        credentials: "include"
+    });
+
+    const data = await res.json();
+
+    if (!data.username) {
+        window.location.href = "/user-login";
+        return;
+    }
+
+    // ✅ Set user from backend
+    user = {
+        username: data.username,
+        email: data.email,
+		plan: data.plan,
+		planExpiry: data.plan_expiry,
+		planStart: data.plan_start
+    };
+
+    loadCheckout(); // continue your existing logic
+}
+
+initCheckout();
+</script>
+
+
+		<script>
+			if (user.planExpiry) {
+				let now = new Date();
+				let expiry = new Date(user.planExpiry);
+
+				function calculateTradingDaysRemaining(start, end) {
+					let date = new Date(start);
+					let count = 0;
+
+					while (date <= end) {
+						let day = date.getDay();
+						let formatted = date.toISOString().split("T")[0];
+
+						if (day !== 0 && day !== 6 && !marketHolidays.includes(formatted)) {
+							count++;
+						}
+
+						date.setDate(date.getDate() + 1);
+					}
+
+					return count;
+				}
+
+				if (user.planExpiry) {
+					let now = new Date();
+					let expiry = new Date(user.planExpiry);
+
+					let tradingDaysLeft = calculateTradingDaysRemaining(now, expiry);
+
+					document.getElementById("daysRemaining").innerText =
+						tradingDaysLeft > 0
+							? tradingDaysLeft + " trading days left"
+							: "Expired";
+				}
+			}
+
+			function getPlanStatus(expiry) {
+				let now = new Date();
+
+				if (now > expiry) return "Expired ❌";
+
+				let diffHours = (expiry - now) / (1000 * 60 * 60);
+
+				if (diffHours < 24) return "Expiring Today ⚠️";
+
+				return "Active ✅";
+			}
+
+			if (user.planExpiry) {
+				let expiry = new Date(user.planExpiry);
+				document.getElementById("planStatus").innerText = getPlanStatus(expiry);
+			}
+		</script>
+
+		<script>
+			function updateProgressBar() {
+				if (!user.planStart || !user.planExpiry) return;
+
+				let start = new Date(user.planStart);
+				let expiry = new Date(user.planExpiry);
+				let now = new Date();
+
+				let total = expiry - start;
+				let used = now - start;
+
+				let percent = Math.min((used / total) * 100, 100);
+
+				document.getElementById("planProgress").style.width = percent + "%";
+			}
+
+			updateProgressBar();
+		</script>
+
+<script>
+async function renderNavbar() {
+    const res = await fetch("/api/me");
+    const data = await res.json();
+
+    const nav = document.getElementById("navAuth");
+
+    if (!nav) return;
+
+    if (data.username) {
+        const firstLetter = data.username.charAt(0).toUpperCase();
+
+        nav.innerHTML = `
+        <div class="dropdown">
+            <div class="d-flex align-items-center" style="cursor:pointer;" data-bs-toggle="dropdown">
+                <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#00c6ff,#0072ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;margin-right:10px;">
+                    ${firstLetter}
+                </div>
+                <span class="text-white">Hi, ${data.username}</span>
+            </div>
+
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="/account">👤 My Account</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="#" onclick="logout()">🚪 Logout</a></li>
+            </ul>
+        </div>
+        `;
+    } else {
+        nav.innerHTML = `
+            <a class="btn btn-outline-primary me-2" href="/user-login">Login</a>
+            <a class="btn btn-primary" href="/register">Register</a>
+        `;
+    }
+}
+
+function logout() {
+    fetch("/logout").then(() => window.location.href = "/");
+}
+
+renderNavbar();
+</script>
+
+</body>
+
+</html>

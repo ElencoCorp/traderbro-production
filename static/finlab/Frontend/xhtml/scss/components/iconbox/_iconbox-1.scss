@@ -1,0 +1,209 @@
+.icon-bx-wraper{
+	
+	// Style 1
+	&.style-1{
+		padding: 35px 40px 30px;
+		border-radius: 20px;
+		background: linear-gradient(180deg, #FFF5EB 0%, rgba(9, 9, 21, 0.05) 0.01%, rgba(9, 9, 21, 0) 100%);
+		margin-top: 90px;
+		@include transitionMedium;
+		
+		p{
+			color: #333333;
+			margin-bottom: 8px;
+			@include transitionMedium;
+		}
+		.title{
+			font-size: 28px;
+			margin-bottom: 12px;
+			@include transitionMedium;
+		}
+		.icon-media{
+			width: 180px;
+			height: 180px;
+			position: relative;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin: -125px auto 20px;
+			
+			img{				
+				z-index: 1;
+				position: relative;
+				width: 72px;
+			}
+			&:after{
+				content: "";
+				left: 0;
+				top: 0;
+				height: 100%;
+				width: 100%;
+				position: absolute;
+				@include transitionMedium;
+				background-size: 100%;
+				background-repeat: no-repeat;
+				background-position: center 2px;
+				background-image: url(../images/shape/polygon6.svg);
+			}
+			&:before{
+				content: "";
+				left: 0;
+				top: 0;
+				height: 100%;
+				width: 100%;
+				position: absolute;
+				opacity:0;
+				@include transitionMedium;
+				background-size: 100%;
+				background-repeat: no-repeat;
+				background-position: center 2px;
+				background-image: url(../images/shape/polygon5.svg);
+			}
+		}
+		@include respond('tab-land'){
+			p{
+				br{
+					display:none;
+				}
+			}
+		}
+		@include respond('laptop'){
+			margin-top: 70px;
+			.title{
+				font-size: 24px;
+			}
+			.icon-media{
+				width: 150px;
+				height: 150px;
+				margin: -110px auto 20px;
+				
+				img{				
+					width: 55px;
+				}
+			}
+		}
+		@include respond('phone'){
+			padding: 30px 25px 25px;
+			margin-top: 70px;
+			.title{
+				font-size: 20px;
+			}
+			.icon-media{
+				width: 135px;
+				height: 135px;
+				margin: -100px auto 15px;
+				
+				img{				
+					width: 48px;
+				}
+			}
+		}
+		&.active,
+		&:hover{
+			.icon-media{
+				&:after{
+					opacity:0;
+				}
+				&:before{
+					opacity:1;
+				}
+			}
+		}
+		&:hover{
+			background:linear-gradient(180deg, #E9F7FF 0%, rgba(233, 247, 255, 0.1) 100%);
+			p{
+				color: #000;
+				opacity:0.85;
+			}
+			.title{
+				color: #000;
+			}
+		}
+	}
+	
+	&.style-2{
+		padding: 35px 40px 30px;
+		border-radius: 10px;
+		@include transitionMedium;
+		background:rgba(30, 30, 38, 1);
+		z-index:1;
+		position: relative;
+		overflow: hidden;
+		
+		&:after{
+			content: "";
+			right: 0;
+			top: 0;
+			height: 100%;
+			width: 100%;
+			position: absolute;
+			@include transitionMedium;
+			background-repeat: no-repeat;
+			background-position: center 2px;
+			background: -moz-linear-gradient(-45deg,  rgba(30,87,153,0) 0%, rgba(2,163,254,1) 100%); /* FF3.6-15 */
+			background: -webkit-linear-gradient(-45deg,  rgba(30,87,153,0) 0%,rgba(2,163,254,1) 100%); /* Chrome10-25,Safari5.1-6 */
+			background: linear-gradient(135deg,  rgba(30,87,153,0) 0%,rgba(2,163,254,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#001e5799', endColorstr='#02a3fe',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+			z-index:-1;
+			opacity: 0.2;
+		}
+		
+		p{
+			color: #D3EFFF;
+			margin-bottom: 8px;
+			@include transitionMedium;
+		}
+		.title{
+			color:#ffffff;
+			margin-bottom: 12px;
+			@include transitionMedium;
+		}
+		&.active,
+		&:hover{
+			background:rgba(2, 163, 254, 1);
+			
+			p{
+				color: #fff;
+				opacity:0.85;
+			}
+			.title{
+				color: #fff
+			}
+		}
+	}
+}
+
+@-webkit-keyframes toTopFromBottom {
+	49% {
+		-webkit-transform: translateY(-100%); }
+	50% {
+		opacity: 0;
+		-webkit-transform: translateY(100%); }
+	51% {
+		opacity: 1;
+	}
+}
+@-moz-keyframes toTopFromBottom {
+	49% {
+		-moz-transform: translateY(-100%);
+	}
+	50% {
+		opacity: 0;
+		-moz-transform: translateY(100%);
+	}
+	51% {
+		opacity: 1;
+	}
+}
+@keyframes toTopFromBottom {
+	49% {
+		transform: translateY(-100%);
+	}
+	50% {
+		opacity: 0;
+		transform: translateY(100%);
+	}
+	51% {
+		opacity: 1;
+	}
+}

@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TraderBro — Sensex Dashboard</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Roboto+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #f0f4f8;
+      --white: #ffffff;
+      --border: #d1dce8;
+      --text: #1a2a3a;
+      --dim: #6b7f96;
+      --accent: #1a56db;
+      --green: #16a34a;
+      --green-bg: #dcfce7;
+      --green-brd: #86efac;
+      --red: #dc2626;
+      --red-bg: #fee2e2;
+      --red-brd: #fca5a5;
+      --gold: #d97706;
+      --purple: #7c3aed;
+      --header-h: 72px;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .header {
+      height: var(--header-h);
+      background: var(--white);
+      border-bottom: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 16px;
+      box-shadow: 0 2px 12px rgba(26, 86, 219, 0.08);
+      position: relative;
+      z-index: 10;
+    }
+
+    .logo-block {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .logo-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--dim);
+      letter-spacing: 2px;
+      font-weight: 600;
+    }
+
+    .header-divider {
+      width: 2px;
+      height: 40px;
+      background: var(--border);
+      margin: 0 8px;
+    }
+
+    .header-indices {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .idx-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .idx-label {
+      font-size: 10px;
+      color: var(--dim);
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    .idx-val {
+      font-size: 16px;
+      font-weight: 700;
+      font-family: 'Roboto Mono', monospace;
+      color: var(--text);
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f0fdf4;
+      border: 1px solid var(--green-brd);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--green);
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: blink 1.4s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .3
+      }
+    }
+
+    .ts-block {
+      text-align: right;
+    }
+
+    .ts-label {
+      font-size: 10px;
+      color: var(--dim);
+      letter-spacing: 1px;
+    }
+
+    .ts-val {
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'Roboto Mono', monospace;
+      color: var(--text);
+    }
+
+    /* .admin-btn {
+      padding: 7px 16px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      letter-spacing: 0.5px;
+    }
+
+    .admin-btn:hover {
+      background: #1740b0;
+    } */
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr;
+      height: calc(100vh - var(--header-h));
+      gap: 0;
+    }
+
+    .left-panel {
+      background: var(--white);
+      border-right: 2px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, #f8faff, #eef2ff);
+      flex-shrink: 0;
+    }
+
+    .panel-header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--purple);
+      letter-spacing: 0.5px;
+    }
+
+    .atm-hero {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .atm-dt-box {
+      flex: 1;
+      border: 2px solid var(--red);
+      border-radius: 8px;
+      padding: 10px 16px;
+      background: var(--white);
+    }
+
+    .atm-dt-label {
+      font-size: 9px;
+      color: var(--dim);
+      letter-spacing: 1px;
+      margin-bottom: 2px;
+    }
+
+    .atm-dt-val {
+      font-size: 15px;
+      font-weight: 700;
+      font-family: 'Roboto Mono', monospace;
+      color: var(--text);
+    }
+
+    .market-note{
+    margin-top:8px;
+    font-size:12px;
+    color:#d97706;
+    font-weight:600;
+    letter-spacing:0.3px;
+    }
+
+    .atm-run-box {
+      min-width: 90px;
+      min-height: 60px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 800;
+      font-family: 'Roboto Mono', monospace;
+      flex-shrink: 0;
+    }
+
+    .atm-run-pos {
+      background: var(--green);
+      color: white;
+    }
+
+    .atm-run-neg {
+      background: var(--red);
+      color: white;
+    }
+
+    .atm-run-zero {
+      background: var(--gold);
+      color: white;
+    }
+
+    .rows-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .rows-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .rows-scroll::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    .rows-scroll::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    .rows-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px 0 80px 0;
+    }
+
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 95%;
+      margin: auto;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+
+    .data-row:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .row-dt {
+      font-size: 12px;
+      font-family: 'Roboto Mono', monospace;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .val-pill {
+      min-width: 64px;
+      text-align: center;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'Roboto Mono', monospace;
+      flex-shrink: 0;
+    }
+
+    .val-pos {
+      background: var(--green);
+      color: white;
+    }
+
+    .val-neg {
+      background: var(--red);
+      color: white;
+    }
+
+    .val-zero {
+      background: var(--gold);
+      color: white;
+    }
+
+    .right-panel {
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .gauge-card {
+      background: var(--white);
+      border-bottom: 2px solid var(--border);
+      padding: 16px 20px;
+      flex-shrink: 0;
+    }
+
+    .gauge-card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--purple);
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .gauge-wrapper {
+      position: relative;
+      width: 300px;
+      margin: 0 auto;
+    }
+
+    canvas#gauge {
+      display: block;
+      width: 300px;
+      height: 165px;
+    }
+
+    .gauge-value-display {
+      position: absolute;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Roboto Mono', monospace;
+      font-size: 26px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .gauge-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--dim);
+      font-family: 'Roboto Mono', monospace;
+      padding: 0 4px;
+      margin-top: 2px;
+    }
+
+    .sentiment-text {
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-top: 6px;
+    }
+
+    .download-card {
+      background: var(--white);
+      flex: 1;
+      overflow-y: auto;
+      margin: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      padding: 14px;
+    }
+
+    .download-card::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .download-card::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    .dl-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dl-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 6px;
+      background: var(--bg);
+      transition: all .15s;
+    }
+
+    .dl-item:hover {
+      border-color: var(--accent);
+      background: var(--white);
+    }
+
+    .dl-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      font-family: 'Roboto Mono', monospace;
+    }
+
+    .dl-date {
+      font-size: 10px;
+      color: var(--dim);
+      margin-top: 1px;
+    }
+
+    .dl-btn {
+      padding: 5px 14px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+
+    .dl-btn:hover {
+      background: #1740b0;
+    }
+
+    .no-files {
+      text-align: center;
+      padding: 24px;
+      color: var(--dim);
+      font-size: 13px;
+    }
+
+    .shimmer {
+      background: linear-gradient(90deg, var(--bg) 25%, var(--border) 50%, var(--bg) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 8px;
+      height: 42px;
+      margin-bottom: 6px;
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 200% 0
+      }
+
+      100% {
+        background-position: -200% 0
+      }
+    }
+
+    @media (max-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow-y: auto;
+      }
+
+      html,
+      body {
+        overflow: auto;
+      }
+
+      .header-indices {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div
+    style="text-align: center; padding: 10px; font-weight: bold; font-size: 18px; background-color: #1a2a3a; color: white;">
+    Welcome to the Black Box Developed by TraderBro.in
+  </div>
+
+  <header class="header">
+    <div class="logo-block">
+      <div class="logo-title">📈 TraderBro Dashboard</div>
+      <div class="logo-sub">SENSEX SENTIMENT LIVE</div>
+    </div>
+    <div class="header-divider"></div>
+    <div class="header-indices">
+      <div class="idx-item">
+        <div class="idx-label">SENSEX</div>
+        <div class="idx-val" id="h-ltp">—</div>
+      </div>
+      <div class="idx-item">
+        <div class="idx-label">EXPIRY</div>
+        <div class="idx-val" id="h-expiry" style="font-size:13px">—</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="live-badge"><span class="live-dot"></span>LIVE</div>
+      <div class="ts-block">
+        <div class="ts-label">LAST UPDATED</div>
+        <div class="ts-val" id="h-ts">—</div>
+      </div>
+      <!-- <a href="/admin" class="admin-btn">⚙ Admin</a> -->
+    </div>
+  </header>
+
+  <div class="main-grid">
+
+    <div class="left-panel">
+      <div class="panel-header">
+        <div class="panel-header-top">
+          <div class="panel-title">📊 Black Box Engine</div>
+        </div>
+        <div class="atm-hero">
+          <div class="atm-dt-box">
+            <div class="atm-dt-label">ATM STRIKE &amp; TIMESTAMP</div>
+            <div class="atm-dt-val" id="atm-dt">Loading...</div>
+          </div>
+          <div class="atm-run-box atm-run-zero" id="atm-run-box">
+            <span id="atm-run-val">—</span>
+          </div>
+        </div>
+        <div class="market-note" id="market-note" style="display:none;">
+          ⏰ Values are generated from 9:16 AM to 12:00 PM and remain visible till 8:30 AM next trading day.
+      </div>
+      </div>
+      <div class="rows-scroll">
+        <div class="rows-grid" id="rows-grid">
+          <div class="shimmer"></div>
+          <div class="shimmer"></div>
+          <div class="shimmer"></div>
+          <div class="shimmer"></div>
+          <div class="shimmer"></div>
+          <div class="shimmer"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-panel">
+      <div class="gauge-card">
+        <div class="gauge-card-title">Sentimental Dial Gauge</div>
+        <div class="gauge-wrapper">
+          <canvas id="gauge" width="600" height="330"></canvas>
+          <div class="gauge-value-display" id="gauge-val">0</div>
+        </div>
+        <div class="gauge-ticks">
+          <span>-180</span><span>-120</span><span>-60</span>
+          <span>0</span>
+          <span>+60</span><span>+120</span><span>+180</span>
+        </div>
+        <div class="sentiment-text" id="sentiment-text">◆ </div>
+      </div>
+      <div class="download-card">
+        <div class="dl-title">📥 Historical Data Downloads</div>
+        <div id="dl-list">
+          <div class="no-files">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <h3>📈 Live Sensex Chart</h3>
+  <canvas id="sensexChart" height="100"></canvas>
+
+
+  <!-- It will only access when in market time or else not -->
+  <script>
+
+    function isMarketOpen() {
+      let now = new Date();
+      let hour = now.getHours();
+      let minutes = now.getMinutes();
+
+      const isAfter915 = (hour > 9) || (hour === 9 && minutes >= 15);
+      const isBefore12 = (hour < 12) || (hour === 12 && minutes === 0);
+
+      return isAfter915 && isBefore12;
+    }
+
+    // 🚨 CHECK ACCESS (Commented out for testing so you can view the dashboard anytime)
+    /*
+    if (!isMarketOpen()) {
+      alert("Market is closed. Access available only between 9:00 AM - 3:30 PM");
+      window.location.href = "/";
+    }
+    */
+
+  </script>
+
+
+  <script>
+    /*
+      Dashboard reads `running` (cumulative) directly from DB.
+      simple.html now saves the PREVIOUS row (with corrected diff_prev + running)
+      to DB BEFORE saving the current row, so values are always consistent.
+    */
+
+    let refreshTimer = null;
+
+    function loadData() {
+      fetch('/api/live-data')
+        .then(r => r.json())
+        .then(d => {
+          let rawRows = d.rows || [];
+          const rows = rawRows.filter(r => {
+
+            if (!r.datetime) return true;
+
+            const timeStr = r.datetime.split(" ")[1];
+
+            if (!timeStr) return true;
+
+            const parts = timeStr.split(":");
+
+            const h = parseInt(parts[0], 10);
+            const m = parseInt(parts[1], 10);
+
+            // 9:16 AM onwards
+            const after916 =
+                (h > 9) ||
+                (h === 9 && m >= 16);
+
+            // till 12:00 PM
+            const before12 =
+                (h < 12) ||
+                (h === 12 && m === 0);
+
+            return after916 && before12;
+          });
+          
+          if (rows.length === 0) return;
+
+          // Latest row is the current/tail row
+          const top = rows[rows.length - 1];
+
+          // Update header
+          document.getElementById("h-ltp").textContent = top.index_ltp || "—";
+          document.getElementById("h-expiry").textContent = top.expiry || "—";
+          document.getElementById("h-ts").textContent = top.datetime || "—";
+
+          // ATM hero — show latest cumulative from DB
+          document.getElementById("atm-dt").innerHTML =
+          `
+          ${top.datetime}
+          &nbsp;&nbsp;|&nbsp;&nbsp;
+          Strike: ${top.strike}
+          &nbsp;&nbsp;|&nbsp;&nbsp;
+          Sensex: ${parseFloat(top.index_ltp || 0).toFixed(2)}
+          `;
+
+          const rv = parseFloat(top.running || 0);
+          document.getElementById("atm-run-val").textContent = rv.toFixed(2);
+          const box = document.getElementById("atm-run-box");
+          box.className = "atm-run-box " +
+            (rv > 0 ? "atm-run-pos" : rv < 0 ? "atm-run-neg" : "atm-run-zero");
+
+          // All rows except tail → show in scrollable list
+          const displayRows = rows.slice(0, rows.length - 1);
+          let html = "";
+          displayRows.forEach(r => {
+            const val = parseFloat(r.running || 0);
+            const cls = val > 0 ? "val-pos" : val < 0 ? "val-neg" : "val-zero";
+            html += `
+            <div class="data-row">
+
+                <div class="row-dt">
+                    ${r.datetime}
+                    &nbsp;&nbsp;&nbsp;
+                    Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)}
+                </div>
+
+                <div class="val-pill ${cls}">
+                    ${val.toFixed(2)}
+                </div>
+
+            </div>`;
+          });
+
+          const grid = document.getElementById("rows-grid");
+          grid.innerHTML = html;
+          const scrollBox = document.querySelector(".rows-scroll");
+          scrollBox.scrollTop = scrollBox.scrollHeight;
+
+          // Gauge = average of last 6 running values
+          const last6 = rows.slice(-6);
+          const avg6 = last6.reduce((s, r) => s + parseFloat(r.running || 0), 0) / last6.length;
+          updateGauge(avg6);
+        })
+        .catch(err => console.error("loadData error", err));
+    }
+
+    function startAutoRefresh(ms = 3000) {
+      if (refreshTimer) clearInterval(refreshTimer);
+      loadData();
+      refreshTimer = setInterval(loadData, ms);
+    }
+
+    // ── GAUGE ──────────────────────────────────────────────────────────────────
+    function drawGauge() {
+      const canvas = document.getElementById("gauge");
+      const ctx = canvas.getContext("2d");
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h * 0.9, r = w * 0.4;
+
+      ctx.beginPath(); ctx.strokeStyle = "#dc2626"; ctx.lineWidth = 30;
+      ctx.arc(cx, cy, r, Math.PI, Math.PI * 1.5); ctx.stroke();
+
+      ctx.beginPath(); ctx.strokeStyle = "#d97706"; ctx.lineWidth = 30;
+      ctx.arc(cx, cy, r, Math.PI * 1.5, Math.PI * 1.75); ctx.stroke();
+
+      ctx.beginPath(); ctx.strokeStyle = "#16a34a"; ctx.lineWidth = 30;
+      ctx.arc(cx, cy, r, Math.PI * 1.75, Math.PI * 2); ctx.stroke();
+    }
+
+    function updateGauge(val) {
+      val = parseFloat(val || 0);
+      if (isNaN(val)) val = 0;
+      val = Math.max(-180, Math.min(180, val));
+
+      drawGauge();
+
+      const canvas = document.getElementById("gauge");
+      const ctx = canvas.getContext("2d");
+      const w = canvas.width, h = canvas.height;
+      const cx = w / 2, cy = h * 0.9, r = w * 0.35;
+      const angle = Math.PI + ((val + 180) / 360) * Math.PI;
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+      ctx.strokeStyle = "#111"; ctx.lineWidth = 4; ctx.stroke();
+
+      ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+      ctx.fillStyle = "#333"; ctx.fill();
+
+      document.getElementById("gauge-val").textContent = Math.round(val);
+      const s = document.getElementById("sentiment-text");
+      s.style.color = val > 0 ? "#16a34a" : val < 0 ? "#dc2626" : "#d97706";
+    }
+
+    // ── DOWNLOADS ──────────────────────────────────────────────────────────────
+    function loadDownloads() {
+      fetch('/api/downloads')
+        .then(res => res.json())
+        .then(files => {
+          const container = document.getElementById("dl-list");
+          if (!files.length) {
+            container.innerHTML = `<div class="no-files">No historical files</div>`;
+            return;
+          }
+          container.innerHTML = files.map(f => `
+            <div class="dl-item">
+                <div>
+                    <div class="dl-name">${f.name}</div>
+                    <div class="dl-date">${f.date}</div>
+                </div>
+                <a href="${f.url}" class="dl-btn">⬇ Download</a>
+            </div>
+        `).join('');
+        })
+        .catch(() => {
+          document.getElementById("dl-list").innerHTML =
+            `<div class="no-files">Error loading</div>`;
+        });
+    }
+
+    // ── INIT ───────────────────────────────────────────────────────────────────
+    drawGauge();
+    updateGauge(0);
+    loadDownloads();
+    startAutoRefresh(3000);
+    setInterval(loadDownloads, 30000);
+  </script>
+
+  <script>
+
+    async function checkDashboardAccess() {
+
+      try {
+
+        const res = await fetch("/api/me", {
+          credentials: "include"
+        });
+
+        const user = await res.json();
+
+        // NOT LOGGED IN
+        if (!user.username) {
+
+          alert("Please login first");
+          window.location.href = "/user-login";
+          return;
+
+        }
+
+        // NO PLAN
+        if (!user.plan) {
+
+          alert("Please buy a subscription plan");
+          window.location.href = "/trading-plan";
+          return;
+
+        }
+
+        // PLAN EXPIRY CHECK
+        if (user.plan_expiry) {
+
+          const today = new Date();
+          const expiry = new Date(user.plan_expiry);
+
+          if (today > expiry) {
+
+            alert("Your plan has expired");
+            window.location.href = "/trading-plan";
+            return;
+
+          }
+        }
+
+        console.log("Dashboard access granted");
+
+      } catch (err) {
+
+        console.log(err);
+        alert("Session error");
+
+        window.location.href = "/user-login";
+
+      }
+    }
+
+    checkDashboardAccess();
+
+  </script>
+
+  <script>
+
+function updateMarketMessage(){
+
+    const note = document.getElementById("market-note");
+
+    const now = new Date();
+
+    const h = now.getHours();
+    const m = now.getMinutes();
+
+    // MARKET HOURS
+    const marketOpen =
+        (h > 9 || (h === 9 && m >= 16));
+
+    const marketClose =
+        (h < 12 || (h === 12 && m === 0));
+
+    // DURING MARKET
+    if(marketOpen && marketClose){
+
+        note.style.display = "none";
+
+    }else{
+
+        note.style.display = "block";
+    }
+}
+
+updateMarketMessage();
+
+setInterval(updateMarketMessage, 60000);
+
+</script>
+
+
+</body>
+
+</html>

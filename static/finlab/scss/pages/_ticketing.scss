@@ -1,0 +1,28 @@
+.ticket {
+    .back-image {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+    }
+    .card-body{
+		padding: 1.57rem;
+        .title{
+            display: flex;
+            align-items: center;
+            svg{
+                margin-right: 0.4rem;
+                margin-bottom: 0.5rem;
+                @include respond('laptop'){
+                    margin-right: 0.2rem;
+                }
+            }
+            
+        }
+        
+    }
+}
+.event-agenda{
+    .event{
+        padding: 0.625rem;
+    }
+}

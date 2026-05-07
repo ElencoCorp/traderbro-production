@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TraderBro Admin Panel</title>
+<link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png">
+
+<!-- GOOGLE FONTS -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#f0f4f8;
+  --white:#ffffff;
+  --border:#d1dce8;
+  --text:#1a2a3a;
+  --dim:#6b7f96;
+  --accent:#1a56db;
+  --green:#16a34a;
+  --red:#dc2626;
+}
+
+body{
+  font-family:'Poppins',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* HEADER */
+.header{
+  height:70px;
+  background:var(--white);
+  border-bottom:2px solid var(--accent);
+  display:flex;
+  align-items:center;
+  padding:0 24px;
+}
+
+.logo{
+  font-size:20px;
+  font-weight:800;
+  color:var(--accent);
+}
+
+.header-right{
+  margin-left:auto;
+}
+
+.btn{
+  padding:8px 14px;
+  border:none;
+  border-radius:6px;
+  background:var(--accent);
+  color:#fff;
+  cursor:pointer;
+  font-size:12px;
+  font-weight:600;
+}
+.btn:hover{background:#1740b0}
+.btn.red{background:var(--red)}
+.btn.green{background:var(--green)}
+
+/* CONTAINER */
+.container{
+  padding:20px;
+}
+
+/* CARD */
+.card{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px;
+  margin-bottom:20px;
+}
+
+/* FLEX */
+.flex{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:end;
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  font-size:12px;
+}
+
+label{
+  margin-bottom:4px;
+  color:var(--dim);
+}
+
+/* INPUT */
+input,select{
+  padding:7px 10px;
+  border:1px solid var(--border);
+  border-radius:6px;
+}
+
+/* LIVE BADGE */
+.badge{
+  padding:4px 10px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:600;
+  display:inline-block;
+}
+
+.badge-live{
+  background:#dcfce7;
+  color:var(--green);
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+}
+
+/* TABLE BASE */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+}
+
+/* HEADER */
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+  color: #1a2a3a;
+  font-weight: 700;
+  padding: 10px 8px;
+  text-align: center;
+  border-bottom: 2px solid #c7d2fe;
+}
+
+/* GROUP COLORS */
+th:nth-child(-n+7) { color: #16a34a; }      /* CE side */
+th:nth-child(9), 
+th:nth-child(n+10):nth-child(-n+15) { color: #dc2626; } /* PE side */
+
+/* STRIKE COLUMN */
+th:nth-child(8),
+td:nth-child(8) {
+  background: #f1f5f9;
+  font-weight: 800;
+  color: #1a56db;
+  border-left: 2px solid #cbd5e1;
+  border-right: 2px solid #cbd5e1;
+}
+
+/* BODY */
+tbody td {
+  padding: 8px 6px;
+  text-align: center;
+  font-family: 'Roboto Mono', monospace;
+  border-bottom: 1px solid #edf2f7;
+  transition: all 0.2s ease;
+}
+
+/* ZEBRA */
+tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+/* HOVER */
+tbody tr:hover td {
+  background: #eef2ff;
+  transform: scale(1.01);
+}
+
+/* ATM ROW */
+.atm-row td {
+  background: linear-gradient(90deg, #ffe082, #fff3c4);
+  font-weight: 700;
+  border-top: 2px solid #f59e0b;
+  border-bottom: 2px solid #f59e0b;
+}
+
+/* VALUE COLORS */
+.up {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.down {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">📈 TraderBro Admin</div>
+
+  <div class="header-right">
+    <a href="/simple">
+      <button class="btn">Recorder Page</button>
+    </a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- CONTROLS -->
+<div class="card">
+  <h3>⚙ Controls</h3>
+
+  <div class="flex">
+    <div class="field">
+      <label>Expiry</label>
+      <select id="master-expiry" onchange="onExpiryChange()"></select>
+    </div>
+
+    <div class="field">
+      <label>Date</label>
+      <input type="date" id="inp-date">
+    </div>
+
+    <div class="field">
+      <label>Time</label>
+      <input type="time" id="inp-time">
+    </div>
+
+    <button class="btn" onclick="applyView()">Apply</button>
+    <button class="btn red" onclick="goLive()">Go Live</button>
+  </div>
+
+  <div style="margin-top:10px">
+    <span class="badge badge-live">LIVE — Auto refresh</span>
+    <span id="refresh-indicator"></span>
+  </div>
+
+  <p style="margin-top:6px">
+    LTP: <b id="ltp-val">—</b> |
+    Expiry: <b id="expiry-label">—</b>
+  </p>
+</div>
+
+<!-- UPLOAD -->
+<!-- <div class="card">
+  <h3>📤 Upload CSV</h3>
+
+  <div class="flex">
+    <input type="date" id="upload-label">
+    <input type="file" id="upload-file">
+    <button class="btn green" onclick="uploadCSV()">Upload</button>
+  </div>
+
+  <div id="file-list" style="margin-top:10px;color:gray">Loading...</div>
+</div> -->
+
+<!-- TABLE -->
+<div class="card">
+  <h3>📊 Option Chain</h3>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date Time</th><th>Expiry</th>
+          <th>CE</th><th>Δ</th><th>Γ</th><th>Θ</th><th>V</th>
+          <th>Strike</th>
+          <th>PE</th><th>Δ</th><th>Γ</th><th>Θ</th><th>V</th>
+          <th>Ratio</th><th>Index</th>
+          <th>Ref</th><th>Stretch</th><th>Diff</th>
+        </tr>
+      </thead>
+      <tbody id="tbl-body">
+        <tr><td colspan="18">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────────
+let isLive = true;
+let currentExpiry = "";
+let refreshTimer = null;
+
+// ── FORMAT ───────────────────────────────────────
+function fmt(v) {
+  if (v === null || v === undefined || v === "") return "";
+  return v;
+}
+
+// ── BUILD TABLE ─────────────────────────────────
+function buildTableHTML(rows) {
+  if (!rows || rows.length === 0) {
+    return `
+<tr>
+  <td colspan="18"
+      style="
+        text-align:center;
+        padding:40px;
+        background:#06111f;
+        color:#00ffcc;
+        font-size:20px;
+        font-weight:700;
+        letter-spacing:0.5px;
+      ">
+      🚀 Live market values are available only during market hours
+      <br><br>
+      🕘 9:16 AM → 12:00 PM
+  </td>
+</tr>`;
+}
+
+  let html = "";
+
+  rows.forEach(r => {
+
+    const atmStyle = r.is_atm
+      ? "background:#ffe082;font-weight:bold;color:black;"
+      : "";
+
+    html += `
+    <tr style="${atmStyle}">
+      <td>${fmt(r.datetime)}</td>
+      <td>${fmt(r.expiry)}</td>
+      <td>${fmt(r.ce_ltp)}</td>
+      <td>${fmt(r.ce_delta)}</td>
+      <td>${fmt(r.ce_gamma)}</td>
+      <td>${fmt(r.ce_theta)}</td>
+      <td>${fmt(r.ce_vega)}</td>
+      <td><b>${r.strike}</b></td>
+      <td>${fmt(r.pe_ltp)}</td>
+      <td>${fmt(r.pe_delta)}</td>
+      <td>${fmt(r.pe_gamma)}</td>
+      <td>${fmt(r.pe_theta)}</td>
+      <td>${fmt(r.pe_vega)}</td>
+      <td>${fmt(r.delta_ratio)}</td>
+      <td>${fmt(r.index_ltp)}</td>
+      <td>${fmt(r.reference)}</td>
+      <td>${fmt(r.stretched)}</td>
+      <td>${fmt(r.difference)}</td>
+    </tr>`;
+  });
+
+  return html;
+}
+
+// ── LOAD EXPIRY ─────────────────────────────────
+async function loadExpiries() {
+  try {
+    const res = await fetch("/api/expiries");
+    const data = await res.json();
+
+    const sel = document.getElementById("master-expiry");
+
+    if (!data || data.length === 0) {
+      sel.innerHTML = `<option>No Expiry</option>`;
+      return;
+    }
+
+    sel.innerHTML = data.map((e, i) =>
+      `<option value="${e}" ${i === 0 ? "selected" : ""}>${e}</option>`
+    ).join("");
+
+    currentExpiry = data[0];
+
+    document.getElementById("expiry-label").textContent = currentExpiry;
+
+    // 🔥 IMPORTANT: start refresh ONLY AFTER expiry is set
+    startAutoRefresh();
+
+  } catch (e) {
+    console.error("Expiry load failed:", e);
+  }
+}
+// ── FETCH DATA ─────────────────────────────────
+async function refreshTable() {
+
+  if (!currentExpiry) {
+    console.log("Waiting for expiry...");
+    return;
+  }
+
+  const ind = document.getElementById("refresh-indicator");
+  ind.innerHTML = "⟳ Refreshing...";
+
+  try {
+    const res = await fetch(`/api/full-chain?expiry=${encodeURIComponent(currentExpiry)}`);
+    const data = await res.json();
+
+    if (data.error) {
+      ind.textContent = "⚠ " + data.error;
+      return;
+    }
+
+    document.getElementById("tbl-body").innerHTML = buildTableHTML(data.rows);
+    document.getElementById("ltp-val").textContent = data.ltp;
+    document.getElementById("expiry-label").textContent = data.expiry;
+
+    ind.textContent =
+    "✓ Updated " +
+    new Date().toLocaleTimeString();
+
+  } catch (e) {
+    console.error(e);
+    ind.textContent = "❌ Fetch error";
+  }
+}
+// ── AUTO REFRESH ───────────────────────────────
+function startAutoRefresh() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(refreshTable, 5000);
+  refreshTable();
+}
+
+function stopAutoRefresh() {
+  if (refreshTimer) clearInterval(refreshTimer);
+}
+
+// ── CHANGE EXPIRY ──────────────────────────────
+function onExpiryChange() {
+  currentExpiry = document.getElementById("master-expiry").value;
+  document.getElementById("expiry-label").textContent = currentExpiry;
+  refreshTable();
+}
+
+// ── APPLY / LIVE ───────────────────────────────
+function applyView() {
+  const d = document.getElementById("inp-date").value;
+  const t = document.getElementById("inp-time").value;
+
+  if (d && t) {
+    stopAutoRefresh();
+    window.location.href =
+      `/?expiry=${currentExpiry}&manual_date=${d}&manual_time=${t}`;
+  } else {
+    startAutoRefresh();
+  }
+}
+
+function goLive() {
+  document.getElementById("inp-date").value = "";
+  document.getElementById("inp-time").value = "";
+  startAutoRefresh();
+}
+
+// ── INIT ──────────────────────────────────────
+loadExpiries();  // this will call startAutoRefresh internally
+</script>
+
+</body>
+</html>

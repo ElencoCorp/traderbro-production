@@ -1,0 +1,20 @@
+.grid-col {
+    padding: 0.8rem !important;
+    background:var(--body-bg);
+	border-radius:$radius;
+
+ 
+}
+
+.row.grid {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.row.grid .grid-col:first-child{
+    text-align: left;
+}
+
+
+
+

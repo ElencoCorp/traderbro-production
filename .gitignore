@@ -1,0 +1,13 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+.env
+.pm2/
+token.txt
+token_data.json
+node_modules/
+.DS_Store
+traderbro.db
+live_running.json

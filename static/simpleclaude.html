@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Running Tracker</title>
+    <style>
+        body { background:#0b0f1a; color:#fff; font-family:Arial; padding:20px; }
+
+        .top-bar { display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+        .top-bar h2 { margin:0; font-size:16px; }
+
+        .status-pill { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:bold; }
+        .pill-live { background:#00c853; color:#000; }
+        .pill-stop { background:#c62828; color:#fff; }
+
+        .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+        .dot-green { background:#00ff88; box-shadow:0 0 6px #00ff88; animation:pulse 1.5s infinite; }
+        .dot-red   { background:#ff4444; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        .controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+        .controls label { font-size:11px; color:#90a4ae; }
+
+        input[type=number] { background:#1e2a3a; color:#fff; border:1px solid #455a64; padding:6px 9px; border-radius:4px; font-size:13px; width:80px; }
+
+        button { padding:7px 14px; border:none; cursor:pointer; border-radius:4px; font-size:13px; font-weight:bold; }
+        .btn-start { background:#00c853; color:#000; }
+        .btn-stop  { background:#c62828; color:#fff; }
+        .btn-reset { background:#e65100; color:#fff; }
+        .btn-dl    { background:#1565c0; color:#fff; }
+        .btn-nav   { background:#6a1b9a; color:#fff; }
+        button:hover { opacity:.85; }
+
+        #log { font-size:11px; color:#90a4ae; margin-bottom:8px; min-height:18px; background:#0d1b2a; padding:5px 10px; border-radius:4px; }
+
+        .tbl-wrap { overflow-x:auto; }
+        table { border-collapse:collapse; width:100%; font-size:12px; }
+        th,td { border:1px solid #1e2d3d; padding:6px 8px; text-align:center; white-space:nowrap; }
+        th { background:#102030; color:#90caf9; position:sticky; top:0; z-index:1; }
+        tr:hover td { background:#0d2137; }
+        .running-pos { background:#1b5e20 !important; color:#fff; font-weight:bold; }
+        .running-neg { background:#b71c1c !important; color:#fff; font-weight:bold; }
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <h2>📊 Live Running Tracker (ATM)</h2>
+    <span class="status-pill pill-stop" id="status-pill">
+        <span class="dot dot-red" id="status-dot"></span>
+        <span id="status-text">Stopped</span>
+    </span>
+    <span style="margin-left:auto;display:flex;gap:8px;">
+        <a href="/"><button class="btn-nav">⚙ Admin Panel</button></a>
+        <a href="/dashboard"><button class="btn-nav">👤 Dashboard</button></a>
+    </span>
+</div>
+
+<div class="controls">
+    <label>Interval (sec)
+        <input type="number" id="interval" value="15" min="3" max="600">
+    </label>
+    <button class="btn-start" onclick="startRecording()">▶ Start</button>
+    <button class="btn-stop"  onclick="stopRecording()">⛔ Stop</button>
+    <button class="btn-reset" onclick="resetAll()">🗑 Reset</button>
+    <button class="btn-dl"    onclick="downloadCSV()">⬇ Download CSV</button>
+</div>
+
+<div id="log">Initialising...</div>
+
+<div class="tbl-wrap">
+<table>
+<thead><tr>
+    <th>Date Time</th><th>Expiry</th>
+    <th>CE LTP</th><th>Δ</th><th>Γ</th><th>Θ</th><th>V</th>
+    <th>STRIKE</th>
+    <th>PE LTP</th><th>Δ</th><th>Γ</th><th>Θ</th><th>V</th>
+    <th>Delta Ratio</th><th>Index LTP</th>
+    <th>Reference</th><th>Stretched</th><th>Difference</th>
+    <th>Diff Prev</th><th>Cumulative</th>
+</tr></thead>
+<tbody id="tbl"></tbody>
+</table>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let records       = [];
+let intervalSec   = 15;
+let timer         = null;
+let isFetching    = false;
+let isRunning     = false;
+let currentExpiry = "";
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+function log(msg) {
+    document.getElementById("log").textContent = msg;
+    console.log(msg);
+}
+
+function nowStr() {
+    const n = new Date();
+    return n.getFullYear() + "-" +
+           String(n.getMonth()+1).padStart(2,'0') + "-" +
+           String(n.getDate()).padStart(2,'0') + " " +
+           String(n.getHours()).padStart(2,'0') + ":" +
+           String(n.getMinutes()).padStart(2,'0') + ":" +
+           String(n.getSeconds()).padStart(2,'0');
+}
+
+function setStatus(running) {
+    const pill = document.getElementById("status-pill");
+    const dot  = document.getElementById("status-dot");
+    const txt  = document.getElementById("status-text");
+    if (running) {
+        pill.className = "status-pill pill-live";
+        dot.className  = "dot dot-green";
+        txt.textContent = "LIVE — every " + intervalSec + "s";
+    } else {
+        pill.className = "status-pill pill-stop";
+        dot.className  = "dot dot-red";
+        txt.textContent = "Stopped";
+    }
+}
+
+// ══════════════════════════════════════════
+// LOAD EXPIRY
+// ══════════════════════════════════════════
+async function loadExpiry() {
+    try {
+        const res  = await fetch("/api/expiries");
+        const data = await res.json();
+        if (data && data.length > 0) {
+            currentExpiry = data[0];
+            log("✓ Expiry: " + currentExpiry);
+            return true;
+        }
+        log("⚠ No expiries from API");
+        return false;
+    } catch(e) {
+        log("⚠ Expiry load failed: " + e.message);
+        return false;
+    }
+}
+
+// ══════════════════════════════════════════
+// START / STOP
+// ══════════════════════════════════════════
+function startRecording() {
+    if (isRunning) return;
+    intervalSec = parseFloat(document.getElementById("interval").value) || 15;
+    isRunning = true;
+    setStatus(true);
+    log("▶ Recording started — interval: " + intervalSec + "s");
+    fetchData();  // immediate first fetch
+    timer = setInterval(() => {
+        if (!isFetching) fetchData();
+        else log("⏳ Previous fetch still running, skipping tick...");
+    }, intervalSec * 1000);
+}
+
+function stopRecording() {
+    isRunning = false;
+    if (timer) { clearInterval(timer); timer = null; }
+    setStatus(false);
+    log("⛔ Stopped. " + records.length + " rows recorded.");
+}
+
+// ══════════════════════════════════════════
+// MAIN FETCH
+// ══════════════════════════════════════════
+async function fetchData() {
+    isFetching = true;
+    const fetchTime = nowStr();  // capture timestamp BEFORE the API call
+    log("⟳ Fetching... " + fetchTime);
+
+    try {
+        const url = "/api/full-chain" + (currentExpiry ? "?expiry=" + encodeURIComponent(currentExpiry) : "");
+        const res  = await fetch(url);
+
+        if (!res.ok) { log("⚠ HTTP " + res.status); isFetching = false; return; }
+
+        const data = await res.json();
+
+        if (data.error) { log("⚠ API: " + data.error); isFetching = false; return; }
+        if (!data.rows || !data.rows.length) { log("⚠ Empty rows"); isFetching = false; return; }
+
+        if (data.expiry) currentExpiry = data.expiry;
+
+        const atmRow = data.rows.find(r => r.is_atm);
+        if (!atmRow) { log("⚠ ATM row not found"); isFetching = false; return; }
+
+        let diff = parseFloat(atmRow.difference);
+        if (isNaN(diff)) diff = 0;
+
+        // ── BUILD ROW ──────────────────────────────────
+        let row = {
+            datetime: getNowTime(),
+            expiry: atmRow.expiry,
+            ce_ltp: atmRow.ce_ltp,
+            ce_delta: atmRow.ce_delta,
+            ce_gamma: atmRow.ce_gamma,
+            ce_theta: atmRow.ce_theta,
+            ce_vega: atmRow.ce_vega,
+            strike: atmRow.strike,
+            pe_ltp: atmRow.pe_ltp,
+            pe_delta: atmRow.pe_delta,
+            pe_gamma: atmRow.pe_gamma,
+            pe_theta: atmRow.pe_theta,
+            pe_vega: atmRow.pe_vega,
+            delta_ratio: atmRow.delta_ratio,
+            index_ltp: atmRow.index_ltp,
+            reference: atmRow.reference,
+            stretched: atmRow.stretched,
+            difference: currentDiff,
+            diff_prev: 0,
+            running: 0
+        };
+
+        // FIRST ROW
+        if (records.length === 0) {
+
+            row.diff_prev = 0;
+            row.running = 0;
+
+        } else {
+
+            // Previous row gets calculated now
+            let prevRow = records[records.length - 1];
+
+            prevRow.diff_prev = +(currentDiff - prevRow.difference).toFixed(2);
+
+            row.running = +(prevRow.running + prevRow.diff_prev).toFixed(2);
+
+        }
+
+        records.push(row);
+
+        // Refresh table
+        document.getElementById("tbl").innerHTML = "";
+
+        records.forEach(r => appendRow(r));
+        saveRow(row);
+
+        // Scroll to bottom
+        const tbody = document.getElementById("tbl");
+        if (tbody.lastElementChild) tbody.lastElementChild.scrollIntoView({ behavior:"smooth" });
+
+        log("✓ " + fetchTime + " | Strike:" + row.strike + " | Diff:" + diff + " | Cumul:" + row.running.toFixed(2));
+
+    } catch(err) {
+        log("⚠ Error: " + err.message);
+        console.error(err);
+    }
+
+    isFetching = false;
+}
+
+// ══════════════════════════════════════════
+// TABLE RENDER
+// ══════════════════════════════════════════
+function rowId(r) {
+    return "row-" + (r.datetime || "").replace(/[^0-9]/g, "");
+}
+
+function appendRow(r) {
+    const tbody = document.getElementById("tbl");
+    const tr    = document.createElement("tr");
+    tr.id       = rowId(r);
+    tr.innerHTML = rowHTML(r);
+    tbody.appendChild(tr);
+}
+
+function redrawRow(r) {
+    const tr = document.getElementById(rowId(r));
+    if (tr) tr.innerHTML = rowHTML(r);
+}
+
+function rowHTML(r) {
+    const dp = typeof r.diff_prev === 'number' ? r.diff_prev.toFixed(2) : (r.diff_prev || "0.00");
+    const ru = typeof r.running   === 'number' ? r.running.toFixed(2)   : (r.running   || "0.00");
+    const runCls = r.running > 0 ? "running-pos" : r.running < 0 ? "running-neg" : "";
+    return `
+        <td>${r.datetime}</td>
+        <td>${r.expiry}</td>
+        <td>${r.ce_ltp}</td><td>${r.ce_delta}</td><td>${r.ce_gamma}</td>
+        <td>${r.ce_theta}</td><td>${r.ce_vega}</td>
+        <td><b>${r.strike}</b></td>
+        <td>${r.pe_ltp}</td><td>${r.pe_delta}</td><td>${r.pe_gamma}</td>
+        <td>${r.pe_theta}</td><td>${r.pe_vega}</td>
+        <td>${r.delta_ratio}</td><td>${r.index_ltp}</td>
+        <td>${r.reference}</td><td>${r.stretched}</td>
+        <td>${r.difference}</td>
+        <td>${dp}</td>
+        <td class="${runCls}">${ru}</td>`;
+}
+
+// ══════════════════════════════════════════
+// SERVER SAVE
+// ══════════════════════════════════════════
+function saveRow(row) {
+    fetch("/api/save-running", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(row)
+    }).catch(e => console.warn("save-running:", e));
+}
+
+// ══════════════════════════════════════════
+// RESET
+// ══════════════════════════════════════════
+async function resetAll() {
+    stopRecording();
+    try { await fetch("/api/clear-running", { method:"POST" }); } catch(e) {}
+    records = [];
+    document.getElementById("tbl").innerHTML = "";
+    log("🗑 Cleared.");
+}
+
+// ══════════════════════════════════════════
+// CSV DOWNLOAD
+// ══════════════════════════════════════════
+function downloadCSV() {
+    if (!records.length) { alert("No data."); return; }
+    const cols = ["datetime","expiry","strike","ce_ltp","ce_delta","ce_gamma","ce_theta","ce_vega",
+                  "pe_ltp","pe_delta","pe_gamma","pe_theta","pe_vega",
+                  "delta_ratio","index_ltp","reference","stretched","difference","diff_prev","running"];
+    let csv = cols.join(",") + "\n";
+    records.forEach(r => {
+        csv += cols.map(c => {
+            const v = r[c];
+            return typeof v === 'number' ? v.toFixed(2) : (v ?? "");
+        }).join(",") + "\n";
+    });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv"}));
+    a.download = "running_" + nowStr().replace(/[: ]/g,"-") + ".csv";
+    a.click();
+}
+
+// ══════════════════════════════════════════
+// INIT — load expiry + previous data + start
+// ══════════════════════════════════════════
+async function init() {
+    log("Loading...");
+    await loadExpiry();
+
+    try {
+        const res = await fetch("/api/get-running");
+        const data = await res.json();
+
+        if (data.rows && data.rows.length > 0) {
+            records = data.rows;
+            records.forEach(r => appendRow(r));
+            log("✓ Loaded " + records.length + " previous rows.");
+        } else {
+            log("No previous data. Fresh start.");
+        }
+
+    } catch(e) {
+        log("Previous data load failed: " + e.message);
+    }
+
+    startRecording();
+}
+
+init();
+</script>
+</body>
+</html>

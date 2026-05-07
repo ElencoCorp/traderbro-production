@@ -1,0 +1,434 @@
+.photo-content{
+    position: relative;
+    .cover-photo{
+        background: url(../images/profile/12.jpg);
+        background-size: cover;
+        background-position: center;
+        min-height: 15.625rem;
+        width: 100%;
+        border-top-left-radius: $radius;
+        border-top-right-radius: $radius;
+    }
+
+}
+.user{
+    .user-info{
+        display:flex;
+        padding: 0.9375rem 1.25rem 1.5rem;
+        @include respond('phone-land'){
+            flex-wrap: wrap;
+        }
+        @include respond('phone') {
+            display:block;
+        }
+        .user-details {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            @include respond('phone') {
+                display:block;
+                
+            
+            }
+            .user-contact{
+                display: flex;
+                align-items: center;
+                padding-top: 1.125rem;
+                flex-wrap: wrap;
+               
+                .user-number {
+                    display: flex;
+                    align-items: center;
+                    margin-right: 1.5rem;
+                    margin-bottom: 0.625rem;
+                    @include respond('phone'){
+                        margin-bottom: 0.875rem;
+                    }
+                }
+                .user-email{
+                    display: flex;
+                    align-items: center;
+					margin-bottom: 0.625rem;
+                    @include respond('phone'){
+                        margin-bottom: 0.875rem;
+                    }
+                }
+            }
+    
+        }
+       
+    }
+}
+.user-photo {
+	img{
+		min-width: 6.25rem;
+		height:6.25rem	;
+		position: relative;
+		z-index: 1;
+		margin-top: -4.5rem;
+		margin-right: 0.625rem;
+		object-fit: cover;
+		border:3px solid var(--card);
+    }
+	
+	
+}
+.profile-interest{
+    .row{
+        margin: 0 -0.0437rem;
+        .int-col{
+            padding: 0 0.0437rem;
+            .interest-cat{
+                margin-bottom: 0.0875rem;
+                position: relative;
+                display: block;
+                &:after{
+                    background: $black;
+                    bottom: 0;
+                    content: "";
+                    left: 0;
+                    opacity: 0.5;
+                    position: absolute;
+                    right: 0;
+                    top: 0;
+                    z-index: 0;
+                }
+               
+                p{
+                    position: absolute;
+                    top: 0;
+                    width: 100%;
+                    height: 100%;
+                    padding: 0.3125rem;
+                    left: 0;
+                    margin: 0;
+                    z-index: 1;
+                    color:white;
+                    font-size: 0.075rem;
+                }
+            }
+            
+        }
+    }
+}
+.profile-tab{
+    .nav-item{
+        .nav-link{
+            font-size: 1rem;
+            margin-right: 1.875rem;
+            transition: all 0.5s ease-in-out;
+            border: none;
+            border-bottom: 0.0125rem solid transparent;
+            color: $l-ctl;
+
+            &:hover, &.active{
+                border: 0;
+                background: transparent;
+                background: transparent;
+                border-bottom: 0.0125rem solid var(--primary);
+                color: var(--primary);
+            }
+			@include respond ('phone'){
+				margin-right:0rem;
+			}
+        }
+        
+    }
+}
+
+.side-detail {
+    display: flex;
+   .edit-profiil{
+    margin-right: 0.625rem;
+
+   }
+}
+
+
+.profile-uoloaded-post{
+    
+    img{
+        margin-bottom: 1.25rem;
+    }
+    a{
+        h4{
+            margin-bottom: 0.625rem;
+            color: $l-ctd;
+        }
+    }
+}
+
+.prot-blog {
+	padding: 30px 20px;
+	background-color:var(--primary);
+	position: relative;
+	overflow: hidden;
+	z-index: 0;
+    border-radius: $radius;
+	.shape {
+		position: absolute;
+		bottom: -70px;
+		right: -50px;
+		z-index: -1;
+		svg{
+			path {
+				fill: #3ab5ff;
+			}
+		}
+	}
+}
+
+ .messages{
+    .student{
+        border-bottom: 1px dashed var(--border);
+    }
+}
+.pie-chart2{
+    .chart-group{
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        .radius-bar {
+            @include respond('tab-land'){
+                flex: 0 0 50%;
+                margin-bottom: 0.875rem;
+               
+            }
+            @include respond('phone'){
+                flex: 0 0 100%;
+            }
+        }
+        .donut-chart-sale {
+           margin-bottom: 0.625rem;
+            small{
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%,-50%);
+                font-size: 1rem;
+                font-weight: 600;
+            }
+        }
+    }
+    .chart-info{
+        margin-top: 1rem;
+        padding-top: 0.625rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px dashed var(--border);
+        @include respond('phone'){
+            flex-wrap: wrap;
+            .btn{
+                margin-top: 0.625rem;
+            }
+        }
+        p{
+            margin-bottom: 0;
+        }
+    }
+    
+}
+
+.profile-card{
+	.card-header{
+		border-color: var(--border);
+		padding: 30px;
+		.title{
+			position: relative;
+			margin-bottom: 0;
+			color: $dark;
+			&:after{
+				content: "";
+				height: 3px;
+				width: 100%;
+				background-color: var(--primary);
+				position: absolute;
+				bottom: -31px;
+				left: 0;
+			}
+		}
+	}
+	.m-b30{
+		margin-bottom:30px;
+	}
+	.card-body{
+		padding: 40px 40px 10px;
+	}
+	.card-footer{
+		padding: 35px 40px 40px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		border-color: var(--border);
+		.btn-lg{
+			padding: 18px 50px;
+			font-size: 15px;
+		}
+		.btn-link{
+			font-size: 15px;
+		}
+	}
+	@include respond('phone'){
+		.card-header{
+			padding: 25px;
+			.title{
+				&:after{
+					bottom: -26px;
+				}
+			}
+		}
+		.card-body{
+			padding: 25px 25px 0;
+		}
+		.card-footer{
+			padding: 25px 25px 25px;
+			.btn-lg{
+				padding: 18px 30px;
+			}
+		}
+	}
+}
+.author-profile{
+	text-align:center;
+	.card-body{
+		padding: 0;
+	}
+	.form-control{
+		overflow:hidden;
+	}
+	.author-media{
+		position: relative;
+		margin-left: auto;
+		margin-right: auto;
+		margin-bottom: 20px;
+		display: inline-block;
+		img{
+			width: 130px;
+			border-radius: 100%;
+		}
+	}	
+	.author-info{
+		.title{
+			font-size:15px;
+			font-weight:500;
+			margin-bottom: 0;
+		}
+		span{
+			display:block;
+			color: var(--text);
+		}
+	}
+	.info-list{
+		li{
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			font-size: 15px;
+			border-top: 1px solid var(--border);
+			padding: 18px 30px;
+			color: $dark;
+			
+			span{
+				color: $body-color;
+				font-weight: 500;
+			}
+		}
+	}
+	.card-footer {
+		padding: 30px;
+		display: block;
+	}
+	.upload-link {
+		position: absolute;
+		width: 35px;
+		height: 35px;
+		line-height: 32px;
+		background: #395ee2;
+		bottom: 0;
+		right: 0px;
+		box-shadow: 0 0 10px 0 rgba(0, 24, 128, 0.1);
+		border-radius: 100%;
+		color: #fff;
+		overflow: hidden;
+		border: 2px solid #fff;
+		.update-flie {
+			position: absolute;
+			opacity: 0;
+			z-index: 0;
+			width: 100%;
+			cursor: pointer;
+			left: 0;
+			height: 100%;
+		}
+	}
+}
+
+
+
+.coin-1, .coin-10, .coin-11, .coin-12, .coin-13, .coin-14, .coin-15, .coin-16, .coin-2, .coin-3, .coin-4, .coin-5, .coin-6, .coin-7, .coin-8, .coin-9{
+	position: absolute;
+	-webkit-animation:animate 2s linear infinite wase;
+	        animation:animate 2s linear infinite wase;
+
+    img{
+        width:70%;
+    }
+
+}
+.coin-5 {
+    inset-inline-start: 40%;
+    inset-block-start: 76%;
+    -webkit-animation: shap 5s linear infinite;
+     animation: shap 5s linear infinite;
+}
+.coin-4 {
+    inset-inline-start: 50%;
+    inset-block-start: 76%;
+    -webkit-animation: shap 5s linear infinite;
+    animation: shap 5s linear infinite;
+}
+.coin-3 {
+    inset-inline-start: 94%;
+    inset-block-start: 76%;
+    -webkit-animation: shap 5s linear infinite;
+    animation: shap 5s linear infinite;
+}
+
+.coin-2 {
+    inset-inline-start: 5%;
+    inset-block-start: 42%;
+    -webkit-animation: shap 5s linear infinite;
+    animation: shap 5s linear infinite;
+}
+.coin-1 {
+	
+    inset-inline-start: 22%;
+    inset-block-start: 76%;
+    -webkit-animation: shap 4s linear infinite;
+    animation: shap 4s linear infinite;
+}
+@-webkit-keyframes shap {
+	0%{
+		-webkit-transform: translateY(0) rotate(0);
+	    opacity: 1;
+
+	}
+	100%{
+		-webkit-transform: translateY(-90px) rotate(360deg);
+		opacity: 0;
+	}
+	
+}
+@keyframes shap {
+	0%{
+		-webkit-transform: translateY(0) rotate(0);
+	    opacity: 1;
+
+	}
+	100%{
+		-webkit-transform: translateY(-90px) rotate(360deg);
+		opacity: 0;
+	}
+	
+}

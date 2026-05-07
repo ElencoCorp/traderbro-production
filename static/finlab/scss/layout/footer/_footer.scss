@@ -1,0 +1,60 @@
+
+.footer {
+    padding: 0.3875rem 0;
+    font-size: 0.875rem;
+    background-color:var(--card);
+    border-top-left-radius: $radius;
+    border-top-right-radius: $radius;
+    margin-top: 1rem;
+	width: calc(100% - 19.825rem);
+	margin-right:1.675rem;
+	margin-left: auto;
+    .copyright {
+        padding: 0.5375rem;
+        margin: 0;
+       
+        p {
+            text-align: center;
+            margin: 0;
+			
+        }
+
+        a{
+            color: var(--primary);
+        }
+    }
+	@include respond ('phone'){
+		margin-right:auto
+	}
+	
+}
+.wallet-open{
+    &.active{
+       .footer{
+            &.outer-footer{
+                width: calc(100% - 45.225rem);
+                margin-right: 26.775rem;
+                margin-left: auto;      
+                
+                @include custommq($max:100rem){
+                    width: calc(100% - 20.225rem);
+                    margin-right: 1.775rem;
+                }
+                @include respond ('tab-port'){
+                    width: calc(100% - 9.725rem);
+                    margin-right: 1.775rem;
+                }
+                @include respond ('phone'){
+                    width: calc(100% - 9.725rem);
+                    margin-right: 1.775rem;
+
+                }
+
+
+            }
+
+        } 
+    }
+}
+
+

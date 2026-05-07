@@ -1,0 +1,77 @@
+.modal-header{
+	padding: 1rem 1.875rem;
+
+	.close{
+		padding: 0.875rem 1.815rem;
+		margin: 0;
+		position: absolute;
+		right: 0;
+		float: none;
+		top: 0;
+		font-size: 1.875rem;
+		font-weight: 100;
+	}
+}
+.modal-body{
+	padding: 1.875rem;
+}
+.modal-footer{
+	padding: 1rem 1.875rem;
+}
+.modal-content{
+	border-radius:$radius;
+	background-color:var(--card);
+}
+.modal-backdrop{
+    z-index: 10!important;
+}
+
+.Modal-box {
+	background-color:var(--card);
+	height: 300px;
+	border-radius: 8px;
+	overflow: hidden;
+	@include respond('phone'){
+		margin-bottom: 0.875rem;
+	}
+	.box1 {
+		display: flex;
+		justify-content: space-between;
+		padding: 20px 25px;
+		border-bottom: 1px solid var(--border);
+		h3 {
+			color: var(--text-dark);
+		}
+		i {
+			font-size: 20px;
+		}
+	}
+	.box2 {
+		padding: 10px 25px;
+		height: 150px;
+	}
+	.box3 {
+		padding: 20px 25px;
+		text-align: end;
+		
+		border-top: 1px solid var(--border);
+
+		.bt-1 {
+			color: #f34e5f;
+			
+			padding: 5px 15px;
+			border: 1px solid var(--border);
+			margin-right: 5px;
+			border-radius: 6px;
+		}
+		.bt-2 {
+			color: $white;
+			
+			border: 1px solid var(--border);
+			padding: 5px 15px;
+			border-radius: 6px;
+		}
+		
+	}
+
+}

@@ -1,0 +1,36 @@
+
+
+
+#preloader {
+	display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    position: fixed;
+    width: 100%;
+    z-index: 999999;
+	background-color: #e6ebee;
+	
+  .loader {
+    margin: auto;
+    width: 1rem;
+    height: 1rem;
+    border: 3px solid var(--primary);
+   
+    animation: loader 6s infinite ease-in-out;
+  }
+}
+
+@keyframes loader {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  
+  50% {
+    transform: rotate(720deg) scale(5);
+  }
+  
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+}

@@ -1,0 +1,131 @@
+
+ .mothly-income{
+    margin-bottom: 1rem;
+    h4{
+		margin-bottom: 1.625rem;
+		display: flex;
+		align-items: center;
+       
+    }
+    span{
+        font-size: 0.938rem;
+    }
+}
+.balance_data{
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.938rem; 
+}
+.your_balance{
+    .custome-tooltip {
+        .apexcharts-tooltip.apexcharts-theme-light{
+            background-color: $danger;
+        }
+    }
+}
+
+// ----lastest_transaction----
+.trans-list{
+	display:flex;
+	align-items:center;
+}
+.table-pagenation{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 0.625rem;
+	padding: 0 32px;
+
+    @include respond ('phone'){
+        justify-content: center;
+    }
+	
+    
+   
+}
+
+// -----Quick Payment----
+
+.quick-info{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.88rem 1.875rem;
+    &:hover{
+
+        background-color: var(--card-element-color);
+    }
+    @include respond('laptop'){
+        padding: 1rem 1.175rem;
+    }
+    .quick-content{
+        display: flex;
+        align-items: center;
+       
+        @include respond('tab-land'){
+            flex-direction: row;
+        }
+        
+    }
+}
+
+
+// --prim-card-
+.prim-card{
+    background-color:var(--primary);
+    overflow: hidden;
+    z-index: 2;
+    .number{
+        font-size: 1.25rem;
+        font-weight: 400;
+        color: $white;
+        font-family: monospace;
+		margin-bottom: 2rem;
+    }
+    .master-card{
+        text-align: center;
+    }
+    &::before{
+        content: '';
+        background-color: rgba(255, 255, 255, 0.9);
+        position: absolute;
+        top: 58%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 23.063rem;
+        height: 23.063rem;
+        border-radius: 50%;
+        opacity: 0.14;
+     
+    }
+    &::after{
+        content: '';
+        background-color:rgba(255, 255, 255, 0.9);
+        position: absolute;
+		top: -27%;
+        left: 50%;
+        width: 23.063rem;
+        height: 23.063rem;
+        border-radius: 50%;
+        z-index: -1;
+        opacity: 0.14;
+    }
+}
+
+    // ------Recent Activity---
+    .recent-activity{
+        overflow: hidden;
+    }
+    .recent-info{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1.4rem;
+        .recent-content{
+            display: flex;
+            align-items: center;
+            
+        }
+        
+    }

@@ -1,0 +1,48 @@
+.invoice-btn{
+    @include custommq($max:24.938rem){
+        margin-top: 0.625rem;
+    }
+}
+.card-box{
+    .back-image {
+        position: absolute;
+    }
+}
+
+.card-box.blue {
+    .card-box-icon{
+        background-color:var(--primary);
+        border: none;
+    }
+}
+.card-box.green{
+    .back-image{
+        svg{
+            g{
+                path{
+                    stroke :#1EBA62;
+                }
+                circle {
+                    stroke :#1EBA62;
+                }
+            }
+        }
+    }
+}
+
+.card-box.secondary{
+    .back-image{
+        svg{
+            g{
+                path{
+                    stroke :#9568FF;
+                }
+                circle {
+                    stroke :#9568FF;
+                }
+            }
+        }
+    }
+}
+
+

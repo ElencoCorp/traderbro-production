@@ -1,0 +1,346 @@
+.file-drive{
+    border-bottom: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0;
+    margin-bottom: 0;
+	
+}
+.file_area{
+	.table-pagenation{
+		margin: 0;
+		background-color: var(--border);
+		padding: 0.813rem 15.6px;
+		flex-wrap: wrap;
+		p{
+			margin-bottom: 0;
+		}
+		.pagination{
+			margin-bottom: 0;
+		}
+		@include respond ('phone'){
+			display:none;
+		}
+	}
+}
+.drive {
+    display: flex;
+    padding: 0.625rem;
+    justify-content: flex-start;
+    align-items: center;
+	border: 1px solid var(--card);
+	border-radius: $radius;
+	@include transitionMedium ;
+	cursor: pointer;
+	.dz-folder{
+		margin-right: 0.625rem;
+		svg{
+			path{
+				fill:var(--primary);
+			}
+			@include custommq($max:100rem){
+				width: 65px;
+				height: 60px;
+			}
+			@include respond('laptop'){
+				width: 50px;
+				height: 50px;
+			}
+			@include respond('tab-port'){
+				width: 70px;
+				height: 50px;
+			}
+		}
+	
+	}
+    .dz-media{
+        width: 11.188rem;
+    }
+	.drive-content{
+		flex: 0 0 60%;
+		
+	}
+    .progress {
+        margin-bottom: 0.3rem;
+        background-color: var(--rgba-primary-1);
+        border: 1px solid var(--primary);
+        border-radius: $radius-sm;
+		width: 100%;
+		@include custommq($max:110rem){
+			width: 100%;
+		}
+	
+        .progress-bar{
+            border-radius: 0;
+        }
+    }
+	&:hover{
+		background-color: var(--rgba-primary-1);
+		border: 1px solid var(--primary);
+	}
+}
+
+.file-header{
+    border-bottom: 1px solid var(--border);
+    .page-titles{
+        margin-bottom: 0;
+        padding: 0;
+		flex-wrap: wrap;
+        
+    }
+    .file-path{
+        display: flex;
+        align-items: center;
+        margin-right: 0.625rem;
+        h4{
+            a{
+               font-size: 0.875rem;
+               margin-right: 0.5rem;
+            }
+        }
+		svg{
+			path{
+				fill:var(--primary);
+			}
+		}
+    } 
+   
+}
+.file-list{
+    display: flex;
+    align-items: center;
+	padding: 0.938rem;
+  
+	.dz-media{
+        margin-right: 0.8rem;
+		
+
+    }
+    
+}
+.folder-layout-tab{
+	.feature-btn:first-child{
+		background:var(--primary);
+		color:#fff;
+		svg path{
+			fill:#fff;
+		}
+	}
+	&.grid{
+		.feature-btn{
+			&:first-child{
+				background:var(--rgba-primary-1);
+				color:#fff;
+				svg path{
+					fill:var(--primary);
+				}
+			}
+			&:last-child{
+				background:var(--primary);
+				color:#fff;
+				svg path{
+					fill:#fff;
+				}
+			}
+
+		}
+	}
+	
+}
+.folder-structure{
+	height: calc(100vh - 22.213rem);
+	overflow-y: scroll;
+	@include respond('laptop'){
+		height: calc(100vh - 25.75rem);
+	}
+	@include respond('tab-land'){
+		height: calc(100vh - 7.813rem);
+    	overflow-y: scroll;
+	}
+	@include respond('tab-port'){
+		height: calc(100vh - 3.313rem);
+	}
+	li{
+		border-bottom: 1px solid var(--border);
+	}
+	&.grid{ 
+		padding:1.875rem;
+		display: flex;
+		flex-wrap: wrap;
+		margin-left: -12px;
+   		margin-right: -12px;
+		   @include respond('tab-land'){
+			margin-left: 0; 
+			 margin-right: 0;
+			 
+		   }
+		li{
+			border:0;
+			max-width: 20%;
+			padding-left: 0.75rem;
+			padding-right: 0.75rem;
+			margin-bottom: 24px;
+			box-sizing: border-box;
+			@include custommq($max:100rem){
+				max-width: 25%;
+			}
+			@include respond('laptop'){
+				max-width: 33.33%;
+			}
+			@include respond('tab-port'){
+				max-width: 50%;
+				
+			}
+			@include respond('phone-land'){
+				max-width: 33.33%;
+			}
+			@include respond('phone'){
+				max-width: 50%;
+			}
+			.file-list{
+				display: block;		
+				align-items: center;
+				padding: 1.25rem;
+				text-align: center;
+				min-width: 15rem;
+				border: 1px solid transparent;
+    			border-radius: $radius;
+				@include custommq($max:100rem){
+					min-width: 13.75rem;
+				}
+				@include respond('laptop'){
+					min-width: 15rem;
+				}
+				@include respond('tab-land'){
+					min-width: 12.5rem;
+				}
+				@include custommq($max:64rem){
+					min-width: 11.125rem;
+				}
+				@include respond('tab-port'){
+					min-width: 100%;
+					padding: 1rem;
+				}
+				
+				@include respond('phone'){
+					padding: 0.625rem;
+				}
+				.dz-media{
+					height: 100%;
+					width: 100%;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					margin-left: auto;
+					margin-right: auto;
+					margin-bottom: 10px;
+					.dz-img{
+						max-width: 100%;
+						max-height: 100%;
+						min-width: 100%;
+						border-radius: 10px;
+						box-shadow: 0px 10px 10px 0 rgba(0, 0, 0,  0.10);
+						
+					}
+					
+				}
+				svg{
+					width:3rem;
+					height:3rem;
+					
+				}
+				&:hover{
+					border: 1px solid var(--rgba-primary-5);
+					background: var(--rgba-primary-1);
+				}
+			}
+		}
+		@include respond ('phone'){
+			padding:1rem;
+		}
+	}
+}
+.file-left-body{
+    @include respond ('tab-land'){
+        .email-left-body{
+            width: 18rem;
+            position: fixed;
+            height: 100vh;
+            z-index: 2;
+            transition: all 0.5s;
+            left: -22rem;
+            top: 0px;
+            z-index: 999;
+            &.active{
+                left:0;
+                background: var(--card);
+                transition:all 0.5s;
+                overflow-y:scroll;
+                
+            }
+        }
+    }
+    
+    .email-tools-box{
+        display:inline-block;
+        width:40px;
+        height:40px;
+        line-height:40px;
+        text-align:center;
+        background-color:var(--rgba-primary-1);
+        border-radius:$radius;
+        color:var(--primary);
+        
+        &.active{
+            background-color:$primary;
+            color:$white;
+        }
+        
+        display:none!important;
+        @include respond ('tab-land'){
+            display:inline-block!important;
+            margin-left:auto;
+        }
+        &.active{
+            &:before{
+                content: '';
+                display: block;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background-color: #000;
+                opacity: 0.2;
+                border-radius: 0.75rem;
+                z-index: 4;
+            }
+        }
+    }
+    .email-left-box{
+        
+        @include respond ('tab-land'){
+            margin-right:-10px;
+        }
+        @include respond ('tab-port'){
+            margin:0;
+        }
+        @include respond ('phone'){
+            margin-top:20px;
+        }
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

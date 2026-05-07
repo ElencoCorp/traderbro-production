@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	
+	<!-- Meta -->
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="keywords" content="TraderBro, stock market education, Sensex, Bank Nifty, Nifty 50, FinnNifty, options trading, India">
+	<meta name="author" content="TraderBro">
+	<meta name="robots" content="">
+	<meta name="description" content="TraderBro : Your Trading Friend - Learn Sensex, Bank Nifty, Nifty 50 & FinNifty with India's best stock market education platform.">
+	<meta property="og:title" content="TraderBro : Your Trading Friend">
+	<meta property="og:description" content="Learn Sensex, Bank Nifty, Nifty 50 & FinNifty options trading with TraderBro — India's most trusted stock market education platform.">
+	<meta property="og:image" content="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png">
+	<meta name="format-detection" content="telephone=no">
+	
+	<!-- Mobile Specific -->
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	
+	<!-- Title -->
+	<title>TraderBro</title>
+    
+	<!-- Favicon icon -->
+    <link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png">
+    
+	<!-- Stylesheet -->
+	<link href="/static/finlab/Frontend/xhtml/vendor/animate/animate.css" rel="stylesheet">
+	<link href="/static/finlab/Frontend/xhtml/vendor/magnific-popup/magnific-popup.css" rel="stylesheet">
+	<link href="/static/finlab/Frontend/xhtml/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+    
+	<!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="/static/finlab/Frontend/xhtml/css/style.css">
+	
+	<!-- Google Fonts -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+	
+
+<style>
+body {
+    background: #e43b3b;
+}
+
+/* Container spacing */
+
+/* Card */
+.account-card {
+    border-radius: 20px;
+    padding: 30px;
+    /* background: linear-gradient(145deg, #1e293b, #0f172a); */
+    background: #ffff;
+    box-shadow: 
+        0 10px 25px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+    color: red;
+}
+
+.account-card:hover {
+    transform: translateY(-6px);
+}
+
+/* Profile */
+.profile-card {
+    text-align: center;
+}
+
+.page-content {
+    background: #ffff;
+}
+
+/* Add gap between banner and cards */
+.dz-bnr-inr {
+    margin-bottom: 40px;
+}
+
+.avatar {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: linear-gradient(135deg,#38bdf8,#6366f1);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:42px;
+    font-weight:bold;
+    margin:auto;
+    color:white;
+}
+
+/* Subscription layout */
+.subscription-box {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.subscription-box div {
+    background: #020617;
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.subscription-box div:hover {
+    background: #020617;
+    transform: translateY(-3px);
+}
+
+/* Plan badge */
+.plan-highlight {
+    background: linear-gradient(135deg,#00c6ff,#0072ff);
+    padding: 8px 14px;
+    border-radius: 8px;
+    display: inline-block;
+    font-weight: 600;
+}
+
+/* Status */
+.status-active {
+    background: #22c55e;
+    padding: 6px 12px;
+    border-radius: 20px;
+}
+
+.status-expired {
+    background: #ef4444;
+    padding: 6px 12px;
+    border-radius: 20px;
+}
+
+/* Button */
+.btn-primary {
+    border-radius: 10px;
+    font-weight: 500;
+}
+</style>
+</head>
+<body>
+<div id="loading-area" class="loading-page-1">
+	<div class="loader">
+		<div class="border one"></div>	
+		<div class="border two"></div>	
+		<div class="border three"></div>	
+		<div class="border four"></div>	
+		<div class="border five"></div>	
+		<div class="border six"></div>	
+		<div class="border seven"></div>	
+		<div class="border eight"></div>	
+		<div class="border nine"></div>	
+	</div>
+</div>  
+
+<div class="page-wraper">
+
+	<!-- Header -->
+	<header class="site-header mo-left header header-transparent ">
+		<!-- Main Header -->
+		<div class="sticky-header main-bar-wraper navbar-expand-lg">
+			<div class="main-bar clearfix ">
+				<div class="container clearfix">
+	
+					<!-- Website Logo -->
+					<div class="logo-header">
+						<a href="index.html" class="logo-light"><img src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png" alt="TraderBro"></a>
+						<a href="index.html" class="logo-dark"><img src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png" alt="TraderBro"></a>
+					</div>
+					
+					<!-- Nav Toggle Button -->
+					<button class="navbar-toggler collapsed navicon justify-content-end" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+						<span></span>
+						<span></span>
+						<span></span>
+					</button>
+					
+					<!-- Extra Nav -->
+					<div class="extra-nav">
+						<div class="extra-cell">
+							<a class="btn btn-outline-primary text-primary" href="/user-login">Login</a>
+							<a class="btn btn-primary btn-shadow" href="/register">Register</a>
+						</div>
+					</div>
+
+					<!-- Header Nav -->
+					<div class="header-nav navbar-collapse collapse justify-content-end" id="navbarNavDropdown">
+						<div class="logo-header">
+							<a href="index.html" class="logo-dark"><img src="/static/finlab/images/logotraderbro.png" alt="TraderBro"></a>
+						</div>
+						<ul class="nav navbar-nav navbar navbar-left">	
+							<!-- <li><a href="/">Home</a></li> -->
+							<li><a href="/about-us">About Us</a></li>
+							<li><a href="/static/finlab/Frontend/xhtml//trading-plan.html">Trading Plans</a></li>
+							<!-- <li class="sub-menu-down"><a href="javascript:void(0);">Our Blogs</a>
+								<ul class="sub-menu">
+									<li><a href="/static/finlab/Frontend/xhtml//blog-list.html">Blog List</a></li>
+									<li><a href="/static/finlab/Frontend/xhtml//blog-grid.html">Blog Grid</a></li>
+									<li><a href="/static/finlab/Frontend/xhtml//blog-details.html">Blog Details</a></li>
+								</ul>
+							</li> -->
+							<li><a href="/static/finlab/Frontend/xhtml//contact-us.html">Contact Us</a></li>
+							<li><a href="/account">My Account</a></li>
+
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- Main Header End -->
+	</header>
+	<!-- Header End -->
+	
+	<div class="page-content">
+
+
+		<!-- Banner  -->
+		<div class="dz-bnr-inr dz-bnr-inr-sm text-center position-relative" style="background-image:url('/static/finlab/Frontend/xhtml/images/background/bg2.jpg');">
+			<div class="container">
+				<div class="dz-bnr-inr-entry">
+					<h1>Account TraderBro</h1>
+					<!-- Breadcrumb Row -->
+					<nav aria-label="breadcrumb" class="breadcrumb-row m-t15">
+						<ul class="breadcrumb">
+							<li class="breadcrumb-item"><a href="index.html">Home</a></li>
+							<li class="breadcrumb-item active" aria-current="page">Account</li>
+						</ul>
+					</nav>
+					<!-- Breadcrumb Row End -->
+				</div>
+			</div>
+			<img class="shape1" src="/static/finlab/Frontend/xhtml/images/home-banner/shape1.svg" alt="">
+		</div>
+		<!-- Banner End -->
+		
+		<div class="container" style="padding:80px 0;">
+		<div class="row">
+
+			<!-- PROFILE -->
+<div class="col-xl-4">
+<div class="account-card profile-card">
+
+<div class="avatar" id="avatar">A</div>
+
+<h4 class="mt-3" id="name"></h4>
+<p id="email"></p>
+<p id="phone"></p>
+
+</div>
+</div>
+
+			<!-- SUBSCRIPTION -->
+<div class="col-xl-8">
+<div class="account-card">
+
+<h4 class="mb-4">💳 Subscription Details</h4>
+
+<div class="subscription-box">
+
+<div>
+<p>Plan</p>
+<h5><span id="plan" class="plan-highlight"></span></h5>
+</div>
+
+<div>
+<p>Expiry</p>
+<h5 id="expiry"></h5>
+</div>
+
+<div>
+<p>Status</p>
+<span id="status"></span>
+</div>
+
+</div>
+
+<div class="mt-4">
+<button class="btn btn-primary w-100" onclick="window.location.href='/trading-plan'">
+Upgrade Plan 🚀
+</button>
+</div>
+
+</div>
+</div>
+
+		</div> 
+	</div>
+	
+	
+	<!-- Footer -->
+    <footer class="site-footer">
+		<div class="footer-top">
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-4 col-md-12 col-sm-12">
+						<div class="widget widget_about wow fadeInUp" data-wow-delay="0.4s">
+							<h6 class="footer-title mb-3">Welcome to TraderBro</h6>
+							<a href="index.html" class="logo-light"><img src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png" alt="TraderBro"></a>
+
+							<!-- <form class="dzSubscribe ft-subscribe mb-4" action="script/mailchamp.php" method="post">
+								<div class="dzSubscribeMsg"></div>
+								<div class="input-group mb-0"> 
+									<input name="dzEmail" required="required" type="email" class="form-control" placeholder="Your Email Address">
+									<button name="submit" value="Submit" type="submit" class="btn btn-primary style-1">
+										<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none"><g clip-path="url(#l)"><path d="M.246 17.179c-.148.68.374.967.858.75l16.365-8.391h.002c.195-.11.308-.308.308-.537s-.113-.428-.308-.538h-.002L1.104.071C.62-.146.098.142.246.822L1.75 7.521 10.293 9 1.75 10.479.246 17.179z" fill="#fff"/></g><defs><clipPath id="l"><path fill="#fff" d="M0 0h18v18H0z"/></clipPath></defs></svg>
+									</button>
+								</div>
+							</form> -->
+							<!-- <p class="text-primary font-13 mb-2">Download the TraderBro App</p>
+							<div>
+								<a href="https://appstore.com/" class="me-2"><img src="/static/finlab/Frontend/xhtml/images//app-store.png" alt="Download on App Store"></a>
+								<a href="https://playstore.com/"><img src="/static/finlab/Frontend/xhtml/images//play-store.png" alt="Get it on Google Play"></a>
+							</div> -->
+						</div>
+					</div>
+					<div class="col-lg-2 col-md-3 col-6">
+						<div class="widget widget_links wow fadeInUp" data-wow-delay="0.6s">
+							<h6 class="footer-title">Quick Links</h6>
+							<ul>
+								<li><a href="/about-us">About Us</a></li>
+								<li><a href="javascript:void(0);">Privacy Policy</a></li>
+								<li><a href="/static/finlab/Frontend/xhtml/contact-us.html">Contact Us</a></li>
+							</ul>
+						</div>
+					</div>
+					<div class="col-lg-2 col-md-3 col-6">
+						<div class="widget widget_links wow fadeInUp" data-wow-delay="0.8s">
+							<h6 class="footer-title">Learn Trading</h6>
+							<ul>
+								<li><a href="blog-list.html">Nifty 50 Basics</a></li>
+								<li><a href="blog-list.html">Bank Nifty Strategies</a></li>
+								<li><a href="blog-list.html">FinNifty Guide</a></li>
+								<li><a href="blog-list.html">Sensex Analysis</a></li>
+							</ul>
+						</div>
+					</div>
+					<div class="col-lg-2 col-md-3 col-6">
+						<div class="widget widget_links wow fadeInUp" data-wow-delay="1.2s">
+							<h6 class="footer-title">Support</h6>
+							<ul>
+								<li><a href="javascript:void(0);">FAQ</a></li>
+								<li><a href="contact-us.html">Contact Us</a></li>
+							</ul>
+						</div>
+					</div>
+					<div class="col-lg-2 col-md-3 col-6">
+						<div class="widget widget-social wow fadeInUp" data-wow-delay="1.4s">
+							<h6 class="footer-title">Follow Us</h6>
+							<ul>
+								<li><a target="_blank" href="https://twitter.com/"><img src="/static/finlab/Frontend/xhtml/images//social/twitter.png" alt="">Twitter / X</a></li>
+								<li><a target="_blank" href="https://www.facebook.com/"><img src="/static/finlab/Frontend/xhtml/images//social/facebook.png" alt="">Facebook</a></li>
+								<li><a target="_blank" href="https://www.linkedin.com/"><img src="/static/finlab/Frontend/xhtml/images//social/linkedin.png" alt="">LinkedIn</a></li>
+								<li><a target="_blank" href="https://www.instagram.com/"><img src="/static/finlab/Frontend/xhtml/images//social/instagram.png" alt="">Instagram</a></li>
+								<li><a target="_blank" href="https://www.youtube.com/"><img src="/static/finlab/Frontend/xhtml/images//social/youtube.png" alt="">YouTube</a></li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="footer-bottom">
+			<div class="container">
+				<div class="footer-inner text-center">
+					<p class="copyright-text wow fadeInUp" data-wow-delay="1.6s">Copyright &copy; 2026 TraderBro — Stock Market Education Platform. All Rights Reserved.</p>
+				</div>
+			</div>
+		</div>
+	</footer>
+    <!-- Footer End -->
+
+	<button class="scroltop icon-up" type="button"><i class="fas fa-arrow-up"></i></button>
+</div>
+<!-- JAVASCRIPT FILES ========================================= -->
+<script src="/static/finlab/Frontend/xhtml/js/jquery.min.js"></script>
+<script src="/static/finlab/Frontend/xhtml/vendor/wow/wow.js"></script>
+<script src="/static/finlab/Frontend/xhtml/vendor/swiper/swiper-bundle.min.js"></script>
+<script src="/static/finlab/Frontend/xhtml/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="/static/finlab/Frontend/xhtml/vendor/skrollr/skrollr.js"></script>
+<script src="/static/finlab/Frontend/xhtml/vendor/magnific-popup/magnific-popup.js"></script>
+<script src="/static/finlab/Frontend/xhtml/js/dz.carousel.js"></script>
+<script src="/static/finlab/Frontend/xhtml/js/dz.ajax.js"></script>
+<script src="/static/finlab/Frontend/xhtml/js/custom.js"></script>
+
+<script>
+let user = JSON.parse(localStorage.getItem("currentUser"));
+
+if (!user) {
+  alert("Please login first");
+  window.location.href = "/user-login";
+}
+
+// Profile
+document.getElementById("name").innerText = user.username;
+document.getElementById("email").innerText = user.email;
+document.getElementById("phone").innerText = user.phone;
+document.getElementById("avatar").innerText = user.username.charAt(0).toUpperCase();
+
+// Plan
+document.getElementById("plan").innerText =
+    user.plan ? user.plan.charAt(0).toUpperCase() + user.plan.slice(1) : "No Plan";
+function formatDate(dateStr) {
+    if (!dateStr) return "-";
+
+    const date = new Date(dateStr);
+
+    return date.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+    }) + " | " + date.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+}
+
+document.getElementById("expiry").innerText = formatDate(user.planExpiry);
+// Status
+let status = document.getElementById("status");
+
+if (!user.plan) {
+    status.innerText = "Inactive";
+    status.className = "status-expired";
+} else {
+    let today = new Date();
+    let expiry = new Date(user.planExpiry);
+
+    if (today > expiry) {
+        status.innerText = "Expired";
+        status.className = "status-expired";
+    } else {
+        status.innerText = "Active";
+        status.className = "status-active";
+    }
+}
+
+// Logout
+function logout() {
+  localStorage.removeItem("currentUser");
+  window.location.href = "/";
+}
+</script>
+
+<script>
+const user = JSON.parse(localStorage.getItem("currentUser"));
+
+if (user) {
+    document.querySelector(".extra-nav").innerHTML = `
+        <div class="extra-cell">
+            <a class="btn btn-outline-primary text-primary" href="/account">My Account</a>
+            <button class="btn btn-danger" onclick="logout()">Logout</button>
+        </div>
+    `;
+}
+</script>
+</body>
+</html>

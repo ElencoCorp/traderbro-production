@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	
+	<!-- Meta -->
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="keywords" content=""/>
+	<meta name="author" content="DexignLab"/>
+	<meta name="robots" content=""/>
+	<meta name="description" content="FinLab - Crypto Trading is a Responsive HTML Template that can be used to build crypto exchange Website. Template is well designed and well coded and flexible"/>
+	<meta property="og:title" content="FinLab - Crypto Trading HTML Template"/>
+	<meta property="og:description" content="FinLab - Crypto Trading is a Responsive HTML Template that can be used to build crypto exchange Website. Template is well designed and well coded and flexible"/>
+	<meta property="og:image" content="https://finlab.dexignlab.com/xhtml/social-image.png"/>
+	<meta name="format-detection" content="telephone=no">
+	
+	<!-- Mobile Specific -->
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	
+	<!-- Favicon icon -->
+	<link rel="icon" type="image/x-icon" href="images/favicon.png"/>
+	
+	<!-- Title -->
+	<title>FinLab : Crypto Trading Frontend Bootstrap template</title>
+	
+    <!-- Bootstrap CSS CDN -->
+	<link rel="stylesheet" href="css/bootstrap.css">
+	<link rel="stylesheet" href="plugins/jstree/dist/themes/default/style.min.css">
+	<link rel="stylesheet" href="css/scrollbar.css">
+	<link rel="stylesheet" href="css/font-awesome.css">
+	<link rel="stylesheet" href="css/styles.css">
+    
+	
+	<!-- GOOGLE FONTS-->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+	
+</head>
+<body data-spy="scroll" data-target=".nav-bar" data-offset="50">
+<div class="wrapper" id="tableofcontent">
+		
+	<!-- Sidebar Holder -->
+	<nav id="nevbarleft">
+		<div class="side-nav full-height">
+			<div class="sidebar-header">
+				<h2><img src="images/logo.png" alt="logo"/></h2>
+			</div>
+			<div class="nav-bar">
+				<ul class="list-unstyled content-scroll components navbar-nav nav" id="download-button">
+					<li class="active"><a href="#introduction">Introduction</a></li>
+					<li><a href="#installation">Installation</a></li>
+					<li><a href="#folder_directories">Folder Directories</a></li>
+					<li><a href="#html_file">HTML File</a></li>
+					<li><a href="#credits_file">Credits </a></li>
+					<li><a href="#html_structure">Basic HTML Structure</a></li>
+					<li><a href="#contact_form">Contact Form</a></li>
+					<li><a href="#recaptcha">reCAPTCHA <i class="fa fa-star text-yellow"></i></a></li>
+					<li><a href="#our_product" class="scroll">Our Products </a></li>
+					<li><a href="#custom_work" class="scroll">Custom Work Requirements </a></li>
+					<li><a href="#version_history">Version History</a></li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+
+	<!-- Page Content Holder -->
+	<div id="content">
+		
+		<!-- Top Nav -->
+		<nav class="navbar navbar-default top-nav-bar ">
+			<div class="container-fluid">
+				<div class="navbar-header">
+				   <button type="button" id="sidebarCollapse" class="navbar-btn">
+						<span></span>
+						<span></span>
+						<span></span>
+					</button>
+				</div>
+				<a href="https://support.w3itexperts.com/" target="_blank" class="site-button support-button">Support</a>
+				<a href="https://1.envato.market/ORgk0Q" class="site-button support-button DZBuyNowBtn">Buy Now</a>
+			</div>
+		</nav>
+		
+		<!-- Banner -->
+		<section class="app-brief slide-banner">
+			<div class="container">
+				<div class="section-header">
+					<h2>FinLab</h2>
+					<div class="colored-line"></div>
+					<div class="section-description">
+						FinLab : Crypto Trading Frontend Bootstrap template
+					</div>
+					<div class="colored-line"></div>
+				</div>
+			</div>
+		</section>
+				
+		<!-- Introduction -->
+		<section class="app-brief " id="introduction">
+			<div class="container center-align ">
+				<h1>FinLab</h1>
+				<h3>FinLab Crypto Trading Frontend Bootstrap template</h3>
+				<p>This documentation is last updated on 25 FEBRUARY 2023</p>
+				<p>Thank you for purchasing this HTML template.</p>
+				<h5>If you like this template, Please support us by rating this template with 5 stars</h5>
+			</div>
+		</section>
+		
+		<!-- Installation -->
+		<section class="app-brief" id="installation">
+			<div class="container left-align">
+				<div class="section-header">
+					<h2 class="dark-text title">Installation - </h2>
+				</div>
+				<div class="sass-compile">
+					<h3 class="title">1.- Install Node.js</h3>
+					<p>To compile Sass via the command line first, we need to install <a href="https://nodejs.org/en/" target="_blank">node.js</a>. The easiest way is downloading it from the official website nodejs.org open the package and follow the wizard.</p>
+					
+					<h3 class="title">2.- Initialize NPM</h3>
+					<p>NPM is the Node Package Manager for JavaScript. NPM makes it easy to install and uninstall third party packages. To initialize a Sass project with NPM, open your terminal and CD (change directory) to your project folder.</p>
+<pre class="brush: javascript; h-100">
+npm init
+</pre>
+<img src="images/cmd.png" alt="">
+<p>Once in the correct folder, run the command <code>npm init</code>. You will be prompted to answer several questions about the project, after which NPM will generate a <code>package.json</code> file in your folder.</p>
+
+
+					<h3 class="title">3.- Install Node-Sass</h3>
+					<p>Node-sass is an NPM package that compiles Sass to CSS (which it does very quickly too). To install node-sass run the following command in your terminal:  <code>npm install node-sass</code></p>
+<pre class="brush: javascript; h-100">
+npm install node-sass
+</pre>
+
+					<h3 class="title">4.- Write Node-sass Command</h3>
+					<p>Everything is ready to write a small script in order to compile Sass. Open the package.json file in a code editor. You will see something like this:</p>
+					<p>In the scripts section add an <strong>scss command</strong></p>
+					<img src="images/jsn.png" alt="">
+<pre class="brush: javascript; h-100">
+"scripts": {
+  "sass": "node-sass --watch scss/main.scss css/style.css"
+},
+</pre>
+					
+					<h3 class="title">5.- Run the Script</h3>
+					<p>To execute our one-line script, we need to run the following command in the terminal: <code>npm run scss</code></p>
+<pre class="brush: javascript; h-100">
+npm run sass
+</pre>
+
+					<h3 class="title">6. - Other Option</h3>
+					<p><code>--source-map</code></p>
+<pre class="brush: javascript; h-100">
+"sass": "node-sass --watch scss/main.scss css/style.css --source-map css/style.css.map"
+</pre>
+
+
+				</div>
+			</div>
+		</section>
+				
+		<!-- Folder Directories -->
+		<section class="app-brief grey-bg" id="folder_directories">
+			<div class="container left-align">
+				<div class="section-header">
+					<h2 class="dark-text title">Folder Directories - </h2>
+				</div>
+				<div class="">
+					<ul class="list-files">
+						<li>
+							<div class="row">
+								<div class="col-sm-4">
+									<p>images</p>
+								</div>
+								<div class="col-sm-8">
+									<p>This folder contains all the images of FinLab template.</p>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="row">
+								<div class="col-sm-4">
+									<p>fonts</p>
+								</div>
+								<div class="col-sm-8">
+									<p>This folder font files for various template features.</p>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="row">
+								<div class="col-sm-4">
+									<p>css</p>
+								</div>
+								<div class="col-sm-8">
+									<p>This folder contains all the CSS files of FinLab template.</p>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="row">
+								<div class="col-sm-4">
+									<p>js</p>
+								</div>
+								<div class="col-sm-8">
+									<p>This folder has all javascript files for various template features.</p>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="row">
+								<div class="col-sm-4">
+									<p>vendor</p>
+								</div>
+								<div class="col-sm-8">
+									<p>This folder has all plugins used in the template.</p>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="row">
+								<div class="col-sm-4">
+									<p>script</p>
+								</div>
+								<div class="col-sm-8">
+									<p>This folder has all script contact form used in the template.</p>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="row">
+								<div class="col-sm-4">
+									<p>scss</p>
+								</div>
+								<div class="col-sm-8">
+									<p>Scss File</p>
+								</div>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</section>
+		
+		<!-- Folder Directories -->
+		<section class="app-brief" id="html_file">
+			<div class="container left-align">
+				<div class="section-header ">
+					<h2 class="dark-text title">HTML File - </h2>
+				</div>
+				<div id="dz_tree" class="tree-demo">
+					<ul>
+						<li data-jstree='{ "opened" : true }'>xhtml
+							<ul>
+								<li data-jstree='{ "selected" : false }'>css</li>
+								<li data-jstree='{ "selected" : false }'>icons</li>
+								<li data-jstree='{ "selected" : false }'>images</li>
+								<li data-jstree='{ "selected" : false }'>js</li>
+								<li data-jstree='{ "selected" : false }'>script</li>
+								<li data-jstree='{ "selected" : false }'>scss</li>
+								<li data-jstree='{ "selected" : false }'>vendor</li>
+							</ul>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</section>
+		
+		<!-- Credits -->
+		<section class="app-brief grey-bg" id="credits_file">
+			<div class="container left-align">
+				<div class="section-header">
+					<h2 class="dark-text title">Credits - </h2>
+				</div>
+				<div class="">
+					<ul class="list-files">
+						<li>
+							<div class="row">
+								<div class="col-sm-4">
+									<p>Bootstrap</p>
+								</div>
+								<div class="col-sm-8">
+									<p><a href="https://getbootstrap.com/">https://getbootstrap.com/</a></p>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="row">
+								<div class="col-sm-4">
+									<p>Bootstrap Touchspin</p>
+								</div>
+								<div class="col-sm-8">
+									<p><a href="https://plugins.jquery.com/bootstrap-touchspin/">https://plugins.jquery.com/bootstrap-touchspin/</a></p>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="row">
+								<div class="col-sm-4">
+									<p>counter</p>
+								</div>
+								<div class="col-sm-8">
+									<p><a href="https://cdnjs.com/libraries/Counter-Up">https://cdnjs.com/libraries/Counter-Up</a></p>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="row">
+								<div class="col-sm-4">
+									<p>imagesloaded</p>
+								</div>
+								<div class="col-sm-8">
+									<p><a href="https://imagesloaded.desandro.com/">https://imagesloaded.desandro.com/</a></p>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="row">
+								<div class="col-sm-4">
+									<p>lightgallery</p>
+								</div>
+								<div class="col-sm-8">
+									<p><a href="https://sachinchoolur.github.io/lightGallery/">https://sachinchoolur.github.io/lightGallery/</a></p>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="row">
+								<div class="col-sm-4">
+									<p>magnific-popup</p>
+								</div>
+								<div class="col-sm-8">
+									<p><a href="https://dimsemenov.com/plugins/magnific-popup/">https://dimsemenov.com/plugins/magnific-popup/</a></p>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="row">
+								<div class="col-sm-4">
+									<p>masonry</p>
+								</div>
+								<div class="col-sm-8">
+									<p><a href="https://masonry.desandro.com/">https://masonry.desandro.com/</a></p>
+								</div>
+							</div>
+						</li>
+						<li>
+							<div class="row">
+								<div class="col-sm-4">
+									<p>Swiper js</p>
+								</div>
+								<div class="col-sm-8">
+									<p><a href="https://swiperjs.com/">https://swiperjs.com/</a></p>
+								</div>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</section>
+		
+		<!-- HTML Structure -->
+		<section class="app-brief" id="html_structure">
+			<div class="container left-align">
+				<h3>HTML Structure</h3>
+				<img src="images/screenshot/1.png" alt="1"/>
+				<div class="separator"></div>
+				<h3>Header</h3>
+				<img src="images/screenshot/2.png" alt="2"/>
+				<h3>Footer</h3>
+				<img src="images/screenshot/3.png" alt="3"/>
+				<div class="separator"></div>
+				<h3>Footer Essentials</h3>
+				<img src="images/screenshot/4.png" alt="4"/>
+			</div>
+		</section>
+		
+		<!-- Contact Form -->
+		<section class="app-brief" id="contact_form">
+			<div class="container left-align">
+				<div class="section-header">
+					<h2 class="dark-text">Contact Form Handler - </h2>
+				</div>
+				<div class="theme-images">
+					<div class="item">
+						<h3 class="mb-3">1. Simple Mail Function</h3>
+						<img src="images/screenshot/7.png" alt="8"/>
+					</div>
+					<br>
+					<div class="item">
+						<h3 class="mb-3">2. Using SMTP</h3>
+						<p>Enter the required details for the SMTP server. These should be provided by your system administrator.</p>
+						<code>
+							<ul>
+								<li>Host = '&lt;Put Your Server Host&gt;';</li>
+								<li>Username = '&lt;Put Your SMTP Username&gt;';</li>
+								<li>Password = '&lt;Put Your SMTP Password&gt;';</li>
+								<li>SMTPSecure = '&lt;PHPMailer::ENCRYPTION_SMTPS or 'ssl' OR PHPMailer::ENCRYPTION_STARTTLS or 'tls'&gt;';</li>
+								<li>Port = '&lt;465 or 587&gt;';</li>
+							</ul>
+						</code>
+						<img src="images/screenshot/10.png" alt="8"/>
+					</div>
+				</div>
+			</div>
+		</section>
+		
+		<!-- reCAPTCHA -->
+		<section class="app-brief change-log no-grey-bg" id="recaptcha">
+			<div class="container left-align">
+				<div class="section-header">
+					<h2 class="dark-text title">reCAPTCHA - </h2>
+				</div>
+				<div class="theme-images">
+					<div class="item">
+						<img src="images/important/recaptcha.png" alt="8"/>
+					</div>
+				</div>
+				<h3><strong>Register your website and get Secret Key.</strong></h3>
+				<p>Very first thing you need to do is register your website on Google recaptcha to do that click <a href="https://www.google.com/recaptcha/admin" class="text-primary">here.</a></p>
+				<p>Login to your Google account and submit the form.</p>
+				<div class="theme-images">
+					<div class="item">
+						<img src="images/important/capcha.png" alt="8"/>
+					</div>
+				</div>
+				<p>Once submit, Google will provide you following two information.</p>
+				<ul>
+					<li>Site key</li>
+					<li>Secret key</li>
+				</ul>
+				<h3><strong>Integrate Google reCAPTCHA in your website.</strong></h3>
+				<p>To integrate it into your website you need to put it in client side as well as in Server side. In client HTML page you need to integrate this line before <code>HEAD</code>tag.</p>
+				<img src="images/important/script1.png" alt="10"/>
+				<p>And to show the widget into your form you need to put this below contact form, comment form etc.</p>
+				<img src="images/important/script2.png" alt="10"/>
+				<p>When the form get submit to Server, this script will send ‘g-recaptcha-response’ as a POST data. You need to verify it in order to see whether user has checked the Captcha or not.</p>
+				<h3><strong>Sample project</strong></h3>
+				<p>Here is the HTML code for the simple form with comment box and submit button. On submit of this form we will use PHP in back-end to do the Google reCAPTCHA validation.</p>
+				<div class="theme-images">
+					<div class="item">
+						<img src="images/important/9.png" alt="8"/>
+					</div>
+				</div>
+				<p>This will generate this form.</p>	
+				<img src="images/important/recaptcha2.png" alt="8"/>
+				<p>On server side i am using PHP for now. So on Form submit request we will check the POST variable.</p>
+				<div class="theme-images">
+					<div class="item">
+						<img src="images/important/8.png" alt="8"/>
+					</div>
+				</div>
+				<p>try out the demo to see how it works.</p>
+			</div>
+		</section>
+
+		<!-- Our Products -->
+		<section class="app-brief" id="our_product">
+			<div class="container left-align">
+				<div class="section-header">
+					<h2 class="dark-text">Our Products - </h2>
+				</div>
+				<div class="row other-theme">
+					<div class="col-md-4 col-sm-6 m-b30">
+						<div class="product-port-bx">
+							<a target="_blank" href="https://1.envato.market/x0b4x">
+								<img src="images/product/motaadmin.png"/>
+							</a>
+							<div class="product-info">
+								<h4 class="title">
+									<a target="_blank" href="https://1.envato.market/x0b4x">
+										MotaAdmin - Laravel Admin Dashboard Template 
+									</a>
+								</h4>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-4 col-sm-6 m-b30">
+						<div class="product-port-bx">
+							<a target="_blank" href="https://1.envato.market/jxv75">
+								<img src="images/product/vora.png"/>
+							</a>
+							<div class="product-info">
+								<h4 class="title">
+									<a target="_blank" href="https://1.envato.market/jxv75">
+										Vora - Saas React Admin Dashboard Template
+									</a>
+								</h4>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-4 col-sm-6 m-b30">
+						<div class="product-port-bx">
+							<a target="_blank" href="https://1.envato.market/KrOOv">
+								<img src="images/product/edumin.png"/>
+							</a>
+							<div class="product-info">
+								<h4 class="title">
+									<a target="_blank" href="https://1.envato.market/KrOOv">
+										EduMin - Education Admin Dashboard Template
+									</a>
+								</h4>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-4 col-sm-6 m-b30">
+						<div class="product-port-bx">
+							<a target="_blank" href="https://1.envato.market/zaXJ1r">
+								<img src="images/product/jobick.png"/>
+							</a>
+							<div class="product-info">
+								<h4 class="title">
+									<a target="_blank" href="https://1.envato.market/zaXJ1r">
+										Jobick : Job Admin Dashboard Bootstrap 5 Template
+									</a>
+								</h4>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-4 col-sm-6 m-b30">
+						<div class="product-port-bx">
+							<a target="_blank" href="https://1.envato.market/P0bBxM">
+								<img src="images/product/fillow.png"/>
+							</a>
+							<div class="product-info">
+								<h4 class="title">
+									<a target="_blank" href="https://1.envato.market/P0bBxM">
+										Fillow Saas Admin Dashboard Template
+									</a>
+								</h4>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-4 col-sm-6 m-b30">
+						<div class="product-port-bx">
+							<a target="_blank" href="https://1.envato.market/EaG4Q2">
+								<img src="images/product/dopmet.png"/>
+							</a>
+							<div class="product-info">
+								<h4 class="title">
+									<a target="_blank" href="https://1.envato.market/EaG4Q2">
+										Dompet - Payment Admin Dashboard Bootstrap Template
+									</a>
+								</h4>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-4 col-sm-6 m-b30">
+						<div class="product-port-bx">
+							<a target="_blank" href="https://1.envato.market/MXb4r3">
+								<img src="images/product/workload.png"/>
+							</a>
+							<div class="product-info">
+								<h4 class="title">
+									<a target="_blank" href="https://1.envato.market/MXb4r3">
+										Workload | Project Management Bootstrap 5 Admin Dashboard
+									</a>
+								</h4>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-4 col-sm-6 m-b30">
+						<div class="product-port-bx">
+							<a target="_blank" href="https://1.envato.market/GjoLrm">
+								<img src="images/product/invome.png"/>
+							</a>
+							<div class="product-info">
+								<h4 class="title">
+									<a target="_blank" href="https://1.envato.market/GjoLrm">
+										Invome - Admin Dashboard Bootstrap 5 Template
+									</a>
+								</h4>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-4 col-sm-6 m-b30">
+						<div class="product-port-bx">
+							<a target="_blank" href="https://1.envato.market/P0r3Dz">
+								<img src="images/product/travl.png"/>
+							</a>
+							<div class="product-info">
+								<h4 class="title">
+									<a target="_blank" href="https://1.envato.market/P0r3Dz">
+										Travl Hotel Admin Dashboard Template
+									</a>
+								</h4>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+		
+		<!-- Customization -->
+		<section class="app-brief " id="custom_work" style="background-image: url(images/bg1.png); background-position: left center;">
+			<div class="container left-align">
+				<div class="col-md-12 text-center custom-info">
+					<h2 class="m-t0">Do You Need Help To Customization</h2>
+					<h3>After Purchase A Template...</h3>
+					<h4>You Will Start Customizing According Your Requirement<br/> <span>BUT</span> What If You Don't Know</h4>
+					<h3 class="text-black">SOLUTION IS <span><u>HIRE DexignZone</u></span></h3>
+					<div class="hire">
+						<h4><span class="">Hire Same Team For </span> <span>Quality Customization</span></h4>
+						<ul>
+							<li>We Will Customize Template According To Your Requirement</li>
+							<li>We Will Upload On Server And Make Sure Your Website is Live</li>
+						</ul>
+						<div class="gmail-box">
+							<a href="skype:rahulxarma?chat" class="gmail"><i class="fa fa-skype"></i>rahulxarma</a>
+							<a target="_blank" href="mailto:dexignzones@gmail.com" class="gmail"><i class="fa fa-envelope"></i> dexignzones@gmail.com</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+		
+		<!-- Change Log -->
+		<section class="app-brief change-log grey-bg" id="version_history">
+			<div class="container left-align">
+				<div class="section-header">
+					<h2 class="dark-text">Version History - <small class="topbutton"><a class="scroltop" href="javascript:void(0);">back to top</a></small></h2>
+				</div>
+				<h3>15 FEBRUARY 2023</h3>
+				<ul>
+					<li>New - Created & Upload FinLab Html Template</li>
+				</ul>
+			</div>
+		</section>
+				
+		<!-- Footer -->
+		<footer>
+			<div class="container">
+				<p class="copyright">
+					© 2023 DexignLab , All Rights Reserved
+				</p>
+			</div>
+		</footer>
+	
+	</div>
+	
+</div>
+<script src="js/jquery.min.js"></script>
+<!-- Bootstrap Js CDN -->
+<script src="js/bootstrap.min.js"></script>
+<script src="js/smoothscroll.js"></script>
+<script src="js/jquery.scrollTo.min.js"></script>
+<script src="js/jquery.localScroll.min.js"></script>
+<script src="js/load.js"></script>
+<script src="js/scrollbar.min.js"></script>
+<script src="plugins/jstree/dist/jstree.min.js"></script>
+<script src="js/custom.js"></script>
+<script>
+// prettyPhoto
+jQuery(document).ready(function(){
+	jQuery('.dzClickload').click(function(){
+		jQuery('.dzClickload').removeClass('active');
+		jQuery(this).addClass('active');
+	});
+	
+	 
+	jQuery(".content-scroll").mCustomScrollbar({
+		setWidth:false,
+		setHeight:false,
+		axis:"y"
+	});	
+	
+	$(".full-height").css("height", $(window).height());
+	
+	// dz_tree
+	$("#dz_tree, #dz_tree_rtl").jstree({
+		"core": {
+			"themes": {
+				"responsive": false
+			}
+		},
+		"types": {
+			"default": {
+				"icon": "fa fa-folder"
+			},
+			"file": {
+				"icon": "fa fa-file-text"
+			}
+		},
+		"plugins": ["types"]
+	});
+	
+	// Add smooth scrolling to all links
+	$(".navbar-nav a").on('click', function(event) {
+
+		// Make sure this.hash has a value before overriding default behavior
+		if (this.hash !== "") {
+			// Prevent default anchor click behavior
+			event.preventDefault();
+
+			// Store hash
+			var hash = this.hash;
+
+			// Using jQuery's animate() method to add smooth page scroll
+			// The optional number (800) specifies the number of milliseconds it takes to scroll to the specified area
+			$('html, body').animate({
+				scrollTop: $(hash).offset().top
+			});
+		}	 // End if
+	});
+	
+});
+</script>
+</body>
+</html>
