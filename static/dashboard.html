@@ -269,6 +269,9 @@
       font-weight: 800;
       font-family: 'Roboto Mono', monospace;
       flex-shrink: 0;
+      box-shadow:
+        0 10px 25px rgba(239,68,68,0.18),
+        inset 0 -3px 0 rgba(255,255,255,0.08);
     }
 
     .atm-run-pos {
@@ -630,23 +633,263 @@
         background-position: -200% 0
       }
     }
+@media (max-width: 768px) {
 
-    @media (max-width: 900px) {
-      .main-grid {
-        grid-template-columns: 1fr;
-        height: auto;
-        overflow-y: auto;
-      }
+  html,
+  body {
+    background: #eef2ff;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: auto;
+  }
 
-      html,
-      body {
-        overflow: auto;
-      }
+  body {
+    font-size: 14px;
+  }
 
-      .header-indices {
-        display: none;
-      }
-    }
+  .header {
+    height: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .header-divider {
+    display: none;
+  }
+
+  .header-indices,
+  .header-right {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .logo-title {
+    font-size: 22px;
+  }
+
+  .logo-sub {
+    font-size: 9px;
+  }
+
+  .main-grid {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  .left-panel,
+  .right-panel {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* TOP ENGINE */
+  .panel-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    padding: 10px;
+    background: linear-gradient(135deg, #f8faff, #eef2ff);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
+  }
+
+  .panel-title {
+    font-size: 13px;
+  }
+
+  .atm-hero {
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .atm-dt-box {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: white;
+  }
+
+  .atm-dt-label {
+    font-size: 8px;
+  }
+
+  .atm-dt-val {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  /* SMALLER LIVE VALUE */
+.atm-run-box {
+    width: 100%;
+    min-height: 48px;
+    border-radius: 12px;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+  .market-note {
+    font-size: 11px;
+    line-height: 1.5;
+    margin-top: 8px;
+  }
+
+  /* INTERNAL SCROLL AREA */
+  .rows-scroll {
+    max-height: 52vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px;
+    padding-bottom: 30px;
+    border-radius: 18px;
+    background: linear-gradient(180deg,#f8fbff,#eef2ff);
+}
+
+  .rows-grid {
+    gap: 10px;
+    padding-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* SMALLER ROWS */
+  .data-row {
+    width: 100%;
+    padding: 12px;
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(255,255,255,0.92);
+    border: 1px solid #dbeafe;
+    box-shadow:
+      0 4px 14px rgba(15,23,42,0.05),
+      0 1px 2px rgba(15,23,42,0.04);
+    backdrop-filter: blur(8px);
+}
+
+.row-dt {
+    word-break: break-word;
+    font-size: 11px;
+    line-height: 1.6;
+    color: #334155;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+  .val-pill {
+    width: 100%;
+    font-size: 18px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    letter-spacing: 1px;
+    box-shadow: inset 0 -2px 0 rgba(255,255,255,0.15);
+}
+
+  /* GAUGE */
+  .gauge-card {
+    margin-top: 10px;
+    border-top: 1px solid #dbeafe;
+    padding: 14px 10px;
+  }
+
+  .gauge-card-title {
+    font-size: 15px;
+  }
+
+  .gauge-wrapper {
+    width: 100%;
+    max-width: 240px;
+    margin: auto;
+  }
+
+  canvas#gauge {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .gauge-value-display {
+    font-size: 22px;
+    bottom: 14px;
+  }
+
+  .gauge-ticks {
+    font-size: 8px;
+  }
+
+  /* DOWNLOADS */
+  .download-card {
+    margin: 8px;
+    border-radius: 14px;
+    padding: 10px;
+  }
+
+  .dl-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .dl-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* MARKET CLOSED */
+  .market-closed-box {
+    width: 100%;
+    padding: 18px 12px;
+    border-radius: 16px;
+  }
+
+  .market-title {
+    font-size: 17px;
+  }
+
+  .market-desc {
+    font-size: 12px;
+  }
+
+  .market-time {
+    font-size: 14px;
+    width: 100%;
+  }
+
+  .market-sub {
+    font-size: 11px;
+  }
+
+  /* REMOVE EXTRA CHART */
+  h3,
+  #sensexChart {
+    display: none;
+  }
+
+  /* BETTER SCROLLBAR */
+  .rows-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .rows-scroll::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 10px;
+  }
+}
   </style>
 </head>
 
@@ -801,31 +1044,9 @@
         .then(r => r.json())
         .then(d => {
           let rawRows = d.rows || [];
-          const rows = rawRows.filter(r => {
 
-            if (!r.datetime) return true;
-
-            const timeStr = r.datetime.split(" ")[1];
-
-            if (!timeStr) return true;
-
-            const parts = timeStr.split(":");
-
-            const h = parseInt(parts[0], 10);
-            const m = parseInt(parts[1], 10);
-
-            // 9:16 AM onwards
-            const after916 =
-                (h > 9) ||
-                (h === 9 && m >= 16);
-
-            // till 12:00 PM
-            const before12 =
-                (h < 12) ||
-                (h === 12 && m === 0);
-
-            return after916 && before12;
-          });
+          const rows = rawRows;
+          rows.sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
           
           if (rows.length === 0) {
 
@@ -860,7 +1081,7 @@
         }
 
           // Latest row is the current/tail row
-          const top = rows[rows.length - 1];
+          const top = rawRows[rawRows.length - 1];
 
           // Update header
           document.getElementById("h-ltp").textContent = top.index_ltp || "—";
@@ -884,7 +1105,9 @@
             (rv > 0 ? "atm-run-pos" : rv < 0 ? "atm-run-neg" : "atm-run-zero");
 
           // All rows except tail → show in scrollable list
-          const displayRows = [...rows].reverse();
+          const displayRows = [...rows];
+          displayRows.pop(); // remove latest/current row
+          displayRows.reverse(); // latest old rows on top
           let html = "";
           displayRows.forEach(r => {
             const val = parseFloat(r.running || 0);

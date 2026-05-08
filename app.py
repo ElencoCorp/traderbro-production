@@ -182,7 +182,7 @@ def auto_market_recorder():
     current = (hour * 60) + minute
 
     start_time = (9 * 60) + 16
-    end_time = (12 * 60)
+    end_time = (15 * 60) + 30
 
     # START
     if start_time <= current <= end_time:
@@ -691,8 +691,8 @@ async def activate_plan(request: Request):
 
     # MARKET END TIME → 12 PM
     expiry = expiry.replace(
-        hour=12,
-        minute=0,
+        hour=15,
+        minute=30,
         second=0,
         microsecond=0
     )
@@ -978,7 +978,7 @@ def is_market_open():
     ) + now.minute
 
     start_minutes = (9 * 60) + 16
-    end_minutes   = (24 * 60)
+    end_minutes   = (15 * 60) + 30
 
     return (
         current_minutes >= start_minutes
@@ -1133,8 +1133,17 @@ def restart_market_job():
     #     replace_existing=True
     # )
 # restart_market_job()
+    scheduler.add_job(
+        auto_market_recorder,
+        "interval",
+        seconds=max(get_interval(), 5),
+        id="market_auto_job",
+        replace_existing=True
+    )
 
-            
+    print("✅ VPS MARKET WORKER STARTED")
+
+restart_market_job()    
 
 # Interval
 @app.get("/api/get-interval")
@@ -1547,7 +1556,7 @@ def get_subscription_start_date():
     current_minutes = (now.hour * 60) + now.minute
 
     # MARKET CLOSE = 12 PM
-    market_close = (12 * 60)
+    market_close = (15 * 60) + 30
 
     # BEFORE OR DURING MARKET
     if current_minutes <= market_close:

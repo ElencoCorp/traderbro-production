@@ -563,6 +563,32 @@ async function loadLiveData() {
             tbody.innerHTML = "";
 
             records = data.rows;
+<<<<<<< HEAD
+
+            records.forEach((r, idx) => {
+                appendRow(r, idx);
+            });
+
+            return;
+        }
+
+        // APPEND ONLY NEW ROWS
+        if (data.rows.length > records.length) {
+
+            const newRows =
+                data.rows.slice(records.length);
+
+            newRows.forEach((r) => {
+
+                records.push(r);
+
+                appendRow(r, records.length - 1);
+
+            });
+
+        }
+=======
+>>>>>>> f986732 (fixed vps background market worker)
 
             records.forEach((r, idx) => {
                 appendRow(r, idx);
@@ -594,24 +620,7 @@ async function loadLiveData() {
     }
 }
 
-async function loadInterval() {
-
-    try {
-
-        const res = await fetch("/api/get-interval");
-
-        const data = await res.json();
-
-        document.getElementById("interval").value =
-            data.interval;
-
-    } catch (e) {
-
-        console.log(e);
-
-    }
-}
-
+<<<<<<< HEAD
 // INITIAL LOAD
 // INITIAL LOAD
 // AUTO REFRESH TIMER
@@ -636,6 +645,9 @@ async function startAutoRefresh() {
     if (autoRefreshTimer) {
         clearInterval(autoRefreshTimer);
     }
+=======
+async function loadInterval() {
+>>>>>>> f986732 (fixed vps background market worker)
 
     try {
 
@@ -643,6 +655,7 @@ async function startAutoRefresh() {
 
         const data = await res.json();
 
+<<<<<<< HEAD
         const interval = data.interval || 15;
 
         console.log("AUTO REFRESH RUNNING:", interval);
@@ -668,6 +681,10 @@ async function startAutoRefresh() {
             isFetching = false;
 
         }, interval * 1000);
+=======
+        document.getElementById("interval").value =
+            data.interval;
+>>>>>>> f986732 (fixed vps background market worker)
 
     } catch(e) {
 
@@ -676,6 +693,7 @@ async function startAutoRefresh() {
     }
 }
 
+<<<<<<< HEAD
 window.addEventListener("load", async () => {
 
     await loadInterval();
@@ -685,6 +703,30 @@ window.addEventListener("load", async () => {
     await fetchData();
 
     startAutoRefresh();
+=======
+// INITIAL LOAD
+// INITIAL LOAD
+// AUTO REFRESH TIMER
+
+
+function getISTTime() {
+
+    return new Date(
+        new Date().toLocaleString(
+            "en-US",
+            { timeZone: "Asia/Kolkata" }
+        )
+    );
+
+}
+
+
+window.addEventListener("load", async () => {
+
+    await loadInterval();
+
+    await loadLiveData();
+>>>>>>> f986732 (fixed vps background market worker)
 
 });
 </script>
