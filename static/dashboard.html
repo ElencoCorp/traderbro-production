@@ -797,7 +797,7 @@
     let refreshTimer = null;
 
     function loadData() {
-      fetch('/api/live-data')
+      fetch('/api/get-running')
         .then(r => r.json())
         .then(d => {
           let rawRows = d.rows || [];
