@@ -566,6 +566,16 @@ async function loadInterval() {
 // AUTO REFRESH TIMER
 let autoRefreshTimer = null;
 
+    function getISTTime() {
+
+    return new Date(
+        getISTTime().toLocaleString(
+            "en-US",
+            { timeZone: "Asia/Kolkata" }
+        )
+    );
+}
+
 async function startAutoRefresh() {
 
     if (autoRefreshTimer) {
@@ -582,7 +592,12 @@ async function startAutoRefresh() {
 
         autoRefreshTimer = setInterval(async () => {
 
-            const now = new Date();
+            const now = new Date(
+                getISTTime().toLocaleString(
+                    "en-US",
+                    { timeZone: "Asia/Kolkata" }
+                )
+            );
 
             const currentMinutes =
                 now.getHours() * 60 + now.getMinutes();
@@ -627,7 +642,12 @@ loadInterval();
 
 loadLiveData();
 
-const now = new Date();
+const now = new Date(
+    getISTTime().toLocaleString(
+        "en-US",
+        { timeZone: "Asia/Kolkata" }
+    )
+);
 
 const currentMinutes =
     now.getHours() * 60 + now.getMinutes();
