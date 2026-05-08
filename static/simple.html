@@ -553,15 +553,39 @@ async function loadLiveData() {
 
         const data = await res.json();
 
+        if (!data.rows) return;
+
         const tbody = document.getElementById("tbl");
 
-        tbody.innerHTML = "";
+        // ONLY FIRST LOAD
+        if (records.length === 0) {
 
-        records = data.rows || [];
+            tbody.innerHTML = "";
 
-        records.forEach((r, idx) => {
-            appendRow(r, idx);
-        });
+            records = data.rows;
+
+            records.forEach((r, idx) => {
+                appendRow(r, idx);
+            });
+
+            return;
+        }
+
+        // APPEND ONLY NEW ROWS
+        if (data.rows.length > records.length) {
+
+            const newRows =
+                data.rows.slice(records.length);
+
+            newRows.forEach((r) => {
+
+                records.push(r);
+
+                appendRow(r, records.length - 1);
+
+            });
+
+        }
 
     } catch (e) {
 
@@ -591,7 +615,7 @@ async function loadInterval() {
 // INITIAL LOAD
 // INITIAL LOAD
 // AUTO REFRESH TIMER
-let autoRefreshTimer = null;
+
 
 function getISTTime() {
 
@@ -603,6 +627,9 @@ function getISTTime() {
     );
 
 }
+
+let autoRefreshTimer = null;
+let isFetching = false;
 
 async function startAutoRefresh() {
 
@@ -617,29 +644,49 @@ async function startAutoRefresh() {
         const data = await res.json();
 
         const interval = data.interval || 15;
+
+        console.log("AUTO REFRESH RUNNING:", interval);
+
         autoRefreshTimer = setInterval(async () => {
 
-            await fetchData();
+            if (isFetching) return;
 
-            await loadLiveData();
+            isFetching = true;
+
+            console.log("FETCHING NEW VALUES");
+
+            try {
+
+                await fetchData();
+
+            } catch(e) {
+
+                console.log(e);
+
+            }
+
+            isFetching = false;
 
         }, interval * 1000);
 
-    } catch (e) {
+    } catch(e) {
 
         console.log(e);
 
     }
 }
 
-// INITIAL LOAD
-loadInterval();
+window.addEventListener("load", async () => {
 
-fetchData();
+    await loadInterval();
 
-loadLiveData();
+    await loadLiveData();
 
-startAutoRefresh();
+    await fetchData();
+
+    startAutoRefresh();
+
+});
 </script>
 
 
