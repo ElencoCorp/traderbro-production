@@ -14,6 +14,8 @@ import math
 import sqlite3
 from passlib.context import CryptContext
 from dotenv import load_dotenv
+import pytz
+IST = pytz.timezone("Asia/Kolkata")
 load_dotenv()
 CONFIG_FILE = "config.json"
 import json
@@ -174,7 +176,7 @@ def auto_market_recorder():
 
     global AUTO_RUNNING
 
-    now = datetime.now()
+    now = datetime.now(IST)
 
     hour = now.hour
     minute = now.minute
@@ -320,7 +322,7 @@ def load_login_template(role="admin", error=False):
     )
 
     html = html.replace(
-        'type="email" class="form-control" value="hello@example.com"',
+        'type="email" class="form-control" value="hello@example.com?"',
         'type="text" name="username" class="form-control" placeholder="Enter Username"'
     )
 
@@ -969,16 +971,38 @@ def build_df_from_oc(ltp, oc, expiry, dt_label):
 
 CACHE_SECONDS = 15  # minimum gap between real API calls
 
+# def is_market_open():
+
+#     now = datetime.now()
+
+#     current_minutes = (
+#         now.hour * 60
+#     ) + now.minute
+
+#     start_minutes = (9 * 60) + 16
+#     end_minutes   = (24 * 60)
+
+#     return (
+#         current_minutes >= start_minutes
+#         and
+#         current_minutes <= end_minutes
+#     )
+
+from datetime import datetime
+import pytz
+
+IST = pytz.timezone("Asia/Kolkata")
+
 def is_market_open():
 
-    now = datetime.now()
+    now = datetime.now(IST)
 
     current_minutes = (
         now.hour * 60
     ) + now.minute
 
     start_minutes = (9 * 60) + 16
-    end_minutes   = (24 * 60)
+    end_minutes   = (12 * 60)
 
     return (
         current_minutes >= start_minutes
@@ -1001,7 +1025,7 @@ def get_live_chain(expiry):
 
         return (0, pd.DataFrame(), None)
 
-    now = datetime.now()
+    now = datetime.now(IST)
     cached = LAST_DATA.get("data")
     cached_time = LAST_DATA.get("time")
 
@@ -1556,7 +1580,7 @@ def get_running():
 
     c = conn.cursor()
 
-    now = datetime.now()
+    now = datetime.now(IST)
 
     # TODAY 8:30 AM
     today_830 = now.replace(
