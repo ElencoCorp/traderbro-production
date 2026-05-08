@@ -14,8 +14,6 @@ import math
 import sqlite3
 from passlib.context import CryptContext
 from dotenv import load_dotenv
-import pytz
-IST = pytz.timezone("Asia/Kolkata")
 load_dotenv()
 CONFIG_FILE = "config.json"
 import json
@@ -176,7 +174,7 @@ def auto_market_recorder():
 
     global AUTO_RUNNING
 
-    now = datetime.now(IST)
+    now = datetime.now()
 
     hour = now.hour
     minute = now.minute
@@ -322,7 +320,7 @@ def load_login_template(role="admin", error=False):
     )
 
     html = html.replace(
-        'type="email" class="form-control" value="hello@example.com?"',
+        'type="email" class="form-control" value="hello@example.com"',
         'type="text" name="username" class="form-control" placeholder="Enter Username"'
     )
 
@@ -971,38 +969,16 @@ def build_df_from_oc(ltp, oc, expiry, dt_label):
 
 CACHE_SECONDS = 15  # minimum gap between real API calls
 
-# def is_market_open():
-
-#     now = datetime.now()
-
-#     current_minutes = (
-#         now.hour * 60
-#     ) + now.minute
-
-#     start_minutes = (9 * 60) + 16
-#     end_minutes   = (24 * 60)
-
-#     return (
-#         current_minutes >= start_minutes
-#         and
-#         current_minutes <= end_minutes
-#     )
-
-from datetime import datetime
-import pytz
-
-IST = pytz.timezone("Asia/Kolkata")
-
 def is_market_open():
 
-    now = datetime.now(IST)
+    now = datetime.now()
 
     current_minutes = (
         now.hour * 60
     ) + now.minute
 
     start_minutes = (9 * 60) + 16
-    end_minutes   = (12 * 60)
+    end_minutes   = (24 * 60)
 
     return (
         current_minutes >= start_minutes
@@ -1025,7 +1001,7 @@ def get_live_chain(expiry):
 
         return (0, pd.DataFrame(), None)
 
-    now = datetime.now(IST)
+    now = datetime.now()
     cached = LAST_DATA.get("data")
     cached_time = LAST_DATA.get("time")
 
@@ -1149,14 +1125,14 @@ def restart_market_job():
     except:
         pass
 
-    scheduler.add_job(
-        auto_market_recorder,
-        "interval",
-        seconds=max(get_interval(), 5),
-        id="market_auto_job",
-        replace_existing=True
-    )
-restart_market_job()
+    # scheduler.add_job(
+    #     auto_market_recorder,
+    #     "interval",
+    #     seconds=max(get_interval(), 5),
+    #     id="market_auto_job",
+    #     replace_existing=True
+    # )
+# restart_market_job()
 
             
 
@@ -1302,22 +1278,30 @@ def api_expiries():
 
 
 @app.get("/api/live-data")
-def api_live_data():
-    global LIVE_RUNNING_RECORDS
+def live_data():
 
-    # Load from file first
-    if os.path.exists(RUNNING_FILE):
-        try:
+    try:
+
+        if os.path.exists(RUNNING_FILE):
+
             with open(RUNNING_FILE, "r") as f:
-                LIVE_RUNNING_RECORDS = json.load(f)
-        except:
-            LIVE_RUNNING_RECORDS = []
 
-    rows = LIVE_RUNNING_RECORDS[-51:]
+                rows = json.load(f)
 
-    return JSONResponse({
-        "rows": rows
-    })
+                return {
+                    "rows": rows[-100:]
+                }
+
+        return {
+            "rows": []
+        }
+
+    except Exception as e:
+
+        return {
+            "rows": [],
+            "error": str(e)
+        }
 
 # ═══════════════════════════════════════════════════════════════════════
 # API — FULL CHAIN (all columns, all rows) — used by admin AJAX refresh
@@ -1326,12 +1310,12 @@ def api_live_data():
 @app.get("/api/full-chain")
 def api_full_chain(expiry: str = ""):
         # MARKET CLOSED
-    if not is_market_open():
+    # if not is_market_open():
 
-        return JSONResponse({
-            "market_closed": True,
-            "message": "Values are visible only during market hours (9:16 AM to 12:00 PM)"
-        })
+    #     return JSONResponse({
+    #         "market_closed": True,
+    #         "message": "Values are visible only during market hours (9:16 AM to 12:00 PM)"
+    #     })
     """Return all 21 rows with every column for the admin table AJAX refresh."""
     if not expiry:
         expiries = get_expiries()
@@ -1508,113 +1492,47 @@ def user_download(filename: str):
     return JSONResponse({"error": "File not found"}, status_code=404)
 
 @app.post("/api/save-running")
-async def save_running(data: dict):
+async def save_running(request: Request):
 
-    conn = sqlite3.connect("traderbro.db")
-    c = conn.cursor()
+    try:
 
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS running_data (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        data = await request.json()
 
-            datetime TEXT,
-            expiry TEXT,
+        rows = []
 
-            ce_ltp REAL,
-            ce_delta REAL,
-            ce_gamma REAL,
-            ce_theta REAL,
-            ce_vega REAL,
+        if os.path.exists(RUNNING_FILE):
 
-            strike REAL,
+            with open(RUNNING_FILE, "r") as f:
 
-            pe_ltp REAL,
-            pe_delta REAL,
-            pe_gamma REAL,
-            pe_theta REAL,
-            pe_vega REAL,
+                rows = json.load(f)
 
-            delta_ratio REAL,
-            index_ltp REAL,
+        # PREVENT DUPLICATE TIMESTAMP
+        if len(rows) > 0:
 
-            reference REAL,
-            stretched REAL,
-            difference REAL,
+            last = rows[-1]
 
-            diff_prev REAL,
-            running REAL
-        )
-    """)
+            if last["datetime"] == data["datetime"]:
+                return {"success": True}
 
-    c.execute("""
-        INSERT INTO running_data (
+        rows.append(data)
 
-            datetime,
-            expiry,
+        # LIMIT
+        rows = rows[-500:]
 
-            ce_ltp,
-            ce_delta,
-            ce_gamma,
-            ce_theta,
-            ce_vega,
+        with open(RUNNING_FILE, "w") as f:
 
-            strike,
+            json.dump(rows, f)
 
-            pe_ltp,
-            pe_delta,
-            pe_gamma,
-            pe_theta,
-            pe_vega,
+        return {
+            "success": True
+        }
 
-            delta_ratio,
-            index_ltp,
+    except Exception as e:
 
-            reference,
-            stretched,
-            difference,
-
-            diff_prev,
-            running
-
-        )
-
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-
-    """, (
-
-        data.get("datetime"),
-        data.get("expiry"),
-
-        data.get("ce_ltp"),
-        data.get("ce_delta"),
-        data.get("ce_gamma"),
-        data.get("ce_theta"),
-        data.get("ce_vega"),
-
-        data.get("strike"),
-
-        data.get("pe_ltp"),
-        data.get("pe_delta"),
-        data.get("pe_gamma"),
-        data.get("pe_theta"),
-        data.get("pe_vega"),
-
-        data.get("delta_ratio"),
-        data.get("index_ltp"),
-
-        data.get("reference"),
-        data.get("stretched"),
-        data.get("difference"),
-
-        data.get("diff_prev"),
-        data.get("running")
-
-    ))
-
-    conn.commit()
-    conn.close()
-
-    return {"success": True}
+        return JSONResponse({
+            "success": False,
+            "error": str(e)
+        }, status_code=500)
 
 
 from datetime import datetime, timedelta
@@ -1656,29 +1574,30 @@ def get_subscription_start_date():
     return start_date
 
 @app.get("/api/get-running")
-async def get_running():
+def get_running():
 
-    conn = sqlite3.connect("traderbro.db")
-    conn.row_factory = sqlite3.Row
+    try:
 
-    c = conn.cursor()
+        if os.path.exists(RUNNING_FILE):
 
-    c.execute("""
-        SELECT *
-        FROM running_data
-        ORDER BY id DESC
-        LIMIT 200
-    """)
+            with open(RUNNING_FILE, "r") as f:
 
-    rows = [dict(r) for r in c.fetchall()]
+                rows = json.load(f)
 
-    conn.close()
+                return {
+                    "rows": rows[-500:]
+                }
 
-    rows.reverse()
+        return {
+            "rows": []
+        }
 
-    return {
-        "rows": rows
-    }
+    except Exception as e:
+
+        return {
+            "rows": [],
+            "error": str(e)
+        }
 
 
 @app.post("/api/clear-running")
