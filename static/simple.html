@@ -414,7 +414,7 @@ async function fetchData() {
 
         document.getElementById("loading").style.display = "none";
 
-        const row = {
+       const row = {
 
             datetime: data.datetime,
             expiry: data.expiry || "-",
@@ -439,11 +439,35 @@ async function fetchData() {
             reference: data.reference || 0,
             stretched: data.stretched || 0,
 
-            difference: data.difference || 0,
+            difference: Number(data.difference || 0),
 
-            diff_prev: data.diff_prev || 0,
-            running: data.running || 0
+            diff_prev: 0,
+            running: 0
         };
+
+        // PREVIOUS RECORD CALCULATION
+        if (records.length > 0) {
+
+            let prev = records[records.length - 1];
+
+            // CURRENT - PREVIOUS DIFFERENCE
+            row.diff_prev =
+                Number(
+                    (
+                        row.difference -
+                        Number(prev.difference || 0)
+                    ).toFixed(2)
+                );
+
+            // CUMULATIVE RUNNING
+            row.running =
+                Number(
+                    (
+                        Number(prev.running || 0) +
+                        row.diff_prev
+                    ).toFixed(2)
+                );
+        }
 
         await fetch("/api/save-running", {
 
