@@ -590,39 +590,11 @@ async function startAutoRefresh() {
         const data = await res.json();
 
         const interval = data.interval || 15;
-
         autoRefreshTimer = setInterval(async () => {
 
-            const now = getISTTime();
+            await fetchData();
 
-            const currentMinutes =
-                now.getHours() * 60 + now.getMinutes();
-
-            // 9:16 AM
-            const startMinutes = 9 * 60 + 16;
-
-            // 12:00 PM
-            const endMinutes = 12 * 60;
-
-            // ONLY DURING MARKET HOURS
-            if (
-                currentMinutes >= startMinutes &&
-                currentMinutes <= endMinutes
-            ) {
-
-                fetchData();
-
-            } else {
-
-                document.getElementById("loading").style.display =
-                    "block";
-
-                document.getElementById("loading").innerHTML =
-                    "⏰ Values are generated from 9:16 AM to 12:00 PM and remain visible till 8:30 AM next trading day.";
-            }
-
-            // ALWAYS LOAD SAVED ROWS
-            loadLiveData();
+            await loadLiveData();
 
         }, interval * 1000);
 
@@ -636,28 +608,9 @@ async function startAutoRefresh() {
 // INITIAL LOAD
 loadInterval();
 
+fetchData();
+
 loadLiveData();
-
-const now = getISTTime();
-
-const currentMinutes =
-    now.getHours() * 60 + now.getMinutes();
-
-const startMinutes = 9 * 60 + 16;
-const endMinutes   = 12 * 60;
-
-if (
-    currentMinutes >= startMinutes &&
-    currentMinutes <= endMinutes
-) {
-
-    fetchData();
-
-} else {
-
-    document.getElementById("loading").innerHTML =
-        "⏰ Values are generated from 9:16 AM to 12:00 PM and remain visible till 8:30 AM next trading day."
-}
 
 startAutoRefresh();
 </script>
