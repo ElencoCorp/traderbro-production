@@ -403,14 +403,13 @@ async function fetchData() {
             !data.pe_ltp
         ) {
 
-        document.getElementById("loading").innerHTML =
-            "⏰ Values are generated from 9:16 AM to 12:00 PM and remain visible till 8:30 AM next trading day.";
+            document.getElementById("loading").innerHTML =
+                "⏰ Values are generated from 9:16 AM to 12:00 PM and remain visible till 8:30 AM next trading day.";
+
             return;
         }
 
         document.getElementById("loading").style.display = "none";
-        const currentDifference =
-            parseFloat(data.difference || 0);
 
         const row = {
 
@@ -437,31 +436,12 @@ async function fetchData() {
             reference: data.reference || 0,
             stretched: data.stretched || 0,
 
-            difference: currentDifference,
+            difference: data.difference || 0,
 
-            diff_prev: 0,
-            running: 0
+            diff_prev: data.diff_prev || 0,
+            running: data.running || 0
         };
 
-        // PREVIOUS ROW CALCULATION
-        if (records.length > 0) {
-
-            const prev = records[records.length - 1];
-
-            const diffPrev =
-                currentDifference - prev.difference;
-
-            row.diff_prev = diffPrev;
-
-            row.running =
-                prev.running + diffPrev;
-        }
-
-        records.push(row);
-
-        appendRow(row, records.length - 1);
-
-        // SAVE TO VPS
         await fetch("/api/save-running", {
 
             method: "POST",
@@ -473,6 +453,8 @@ async function fetchData() {
             body: JSON.stringify(row)
 
         });
+
+        await loadLiveData();
 
     } catch (e) {
 
