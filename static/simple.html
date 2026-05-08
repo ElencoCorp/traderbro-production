@@ -399,9 +399,12 @@ async function fetchData() {
 
         if (
             data.error ||
-            !data.ce_ltp ||
-            !data.pe_ltp
-        ) {
+            data.ce_ltp === null ||
+            data.ce_ltp === undefined ||
+            data.pe_ltp === null ||
+            data.pe_ltp === undefined
+        )
+        {
 
             document.getElementById("loading").innerHTML =
                 "⏰ Values are generated from 9:16 AM to 12:00 PM and remain visible till 8:30 AM next trading day.";
