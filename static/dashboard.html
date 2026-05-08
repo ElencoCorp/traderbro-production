@@ -884,7 +884,7 @@
             (rv > 0 ? "atm-run-pos" : rv < 0 ? "atm-run-neg" : "atm-run-zero");
 
           // All rows except tail → show in scrollable list
-          const displayRows = rows.slice(0, rows.length - 1);
+          const displayRows = [...rows].reverse();
           let html = "";
           displayRows.forEach(r => {
             const val = parseFloat(r.running || 0);
@@ -998,7 +998,7 @@
     drawGauge();
     updateGauge(0);
     loadDownloads();
-    startAutoRefresh(3000);
+    startAutoRefresh(15000);
     setInterval(loadDownloads, 30000);
   </script>
 
