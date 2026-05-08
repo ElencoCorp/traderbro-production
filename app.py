@@ -1508,30 +1508,113 @@ def user_download(filename: str):
     return JSONResponse({"error": "File not found"}, status_code=404)
 
 @app.post("/api/save-running")
-async def save_running(req: Request):
-    global LIVE_RUNNING_RECORDS
+async def save_running(data: dict):
 
-    data = await req.json()
-    ts = data.get("datetime")
+    conn = sqlite3.connect("traderbro.db")
+    c = conn.cursor()
 
-    found = False
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS running_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-    for i in range(len(LIVE_RUNNING_RECORDS)):
-        if LIVE_RUNNING_RECORDS[i].get("datetime") == ts:
-            LIVE_RUNNING_RECORDS[i] = data
-            found = True
-            break
+            datetime TEXT,
+            expiry TEXT,
 
-    if not found:
-        LIVE_RUNNING_RECORDS.append(data)
+            ce_ltp REAL,
+            ce_delta REAL,
+            ce_gamma REAL,
+            ce_theta REAL,
+            ce_vega REAL,
 
-    LIVE_RUNNING_RECORDS = LIVE_RUNNING_RECORDS[-500:]
+            strike REAL,
 
-    # Save to file
-    with open(RUNNING_FILE, "w") as f:
-        json.dump(LIVE_RUNNING_RECORDS, f)
+            pe_ltp REAL,
+            pe_delta REAL,
+            pe_gamma REAL,
+            pe_theta REAL,
+            pe_vega REAL,
 
-    return JSONResponse({"status": "ok"})
+            delta_ratio REAL,
+            index_ltp REAL,
+
+            reference REAL,
+            stretched REAL,
+            difference REAL,
+
+            diff_prev REAL,
+            running REAL
+        )
+    """)
+
+    c.execute("""
+        INSERT INTO running_data (
+
+            datetime,
+            expiry,
+
+            ce_ltp,
+            ce_delta,
+            ce_gamma,
+            ce_theta,
+            ce_vega,
+
+            strike,
+
+            pe_ltp,
+            pe_delta,
+            pe_gamma,
+            pe_theta,
+            pe_vega,
+
+            delta_ratio,
+            index_ltp,
+
+            reference,
+            stretched,
+            difference,
+
+            diff_prev,
+            running
+
+        )
+
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+
+    """, (
+
+        data.get("datetime"),
+        data.get("expiry"),
+
+        data.get("ce_ltp"),
+        data.get("ce_delta"),
+        data.get("ce_gamma"),
+        data.get("ce_theta"),
+        data.get("ce_vega"),
+
+        data.get("strike"),
+
+        data.get("pe_ltp"),
+        data.get("pe_delta"),
+        data.get("pe_gamma"),
+        data.get("pe_theta"),
+        data.get("pe_vega"),
+
+        data.get("delta_ratio"),
+        data.get("index_ltp"),
+
+        data.get("reference"),
+        data.get("stretched"),
+        data.get("difference"),
+
+        data.get("diff_prev"),
+        data.get("running")
+
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return {"success": True}
 
 
 from datetime import datetime, timedelta
@@ -1573,53 +1656,25 @@ def get_subscription_start_date():
     return start_date
 
 @app.get("/api/get-running")
-def get_running():
+async def get_running():
 
-    conn = sqlite3.connect(DB_FILE)
+    conn = sqlite3.connect("traderbro.db")
     conn.row_factory = sqlite3.Row
 
     c = conn.cursor()
 
-    now = datetime.now(IST)
-
-    # TODAY 8:30 AM
-    today_830 = now.replace(
-        hour=8,
-        minute=30,
-        second=0,
-        microsecond=0
-    )
-
-    # BEFORE 8:30 AM
-    # SHOW PREVIOUS DAY DATA
-
-    if now < today_830:
-
-        target_date = (
-            now - timedelta(days=1)
-        ).strftime("%Y-%m-%d")
-
-    else:
-
-        target_date = now.strftime("%Y-%m-%d")
-
     c.execute("""
-
         SELECT *
         FROM running_data
+        ORDER BY id DESC
+        LIMIT 200
+    """)
 
-        WHERE datetime LIKE ?
-
-        ORDER BY id ASC
-
-    """, (f"{target_date}%",))
-
-    rows = [
-        dict(row)
-        for row in c.fetchall()
-    ]
+    rows = [dict(r) for r in c.fetchall()]
 
     conn.close()
+
+    rows.reverse()
 
     return {
         "rows": rows
