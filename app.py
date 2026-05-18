@@ -1,22 +1,27 @@
 from fastapi import FastAPI, Request, UploadFile, File, Form
-from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
+from fastapi.responses import (
+    HTMLResponse,
+    FileResponse,
+    JSONResponse,
+    RedirectResponse
+)
 from fastapi.staticfiles import StaticFiles
 from apscheduler.schedulers.background import BackgroundScheduler
 import requests
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import csv, os, shutil, glob, json
-from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.middleware.sessions import SessionMiddleware
-import os
 import math
 import sqlite3
+import pytz
+IST = pytz.timezone("Asia/Kolkata")
 from passlib.context import CryptContext
 from dotenv import load_dotenv
+from fastapi import HTTPException
+from dhan_token_manager import init_token_manager, router as token_router
 load_dotenv()
 CONFIG_FILE = "config.json"
-import json
 
 def get_interval():
 
@@ -71,6 +76,18 @@ def init_db():
     )
     """)
 
+    """
+    c.execute(\"\"\"
+    CREATE TABLE IF NOT EXISTS broadcasts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        message TEXT NOT NULL,
+        sender TEXT DEFAULT 'admin',
+        timestamp TEXT NOT NULL,
+        pinned INTEGER DEFAULT 0
+    )
+    \"\"\")
+    """
+
     # Create default admin if not exists
     c.execute("SELECT * FROM users WHERE username='admin'")
     if not c.fetchone():
@@ -116,6 +133,7 @@ LAST_DATA = {
         "rows": []
     }
 }
+LAST_FETCH_TIME = None
 LIVE_RUNNING_RECORDS = []
 RUNNING_FILE = "live_running.json"
 LOGIN_ATTEMPTS = {}
@@ -136,10 +154,15 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # ── Upload storage folder ────────────────────────────────────────────────
 UPLOADS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploaded_csvs")
+EXCEL_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "excel_exports"
+)
 os.makedirs(UPLOADS_DIR, exist_ok=True)
+os.makedirs(EXCEL_DIR, exist_ok=True)
 
 # CLIENT_ID  = "1100585975"
-# ACCESS_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzc4MjIxNzMxLCJpYXQiOjE3NzgxMzUzMzEsInRva2VuQ29uc3VtZXJUeXBlIjoiU0VMRiIsIndlYmhvb2tVcmwiOiIiLCJkaGFuQ2xpZW50SWQiOiIxMTAwNTg1OTc1In0.o96GqSjFN2Q7kYzzFnzN80KFZk7ju6xDOu9xy1jPQTKDqfi9gEu0AKGLiiJo_niknfMixKMQX3-7yVdOxlkRCg"
+# ACCESS_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzc4NTIwMjExLCJpYXQiOjE3Nzg0MzM4MTEsInRva2VuQ29uc3VtZXJUeXBlIjoiU0VMRiIsIndlYmhvb2tVcmwiOiIiLCJkaGFuQ2xpZW50SWQiOiIxMTAwNTg1OTc1In0.B3PZw1MYo0V33yv2O_nQMaOu6_ISoggjscSpYjhJcgfUPrs1vYt26uI8S3XZxlRG1BswvBKjZzNfjzNnJ74Jwg"
 ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 CLIENT_ID  = os.getenv("CLIENT_ID")
 BASE_URL   = "https://api.dhan.co/v2"
@@ -170,45 +193,34 @@ scheduler.start()
 # VPS AUTO RECORDER
 AUTO_RUNNING = False
 
-def auto_market_recorder():
+# Remove these two globals (no longer needed):
+# LAST_FETCH_TIME = None   ← delete this line at the top
 
+def auto_market_recorder():
     global AUTO_RUNNING
 
-    now = datetime.now()
-
+    now = datetime.now(IST)
     hour = now.hour
     minute = now.minute
 
-    current = (hour * 60) + minute
-
-    start_time = (9 * 60) + 16
-    end_time = (15 * 60) + 30
-
-    # START
-    if start_time <= current <= end_time:
-
+    # if True:  # keep your market hours check here if needed
+    if is_market_open():
         if not AUTO_RUNNING:
-
             print("🚀 MARKET RECORDER STARTED")
-
             AUTO_RUNNING = True
 
         try:
-
             expiry_list = get_expiries()
-
             if not expiry_list:
                 return
 
             expiry = expiry_list[0]
-
-            ltp, df, atm = get_live_chain(expiry)
+            ltp, df, atm = get_live_chain(expiry, force_live=True)  # ← force_live=True
 
             if df.empty or atm is None:
                 return
 
             atm_row = df[df["Strike"] == atm]
-
             if atm_row.empty:
                 return
 
@@ -217,7 +229,6 @@ def auto_market_recorder():
             global LIVE_RUNNING_RECORDS
 
             current_diff = r["Difference"]
-
             if current_diff is None:
                 current_diff = 0
 
@@ -241,25 +252,25 @@ def auto_market_recorder():
                 "stretched": r["Stretched"],
                 "difference": current_diff,
                 "diff_prev": 0,
-                "running": 0
+                "running": LIVE_RUNNING_RECORDS[-1]["running"] if LIVE_RUNNING_RECORDS else 0
             }
 
-            # PREVIOUS ROW LOGIC
             if len(LIVE_RUNNING_RECORDS) > 0:
-
                 prev = LIVE_RUNNING_RECORDS[-1]
-
                 prev_diff = current_diff - prev["difference"]
-
                 prev["diff_prev"] = round(prev_diff, 2)
+                prev["running"] = round(prev.get("running", 0) + prev_diff, 2)
+                row["running"] = prev["running"]
 
-                prev["running"] = round(
-                    prev.get("running", 0) + prev_diff,
-                    2
-                )
+            # DUPLICATE TIMESTAMP PROTECTION
+            if len(LIVE_RUNNING_RECORDS) > 0:
+                last = LIVE_RUNNING_RECORDS[-1]
+                if (last["datetime"] == row["datetime"] and
+                        last["difference"] == row["difference"]):
+                    print("⚠️ DUPLICATE ROW SKIPPED")
+                    return
 
             LIVE_RUNNING_RECORDS.append(row)
-
             LIVE_RUNNING_RECORDS = LIVE_RUNNING_RECORDS[-500:]
 
             with open(RUNNING_FILE, "w") as f:
@@ -269,12 +280,9 @@ def auto_market_recorder():
 
         except Exception as e:
             print("AUTO RECORDER ERROR:", e)
-
     else:
-
         if AUTO_RUNNING:
             print("⛔ MARKET RECORDER STOPPED")
-
         AUTO_RUNNING = False
 
 # login
@@ -342,11 +350,61 @@ def load_login_template(role="admin", error=False):
 
     return html
 
+# @app.get("/api/me")
+# def get_current_user(request: Request):
+
+#     if "user" not in request.session:
+#         return {"username": None}
+
+#     conn = sqlite3.connect(DB_FILE)
+#     c = conn.cursor()
+
+#     c.execute("""
+#         SELECT username, email, phone, plan, plan_start, plan_expiry
+#         FROM users
+#         WHERE username=?
+#     """, (request.session["user"],))
+
+#     user = c.fetchone()
+
+#     conn.close()
+
+#     if user:
+#         return {
+#             "username": user[0],
+#             "email": user[1],
+#             "phone": user[2],
+#             "plan": user[3],
+#             "plan_start": user[4],
+#             "plan_expiry": user[5]
+#         }
+
+#     return {"username": None}
+
+
 @app.get("/api/me")
 def get_current_user(request: Request):
 
-    if "user" not in request.session:
-        return {"username": None}
+    username = None
+    role = "user"
+
+    # USER SESSION
+    if "user" in request.session:
+        username = request.session["user"]
+        role = request.session.get("role", "user")
+
+    # ADMIN SESSION
+    elif "admin" in request.session:
+        username = request.session["admin"]
+        role = "admin"
+
+    # NO SESSION
+    else:
+        return {
+            "username": None,
+            "role": None,
+            "is_admin": False
+        }
 
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
@@ -355,7 +413,7 @@ def get_current_user(request: Request):
         SELECT username, email, phone, plan, plan_start, plan_expiry
         FROM users
         WHERE username=?
-    """, (request.session["user"],))
+    """, (username,))
 
     user = c.fetchone()
 
@@ -368,10 +426,170 @@ def get_current_user(request: Request):
             "phone": user[2],
             "plan": user[3],
             "plan_start": user[4],
-            "plan_expiry": user[5]
+            "plan_expiry": user[5],
+            "role": role,
+            "is_admin": role == "admin"
         }
 
-    return {"username": None}
+    return {
+        "username": None,
+        "role": None,
+        "is_admin": False
+    }
+
+@app.post("/api/trigger-eod-save")
+def trigger_eod_save(request: Request):
+    username = request.session.get("user") or request.session.get("admin")
+    if not username:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    # Allow any logged-in user to trigger — saves only once (idempotent by date)
+    try:
+        save_daily_excel()
+        return JSONResponse({"success": True})
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+
+@app.post("/api/trigger-eod-save")
+def trigger_eod_save(request: Request):
+    """
+    Any logged-in user can call this right after market close (3:30 PM IST).
+    Saves today's Excel and makes it available in the downloads list.
+    Safe to call multiple times — openpyxl overwrites the same dated file.
+    """
+    username = request.session.get("user") or request.session.get("admin")
+    if not username:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    try:
+        save_daily_excel()
+        return JSONResponse({
+            "success": True,
+            "message": "EOD Excel saved.",
+            "time": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
+        })
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+# ── GET broadcast messages (all logged-in users can read) ───────────────
+@app.get("/api/broadcast")
+def get_broadcasts(request: Request):
+    username = request.session.get("user") or request.session.get("admin")
+    if not username:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+ 
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    
+    # Create table if it doesn't exist yet
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS broadcasts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        message TEXT NOT NULL,
+        sender TEXT DEFAULT 'admin',
+        timestamp TEXT NOT NULL,
+        pinned INTEGER DEFAULT 0
+    )
+    """)
+    
+    c.execute("""
+        SELECT id, message, sender, timestamp, pinned
+        FROM broadcasts
+        ORDER BY pinned DESC, id DESC
+        LIMIT 50
+    """)
+    rows = c.fetchall()
+    conn.close()
+ 
+    return JSONResponse({
+        "messages": [
+            {
+                "id": r[0],
+                "message": r[1],
+                "sender": r[2],
+                "timestamp": r[3],
+                "pinned": bool(r[4])
+            }
+            for r in rows
+        ],
+        "is_admin": request.session.get("role") == "admin"
+    })
+ 
+ 
+# ── POST broadcast message (admin only) ────────────────────────────────
+@app.post("/api/admin/broadcast")
+async def post_broadcast(request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+ 
+    data = await request.json()
+    message = data.get("message", "").strip()
+    pinned = int(data.get("pinned", 0))
+ 
+    if not message:
+        return JSONResponse({"error": "Message cannot be empty"}, status_code=400)
+ 
+    timestamp = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
+ 
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+ 
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS broadcasts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        message TEXT NOT NULL,
+        sender TEXT DEFAULT 'admin',
+        timestamp TEXT NOT NULL,
+        pinned INTEGER DEFAULT 0
+    )
+    """)
+ 
+    c.execute("""
+        INSERT INTO broadcasts (message, sender, timestamp, pinned)
+        VALUES (?, ?, ?, ?)
+    """, (message, "admin", timestamp, pinned))
+ 
+    conn.commit()
+    new_id = c.lastrowid
+    conn.close()
+ 
+    return JSONResponse({
+        "success": True,
+        "id": new_id,
+        "timestamp": timestamp
+    })
+ 
+ 
+# ── DELETE broadcast message (admin only) ──────────────────────────────
+@app.delete("/api/admin/broadcast/{msg_id}")
+def delete_broadcast(msg_id: int, request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+ 
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("DELETE FROM broadcasts WHERE id=?", (msg_id,))
+    conn.commit()
+    conn.close()
+ 
+    return JSONResponse({"success": True})
+ 
+ 
+# ── PIN/UNPIN broadcast message (admin only) ───────────────────────────
+@app.patch("/api/admin/broadcast/{msg_id}/pin")
+async def pin_broadcast(msg_id: int, request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+ 
+    data = await request.json()
+    pinned = int(data.get("pinned", 1))
+ 
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("UPDATE broadcasts SET pinned=? WHERE id=?", (pinned, msg_id))
+    conn.commit()
+    conn.close()
+ 
+    return JSONResponse({"success": True})
 
 
 
@@ -438,10 +656,11 @@ async def admin_login(
 
     if admin and verify_password(password, admin[3]):
 
+        request.session.clear()
         request.session["admin"] = username
         request.session["role"] = "admin"
 
-        return RedirectResponse(url="/admin", status_code=303)
+        return RedirectResponse(url="/", status_code=303)
 
     return HTMLResponse(load_login_template("admin", True))
 
@@ -513,9 +732,10 @@ async def login(request: Request):
 
     # SUCCESS LOGIN
     request.session["user"] = user[0]
+    request.session["role"] = "user"
 
     return RedirectResponse(
-        url="/dashboard",
+        url="/",
         status_code=303
     )
 
@@ -611,11 +831,18 @@ def dashboard_page(request: Request):
         return RedirectResponse("/trading-plan")
 
     # EXPIRY CHECK
+    # EXPIRY CHECK
     if expiry:
 
         expiry_date = datetime.fromisoformat(expiry)
 
-        if datetime.now() > expiry_date:
+        # Make both timezone-aware
+        if expiry_date.tzinfo is None:
+            expiry_date = expiry_date.replace(tzinfo=timezone.utc)
+
+        current_time = datetime.now(timezone.utc)
+
+        if current_time > expiry_date:
             return RedirectResponse("/trading-plan")
 
     path = os.path.join(STATIC_DIR, "dashboard.html")
@@ -661,9 +888,6 @@ async def activate_plan(request: Request):
 
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-
-    from datetime import datetime, timedelta
-
     plan_days = {
         "basic": 1,
         "essential": 5,
@@ -967,67 +1191,105 @@ def build_df_from_oc(ltp, oc, expiry, dt_label):
 
     return df, atm_strike
 
-CACHE_SECONDS = 15  # minimum gap between real API calls
+# CACHE_SECONDS = 15
+
+# def is_market_open():
+
+#     now = datetime.now()
+
+#     current_minutes = (
+#         now.hour * 60
+#     ) + now.minute
+
+#     start_minutes = (9 * 60) + 16
+#     end_minutes   = (15 * 60) + 30
+
+#     return (
+#         current_minutes >= start_minutes
+#         and
+#         current_minutes <= end_minutes
+#     )
+
+# def is_market_open():
+#     return True
 
 def is_market_open():
 
-    now = datetime.now()
+    now = datetime.now(IST)
 
-    current_minutes = (
-        now.hour * 60
-    ) + now.minute
+    current_seconds = (
+        now.hour * 3600
+    ) + (
+        now.minute * 60
+    ) + now.second
 
-    start_minutes = (9 * 60) + 16
-    end_minutes   = (15 * 60) + 30
+    # TEST WINDOW
+    start_seconds = (9 * 3600) + (16 * 60) + 0
+    end_seconds   = (12 * 3600) + (00 * 60) + 0
 
     return (
-        current_minutes >= start_minutes
+        current_seconds >= start_seconds
         and
-        current_minutes <= end_minutes
+        current_seconds <= end_seconds
     )
 
 
-def get_live_chain(expiry):
-    print("🔥 FETCHING NEW DATA FROM API")
+def get_live_chain(expiry, force_live=False):
+
     global LAST_DATA
 
-    # MARKET CLOSED
-    if not is_market_open():
+    now = datetime.now(IST)
 
-        cached = LAST_DATA.get("data")
+    current_interval = get_interval()
 
-        if cached:
-            return cached
-
-        return (0, pd.DataFrame(), None)
-
-    now = datetime.now()
     cached = LAST_DATA.get("data")
     cached_time = LAST_DATA.get("time")
 
-    # Return cached data if it's fresh enough
-    if cached and cached_time:
-        if (now - cached_time).total_seconds() < 2:
+    # USE CACHE
+    if (
+        cached is not None
+        and cached_time is not None
+        and not force_live
+    ):
+
+        elapsed = (
+            now - cached_time
+        ).total_seconds()
+
+        if elapsed < current_interval:
+
+            print("⚡ USING CACHED DATA")
+
             return cached
 
     try:
-        ltp, oc  = fetch_live_option_chain(expiry)
+
+        print("🔥 FETCHING NEW DATA FROM API")
+
+        ltp, oc = fetch_live_option_chain(expiry)
+
         dt_label = now.strftime("%Y-%m-%d %H:%M:%S")
-        df, atm  = build_df_from_oc(ltp, oc, expiry, dt_label)
+
+        df, atm = build_df_from_oc(
+            ltp,
+            oc,
+            expiry,
+            dt_label
+        )
 
         LAST_DATA["time"] = now
         LAST_DATA["data"] = (ltp, df, atm)
 
-        return ltp, df, atm
+        return (ltp, df, atm)
 
     except Exception as e:
-        print("🔥 FULL ERROR:", str(e))
-        import traceback
-        traceback.print_exc()
 
-        # Return stale cache rather than empty on rate-limit error
+        print("🔥 FULL ERROR:", str(e))
+
         if cached:
-            print("⚠️ Returning stale cached data due to error")
+
+            print("⚠️ RETURNING OLD CACHE")
+
             return cached
 
         return (0, pd.DataFrame(), None)
@@ -1118,41 +1380,111 @@ def _reschedule(secs):
 
 
 def restart_market_job():
-
     try:
         scheduler.remove_job("market_auto_job")
-
     except:
         pass
 
-    # scheduler.add_job(
-    #     auto_market_recorder,
-    #     "interval",
-    #     seconds=max(get_interval(), 5),
-    #     id="market_auto_job",
-    #     replace_existing=True
-    # )
-# restart_market_job()
+    interval = get_interval()
+
     scheduler.add_job(
         auto_market_recorder,
         "interval",
-        seconds=max(get_interval(), 5),
+        seconds=interval,
         id="market_auto_job",
-        replace_existing=True
+        replace_existing=True,
+        max_instances=1,        # ← ADD THIS: prevents overlapping runs
+        coalesce=True           # ← ADD THIS: skip queued-up missed runs
     )
+    print(f"✅ VPS MARKET WORKER STARTED ({interval}s interval)")
 
-    print("✅ VPS MARKET WORKER STARTED")
 
-restart_market_job()    
+restart_market_job() 
 
-# Interval
-@app.get("/api/get-interval")
-def api_get_interval():
+app.include_router(token_router)
+init_token_manager(app, scheduler, HEADERS)
 
-    return {
-        "interval": get_interval()
-    }
+def daily_cleanup():
+    """Runs every day at 8:30 AM IST — clears live running data before market opens."""
+    global LIVE_RUNNING_RECORDS
+    
+    now = datetime.now(IST)
+    print(f"🧹 DAILY CLEANUP TRIGGERED at {now.strftime('%Y-%m-%d %H:%M:%S')} IST")
+    
+    LIVE_RUNNING_RECORDS = []
+    
+    if os.path.exists(RUNNING_FILE):
+        os.remove(RUNNING_FILE)
+        print("✅ live_running.json cleared for new session")
 
+
+# ── RELOAD EXISTING DATA ON STARTUP ─────────────────────────────────────
+# Add this right after the LIVE_RUNNING_RECORDS = [] global declaration at the top
+
+def load_existing_records():
+    global LIVE_RUNNING_RECORDS
+    if os.path.exists(RUNNING_FILE):
+        try:
+            with open(RUNNING_FILE, "r") as f:
+                LIVE_RUNNING_RECORDS = json.load(f)
+            print(f"✅ Reloaded {len(LIVE_RUNNING_RECORDS)} records from {RUNNING_FILE}")
+        except Exception as e:
+            print(f"⚠️ Could not reload records: {e}")
+            LIVE_RUNNING_RECORDS = []
+
+load_existing_records()  # Call this once at startup
+
+
+def daily_cleanup():
+    """
+    Runs at 8:30 AM IST daily.
+    Safety check: only clears if time is between 8:00 AM and 9:00 AM IST.
+    This prevents accidental wipes during market hours.
+    """
+    global LIVE_RUNNING_RECORDS
+
+    now = datetime.now(IST)
+    hour = now.hour
+    minute = now.minute
+
+    # SAFETY GUARD: only allow cleanup between 8:00 AM and 9:10 AM IST
+    if not (8 <= hour < 9 or (hour == 9 and minute < 10)):
+        print(f"⛔ CLEANUP BLOCKED — unsafe time: {now.strftime('%H:%M:%S')} IST")
+        return
+
+    print(f"🧹 DAILY CLEANUP at {now.strftime('%Y-%m-%d %H:%M:%S')} IST")
+
+    LIVE_RUNNING_RECORDS = []
+
+    if os.path.exists(RUNNING_FILE):
+        os.remove(RUNNING_FILE)
+        print("✅ live_running.json cleared for new session")
+    else:
+        print("ℹ️ No file to clear")
+
+
+def schedule_daily_cleanup():
+    try:
+        scheduler.remove_job("daily_cleanup_job")
+    except:
+        pass
+
+    scheduler.add_job(
+        daily_cleanup,
+        "cron",
+        hour=8,
+        minute=30,
+        second=0,
+        timezone=IST,
+        id="daily_cleanup_job",
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True
+    )
+    print("✅ DAILY CLEANUP SCHEDULED at 8:30 AM IST")
+
+
+schedule_daily_cleanup()
 
 @app.post("/api/set-interval")
 async def api_set_interval(request: Request):
@@ -1179,6 +1511,92 @@ async def api_set_interval(request: Request):
         "success": True,
         "interval": interval
     }
+
+@app.get("/admin/token-manager", response_class=HTMLResponse)
+def token_manager_page(request: Request):
+    if request.session.get("role") != "admin":
+        return RedirectResponse("/admin-login", status_code=302)
+    path = os.path.join(STATIC_DIR, "token_manager.html")
+    with open(path, "r", encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+
+# ═══════════════════════════════════════════════════════════════════════
+# ACTIVE USER TRACKING (heartbeat-based, in-memory)
+# ═══════════════════════════════════════════════════════════════════════
+import time as _time
+
+ACTIVE_USERS: dict = {}   # { session_key: {"username": str, "page": str, "ts": float} }
+ACTIVE_TIMEOUT = 35       # seconds — if no heartbeat in 35s, user is gone
+
+
+@app.post("/api/heartbeat")
+async def heartbeat(request: Request):
+    """
+    Called every 20 s by every open dashboard/simple page.
+    Identifies the session and records the active page.
+    """
+    username = request.session.get("user") or request.session.get("admin")
+    if not username:
+        return JSONResponse({"ok": False}, status_code=401)
+
+    data = await request.json()
+    page = data.get("page", "unknown")   # e.g. "dashboard", "simple", "admin"
+
+    # Use a stable key: username + page so the same user on two tabs counts once per page
+    session_key = f"{username}::{page}"
+
+    ACTIVE_USERS[session_key] = {
+        "username": username,
+        "page": page,
+        "ts": _time.time(),
+        "is_admin": request.session.get("role") == "admin",
+    }
+
+    return JSONResponse({"ok": True})
+
+
+@app.get("/api/active-users")
+def active_users(request: Request):
+    """
+    Returns the count (and list for admin) of currently active users.
+    Any logged-in user can call this.
+    """
+    username = request.session.get("user") or request.session.get("admin")
+    if not username:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    now = _time.time()
+    # Purge stale entries
+    stale = [k for k, v in ACTIVE_USERS.items() if now - v["ts"] > ACTIVE_TIMEOUT]
+    for k in stale:
+        del ACTIVE_USERS[k]
+
+    is_admin = request.session.get("role") == "admin"
+
+    # Count unique users on dashboard page only (non-admin)
+    dashboard_users = {
+        v["username"] for k, v in ACTIVE_USERS.items()
+        if v["page"] == "dashboard" and not v["is_admin"]
+    }
+    total = len(dashboard_users)
+
+    # For admin: also return the full breakdown
+    detail = None
+    if is_admin:
+        detail = {}
+        for v in ACTIVE_USERS.values():
+            u = v["username"]
+            if u not in detail:
+                detail[u] = {"username": u, "pages": [], "is_admin": v["is_admin"]}
+            if v["page"] not in detail[u]["pages"]:
+                detail[u]["pages"].append(v["page"])
+        detail = list(detail.values())
+
+    return JSONResponse({
+        "total": total,          # unique non-admin users on /dashboard
+        "detail": detail,        # None for non-admins
+        "is_admin": is_admin,
+    })
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -1226,25 +1644,25 @@ def recorder_status():
     })
 
 
-@app.get("/download/csv")
-def download_csv():
-    if os.path.exists(CSV_FILE):
-        return FileResponse(CSV_FILE, media_type="text/csv", filename="sensex_atm_history.csv")
-    return JSONResponse({"error": "No CSV yet."})
+# @app.get("/download/csv")
+# def download_csv():
+#     if os.path.exists(CSV_FILE):
+#         return FileResponse(CSV_FILE, media_type="text/csv", filename="sensex_atm_history.csv")
+#     return JSONResponse({"error": "No CSV yet."})
 
-@app.get("/api/downloads")
-def api_downloads():
-    files = sorted(glob.glob(os.path.join(UPLOADS_DIR, "*.csv")), reverse=True)
+# @app.get("/api/downloads")
+# def api_downloads():
+#     files = sorted(glob.glob(os.path.join(UPLOADS_DIR, "*.csv")), reverse=True)
 
-    result = []
-    for f in files:
-        name = os.path.basename(f)
+#     result = []
+#     for f in files:
+#         name = os.path.basename(f)
 
-        result.append({
-            "name": name,
-            "url": f"/user/download-csv/{name}",
-            "date": name.replace(".csv", "")
-        })
+#         result.append({
+#             "name": name,
+#             "url": f"/user/download-csv/{name}",
+#             "date": name.replace(".csv", "")
+#         })
 
     return JSONResponse(result)
 
@@ -1259,9 +1677,9 @@ def clear_csv():
 @app.get("/simple", response_class=HTMLResponse)
 def simple_page(request: Request):
 
-    # 🔐 Require login
-    if "user" not in request.session:
-        return RedirectResponse("/user-login")
+    # 🔐 Allow BOTH user and admin
+    if "user" not in request.session and "admin" not in request.session:
+        return RedirectResponse("/user-login", status_code=302)
 
     path = os.path.join(STATIC_DIR, "simple.html")
 
@@ -1317,7 +1735,7 @@ def live_data():
 # ═══════════════════════════════════════════════════════════════════════
 
 @app.get("/api/full-chain")
-def api_full_chain(expiry: str = ""):
+def api_full_chain(request: Request, expiry: str = ""):
         # MARKET CLOSED
     # if not is_market_open():
 
@@ -1332,8 +1750,12 @@ def api_full_chain(expiry: str = ""):
     if not expiry:
         return JSONResponse({"error": "No expiry available"})
 
-    ltp, df, atm = get_live_chain(expiry)
 
+    force_live = request.query_params.get("live") == "1"
+    ltp, df, atm = get_live_chain(
+        expiry,
+        force_live=force_live
+    )
     if df.empty:
         return JSONResponse({"error": "No data", "ltp": ltp})
 
@@ -1406,9 +1828,6 @@ def api_simple_data(expiry: str = ""):
             })
 
         ltp, df, atm = get_live_chain(expiry)
-        print(df.head())
-        print("ATM =", atm)
-        print("LTP =", ltp)
 
         if df.empty or atm is None:
             return JSONResponse({
@@ -1423,6 +1842,14 @@ def api_simple_data(expiry: str = ""):
             })
 
         r = atm_row.iloc[0]
+        last_dt = LAST_DATA.get("last_sent_dt")
+
+        if last_dt == str(r["DateTime"]):
+            return JSONResponse({
+                "cached": True
+            })
+
+        LAST_DATA["last_sent_dt"] = str(r["DateTime"])
 
         return JSONResponse({
 
@@ -1493,13 +1920,6 @@ def api_simple_data(expiry: str = ""):
 #     ])
 
 
-@app.get("/user/download-csv/{filename}")
-def user_download(filename: str):
-    p = os.path.join(UPLOADS_DIR, filename)
-    if os.path.exists(p):
-        return FileResponse(p, media_type="text/csv", filename=filename)
-    return JSONResponse({"error": "File not found"}, status_code=404)
-
 @app.post("/api/save-running")
 async def save_running(request: Request):
 
@@ -1520,7 +1940,11 @@ async def save_running(request: Request):
 
             last = rows[-1]
 
-            if last["datetime"] == data["datetime"]:
+            if (
+                last["datetime"] == data["datetime"]
+                and
+                last["difference"] == data["difference"]
+            ):
                 return {"success": True}
 
         rows.append(data)
@@ -1543,9 +1967,6 @@ async def save_running(request: Request):
             "error": str(e)
         }, status_code=500)
 
-
-from datetime import datetime, timedelta
-import pytz
 
 IST = pytz.timezone("Asia/Kolkata")
 
@@ -1607,6 +2028,17 @@ def get_running():
             "rows": [],
             "error": str(e)
         }
+
+@app.get("/api/test-market")
+def test_market():
+
+    now = datetime.now(IST)
+
+    return {
+        "time": now.strftime("%H:%M:%S"),
+        "market_open": is_market_open(),
+        "interval": get_interval()
+    }
 
 
 @app.post("/api/clear-running")
@@ -1670,6 +2102,21 @@ def trading_plan_page(request: Request):
     with open(path, "r", encoding="utf-8") as f:
         return HTMLResponse(f.read())
 
+        # Contact Us page
+@app.get("/contact-us", response_class=HTMLResponse)
+def contact_page():
+
+    path = os.path.join(
+        STATIC_DIR,
+        "finlab",
+        "Frontend",
+        "xhtml",
+        "contact-us.html"
+    )
+
+    with open(path, "r", encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+
 # Page-Register Page
 @app.get("/register", response_class=HTMLResponse)
 def register_page():
@@ -1677,6 +2124,60 @@ def register_page():
 
     with open(path, "r", encoding="utf-8") as f:
         return HTMLResponse(f.read())
+
+@app.get("/terms-and-conditions")
+async def terms_page():
+    return FileResponse(
+        "static/finlab/Frontend/xhtml/terms-and-conditions.html"
+    )
+
+@app.get("/privacy-policy")
+async def privacy_page():
+    return FileResponse(
+        "static/finlab/Frontend/xhtml/privacy-policy.html"
+    )
+
+@app.get("/disclaimer")
+async def privacy_page():
+    return FileResponse(
+        "static/finlab/Frontend/xhtml/disclaimer.html"
+    )
+@app.get("/refund-policy")
+async def privacy_page():
+    return FileResponse(
+        "static/finlab/Frontend/xhtml/refund-policy.html"
+    )
+
+@app.post("/api/trigger-cleanup")
+def trigger_cleanup(request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    global LIVE_RUNNING_RECORDS
+    LIVE_RUNNING_RECORDS = []
+    
+    if os.path.exists(RUNNING_FILE):
+        os.remove(RUNNING_FILE)
+    
+    return JSONResponse({
+        "status": "cleared",
+        "message": "Data cleared manually by admin",
+        "time": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+@app.post("/api/trigger-eod-save")
+def trigger_eod_save(request: Request):
+    username = request.session.get("user") or request.session.get("admin")
+    if not username:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    try:
+        save_daily_excel()
+        return JSONResponse({
+            "success": True,
+            "time": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
+        })
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -1716,3 +2217,623 @@ def _single_csv_row_html(r, ltp_disp):
       <td>{g('Reference')}</td><td>{g('Stretched')}</td><td>{g('Difference')}</td>
      
     </tr>"""
+
+
+    # ═══════════════════════════════════════════════════════════════════════
+# ADD THESE IMPORTS at the top of your existing app.py
+# ═══════════════════════════════════════════════════════════════════════
+# from openpyxl import Workbook
+# from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, GradientFill
+# from openpyxl.utils import get_column_letter
+# import glob
+
+# ═══════════════════════════════════════════════════════════════════════
+# ADD THIS DIRECTORY CONSTANT (alongside your existing UPLOADS_DIR)
+# ═══════════════════════════════════════════════════════════════════════
+# EXCEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "excel_exports")
+# os.makedirs(EXCEL_DIR, exist_ok=True)
+
+# ═══════════════════════════════════════════════════════════════════════
+# PASTE ALL CODE BELOW INTO app.py
+# ═══════════════════════════════════════════════════════════════════════
+
+from openpyxl import Workbook
+from openpyxl.styles import (
+    Font, PatternFill, Alignment, Border, Side, GradientFill
+)
+from openpyxl.utils import get_column_letter
+import glob
+
+EXCEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "excel_exports")
+os.makedirs(EXCEL_DIR, exist_ok=True)
+
+
+# ── HELPER: get user plan from DB ───────────────────────────────────────
+def get_user_plan(username: str):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute(
+        "SELECT plan, plan_expiry FROM users WHERE username=?",
+        (username,)
+    )
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        return None, None
+    return row[0], row[1]
+
+
+def is_plan_active(plan: str, expiry_str: str) -> bool:
+    """Return True if the plan is pro/premium and not expired."""
+    if not plan or plan not in ("pro", "premium"):
+        return False
+    if expiry_str:
+        expiry = datetime.fromisoformat(expiry_str)
+        if expiry.tzinfo is None:
+            expiry = expiry.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > expiry:
+            return False
+    return True
+
+
+# ── SAVE DAILY EXCEL ────────────────────────────────────────────────────
+def save_daily_excel():
+    """
+    Save today's LIVE_RUNNING_RECORDS to a dated .xlsx in EXCEL_DIR.
+    Called by the scheduler at 15:31 IST, and also via the admin API trigger.
+    """
+    global LIVE_RUNNING_RECORDS
+ 
+    try:
+        records = list(LIVE_RUNNING_RECORDS)  # snapshot
+ 
+        if not records:
+            print("⚠️ save_daily_excel: no records to save.")
+            return
+ 
+        now      = datetime.now(IST)
+        date_str = now.strftime("%Y-%m-%d")
+        day_name = now.strftime("%A")
+        dest     = os.path.join(EXCEL_DIR, f"{date_str}.xlsx")
+ 
+        wb = Workbook()
+        ws = wb.active
+        ws.title = date_str
+ 
+        # ── Colour palette ──────────────────────────────────────────
+        HDR_FILL   = PatternFill("solid", fgColor="090915")
+        TITLE_FILL = PatternFill("solid", fgColor="EB4201")
+        ODD_FILL   = PatternFill("solid", fgColor="0A0A18")
+        EVEN_FILL  = PatternFill("solid", fgColor="13132A")
+        POS_FILL   = PatternFill("solid", fgColor="00291F")
+        NEG_FILL   = PatternFill("solid", fgColor="2D0010")
+ 
+        WHITE    = Font(name="Arial", color="FFFFFF", bold=True,  size=11)
+        BLUE_F   = Font(name="Arial", color="02A3FE", bold=True,  size=10)
+        GREEN_F  = Font(name="Arial", color="00D4AA", bold=True,  size=10)
+        RED_F    = Font(name="Arial", color="FF4D6D", bold=True,  size=10)
+        NORMAL_F = Font(name="Arial", color="E8EAF0", size=10)
+        ORANGE_F = Font(name="Arial", color="FF6B35", size=10)
+        GOLD_F   = Font(name="Arial", color="F5A623", bold=True,  size=12)
+ 
+        thin  = Side(style="thin",   color="1A1A35")
+        thick = Side(style="medium", color="02A3FE")
+ 
+        def thin_border():
+            return Border(left=thin, right=thin, top=thin, bottom=thin)
+ 
+        center = Alignment(horizontal="center", vertical="center")
+ 
+        # ── Column headers ───────────────────────────────────────────
+        headers = [
+            "DateTime", "Expiry", "Strike", "Index LTP",
+            "CE LTP", "CE Delta", "CE Gamma", "CE Theta", "CE Vega",
+            "PE LTP", "PE Delta", "PE Gamma", "PE Theta", "PE Vega",
+            "Delta Ratio", "Reference", "Stretched", "Difference",
+            "Diff Prev", "Running"
+        ]
+        num_cols = len(headers)  # 20
+ 
+        # ── Row 1: Title ─────────────────────────────────────────────
+        ws.merge_cells(f"A1:{get_column_letter(num_cols)}1")
+        ws["A1"] = f"TraderBro — Black-Box-Engine  |  {date_str}  ({day_name})"
+        ws["A1"].font      = Font(name="Arial", color="FFFFFF", bold=True, size=14)
+        ws["A1"].fill      = TITLE_FILL
+        ws["A1"].alignment = center
+        ws.row_dimensions[1].height = 28
+ 
+        # ── Row 2: Sub-title ─────────────────────────────────────────
+        ws.merge_cells(f"A2:{get_column_letter(num_cols)}2")
+        ws["A2"] = "Market Session: 09:16 AM → 03:30 PM IST  |  traderbro.in"
+        ws["A2"].font      = Font(name="Arial", color="E8EAF0", size=10, italic=True)
+        ws["A2"].fill      = HDR_FILL
+        ws["A2"].alignment = center
+        ws.row_dimensions[2].height = 18
+ 
+        # Row 3: blank gap
+        ws.row_dimensions[3].height = 6
+ 
+        # ── Row 4: Column headers ────────────────────────────────────
+        for col_idx, hdr in enumerate(headers, start=1):
+            cell = ws.cell(row=4, column=col_idx, value=hdr)
+            cell.font      = Font(name="Arial", color="02A3FE", bold=True, size=10)
+            cell.fill      = HDR_FILL
+            cell.alignment = center
+            cell.border    = Border(
+                left=thin, right=thin,
+                top=Side(style="medium", color="02A3FE"),
+                bottom=Side(style="medium", color="02A3FE")
+            )
+        ws.row_dimensions[4].height = 22
+ 
+        # ── Column widths ─────────────────────────────────────────────
+        col_widths = [22, 13, 9, 12,
+                      9, 10, 10, 11, 9,
+                      9, 10, 10, 11, 9,
+                      12, 11, 12, 11,
+                      10, 10]
+        for i, w in enumerate(col_widths, start=1):
+            ws.column_dimensions[get_column_letter(i)].width = w
+ 
+        # ── Data rows ────────────────────────────────────────────────
+        def safe_num(v):
+            try:
+                if v is None or v == '':
+                    return None
+                f = float(v)
+                import math as _math
+                if _math.isnan(f) or _math.isinf(f):
+                    return None
+                return f
+            except:
+                return None
+ 
+        for row_idx, r in enumerate(records, start=5):
+            running_val = safe_num(r.get("running"))  or 0.0
+            diff_val    = safe_num(r.get("difference")) or 0.0
+ 
+            row_fill = POS_FILL if running_val > 0 else (NEG_FILL if running_val < 0 else ODD_FILL if row_idx % 2 == 1 else EVEN_FILL)
+            run_font = GREEN_F  if running_val > 0 else (RED_F if running_val < 0 else NORMAL_F)
+            dif_font = GREEN_F  if diff_val    > 0 else (RED_F if diff_val    < 0 else NORMAL_F)
+ 
+            values = [
+                r.get("datetime",    ""),
+                r.get("expiry",      ""),
+                r.get("strike",      ""),
+                safe_num(r.get("index_ltp")),
+                safe_num(r.get("ce_ltp")),
+                safe_num(r.get("ce_delta")),
+                safe_num(r.get("ce_gamma")),
+                safe_num(r.get("ce_theta")),
+                safe_num(r.get("ce_vega")),
+                safe_num(r.get("pe_ltp")),
+                safe_num(r.get("pe_delta")),
+                safe_num(r.get("pe_gamma")),
+                safe_num(r.get("pe_theta")),
+                safe_num(r.get("pe_vega")),
+                safe_num(r.get("delta_ratio")),
+                safe_num(r.get("reference")),
+                safe_num(r.get("stretched")),
+                diff_val,
+                round(safe_num(r.get("diff_prev")) or 0.0, 2),
+                round(running_val, 2),
+            ]
+ 
+            for col_idx, val in enumerate(values, start=1):
+                cell = ws.cell(row=row_idx, column=col_idx, value=val)
+                cell.fill      = row_fill
+                cell.alignment = center
+                cell.border    = thin_border()
+ 
+                if   col_idx == 1:   cell.font = ORANGE_F              # DateTime
+                elif col_idx == 3:   cell.font = Font(name="Arial", color="02A3FE", bold=True, size=10)  # Strike
+                elif col_idx == 18:  cell.font = dif_font              # Difference
+                elif col_idx == 20:  cell.font = run_font              # Running
+                else:                cell.font = NORMAL_F
+ 
+            ws.row_dimensions[row_idx].height = 16
+ 
+        # ── Summary row ───────────────────────────────────────────────
+        last_row     = 4 + len(records) + 1
+        total_running = round(records[-1].get("running", 0) if records else 0, 2)
+        ws.merge_cells(f"A{last_row}:{get_column_letter(num_cols // 2)}{last_row}")
+        ws[f"A{last_row}"] = f"Final Running Value: {'+' if total_running > 0 else ''}{total_running}"
+        fill_col = "00291F" if total_running > 0 else ("2D0010" if total_running < 0 else "1A1A35")
+        txt_col  = "00D4AA" if total_running > 0 else ("FF4D6D" if total_running < 0 else "F5A623")
+        ws[f"A{last_row}"].font      = Font(name="Arial", color=txt_col, bold=True, size=12)
+        ws[f"A{last_row}"].fill      = PatternFill("solid", fgColor=fill_col)
+        ws[f"A{last_row}"].alignment = center
+        ws.row_dimensions[last_row].height = 24
+ 
+        # ── Freeze panes ──────────────────────────────────────────────
+        ws.freeze_panes = "A5"
+ 
+        wb.save(dest)
+        print(f"✅ Daily Excel saved: {dest}  ({len(records)} rows)")
+ 
+    except Exception as e:
+        print(f"❌ save_daily_excel ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+
+# ── SCHEDULE DAILY EXCEL SAVE ────────────────────────────────────────────
+def schedule_daily_excel_save():
+    try:
+        scheduler.remove_job("daily_excel_save")
+    except Exception:
+        pass
+
+    scheduler.add_job(
+        save_daily_excel,
+        "cron",
+        hour=12,
+        minute=1,
+        second=0,
+        timezone=IST,
+        id="daily_excel_save",
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+    )
+    print("✅ DAILY EXCEL EXPORT SCHEDULED at 3:31 PM IST")
+
+
+schedule_daily_excel_save()
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# API — LIST AVAILABLE EXCEL FILES (visible to ALL logged-in users)
+# ═══════════════════════════════════════════════════════════════════════
+@app.get("/api/downloads")
+def api_downloads(request: Request):
+
+    username = request.session.get("user") or request.session.get("admin")
+
+    if not username:
+        return JSONResponse({
+            "error": "Unauthorized"
+        }, status_code=401)
+
+    plan, expiry = get_user_plan(username)
+
+    can_dl = is_plan_active(plan, expiry)
+
+    files = sorted(
+        glob.glob(os.path.join(EXCEL_DIR, "*.xlsx")),
+        reverse=True
+    )
+
+    result = []
+
+    for f in files:
+
+        name = os.path.basename(f)
+
+        date_part = name.replace(".xlsx", "")
+
+        try:
+
+            dt = datetime.strptime(date_part, "%Y-%m-%d")
+
+            display = dt.strftime("%d %b %Y — %A")
+
+        except:
+
+            display = date_part
+
+        result.append({
+            "name": name,
+            "display_date": display,
+            "url": f"/api/download-excel/{name}",
+            "can_download": can_dl,
+            "plan": plan or "free"
+        })
+
+    return JSONResponse({
+        "plan": plan or "free",
+        "files": result
+    })
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# API — SECURE EXCEL DOWNLOAD (pro/premium only, server-side check)
+# ═══════════════════════════════════════════════════════════════════════
+@app.get("/api/download-excel/{filename}")
+def download_excel(filename: str, request: Request):
+    """
+    Serves the .xlsx file ONLY if:
+      1. User is logged in
+      2. User has an active pro or premium plan
+    Otherwise returns 403.
+    """
+    # ── Auth ──
+    username = request.session.get("user") or request.session.get("admin")
+    if not username:
+        raise HTTPException(status_code=401, detail="Please login first.")
+
+    # ── Plan check ──
+    plan, expiry = get_user_plan(username)
+
+    # Admin bypass
+    if request.session.get("role") == "admin":
+        pass  # admin can always download
+    elif not is_plan_active(plan, expiry):
+        raise HTTPException(
+            status_code=403,
+            detail="Upgrade to Pro or Premium plan to download historical data."
+        )
+
+    # ── Sanitise filename (no path traversal) ──
+    safe_name = os.path.basename(filename)
+    if not safe_name.endswith(".xlsx") or "/" in safe_name or "\\" in safe_name:
+        raise HTTPException(status_code=400, detail="Invalid filename.")
+
+    filepath = os.path.join(EXCEL_DIR, safe_name)
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="File not found.")
+
+    return FileResponse(
+        filepath,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        filename=safe_name,
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# ADMIN — MANUAL TRIGGER: save today's Excel right now (for testing)
+# ═══════════════════════════════════════════════════════════════════════
+@app.post("/api/admin/trigger-excel-save")
+def admin_trigger_excel(request: Request):
+    if request.session.get("role") != "admin":
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        save_daily_excel()
+        return JSONResponse({"success": True, "message": "Excel saved."})
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+# ═══════════════════════════════════════════════════════════════════════
+# USER MANAGEMENT APIs  — paste this block into app.py
+# Add these routes after your existing admin routes
+# ═══════════════════════════════════════════════════════════════════════
+
+# ── SERVE the user management page ──────────────────────────────────────
+@app.get("/admin/users", response_class=HTMLResponse)
+def admin_users_page(request: Request):
+    if request.session.get("role") != "admin":
+        return RedirectResponse("/admin-login", status_code=302)
+    path = os.path.join(STATIC_DIR, "admin-users.html")
+    with open(path, "r", encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+
+
+# ── LIST ALL USERS (admin only) ──────────────────────────────────────────
+@app.get("/api/admin/users")
+def api_admin_list_users(request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("""
+        SELECT id, username, email, phone, role, plan,
+               plan_start, plan_expiry, consent
+        FROM users
+        ORDER BY id DESC
+    """)
+    rows = c.fetchall()
+    conn.close()
+
+    users = []
+    for r in rows:
+        users.append({
+            "id":          r[0],
+            "username":    r[1],
+            "email":       r[2],
+            "phone":       r[3] or "",
+            "role":        r[4] or "user",
+            "plan":        r[5] or "free",
+            "plan_start":  r[6] or "",
+            "plan_expiry": r[7] or "",
+            "consent":     bool(r[8]),
+        })
+
+    return JSONResponse({"users": users, "total": len(users)})
+
+
+# ── CREATE USER (admin only) ─────────────────────────────────────────────
+@app.post("/api/admin/user/create")
+async def api_admin_create_user(request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    data = await request.json()
+    username = (data.get("username") or "").strip()
+    email    = (data.get("email")    or "").strip()
+    phone    = (data.get("phone")    or "").strip()
+    role     = (data.get("role")     or "user").strip()
+    password = (data.get("password") or "").strip()
+
+    if not username or not email:
+        return JSONResponse({"success": False, "error": "Username and email are required"})
+    if not password:
+        return JSONResponse({"success": False, "error": "Password is required for new users"})
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    # Uniqueness checks
+    c.execute("SELECT id FROM users WHERE username=?", (username,))
+    if c.fetchone():
+        conn.close()
+        return JSONResponse({"success": False, "error": "Username already taken"})
+    c.execute("SELECT id FROM users WHERE email=?", (email,))
+    if c.fetchone():
+        conn.close()
+        return JSONResponse({"success": False, "error": "Email already registered"})
+
+    hashed_pw = hash_password(password)
+    c.execute("""
+        INSERT INTO users (username, email, password, phone, role, consent, plan)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (username, email, hashed_pw, phone, role, True, "free"))
+    conn.commit()
+    new_id = c.lastrowid
+    conn.close()
+
+    return JSONResponse({"success": True, "id": new_id})
+
+
+# ── UPDATE USER (admin only) ─────────────────────────────────────────────
+@app.post("/api/admin/user/update")
+async def api_admin_update_user(request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    data = await request.json()
+    user_id  = data.get("id")
+    username = (data.get("username") or "").strip()
+    email    = (data.get("email")    or "").strip()
+    phone    = (data.get("phone")    or "").strip()
+    role     = (data.get("role")     or "user").strip()
+    password = (data.get("password") or "").strip()
+
+    if not user_id or not username or not email:
+        return JSONResponse({"success": False, "error": "Missing required fields"})
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    # Conflict check (excluding current user)
+    c.execute("SELECT id FROM users WHERE username=? AND id!=?", (username, user_id))
+    if c.fetchone():
+        conn.close()
+        return JSONResponse({"success": False, "error": "Username already taken"})
+    c.execute("SELECT id FROM users WHERE email=? AND id!=?", (email, user_id))
+    if c.fetchone():
+        conn.close()
+        return JSONResponse({"success": False, "error": "Email already registered"})
+
+    if password:
+        hashed_pw = hash_password(password)
+        c.execute("""
+            UPDATE users SET username=?, email=?, phone=?, role=?, password=?
+            WHERE id=?
+        """, (username, email, phone, role, hashed_pw, user_id))
+    else:
+        c.execute("""
+            UPDATE users SET username=?, email=?, phone=?, role=?
+            WHERE id=?
+        """, (username, email, phone, role, user_id))
+
+    conn.commit()
+    conn.close()
+    return JSONResponse({"success": True})
+
+
+# ── ASSIGN / CHANGE PLAN (admin only) ───────────────────────────────────
+@app.post("/api/admin/user/assign-plan")
+async def api_admin_assign_plan(request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    data    = await request.json()
+    user_id = data.get("user_id")
+    plan    = (data.get("plan") or "free").strip().lower()
+    custom_expiry = data.get("custom_expiry")   # ISO string or None
+    note    = data.get("note", "")              # payment reference (stored nowhere yet – extend DB if needed)
+
+    if not user_id:
+        return JSONResponse({"success": False, "error": "user_id required"})
+
+    PLAN_DAYS = {
+        "basic":     1,
+        "essential": 5,
+        "pro":       22,
+        "premium":   250,
+    }
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    if plan == "free":
+        # Remove subscription
+        c.execute("""
+            UPDATE users SET plan='free', plan_start=NULL, plan_expiry=NULL
+            WHERE id=?
+        """, (user_id,))
+        conn.commit()
+        conn.close()
+        return JSONResponse({"success": True})
+
+    # Compute start & expiry
+    if custom_expiry:
+        # Admin provided explicit expiry
+        try:
+            expiry_dt = datetime.fromisoformat(custom_expiry)
+            if expiry_dt.tzinfo is None:
+                expiry_dt = expiry_dt.replace(tzinfo=timezone.utc)
+        except Exception:
+            conn.close()
+            return JSONResponse({"success": False, "error": "Invalid custom_expiry format"})
+        start_dt = datetime.now(IST)
+    else:
+        # Calculate trading-day-aware expiry
+        start_dt = datetime.now(IST)
+        days = PLAN_DAYS.get(plan, 30)
+        expiry_dt = start_dt
+        added = 0
+        while added < days:
+            expiry_dt += timedelta(days=1)
+            if expiry_dt.weekday() < 5:   # Mon–Fri only
+                added += 1
+        expiry_dt = expiry_dt.replace(hour=15, minute=30, second=0, microsecond=0)
+
+    c.execute("""
+        UPDATE users
+        SET plan=?, plan_start=?, plan_expiry=?
+        WHERE id=?
+    """, (plan, start_dt.isoformat(), expiry_dt.isoformat(), user_id))
+    conn.commit()
+    conn.close()
+
+    return JSONResponse({
+        "success":     True,
+        "plan":        plan,
+        "plan_start":  start_dt.isoformat(),
+        "plan_expiry": expiry_dt.isoformat(),
+    })
+
+
+# ── DELETE USER (admin only) ─────────────────────────────────────────────
+@app.post("/api/admin/user/delete")
+async def api_admin_delete_user(request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    data    = await request.json()
+    user_id = data.get("user_id")
+
+    if not user_id:
+        return JSONResponse({"success": False, "error": "user_id required"})
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    # Safety: never delete the last admin
+    c.execute("SELECT role FROM users WHERE id=?", (user_id,))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        return JSONResponse({"success": False, "error": "User not found"})
+    if row[0] == "admin":
+        c.execute("SELECT COUNT(*) FROM users WHERE role='admin'")
+        count = c.fetchone()[0]
+        if count <= 1:
+            conn.close()
+            return JSONResponse({"success": False, "error": "Cannot delete the last admin account"})
+
+    c.execute("DELETE FROM users WHERE id=?", (user_id,))
+    conn.commit()
+    conn.close()
+    return JSONResponse({"success": True})
