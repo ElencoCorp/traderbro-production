@@ -777,36 +777,6 @@
       color: var(--red);
     }
 
-    .today-dl-btn {
-      width: 100%;
-      padding: 9px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all .2s;
-      margin-bottom: 10px;
-      flex-shrink: 0;
-    }
-
-    .today-dl-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 18px rgba(2, 163, 254, .4);
-    }
-
-    .today-dl-btn:disabled {
-      opacity: .5;
-      cursor: not-allowed;
-      transform: none;
-    }
-
     .dl-scroll {
       flex: 1;
       overflow-y: auto;
@@ -1885,6 +1855,18 @@
       min-width: 18px;
       text-align: center;
     }
+    /* ── System / Timed Messages ── */
+.bc-msg.system-msg .bc-msg-sender {
+  color: var(--gold);
+}
+.bc-bubble.system-bubble {
+  background: rgba(245, 166, 35, .06);
+  border-color: rgba(245, 166, 35, .2);
+}
+.bc-bubble.system-bubble::before {
+  background: linear-gradient(90deg, #f5a623, transparent);
+  opacity: .3;
+}
   </style>
 </head>
 
@@ -1915,7 +1897,7 @@
     </div>
     <div class="header-right">
       <!-- Active users pill — visible to everyone on dashboard -->
-      <div class="active-users-pill" title="Users currently on dashboard">
+      <div class="active-users-pill" id="active-users-pill" style="display:none;" title="Users currently on dashboard">
         <span class="au-dot"></span>
         <span class="au-count" id="au-count">—</span>
         <span>on dashboard</span>
@@ -1964,7 +1946,7 @@
         </div>
       </div>
       <div
-        style="padding:8px 14px;background:rgba(235,66,1,.06);border-top:1px solid rgba(235,66,1,.12);font-size:20px;color:#5a3020;text-align:center;flex-shrink:0;">
+        style="padding:8px 14px;background:rgba(235,66,1,.06);border-top:1px solid rgba(235,66,1,.12);font-size:11px;color:yellow;text-align:center;flex-shrink:0;">
         ⚠️ Traderbro.in is an educational platform. Not SEBI registered as RA or IA. No investment advice provided.
       </div>
     </div>
@@ -1993,9 +1975,24 @@
             <span class="plan-strip-label" id="plan-strip-label">⭕ Free Plan</span>
             <span class="plan-strip-status" id="plan-strip-status">⛔ Downloads Locked</span>
           </div>
-          <button class="today-dl-btn" id="today-dl-btn" onclick="downloadTodayExcel()" style="display:none;">
-            <i class="fas fa-file-excel"></i>Download Today's Dashboard Data (Excel)
-          </button>
+
+          <!-- Date range filter — shown only to pro/premium -->
+          <div id="dl-date-filter" style="display:none; margin-bottom:8px; flex-shrink:0;">
+            <div style="display:flex; gap:6px; align-items:flex-end; flex-wrap:wrap;">
+              <div style="display:flex; flex-direction:column; flex:1; min-width:90px;">
+                <label style="font-size:9px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">From</label>
+                <input type="date" id="dl-from-date" style="background:var(--bg-card2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:10px; padding:5px 8px; outline:none; width:100%; color-scheme:dark;">
+              </div>
+              <div style="display:flex; flex-direction:column; flex:1; min-width:90px;">
+                <label style="font-size:9px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">To</label>
+                <input type="date" id="dl-to-date" style="background:var(--bg-card2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:10px; padding:5px 8px; outline:none; width:100%; color-scheme:dark;">
+              </div>
+              <button onclick="applyDateFilter()" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark)); border:none; border-radius:8px; color:white; font-size:10px; font-weight:700; padding:5px 12px; cursor:pointer; white-space:nowrap; height:29px;">Filter</button>
+              <button onclick="clearDateFilter()" style="background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:8px; color:var(--text-dim); font-size:10px; font-weight:700; padding:5px 10px; cursor:pointer; height:29px;">✕</button>
+            </div>
+            <div id="dl-limit-note" style="font-size:9px; color:var(--text-muted); margin-top:5px; padding:4px 8px; background:var(--bg-card2); border-radius:6px; border:1px solid var(--border);"></div>
+          </div>
+
           <div class="dl-scroll" id="dl-list">
             <div class="no-files"><i class="fas fa-circle-notch fa-spin"></i>Loading files…</div>
           </div>
@@ -2097,6 +2094,32 @@
   </div>
 
   <script>
+
+    /* ══════════════════════════════════════════════════════════
+   TIMED SYSTEM MESSAGES
+══════════════════════════════════════════════════════════ */
+const TIMED_MESSAGES = [
+  {
+    id: 'sys-market-soon',
+    fromMins: 9 * 60,          // 9:00 AM
+    toMins:   9 * 60 + 15,     // 9:15 AM (show for 15 mins)
+    text: '🔔 Market Opening Soon — Session starts at 9:16 AM IST'
+  },
+  {
+    id: 'sys-closing-soon',
+    fromMins: 11 * 60 + 45,    // 11:45 AM
+    toMins:   12 * 60,         // 12:00 PM
+    text: '⏳ TraderBro.in session will be closing at 12:00 PM IST'
+  },
+  {
+    id: 'sys-download-ready',
+    fromMins: 12 * 60 + 1,     // 12:01 PM
+    toMins:   14 * 60,         // show till 2 PM
+    text: '📥 You can now download today\'s data — Available with Pro & Premium Plans only'
+  }
+];
+
+let _shownSystemMsgs = new Set();  // track which ones we've injected this session
     /* ══════════════════════════════════════════════════════════
        GLOBALS
     ══════════════════════════════════════════════════════════ */
@@ -2538,56 +2561,149 @@
     /* ══════════════════════════════════════════════════════════
        DOWNLOADS
     ══════════════════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════════════════
+       DOWNLOADS
+    ══════════════════════════════════════════════════════════ */
+    let _allDlFiles = [];
+    const PLAN_DL_DAYS = { pro: 7, premium: 30 };
+
     function loadDownloads() {
       fetch('/api/downloads', { credentials: 'include' })
-        .then(res => { if (res.status === 401) { window.location.href = '/user-login'; return null; } return res.json(); })
+        .then(res => {
+          if (res.status === 401) { window.location.href = '/user-login'; return null; }
+          return res.json();
+        })
         .then(data => {
           if (!data) return;
-          const plan = (data.plan || "free").toLowerCase(); const files = data.files || [];
-          const canDl = (plan === "pro" || plan === "premium"); _userPlan = plan;
+          const plan = (data.plan || "free").toLowerCase();
+          const files = data.files || [];
+          const canDl = (plan === "pro" || plan === "premium");
+          _userPlan = plan;
+          _allDlFiles = files;
+
+          // Plan strip
           document.getElementById("plan-strip").className = `plan-strip plan-${plan}`;
           const labels = { pro: '⚡ Pro Plan', premium: '👑 Premium Plan', essential: '🟡 Essential Plan', basic: '🔵 Basic Plan', free: '⭕ Free Plan' };
           document.getElementById("plan-strip-label").innerHTML = labels[plan] || ('Plan: ' + plan);
-          document.getElementById("plan-strip-status").textContent = canDl ? '✅ Downloads Unlocked' : '⛔ Downloads Locked';
-          document.getElementById("today-dl-btn").style.display = canDl ? "flex" : "none";
-          const container = document.getElementById("dl-list");
-          if (!files.length) { container.innerHTML = `<div class="no-files"><i class="fas fa-folder-open"></i>No historical files yet.<br><span style="font-size:10px;margin-top:4px;display:block">Auto-saved after each market session (3:31 PM IST)</span></div>`; return; }
-          container.innerHTML = files.map(f => {
-            const icon = canDl ? '📊' : '🔒';
-            const btn = canDl ? `<a href="${f.url}" class="dl-btn"><i class="fas fa-file-excel"></i> Download</a>` : `<button class="dl-upgrade-btn" onclick="showUpgradeModal()"><i class="fas fa-lock"></i> Upgrade</button>`;
-            return `<div class="dl-item"><div class="dl-item-left"><span class="dl-item-icon">${icon}</span><div><div class="dl-name">${f.display_date}</div><div class="dl-date">${f.name}</div></div></div>${btn}</div>`;
-          }).join('');
+          const maxDays = PLAN_DL_DAYS[plan] || 0;
+          document.getElementById("plan-strip-status").textContent = canDl ? `✅ Last ${maxDays} days unlocked` : '⛔ Downloads Locked';
+
+          // Show/hide date filter
+          const filterEl = document.getElementById('dl-date-filter');
+          if (filterEl) filterEl.style.display = canDl ? 'block' : 'none';
+
+          if (canDl) {
+            // Compute cutoff date
+            const today = new Date();
+            const cutoff = new Date();
+            cutoff.setDate(today.getDate() - maxDays);
+
+            // Set limit note
+            const noteEl = document.getElementById('dl-limit-note');
+            if (noteEl) {
+              noteEl.textContent = `Files available from last ${maxDays} days (from ${cutoff.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })})`;
+            }
+
+            // Set date input defaults & constraints only on first load
+            const fromInp = document.getElementById('dl-from-date');
+            const toInp = document.getElementById('dl-to-date');
+            if (fromInp && !fromInp.value) {
+              const todayStr = today.toISOString().slice(0, 10);
+              const cutoffStr = cutoff.toISOString().slice(0, 10);
+              fromInp.value = cutoffStr;
+              fromInp.min = cutoffStr;
+              fromInp.max = todayStr;
+              toInp.value = todayStr;
+              toInp.min = cutoffStr;
+              toInp.max = todayStr;
+            }
+          }
+
+          renderDlList(plan, canDl);
         })
-        .catch(() => { document.getElementById("dl-list").innerHTML = `<div class="no-files"><i class="fas fa-exclamation-triangle"></i>Error loading files.</div>`; });
+        .catch(() => {
+          document.getElementById("dl-list").innerHTML = `<div class="no-files"><i class="fas fa-exclamation-triangle"></i>Error loading files.</div>`;
+        });
     }
 
-    /* ══════════════════════════════════════════════════════════
-       TODAY EXCEL DOWNLOAD
-    ══════════════════════════════════════════════════════════ */
-    function downloadTodayExcel() {
-      if (_userPlan !== "pro" && _userPlan !== "premium") { showUpgradeModal(); return; }
-      if (!_dashboardRows.length) { alert("No dashboard data to export yet."); return; }
-      const btn = document.getElementById("today-dl-btn");
-      btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Excel…';
-      try {
-        const ist = getIST(); const dateStr = ist.toISOString().slice(0, 10);
-        const dayName = ist.toLocaleDateString("en-IN", { weekday: "long" });
-        const fileName = `TraderBro_Dashboard_${dateStr}.xlsx`;
-        const headers = ["DateTime", "Strike", "Sensex (Index LTP)", "Running Value"];
-        const dataRows = _dashboardRows.map(r => [r.datetime || '', r.strike || '', parseFloat(r.index_ltp || 0), parseFloat(r.running || 0)]);
-        const lastRow = _dashboardRows[_dashboardRows.length - 1];
-        const finalRunning = parseFloat(lastRow ? lastRow.running || 0 : 0);
-        const fv = (finalRunning > 0 ? '+' : '') + finalRunning.toFixed(2);
-        const wsData = [[`TraderBro — Black-Box-Engine Dashboard  |  ${dateStr}  (${dayName})`], [`Market Session: 09:16 AM → 03:30 PM IST  |  traderbro.in`], [], headers, ...dataRows, [], [`Final Running Value: ${fv}`]];
-        const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(wsData);
-        ws["!cols"] = [{ wch: 22 }, { wch: 10 }, { wch: 18 }, { wch: 14 }];
-        ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }, { s: { r: wsData.length - 1, c: 0 }, e: { r: wsData.length - 1, c: 3 } }];
-        XLSX.utils.book_append_sheet(wb, ws, dateStr);
-        XLSX.writeFile(wb, fileName, { bookType: "xlsx", cellStyles: true });
-      } catch (e) { console.error("Excel error:", e); alert("Export failed: " + e.message); }
-      btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-excel"></i> Download Today\'s Dashboard Data (Excel)';
+    function renderDlList(plan, canDl) {
+      const container = document.getElementById("dl-list");
+      let files = [..._allDlFiles];
+
+      if (!files.length) {
+        container.innerHTML = `<div class="no-files"><i class="fas fa-folder-open"></i>No historical files yet.<br><span style="font-size:10px;margin-top:4px;display:block">Files are auto-saved after each market session</span></div>`;
+        return;
+      }
+
+      // Apply plan-based day limit
+      const maxDays = PLAN_DL_DAYS[plan] || 0;
+      if (canDl && maxDays) {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - maxDays);
+        cutoff.setHours(0, 0, 0, 0);
+        files = files.filter(f => {
+          try { return new Date(f.name.replace('.xlsx', '')) >= cutoff; } catch(e) { return true; }
+        });
+      }
+
+      // Apply user date filter
+      const fromVal = document.getElementById('dl-from-date') ? document.getElementById('dl-from-date').value : '';
+      const toVal   = document.getElementById('dl-to-date')   ? document.getElementById('dl-to-date').value   : '';
+      if (fromVal) {
+        const from = new Date(fromVal + 'T00:00:00');
+        files = files.filter(f => { try { return new Date(f.name.replace('.xlsx', '') + 'T00:00:00') >= from; } catch(e) { return true; } });
+      }
+      if (toVal) {
+        const to = new Date(toVal + 'T23:59:59');
+        files = files.filter(f => { try { return new Date(f.name.replace('.xlsx', '') + 'T00:00:00') <= to; } catch(e) { return true; } });
+      }
+
+      if (!files.length) {
+        container.innerHTML = `<div class="no-files"><i class="fas fa-calendar-times"></i>No files in selected date range.<br><span style="font-size:10px;margin-top:4px;display:block">Try adjusting the date filter.</span></div>`;
+        return;
+      }
+
+      container.innerHTML = files.map(f => {
+        if (canDl) {
+          return `<div class="dl-item">
+            <div class="dl-item-left">
+              <span class="dl-item-icon">📊</span>
+              <div><div class="dl-name">${f.display_date}</div><div class="dl-date">${f.name}</div></div>
+            </div>
+            <a href="${f.url}" class="dl-btn"><i class="fas fa-file-excel"></i> Download</a>
+          </div>`;
+        } else {
+          return `<div class="dl-item">
+            <div class="dl-item-left">
+              <span class="dl-item-icon">🔒</span>
+              <div><div class="dl-name">${f.display_date}</div><div class="dl-date">${f.name}</div></div>
+            </div>
+            <button class="dl-upgrade-btn" onclick="showUpgradeModal()"><i class="fas fa-lock"></i> Upgrade</button>
+          </div>`;
+        }
+      }).join('');
     }
 
+    function applyDateFilter() {
+      const plan = _userPlan.toLowerCase();
+      renderDlList(plan, plan === "pro" || plan === "premium");
+    }
+
+    function clearDateFilter() {
+      const plan = _userPlan.toLowerCase();
+      const canDl = plan === "pro" || plan === "premium";
+      const maxDays = PLAN_DL_DAYS[plan] || 0;
+      if (canDl && maxDays) {
+        const today = new Date();
+        const cutoff = new Date();
+        cutoff.setDate(today.getDate() - maxDays);
+        const fromInp = document.getElementById('dl-from-date');
+        const toInp = document.getElementById('dl-to-date');
+        if (fromInp) fromInp.value = cutoff.toISOString().slice(0, 10);
+        if (toInp) toInp.value = today.toISOString().slice(0, 10);
+      }
+      renderDlList(plan, canDl);
+    }
     /* ══════════════════════════════════════════════════════════
        UPGRADE MODAL
     ══════════════════════════════════════════════════════════ */
@@ -2603,6 +2719,79 @@
       note.style.display = ((h > 9 || (h === 9 && m >= 16)) && (h < 15 || (h === 12 && m <=00))) ? "none" : "flex";
     }
 
+        /* ══════════════════════════════════════════════════════════
+      TIMED SYSTEM MESSAGES — inject into chat at the right time
+    ══════════════════════════════════════════════════════════ */
+    function checkTimedMessages() {
+      const ist = getIST();
+      const nowMins = ist.getHours() * 60 + ist.getMinutes();
+
+      TIMED_MESSAGES.forEach(msg => {
+        const isActive = nowMins >= msg.fromMins && nowMins < msg.toMins;
+        const alreadyShown = _shownSystemMsgs.has(msg.id);
+        const existingEl = document.getElementById('sys-' + msg.id);
+
+        // Remove if time window passed
+        if (!isActive && existingEl) {
+          existingEl.remove();
+          _shownSystemMsgs.delete(msg.id);
+          return;
+        }
+
+        // Inject if time window active and not yet shown
+        if (isActive && !alreadyShown) {
+          _shownSystemMsgs.add(msg.id);
+          injectSystemMessage(msg);
+        }
+      });
+    }
+
+    function injectSystemMessage(msg) {
+      const container = document.getElementById('bc-messages');
+      if (!container) return;
+
+      // Don't inject into the empty state — wait for it to be replaced
+      if (container.querySelector('.bc-empty')) {
+        // Retry after broadcasts load
+        setTimeout(() => injectSystemMessage(msg), 1000);
+        return;
+      }
+
+      // Don't double-inject
+      if (document.getElementById('sys-' + msg.id)) return;
+
+      const ist = getIST();
+      const timeStr = ist.toTimeString().slice(0, 5);
+
+      const div = document.createElement('div');
+      div.className = 'bc-msg system-msg';
+      div.id = 'sys-' + msg.id;
+      div.innerHTML = `
+        <div class="bc-msg-meta">
+          <span class="bc-msg-sender">🤖 TraderBro System</span>
+          <span class="bc-msg-time">${timeStr}</span>
+        </div>
+        <div class="bc-msg-body-row">
+          <div class="bc-bubble system-bubble">
+            ${msg.text}
+            <div class="bc-bubble-footer">
+              <span class="bc-bubble-ts">${timeStr}</span>
+            </div>
+          </div>
+        </div>`;
+
+      // Insert before the first real admin message, or append at bottom
+      const firstMsg = container.querySelector('.bc-msg:not(.system-msg)');
+      if (firstMsg) {
+        container.insertBefore(div, firstMsg);
+      } else {
+        container.appendChild(div);
+      }
+
+      // Scroll to bottom if user is already there
+      if (_bcAtBottom) container.scrollTop = container.scrollHeight;
+    }
+
     /* ══════════════════════════════════════════════════════════
        AUTH CHECK
     ══════════════════════════════════════════════════════════ */
@@ -2611,7 +2800,11 @@
         const res = await fetch("/api/me");
         const data = await res.json();
         if (!data.username) { window.location.href = "/user-login"; return false; }
-        if (data.is_admin === true) return true;
+        if (data.is_admin === true) {
+          const pill = document.getElementById('active-users-pill');
+          if (pill) pill.style.display = 'flex';
+          return true;
+        }
         if (!data.plan || data.plan === "free") { window.location.href = "/trading-plan"; return false; }
         return true;
       } catch (err) { window.location.href = "/user-login"; return false; }
@@ -2629,6 +2822,8 @@
     updateMarketMessage();
     setInterval(updateMarketMessage, 60000);
     setInterval(checkMarketCloseAutoSave, 60000);
+    checkTimedMessages();
+    setInterval(checkTimedMessages, 30000);  // check every 30 seconds
 
     // Broadcast — start after DOM ready to ensure scroll tracking works
     document.addEventListener('DOMContentLoaded', () => {

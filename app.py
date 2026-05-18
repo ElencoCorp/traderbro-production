@@ -2279,81 +2279,79 @@ def is_plan_active(plan: str, expiry_str: str) -> bool:
 # ── SAVE DAILY EXCEL ────────────────────────────────────────────────────
 def save_daily_excel():
     """
-    Save today's LIVE_RUNNING_RECORDS to a dated .xlsx in EXCEL_DIR.
-    Called by the scheduler at 15:31 IST, and also via the admin API trigger.
+    Save today's dashboard data to a simple 4-column .xlsx:
+    DateTime | Strike | Sensex (Index LTP) | Running Value
+    This matches exactly what is visible on the dashboard.
     """
     global LIVE_RUNNING_RECORDS
- 
+
     try:
-        records = list(LIVE_RUNNING_RECORDS)  # snapshot
- 
+        # Filter to TODAY's date only
+        date_str_today = datetime.now(IST).strftime("%Y-%m-%d")
+        records = [
+            r for r in LIVE_RUNNING_RECORDS
+            if str(r.get("datetime", "")).startswith(date_str_today)
+        ]
+
         if not records:
-            print("⚠️ save_daily_excel: no records to save.")
+            print("⚠️ save_daily_excel: no records for today.")
             return
- 
+
         now      = datetime.now(IST)
         date_str = now.strftime("%Y-%m-%d")
         day_name = now.strftime("%A")
         dest     = os.path.join(EXCEL_DIR, f"{date_str}.xlsx")
- 
+
         wb = Workbook()
         ws = wb.active
         ws.title = date_str
- 
-        # ── Colour palette ──────────────────────────────────────────
-        HDR_FILL   = PatternFill("solid", fgColor="090915")
+
+        # ── Colour palette ──────────────────────────────────
         TITLE_FILL = PatternFill("solid", fgColor="EB4201")
+        HDR_FILL   = PatternFill("solid", fgColor="090915")
         ODD_FILL   = PatternFill("solid", fgColor="0A0A18")
         EVEN_FILL  = PatternFill("solid", fgColor="13132A")
         POS_FILL   = PatternFill("solid", fgColor="00291F")
         NEG_FILL   = PatternFill("solid", fgColor="2D0010")
- 
-        WHITE    = Font(name="Arial", color="FFFFFF", bold=True,  size=11)
-        BLUE_F   = Font(name="Arial", color="02A3FE", bold=True,  size=10)
-        GREEN_F  = Font(name="Arial", color="00D4AA", bold=True,  size=10)
-        RED_F    = Font(name="Arial", color="FF4D6D", bold=True,  size=10)
+
+        GREEN_F  = Font(name="Arial", color="00D4AA", bold=True, size=10)
+        RED_F    = Font(name="Arial", color="FF4D6D", bold=True, size=10)
         NORMAL_F = Font(name="Arial", color="E8EAF0", size=10)
         ORANGE_F = Font(name="Arial", color="FF6B35", size=10)
-        GOLD_F   = Font(name="Arial", color="F5A623", bold=True,  size=12)
- 
-        thin  = Side(style="thin",   color="1A1A35")
-        thick = Side(style="medium", color="02A3FE")
- 
+        BLUE_F   = Font(name="Arial", color="02A3FE", bold=True, size=10)
+
+        thin = Side(style="thin", color="1A1A35")
+
         def thin_border():
             return Border(left=thin, right=thin, top=thin, bottom=thin)
- 
+
         center = Alignment(horizontal="center", vertical="center")
- 
-        # ── Column headers ───────────────────────────────────────────
-        headers = [
-            "DateTime", "Expiry", "Strike", "Index LTP",
-            "CE LTP", "CE Delta", "CE Gamma", "CE Theta", "CE Vega",
-            "PE LTP", "PE Delta", "PE Gamma", "PE Theta", "PE Vega",
-            "Delta Ratio", "Reference", "Stretched", "Difference",
-            "Diff Prev", "Running"
-        ]
-        num_cols = len(headers)  # 20
- 
-        # ── Row 1: Title ─────────────────────────────────────────────
-        ws.merge_cells(f"A1:{get_column_letter(num_cols)}1")
-        ws["A1"] = f"TraderBro — Black-Box-Engine  |  {date_str}  ({day_name})"
-        ws["A1"].font      = Font(name="Arial", color="FFFFFF", bold=True, size=14)
+
+        # ── 4 columns only ──────────────────────────────────
+        headers = ["DateTime", "Strike", "Sensex (Index LTP)", "Running Value"]
+        num_cols = 4
+
+        # ── Row 1: Title ────────────────────────────────────
+        ws.merge_cells("A1:D1")
+        ws["A1"] = f"TraderBro — Black-Box-Engine Dashboard  |  {date_str}  ({day_name})"
+        ws["A1"].font      = Font(name="Arial", color="FFFFFF", bold=True, size=13)
         ws["A1"].fill      = TITLE_FILL
         ws["A1"].alignment = center
-        ws.row_dimensions[1].height = 28
- 
-        # ── Row 2: Sub-title ─────────────────────────────────────────
-        ws.merge_cells(f"A2:{get_column_letter(num_cols)}2")
-        ws["A2"] = "Market Session: 09:16 AM → 03:30 PM IST  |  traderbro.in"
+        ws.row_dimensions[1].height = 26
+
+        # ── Row 2: Subtitle ─────────────────────────────────
+        ws.merge_cells("A2:D2")
+        ws["A2"] = "Market Session: 09:16 AM → 12:00 PM IST  |  traderbro.in"
         ws["A2"].font      = Font(name="Arial", color="E8EAF0", size=10, italic=True)
         ws["A2"].fill      = HDR_FILL
         ws["A2"].alignment = center
-        ws.row_dimensions[2].height = 18
- 
-        # Row 3: blank gap
+        ws.row_dimensions[2].height = 16
+
+        # ── Row 3: blank gap ────────────────────────────────
         ws.row_dimensions[3].height = 6
- 
-        # ── Row 4: Column headers ────────────────────────────────────
+
+        # ── Row 4: Column headers ────────────────────────────
+        col_widths = [22, 10, 20, 15]
         for col_idx, hdr in enumerate(headers, start=1):
             cell = ws.cell(row=4, column=col_idx, value=hdr)
             cell.font      = Font(name="Arial", color="02A3FE", bold=True, size=10)
@@ -2364,98 +2362,72 @@ def save_daily_excel():
                 top=Side(style="medium", color="02A3FE"),
                 bottom=Side(style="medium", color="02A3FE")
             )
-        ws.row_dimensions[4].height = 22
- 
-        # ── Column widths ─────────────────────────────────────────────
-        col_widths = [22, 13, 9, 12,
-                      9, 10, 10, 11, 9,
-                      9, 10, 10, 11, 9,
-                      12, 11, 12, 11,
-                      10, 10]
-        for i, w in enumerate(col_widths, start=1):
-            ws.column_dimensions[get_column_letter(i)].width = w
- 
-        # ── Data rows ────────────────────────────────────────────────
+            ws.column_dimensions[get_column_letter(col_idx)].width = col_widths[col_idx - 1]
+        ws.row_dimensions[4].height = 20
+
+        # ── Data rows ────────────────────────────────────────
         def safe_num(v):
             try:
                 if v is None or v == '':
                     return None
+                import math as _m
                 f = float(v)
-                import math as _math
-                if _math.isnan(f) or _math.isinf(f):
-                    return None
-                return f
+                return None if (_m.isnan(f) or _m.isinf(f)) else f
             except:
                 return None
- 
+
         for row_idx, r in enumerate(records, start=5):
-            running_val = safe_num(r.get("running"))  or 0.0
-            diff_val    = safe_num(r.get("difference")) or 0.0
- 
-            row_fill = POS_FILL if running_val > 0 else (NEG_FILL if running_val < 0 else ODD_FILL if row_idx % 2 == 1 else EVEN_FILL)
+            running_val = safe_num(r.get("running")) or 0.0
+            index_ltp   = safe_num(r.get("index_ltp"))
+
+            row_fill = POS_FILL if running_val > 0 else (NEG_FILL if running_val < 0 else (ODD_FILL if row_idx % 2 == 1 else EVEN_FILL))
             run_font = GREEN_F  if running_val > 0 else (RED_F if running_val < 0 else NORMAL_F)
-            dif_font = GREEN_F  if diff_val    > 0 else (RED_F if diff_val    < 0 else NORMAL_F)
- 
+
             values = [
-                r.get("datetime",    ""),
-                r.get("expiry",      ""),
-                r.get("strike",      ""),
-                safe_num(r.get("index_ltp")),
-                safe_num(r.get("ce_ltp")),
-                safe_num(r.get("ce_delta")),
-                safe_num(r.get("ce_gamma")),
-                safe_num(r.get("ce_theta")),
-                safe_num(r.get("ce_vega")),
-                safe_num(r.get("pe_ltp")),
-                safe_num(r.get("pe_delta")),
-                safe_num(r.get("pe_gamma")),
-                safe_num(r.get("pe_theta")),
-                safe_num(r.get("pe_vega")),
-                safe_num(r.get("delta_ratio")),
-                safe_num(r.get("reference")),
-                safe_num(r.get("stretched")),
-                diff_val,
-                round(safe_num(r.get("diff_prev")) or 0.0, 2),
-                round(running_val, 2),
+                r.get("datetime", ""),         # DateTime
+                r.get("strike", ""),            # Strike
+                round(index_ltp, 2) if index_ltp is not None else "",   # Sensex
+                round(running_val, 2),          # Running Value
             ]
- 
+
             for col_idx, val in enumerate(values, start=1):
                 cell = ws.cell(row=row_idx, column=col_idx, value=val)
                 cell.fill      = row_fill
                 cell.alignment = center
                 cell.border    = thin_border()
- 
-                if   col_idx == 1:   cell.font = ORANGE_F              # DateTime
-                elif col_idx == 3:   cell.font = Font(name="Arial", color="02A3FE", bold=True, size=10)  # Strike
-                elif col_idx == 18:  cell.font = dif_font              # Difference
-                elif col_idx == 20:  cell.font = run_font              # Running
-                else:                cell.font = NORMAL_F
- 
+
+                if   col_idx == 1: cell.font = ORANGE_F   # DateTime
+                elif col_idx == 2: cell.font = BLUE_F     # Strike
+                elif col_idx == 3: cell.font = NORMAL_F   # Sensex
+                elif col_idx == 4: cell.font = run_font   # Running Value
+
             ws.row_dimensions[row_idx].height = 16
- 
-        # ── Summary row ───────────────────────────────────────────────
-        last_row     = 4 + len(records) + 1
+
+        # ── Summary row ──────────────────────────────────────
+        last_row      = 4 + len(records) + 1
         total_running = round(records[-1].get("running", 0) if records else 0, 2)
-        ws.merge_cells(f"A{last_row}:{get_column_letter(num_cols // 2)}{last_row}")
-        ws[f"A{last_row}"] = f"Final Running Value: {'+' if total_running > 0 else ''}{total_running}"
+        sign          = '+' if total_running > 0 else ''
+
+        ws.merge_cells(f"A{last_row}:D{last_row}")
+        ws[f"A{last_row}"] = f"Final Running Value: {sign}{total_running}"
+
         fill_col = "00291F" if total_running > 0 else ("2D0010" if total_running < 0 else "1A1A35")
         txt_col  = "00D4AA" if total_running > 0 else ("FF4D6D" if total_running < 0 else "F5A623")
         ws[f"A{last_row}"].font      = Font(name="Arial", color=txt_col, bold=True, size=12)
         ws[f"A{last_row}"].fill      = PatternFill("solid", fgColor=fill_col)
         ws[f"A{last_row}"].alignment = center
-        ws.row_dimensions[last_row].height = 24
- 
-        # ── Freeze panes ──────────────────────────────────────────────
+        ws.row_dimensions[last_row].height = 22
+
+        # ── Freeze panes ─────────────────────────────────────
         ws.freeze_panes = "A5"
- 
+
         wb.save(dest)
-        print(f"✅ Daily Excel saved: {dest}  ({len(records)} rows)")
- 
+        print(f"✅ Daily Excel saved: {dest}  ({len(records)} rows, 4 columns)")
+
     except Exception as e:
         print(f"❌ save_daily_excel ERROR: {e}")
         import traceback
         traceback.print_exc()
-
 # ── SCHEDULE DAILY EXCEL SAVE ────────────────────────────────────────────
 def schedule_daily_excel_save():
     try:
