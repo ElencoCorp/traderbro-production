@@ -55,55 +55,85 @@
 <div class="page-wraper">
 
 	<!-- Header -->
-	<header class="site-header mo-left header header-transparent ">
-		<!-- Main Header -->
-		<div class="sticky-header main-bar-wraper navbar-expand-lg">
-			<div class="main-bar clearfix ">
-				<div class="container clearfix">
-	
-					<!-- Website Logo -->
-					<div class="logo-header">
-						<a href="index.html" class="logo-light"><img src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png" alt="TraderBro"></a>
-						<a href="index.html" class="logo-dark"><img src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png" alt="TraderBro"></a>
-					</div>
-					
-					<!-- Nav Toggle Button -->
-					<button class="navbar-toggler collapsed navicon justify-content-end" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-						<span></span>
-						<span></span>
-						<span></span>
-					</button>
-					
-					<!-- Extra Nav -->
-					<div class="extra-nav">
-						<div class="extra-cell d-flex align-items-center" id="navAuth"></div>
-					</div>
+		<header class="site-header mo-left header header-transparent ">
+			<!-- Main Header -->
+			<div class="sticky-header main-bar-wraper navbar-expand-lg">
+				<div class="main-bar clearfix ">
+					<div class="container clearfix">
 
-					<!-- Header Nav -->
-					<div class="header-nav navbar-collapse collapse justify-content-end" id="navbarNavDropdown">
+						<!-- Website Logo -->
 						<div class="logo-header">
-							<a href="index.html" class="logo-dark"><img src="/static/finlab/images/logotraderbro.png" alt="TraderBro"></a>
+							<a href="/" class="logo-light"><img
+									src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
+									alt="TraderBro" style="size: 40px;"></a>
+							<a href="/" class="logo-dark"><img
+									src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
+									alt="TraderBro" style="size: 40px;"></a>
 						</div>
-						<ul class="nav navbar-nav navbar navbar-left">	
-							<li><a href="/">Home</a></li>
-							<li><a href="/about-us">About Us</a></li>
-							<li><a href="/static/finlab/Frontend/xhtml//trading-plan.html">Trading Plans</a></li>
-							<!-- <li class="sub-menu-down"><a href="javascript:void(0);">Our Blogs</a>
-								<ul class="sub-menu">
-									<li><a href="/static/finlab/Frontend/xhtml//blog-list.html">Blog List</a></li>
-									<li><a href="/static/finlab/Frontend/xhtml//blog-grid.html">Blog Grid</a></li>
-									<li><a href="/static/finlab/Frontend/xhtml//blog-details.html">Blog Details</a></li>
-								</ul>
-							</li> -->
-							<li><a href="/static/finlab/Frontend/xhtml//contact-us.html">Contact Us</a></li>
-						</ul>
+
+						<!-- Nav Toggle Button -->
+						<button class="navbar-toggler collapsed navicon justify-content-end" type="button"
+							data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
+							aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+							<span></span>
+							<span></span>
+							<span></span>
+						</button>
+
+						<!-- Extra Nav -->
+						<div class="extra-nav">
+							<div class="extra-cell d-flex align-items-center" id="navAuth"></div>
+						</div>
+
+						<!-- Header Nav -->
+						<div class="header-nav navbar-collapse collapse justify-content-end" id="navbarNavDropdown">
+						
+							<!-- MOBILE LOGO -->
+							<div class="mobile-logo d-lg-none">
+								<a href="/">
+									<img src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png" alt="TraderBro">
+								</a>
+							</div>
+						
+							<!-- NAVIGATION -->
+							<ul class="nav navbar-nav navbar navbar-left">
+						
+								<li>
+									<a href="/about-us">About Us</a>
+								</li>
+						
+								<li>
+									<a href="/static/finlab/Frontend/xhtml/trading-plan.html">
+										Subscriptions
+									</a>
+								</li>
+						
+								<li>
+									<a href="/static/finlab/Frontend/xhtml/contact-us.html">
+										Contact Us
+									</a>
+								</li>
+						
+							</ul>
+						
+							<!-- MOBILE AUTH -->
+							<div class="mobile-auth-wrapper d-lg-none">
+						
+								<div class="mobile-auth-buttons" id="mobileNavAuth">
+						
+									<!-- Dynamic buttons -->
+						
+								</div>
+						
+							</div>
+						
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
-		<!-- Main Header End -->
-	</header>
-	<!-- Header End -->
+			<!-- Main Header End -->
+		</header>
+		<!-- Header End -->
 	
 	<div class="page-content">
 	
@@ -298,14 +328,15 @@
 								<h6 class="footer-title">Quick Links</h6>
 								<ul>
 									<li><a href="/about-us">About Us</a></li>
-									<li><a href="javascript:void(0);">Privacy Policy</a></li>
+									<li><a href="/privacy-policy">Privacy Policy</a></li>
+									<li><a href="/terms-and-conditions">Terms of Service</a></li>
 									<li><a href="/static/finlab/Frontend/xhtml/contact-us.html">Contact Us</a></li>
 								</ul>
 							</div>
 						</div>
 						<div class="col-lg-2 col-md-3 col-6">
 							<div class="widget widget_links wow fadeInUp" data-wow-delay="0.8s">
-								<h6 class="footer-title">Trading Plans</h6>
+								<h6 class="footer-title">Subscriptions</h6>
 								<ul>
 									<li><a href="trading-plan.html">Basic</a></li>
 									<li><a href="trading-plan.html">Essential</a></li>
@@ -436,134 +467,284 @@
 	
 </div>
 <!-- JAVASCRIPT FILES ========================================= -->
-<script src="js/jquery.min.js"></script><!-- JQUERY.MIN JS -->
-<script src="vendor/wow/wow.js"></script><!-- WOW.JS -->
-<script src="vendor/swiper/swiper-bundle.min.js"></script><!-- OWL silder -->
-<script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script><!-- WOW.JS -->
-<script src="vendor/magnific-popup/magnific-popup.js"></script><!-- OWL SLIDER -->
-<script src='https://www.google.com/recaptcha/api.js'></script> <!-- Google API For Recaptcha  -->
-<script src="js/dz.ajax.js"></script><!-- AJAX -->
-<script src="js/custom.js"></script><!-- CUSTOM JS -->
+<script src="/static/finlab/Frontend/xhtml/js/jquery.min.js"></script>
 
-<script>
-		async function renderNavbar() {
-			const res = await fetch("/api/me");
+<script src="/static/finlab/Frontend/xhtml/vendor/wow/wow.js"></script>
+
+<script src="/static/finlab/Frontend/xhtml/vendor/swiper/swiper-bundle.min.js"></script>
+
+<script src="/static/finlab/Frontend/xhtml/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+<script src="/static/finlab/Frontend/xhtml/vendor/magnific-popup/magnific-popup.js"></script>
+
+<script src="/static/finlab/Frontend/xhtml/js/dz.ajax.js"></script>
+
+<script src="/static/finlab/Frontend/xhtml/js/custom.js"></script>
+
+	<!-- #Navbar Script -->
+	<script>
+	async function renderNavbar() {
+
+		try {
+
+			const res = await fetch("/api/me", {
+				credentials: "include"
+			});
+
 			const data = await res.json();
 
 			const nav = document.getElementById("navAuth");
+			const mobileNav = document.getElementById("mobileNavAuth");
 
-			if (!nav) return;
+			if (!nav || !mobileNav) return;
+
+			// =========================
+			// LOGGED IN USER
+			// =========================
 
 			if (data.username) {
 
-    const firstLetter = data.username.charAt(0).toUpperCase();
+				const firstLetter = data.username.charAt(0).toUpperCase();
 
-    nav.innerHTML = `
+				const desktopHTML = `
 
-    <div class="d-flex align-items-center gap-3">
+				<div class="d-flex align-items-center gap-3">
 
-        <!-- USER DASHBOARD BUTTON -->
+					<a href="/dashboard"
+					   class="btn btn-success"
+					   style="
+							border-radius:12px;
+							font-weight:600;
+							padding:10px 18px;
+							box-shadow:0 4px 15px rgba(0,255,120,0.25);
+					   ">
+						📊 User Dashboard
+					</a>
 
-        <a href="/dashboard"
-           class="btn btn-success"
-           style="
-                border-radius:12px;
-                font-weight:600;
-                padding:10px 18px;
-                box-shadow:0 4px 15px rgba(0,255,120,0.25);
-           ">
-            📊 User Dashboard
-        </a>
+					${data.role === "admin" ? `
+						<a href="/admin"
+						   class="btn btn-warning"
+						   style="
+								border-radius:12px;
+								font-weight:600;
+								padding:10px 18px;
+						   ">
+							⚙ Admin
+						</a>
+					` : ""}
 
-        <!-- ADMIN BUTTON -->
+					<div class="dropdown">
 
-        ${data.role === "admin" ? `
-            <a href="/admin"
-               class="btn btn-warning"
-               style="
-                    border-radius:12px;
-                    font-weight:600;
-                    padding:10px 18px;
-               ">
-                ⚙ Admin
-            </a>
-        ` : ""}
+						<div class="d-flex align-items-center"
+							 style="cursor:pointer;"
+							 data-bs-toggle="dropdown">
 
-        <!-- PROFILE -->
+							<div style="
+								width:42px;
+								height:42px;
+								border-radius:50%;
+								background:linear-gradient(135deg,#00c6ff,#0072ff);
+								display:flex;
+								align-items:center;
+								justify-content:center;
+								color:#fff;
+								font-weight:700;
+								margin-right:10px;
+							">
+								${firstLetter}
+							</div>
 
-        <div class="dropdown">
+							<span class="text-white fw-bold">
+								${data.username}
+							</span>
 
-            <div class="d-flex align-items-center"
-                 style="cursor:pointer;"
-                 data-bs-toggle="dropdown">
+						</div>
 
-                <div style="
-                    width:42px;
-                    height:42px;
-                    border-radius:50%;
-                    background:linear-gradient(135deg,#00c6ff,#0072ff);
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    color:#fff;
-                    font-weight:700;
-                    margin-right:10px;
-                    box-shadow:0 4px 12px rgba(0,114,255,0.35);
-                ">
-                    ${firstLetter}
-                </div>
+						<ul class="dropdown-menu dropdown-menu-end">
 
-                <span class="text-white fw-bold">
-                    ${data.username}
-                </span>
+							<li>
+								<a class="dropdown-item" href="/account">
+									👤 My Account
+								</a>
+							</li>
 
-            </div>
+							<li>
+								<a class="dropdown-item" href="/dashboard">
+									📊 Dashboard
+								</a>
+							</li>
 
-            <ul class="dropdown-menu dropdown-menu-end">
+							<li><hr class="dropdown-divider"></li>
 
-                <li>
-                    <a class="dropdown-item" href="/account">
-                        👤 My Account
-                    </a>
-                </li>
+							<li>
+								<a class="dropdown-item text-danger"
+								   href="#"
+								   onclick="logout()">
+									🚪 Logout
+								</a>
+							</li>
 
-                <li>
-                    <a class="dropdown-item" href="/dashboard">
-                        📊 Dashboard
-                    </a>
-                </li>
+						</ul>
 
-                <li><hr class="dropdown-divider"></li>
+					</div>
 
-                <li>
-                    <a class="dropdown-item text-danger"
-                       href="#"
-                       onclick="logout()">
-                        🚪 Logout
-                    </a>
-                </li>
+				</div>
+				`;
 
-            </ul>
+				const mobileHTML = `
 
-        </div>
+				<div class="w-100 d-flex flex-column gap-2">
 
-    </div>
-    `;
-}
-			else {
-				nav.innerHTML = `
-            <a class="btn btn-outline-primary me-2" href="/user-login">Login</a>
-            <a class="btn btn-primary" href="/register">Register</a>
-        `;
+					<a href="/dashboard"
+					   class="btn btn-primary w-100">
+						📊 User Dashboard
+					</a>
+
+					<a href="/account"
+					   class="btn btn-outline-primary w-100">
+						👤 My Account
+					</a>
+
+					${data.role === "admin" ? `
+						<a href="/admin"
+						   class="btn btn-warning w-100">
+							⚙ Admin Panel
+						</a>
+					` : ""}
+
+					<button onclick="logout()"
+							class="btn btn-danger w-100">
+						🚪 Logout
+					</button>
+
+				</div>
+				`;
+
+				nav.innerHTML = desktopHTML;
+				mobileNav.innerHTML = mobileHTML;
+
 			}
+
+			// =========================
+			// GUEST USER
+			// =========================
+
+			else {
+
+				const guestHTML = `
+					<a class="btn btn-outline-primary me-2"
+					   href="/user-login">
+						Login
+					</a>
+
+					<a class="btn btn-primary"
+					   href="/register">
+						Register
+					</a>
+				`;
+
+				const mobileGuestHTML = `
+					<div class="w-100 d-flex flex-column gap-2">
+
+						<a href="/user-login"
+						   class="btn btn-primary w-100">
+							Login
+						</a>
+
+						<a href="/register"
+						   class="btn btn-outline-primary w-100">
+							Register
+						</a>
+
+					</div>
+				`;
+
+				nav.innerHTML = guestHTML;
+				mobileNav.innerHTML = mobileGuestHTML;
+			}
+
 		}
 
-		function logout() {
-			fetch("/logout").then(() => window.location.href = "/");
+		catch (error) {
+
+			console.error("Navbar Error:", error);
+
+		}
+	}
+
+	function logout() {
+
+		fetch("/logout", {
+			method: "POST",
+			credentials: "include"
+		})
+		.then(() => {
+			window.location.href = "/";
+		});
+
+	}
+
+	renderNavbar();
+</script>
+
+<script>
+	document.addEventListener("DOMContentLoaded", function () {
+
+		// CHECK USER LOGIN STATUS
+		const token = localStorage.getItem("access_token");
+		const username = localStorage.getItem("username");
+
+		const desktopNav = document.getElementById("navAuth");
+		const mobileNav = document.getElementById("mobileNavAuth");
+
+		// USER LOGGED IN
+		if (token) {
+
+			const loggedInButtons = `
+				<a href="/dashboard" class="btn btn-primary btn-sm me-2">
+					User Dashboard
+				</a>
+
+				<a href="/my-account" class="btn btn-outline-primary btn-sm">
+					My Account
+				</a>
+			`;
+
+			if (desktopNav) {
+				desktopNav.innerHTML = loggedInButtons;
+			}
+
+			if (mobileNav) {
+				mobileNav.innerHTML = loggedInButtons;
+			}
+
 		}
 
-		renderNavbar();
-	</script>
+		// USER NOT LOGGED IN
+		else {
+
+			const guestButtons = `
+				<a href="/user-login" class="btn btn-primary btn-sm me-2">
+					Login
+				</a>
+
+				<a href="/user-register" class="btn btn-outline-primary btn-sm">
+					Register
+				</a>
+			`;
+
+			if (desktopNav) {
+				desktopNav.innerHTML = guestButtons;
+			}
+
+			if (mobileNav) {
+				mobileNav.innerHTML = guestButtons;
+			}
+
+		}
+
+	});
+</script>
 
 
 </body>

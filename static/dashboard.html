@@ -4,35 +4,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TraderBro — Sensex Dashboard</title>
+  <title>TraderBro — Black-Box-Engine Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Roboto+Mono:wght@400;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Roboto+Mono:wght@400;500;700&display=swap"
     rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
+    :root {
+      --primary: #02A3FE;
+      --primary-dark: #0082cc;
+      --bg-dark: #0a0a18;
+      --bg-card: #0f0f22;
+      --bg-card2: #13132a;
+      --bg-card3: #191932;
+      --border: rgba(2, 163, 254, 0.15);
+      --border-bright: rgba(2, 163, 254, 0.4);
+      --text: #e8eaf0;
+      --text-dim: #7a8099;
+      --text-muted: #4a5068;
+      --green: #00d4aa;
+      --green-bg: rgba(0, 212, 170, 0.1);
+      --red: #ff4d6d;
+      --red-bg: rgba(255, 77, 109, 0.1);
+      --gold: #f5a623;
+      --gold-bg: rgba(245, 166, 35, 0.1);
+      --orange: #EB4201;
+      --header-h: 70px;
+      --radius: 12px;
+      --radius-lg: 18px;
+    }
+
     *,
     *::before,
     *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-    }
-
-    :root {
-      --bg: #f0f4f8;
-      --white: #ffffff;
-      --border: #d1dce8;
-      --text: #1a2a3a;
-      --dim: #6b7f96;
-      --accent: #1a56db;
-      --green: #16a34a;
-      --green-bg: #dcfce7;
-      --green-brd: #86efac;
-      --red: #dc2626;
-      --red-bg: #fee2e2;
-      --red-brd: #fca5a5;
-      --gold: #d97706;
-      --purple: #7c3aed;
-      --header-h: 72px;
     }
 
     html,
@@ -42,25 +52,64 @@
     }
 
     body {
-      font-family: 'Poppins', sans-serif;
-      background: var(--bg);
+      font-family: "Poppins", sans-serif;
+      background: var(--bg-dark);
       color: var(--text);
+      background-image: radial-gradient(ellipse at 20% 50%, rgba(2, 163, 254, .04) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(235, 66, 1, .04) 0%, transparent 60%);
+    }
+
+    .welcome-bar {
+      background: linear-gradient(90deg, var(--orange), #ff6b35);
+      text-align: center;
+      padding: 8px 20px;
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
     }
 
     .header {
       height: var(--header-h);
-      background: var(--white);
-      border-bottom: 2px solid var(--accent);
+      background: rgba(9, 9, 21, .95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      padding: 0 24px;
-      gap: 16px;
-      box-shadow: 0 2px 12px rgba(26, 86, 219, 0.08);
+      padding: 0 28px;
+      gap: 20px;
       position: relative;
-      z-index: 10;
+      z-index: 100;
+    }
+
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary), var(--orange), var(--primary), transparent);
+      opacity: .5;
     }
 
     .logo-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background-image: url(static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png);
+      background-size: contain;
+      background-repeat: no-repeat;
+    }
+
+    .logo-text-wrap {
       display: flex;
       flex-direction: column;
     }
@@ -68,27 +117,32 @@
     .logo-title {
       font-size: 22px;
       font-weight: 800;
-      color: var(--accent);
-      letter-spacing: -0.5px;
+      color: white;
+      line-height: 1;
+    }
+
+    .logo-title span {
+      color: var(--primary);
     }
 
     .logo-sub {
       font-size: 10px;
-      color: var(--dim);
-      letter-spacing: 2px;
+      color: var(--text-dim);
+      letter-spacing: 2.5px;
       font-weight: 600;
+      margin-top: 2px;
     }
 
     .header-divider {
-      width: 2px;
-      height: 40px;
+      width: 1px;
+      height: 36px;
       background: var(--border);
-      margin: 0 8px;
+      margin: 0 4px;
     }
 
     .header-indices {
       display: flex;
-      gap: 24px;
+      gap: 28px;
       align-items: center;
     }
 
@@ -99,16 +153,17 @@
 
     .idx-label {
       font-size: 10px;
-      color: var(--dim);
-      letter-spacing: 1px;
-      font-weight: 600;
+      color: #fff;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      text-transform: uppercase;
     }
 
     .idx-val {
-      font-size: 16px;
+      font-size: 13px;
       font-weight: 700;
-      font-family: 'Roboto Mono', monospace;
-      color: var(--text);
+      color: #ff6b35;
+      margin-top: 1px;
     }
 
     .header-right {
@@ -118,36 +173,64 @@
       gap: 16px;
     }
 
+    .chat-toggle-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(2, 163, 254, .1);
+      border: 1px solid rgba(2, 163, 254, .3);
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      cursor: pointer;
+      transition: all .2s;
+      letter-spacing: .5px;
+      text-decoration: none;
+    }
+
+    .chat-toggle-btn:hover {
+      background: rgba(2, 163, 254, .18);
+      border-color: var(--primary);
+    }
+
     .live-badge {
       display: flex;
       align-items: center;
-      gap: 6px;
-      background: #f0fdf4;
-      border: 1px solid var(--green-brd);
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
+      gap: 7px;
+      background: var(--green-bg);
+      border: 1px solid rgba(0, 212, 170, .3);
+      padding: 5px 14px;
+      border-radius: 30px;
+      font-size: 10px;
+      font-weight: 700;
       color: var(--green);
+      letter-spacing: 1px;
+      text-transform: uppercase;
     }
 
     .live-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--green);
-      animation: blink 1.4s ease-in-out infinite;
+      animation: pulse 1.5s ease-in-out infinite;
+      box-shadow: 0 0 8px var(--green);
     }
 
-    @keyframes blink {
+    @keyframes pulse {
 
       0%,
       100% {
-        opacity: 1
+        opacity: 1;
+        transform: scale(1)
       }
 
       50% {
-        opacity: .3
+        opacity: .4;
+        transform: scale(.8)
       }
     }
 
@@ -157,54 +240,47 @@
 
     .ts-label {
       font-size: 10px;
-      color: var(--dim);
-      letter-spacing: 1px;
+      color: #fff;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      text-transform: uppercase;
     }
 
     .ts-val {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
-      font-family: 'Roboto Mono', monospace;
-      color: var(--text);
+      color: #ff6b35;
     }
-
-    /* .admin-btn {
-      padding: 7px 16px;
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      letter-spacing: 0.5px;
-    }
-
-    .admin-btn:hover {
-      background: #1740b0;
-    } */
 
     .main-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr;
-      height: calc(100vh - var(--header-h));
-      gap: 0;
+      height: calc(100vh - var(--header-h) - 36px);
     }
 
     .left-panel {
-      background: var(--white);
-      border-right: 2px solid var(--border);
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      position: relative;
+    }
+
+    .left-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--orange));
     }
 
     .panel-header {
-      padding: 12px 20px;
+      padding: 16px 20px 14px;
       border-bottom: 1px solid var(--border);
-      background: linear-gradient(135deg, #f8faff, #eef2ff);
+      background: rgba(2, 163, 254, .03);
       flex-shrink: 0;
     }
 
@@ -212,1116 +288,2453 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      margin-bottom: 14px;
     }
 
     .panel-title {
-      font-size: 14px;
+      font-size: 18px;
       font-weight: 700;
-      color: var(--purple);
-      letter-spacing: 0.5px;
+      color: var(--primary);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title::before {
+      content: '';
+      width: 3px;
+      height: 14px;
+      background: linear-gradient(180deg, var(--primary), var(--orange));
+      border-radius: 2px;
     }
 
     .atm-hero {
       display: flex;
-      align-items: center;
       gap: 12px;
-      margin-top: 10px;
+      align-items: stretch;
     }
 
     .atm-dt-box {
       flex: 1;
-      border: 2px solid var(--red);
-      border-radius: 8px;
-      padding: 10px 16px;
-      background: var(--white);
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .atm-dt-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, var(--primary), transparent);
+      opacity: .5;
     }
 
     .atm-dt-label {
-      font-size: 9px;
-      color: var(--dim);
-      letter-spacing: 1px;
-      margin-bottom: 2px;
+      font-size: 10px;
+      color: #ff6b35;
+      letter-spacing: 2px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 6px;
     }
 
     .atm-dt-val {
-      font-size: 15px;
-      font-weight: 700;
-      font-family: 'Roboto Mono', monospace;
-      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+      line-height: 1.7;
     }
 
-    .market-note{
-    margin-top:8px;
-    font-size:12px;
-    color:#d97706;
-    font-weight:600;
-    letter-spacing:0.3px;
+    .atm-dt-val .strike-highlight {
+      color: var(--primary);
+      font-weight: 700;
     }
 
     .atm-run-box {
-      min-width: 90px;
-      min-height: 60px;
-      border-radius: 10px;
+      min-width: 110px;
+      border-radius: var(--radius);
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
-      font-weight: 800;
-      font-family: 'Roboto Mono', monospace;
       flex-shrink: 0;
-      box-shadow:
-        0 10px 25px rgba(239,68,68,0.18),
-        inset 0 -3px 0 rgba(255,255,255,0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .atm-run-box .run-label {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      opacity: .7;
+    }
+
+    .atm-run-box .run-val {
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1;
     }
 
     .atm-run-pos {
-      background: var(--green);
-      color: white;
+      background: linear-gradient(135deg, rgba(0, 212, 170, .15), rgba(0, 212, 170, .05));
+      border: 1px solid rgba(0, 212, 170, .4);
+      color: var(--green);
+    }
+
+    .atm-run-pos .run-label {
+      color: var(--green);
     }
 
     .atm-run-neg {
-      background: var(--red);
-      color: white;
+      background: linear-gradient(135deg, rgba(255, 77, 109, .15), rgba(255, 77, 109, .05));
+      border: 1px solid rgba(255, 77, 109, .4);
+      color: var(--red);
+    }
+
+    .atm-run-neg .run-label {
+      color: var(--red);
     }
 
     .atm-run-zero {
-      background: var(--gold);
-      color: white;
+      background: linear-gradient(135deg, rgba(245, 166, 35, .15), rgba(245, 166, 35, .05));
+      border: 1px solid rgba(245, 166, 35, .4);
+      color: var(--gold);
+    }
+
+    .atm-run-zero .run-label {
+      color: var(--gold);
+    }
+
+    .market-note {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--gold);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--gold-bg);
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(245, 166, 35, .2);
     }
 
     .rows-scroll {
       flex: 1;
       overflow-y: auto;
-      padding: 12px;
+      padding: 14px;
     }
 
     .rows-scroll::-webkit-scrollbar {
-      width: 5px;
-    }
-
-    .rows-scroll::-webkit-scrollbar-track {
-      background: var(--bg);
+      width: 4px;
     }
 
     .rows-scroll::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 3px;
+      background: rgba(2, 163, 254, .2);
+      border-radius: 2px;
     }
 
     .rows-grid {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      padding: 8px 0 80px 0;
+      gap: 6px;
+      padding-bottom: 20px;
     }
 
     .data-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      width: 95%;
-      margin: auto;
-      background: var(--white);
+      background: var(--bg-card2);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 10px 14px;
+      transition: all .2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .data-row::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      border-radius: 0 2px 2px 0;
+    }
+
+    .data-row.row-neg::before {
+      background: var(--red);
+    }
+
+    .data-row.row-pos::before {
+      background: var(--green);
+    }
+
+    .data-row.row-zero::before {
+      background: var(--gold);
     }
 
     .data-row:hover {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      border-color: var(--border-bright);
+      background: var(--bg-card3);
+      transform: translateX(2px);
     }
 
     .row-dt {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .row-time {
+      font-size: 13px;
+      font-family: "Roboto Mono", monospace;
+      font-weight: 600;
+      color: #ff6b35;
+    }
+
+    .row-sensex {
       font-size: 12px;
-      font-family: 'Roboto Mono', monospace;
-      font-weight: 500;
-      color: var(--text);
-      white-space: nowrap;
+      color: #e8eaf0;
     }
 
     .val-pill {
-      min-width: 64px;
+      min-width: 80px;
       text-align: center;
-      padding: 5px 10px;
+      padding: 6px 14px;
       border-radius: 8px;
       font-size: 14px;
       font-weight: 700;
-      font-family: 'Roboto Mono', monospace;
       flex-shrink: 0;
     }
 
     .val-pos {
-      background: var(--green);
-      color: white;
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid rgba(0, 212, 170, .25);
     }
 
     .val-neg {
-      background: var(--red);
-      color: white;
+      background: var(--red-bg);
+      color: var(--red);
+      border: 1px solid rgba(255, 77, 109, .25);
     }
 
     .val-zero {
-      background: var(--gold);
+      background: var(--gold-bg);
+      color: var(--gold);
+      border: 1px solid rgba(245, 166, 35, .25);
+    }
+
+    .market-closed-box {
+      margin: 20px auto;
+      background: linear-gradient(135deg, rgba(245, 166, 35, .08), rgba(235, 66, 1, .04));
+      border: 1px solid rgba(245, 166, 35, .2);
+      border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      text-align: center;
+      animation: fadeInUp .5s ease;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .market-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+
+    .market-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .market-desc {
+      font-size: 12px;
+      color: red;
+      margin-bottom: 18px;
+      line-height: 1.6;
+    }
+
+    .market-time {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--gold), var(--orange));
       color: white;
+      padding: 8px 24px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .market-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
     }
 
     .right-panel {
-      background: var(--bg);
-      display: flex;
-      flex-direction: column;
+      background: var(--bg-dark);
+      display: grid;
+      grid-template-rows: 48% 52%;
       overflow: hidden;
+      position: relative;
+      gap: 12px;
+      padding: 12px;
     }
 
     .gauge-card {
-      background: var(--white);
-      border-bottom: 2px solid var(--border);
-      padding: 16px 20px;
-      flex-shrink: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      height: 100%;
+      overflow: hidden;
     }
 
     .gauge-card-title {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 700;
-      color: var(--purple);
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
+      color: var(--primary);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
       text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .gauge-card-title::before,
+    .gauge-card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border));
+    }
+
+    .gauge-card-title::after {
+      background: linear-gradient(90deg, var(--border), transparent);
     }
 
     .gauge-wrapper {
       position: relative;
-      width: 300px;
+      width: 100%;
+      max-width: 300px;
       margin: 0 auto;
     }
 
     canvas#gauge {
       display: block;
-      width: 300px;
-      height: 165px;
+      width: 100%;
+      height: auto;
     }
 
     .gauge-value-display {
       position: absolute;
-      bottom: 22px;
+      bottom: 26px;
       left: 50%;
       transform: translateX(-50%);
-      font-family: 'Roboto Mono', monospace;
-      font-size: 26px;
-      font-weight: 700;
+      font-size: 24px;
+      font-weight: 900;
       text-align: center;
-    }
-
-    .gauge-ticks {
-      display: flex;
-      justify-content: space-between;
-      font-size: 10px;
-      color: var(--dim);
-      font-family: 'Roboto Mono', monospace;
-      padding: 0 4px;
-      margin-top: 2px;
+      pointer-events: none;
     }
 
     .sentiment-text {
       text-align: center;
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 700;
-      letter-spacing: 1px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
       margin-top: 6px;
     }
 
+    .sentiment-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 14px;
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
     .download-card {
-      background: var(--white);
-      flex: 1;
-      overflow-y: auto;
-      margin: 12px;
-      border-radius: 10px;
+      background: var(--bg-card);
       border: 1px solid var(--border);
-      padding: 14px;
-    }
-
-    .download-card::-webkit-scrollbar {
-      width: 5px;
-    }
-
-    .download-card::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 3px;
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
     }
 
     .dl-title {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
-      color: var(--text);
+      color: var(--primary);
+      letter-spacing: 2px;
+      text-transform: uppercase;
       margin-bottom: 10px;
       padding-bottom: 8px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .plan-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      border: 1px solid;
+      flex-shrink: 0;
+    }
+
+    .plan-strip.plan-pro {
+      background: rgba(2, 163, 254, .08);
+      border-color: rgba(2, 163, 254, .3);
+    }
+
+    .plan-strip.plan-premium {
+      background: rgba(245, 166, 35, .08);
+      border-color: rgba(245, 166, 35, .3);
+    }
+
+    .plan-strip.plan-basic,
+    .plan-strip.plan-essential,
+    .plan-strip.plan-free {
+      background: rgba(255, 77, 109, .06);
+      border-color: rgba(255, 77, 109, .2);
+    }
+
+    .plan-strip-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .plan-strip.plan-pro .plan-strip-label {
+      color: var(--primary);
+    }
+
+    .plan-strip.plan-premium .plan-strip-label {
+      color: var(--gold);
+    }
+
+    .plan-strip.plan-basic .plan-strip-label,
+    .plan-strip.plan-essential .plan-strip-label,
+    .plan-strip.plan-free .plan-strip-label {
+      color: var(--red);
+    }
+
+    .plan-strip-status {
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .plan-strip.plan-pro .plan-strip-status,
+    .plan-strip.plan-premium .plan-strip-status {
+      color: var(--green);
+    }
+
+    .plan-strip.plan-basic .plan-strip-status,
+    .plan-strip.plan-essential .plan-strip-status,
+    .plan-strip.plan-free .plan-strip-status {
+      color: var(--red);
+    }
+
+    .today-dl-btn {
+      width: 100%;
+      padding: 9px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all .2s;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    .today-dl-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 18px rgba(2, 163, 254, .4);
+    }
+
+    .today-dl-btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .dl-scroll {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+      padding-right: 4px;
+    }
+
+    .dl-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .dl-scroll::-webkit-scrollbar-thumb {
+      background: rgba(2, 163, 254, .25);
+      border-radius: 10px;
     }
 
     .dl-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
       padding: 9px 12px;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 10px;
       margin-bottom: 6px;
-      background: var(--bg);
-      transition: all .15s;
+      background: var(--bg-card2);
+      transition: all .2s;
     }
 
     .dl-item:hover {
-      border-color: var(--accent);
-      background: var(--white);
+      border-color: var(--border-bright);
+      background: var(--bg-card3);
+    }
+
+    .dl-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dl-item-icon {
+      font-size: 18px;
     }
 
     .dl-name {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       color: var(--text);
-      font-family: 'Roboto Mono', monospace;
     }
 
     .dl-date {
       font-size: 10px;
-      color: var(--dim);
-      margin-top: 1px;
+      color: var(--text-muted);
+      margin-top: 2px;
     }
 
     .dl-btn {
-      padding: 5px 14px;
-      background: var(--accent);
+      padding: 6px 14px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: white;
       border: none;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
       cursor: pointer;
       text-decoration: none;
-      transition: background .15s;
+      transition: all .2s;
       white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
     }
 
     .dl-btn:hover {
-      background: #1740b0;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(2, 163, 254, .4);
+    }
+
+    .dl-upgrade-btn {
+      padding: 6px 12px;
+      background: linear-gradient(135deg, #ff6b35, var(--orange));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .dl-upgrade-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(235, 66, 1, .4);
     }
 
     .no-files {
       text-align: center;
       padding: 24px;
-      color: var(--dim);
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .no-files i {
+      font-size: 22px;
+      color: var(--border-bright);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .top-combined-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .gauge-card {
+      margin: 0;
+      height: 100%;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+    }
+
+    .upgrade-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .7);
+      backdrop-filter: blur(6px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .upgrade-overlay.active {
+      display: flex;
+    }
+
+    .upgrade-modal {
+      background: var(--bg-card);
+      border: 1px solid rgba(245, 166, 35, .3);
+      border-radius: 20px;
+      padding: 36px 32px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      animation: fadeInUp .3s ease;
+      position: relative;
+    }
+
+    .upgrade-modal-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .upgrade-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .upgrade-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .upgrade-desc {
       font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.7;
+      margin-bottom: 20px;
     }
 
-    .shimmer {
-      background: linear-gradient(90deg, var(--bg) 25%, var(--border) 50%, var(--bg) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
-      border-radius: 8px;
-      height: 42px;
+    .upgrade-plans {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .upgrade-plan-card {
+      flex: 1;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid;
+      text-align: center;
+    }
+
+    .upgrade-plan-card.plan-pro {
+      border-color: rgba(2, 163, 254, .4);
+      background: rgba(2, 163, 254, .06);
+    }
+
+    .upgrade-plan-card.plan-premium {
+      border-color: rgba(245, 166, 35, .4);
+      background: rgba(245, 166, 35, .06);
+    }
+
+    .upgrade-plan-name {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .upgrade-plan-card.plan-pro .upgrade-plan-name {
+      color: var(--primary);
+    }
+
+    .upgrade-plan-card.plan-premium .upgrade-plan-name {
+      color: var(--gold);
+    }
+
+    .upgrade-plan-feature {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .upgrade-cta {
+      display: inline-block;
+      padding: 12px 32px;
+      background: linear-gradient(135deg, var(--gold), var(--orange));
+      color: white;
+      border: none;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .2s;
+    }
+
+    .upgrade-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(245, 166, 35, .35);
+    }
+
+    /* ═══════════════════════════════════════════
+       BROADCAST CHAT — WhatsApp Admin Style
+    ═══════════════════════════════════════════ */
+    .bc-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: 100%;
+      min-height: 0;
+      position: relative;
+    }
+
+    .bc-wrap::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--orange), var(--primary), var(--orange));
+      opacity: .6;
+    }
+
+    /* Header */
+    .bc-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(2, 163, 254, .1);
+      background: rgba(9, 9, 21, .6);
+      flex-shrink: 0;
+    }
+
+    .bc-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #eb4201, #ff6b35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .bc-avatar::after {
+      content: '';
+      position: absolute;
+      bottom: 1px;
+      right: 1px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+      border: 2px solid var(--bg-card);
+    }
+
+    .bc-header-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .bc-header-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .bc-header-sub {
+      font-size: 10px;
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
+    .bc-online-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
+    }
+
+    .bc-header-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+    }
+
+    .bc-tab {
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 9px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid;
+      transition: all .2s;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    .bc-tab.active {
+      border-color: #02a3fe;
+      color: #02a3fe;
+      background: rgba(2, 163, 254, .15);
+    }
+
+    .bc-tab:not(.active) {
+      border-color: rgba(255, 255, 255, .1);
+      color: #3a4060;
+      background: transparent;
+    }
+
+    .bc-msg-count {
+      font-size: 9px;
+      color: #3a4060;
+    }
+
+    /* Pinned banner */
+    .bc-pinned {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      background: rgba(2, 163, 254, .06);
+      border-bottom: 1px solid rgba(2, 163, 254, .12);
+      border-left: 3px solid #02a3fe;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background .2s;
+    }
+
+    .bc-pinned:hover {
+      background: rgba(2, 163, 254, .1);
+    }
+
+    .bc-pinned.show {
+      display: flex;
+    }
+
+    .bc-pinned-icon {
+      font-size: 10px;
+      color: #02a3fe;
+      flex-shrink: 0;
+    }
+
+    .bc-pinned-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: #02a3fe;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .bc-pinned-text {
+      font-size: 10px;
+      color: #8090b8;
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    /* Messages area */
+    .bc-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 14px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-height: 0;
+      background: var(--bg-dark);
+      background-image: radial-gradient(ellipse at 50% 100%, rgba(2, 163, 254, .03) 0%, transparent 70%);
+    }
+
+    .bc-messages::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .bc-messages::-webkit-scrollbar-thumb {
+      background: rgba(2, 163, 254, .15);
+      border-radius: 2px;
+    }
+
+    /* Date separator */
+    .bc-date-sep {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 9px;
+      color: #2a3050;
+      letter-spacing: .5px;
+      margin: 8px 0 6px;
+    }
+
+    .bc-date-sep::before,
+    .bc-date-sep::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, .04);
+    }
+
+    .bc-date-sep span {
+      background: rgba(2, 163, 254, .06);
+      padding: 2px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(2, 163, 254, .08);
+      color: #3a4060;
+      white-space: nowrap;
+    }
+
+    /* Individual message */
+    .bc-msg {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
       margin-bottom: 6px;
+      animation: bcMsgIn .25s cubic-bezier(.34, 1.56, .64, 1);
     }
 
-    .market-closed-box{
-
-    width:95%;
-    margin:auto;
-
-    background:
-        linear-gradient(
-            135deg,
-            #fff7ed,
-            #fffbeb
-        );
-
-    border:1px solid #fed7aa;
-
-    border-radius:18px;
-
-    padding:28px 20px;
-
-    text-align:center;
-
-    box-shadow:
-        0 10px 25px rgba(217,119,6,0.08);
-
-    animation: fadeIn 0.5s ease;
-}
-
-.market-icon{
-
-    font-size:42px;
-
-    margin-bottom:10px;
-}
-
-.market-title{
-
-    font-size:20px;
-
-    font-weight:800;
-
-    color:#b45309;
-
-    margin-bottom:8px;
-}
-
-.market-desc{
-
-    font-size:13px;
-
-    color:#92400e;
-
-    margin-bottom:18px;
-
-    line-height:1.6;
-}
-
-.market-time{
-
-    display:inline-block;
-
-    background:#d97706;
-
-    color:white;
-
-    padding:10px 22px;
-
-    border-radius:30px;
-
-    font-size:18px;
-
-    font-weight:700;
-
-    font-family:'Roboto Mono', monospace;
-
-    margin-bottom:16px;
-}
-
-.market-sub{
-
-    font-size:12px;
-
-    color:#78716c;
-
-    font-weight:600;
-
-    letter-spacing:0.3px;
-}
-
-@keyframes fadeIn{
-
-    from{
-        opacity:0;
-        transform:translateY(10px);
-    }
-
-    to{
-        opacity:1;
-        transform:translateY(0);
-    }
-}
-
-    @keyframes shimmer {
-      0% {
-        background-position: 200% 0
+    @keyframes bcMsgIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(.97)
       }
 
-      100% {
-        background-position: -200% 0
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1)
       }
     }
-@media (max-width: 768px) {
 
-  html,
-  body {
-    background: #eef2ff;
-    overflow-y: auto;
-    overflow-x: hidden;
-    height: auto;
-  }
+    .bc-msg-meta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 4px;
+      margin-bottom: 4px;
+    }
 
-  body {
-    font-size: 14px;
-  }
+    .bc-msg-sender {
+      font-size: 10px;
+      font-weight: 700;
+      color: #eb4201;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
 
-  .header {
-    height: auto;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 12px;
-    gap: 10px;
-  }
+    .bc-msg-time {
+      font-size: 9px;
+      color: #2a3050;
+    }
 
-  .header-divider {
-    display: none;
-  }
+    .bc-msg-pin-tag {
+      font-size: 8px;
+      color: #02a3fe;
+      background: rgba(2, 163, 254, .08);
+      padding: 1px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(2, 163, 254, .18);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
 
-  .header-indices,
-  .header-right {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-  }
+    .bc-msg-body-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      width: 100%;
+      max-width: 90%;
+    }
 
-  .logo-title {
-    font-size: 22px;
-  }
+    .bc-bubble {
+      background: #161628;
+      border: 1px solid rgba(2, 163, 254, .1);
+      border-radius: 3px 14px 14px 14px;
+      padding: 9px 14px 8px;
+      font-size: 12px;
+      color: #ccd0e0;
+      line-height: 1.65;
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      word-break: break-word;
+      transition: border-color .2s;
+    }
 
-  .logo-sub {
-    font-size: 9px;
-  }
+    .bc-bubble::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #eb4201, transparent);
+      opacity: .2;
+      border-radius: 3px 14px 0 0;
+    }
 
-  .main-grid {
-    display: flex;
-    flex-direction: column;
-    height: auto;
-    overflow: visible;
-  }
+    .bc-bubble.is-pinned {
+      background: rgba(2, 163, 254, .07);
+      border-color: rgba(2, 163, 254, .22);
+    }
 
-  .left-panel,
-  .right-panel {
-    width: 100%;
-    height: auto;
-    overflow: visible;
-  }
+    .bc-bubble.is-pinned::before {
+      background: linear-gradient(90deg, #02a3fe, transparent);
+      opacity: .3;
+    }
 
-  /* TOP ENGINE */
-  .panel-header {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    padding: 10px;
-    background: linear-gradient(135deg, #f8faff, #eef2ff);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.05);
-    border-bottom-left-radius: 18px;
-    border-bottom-right-radius: 18px;
-  }
+    .bc-bubble-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 5px;
+      margin-top: 5px;
+    }
 
-  .panel-title {
-    font-size: 13px;
-  }
+    .bc-bubble-ts {
+      font-size: 9px;
+      color: #2a3050;
+    }
 
-  .atm-hero {
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 8px;
-  }
+    .bc-ticks {
+      font-size: 10px;
+      color: #02a3fe;
+      opacity: .6;
+    }
 
-  .atm-dt-box {
-    width: 100%;
-    padding: 10px 12px;
-    border-radius: 12px;
-    background: white;
-  }
+    /* Admin action buttons — appear on hover */
+    .bc-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity .15s;
+      flex-shrink: 0;
+    }
 
-  .atm-dt-label {
-    font-size: 8px;
-  }
+    .bc-msg-body-row:hover .bc-actions {
+      opacity: 1;
+    }
 
-  .atm-dt-val {
-    font-size: 12px;
-    line-height: 1.5;
-  }
+    .bc-act-btn {
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-size: 9px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid;
+      white-space: nowrap;
+      line-height: 1.6;
+      transition: all .15s;
+      background: var(--bg-card2);
+    }
 
-  /* SMALLER LIVE VALUE */
-.atm-run-box {
-    width: 100%;
-    min-height: 48px;
-    border-radius: 12px;
-    font-size: 22px;
-    font-weight: 800;
-}
+    .bc-act-btn.pin {
+      color: #02a3fe;
+      border-color: rgba(2, 163, 254, .3);
+    }
 
-  .market-note {
-    font-size: 11px;
-    line-height: 1.5;
-    margin-top: 8px;
-  }
+    .bc-act-btn.pin:hover {
+      background: rgba(2, 163, 254, .15);
+    }
 
-  /* INTERNAL SCROLL AREA */
-  .rows-scroll {
-    max-height: 52vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 10px;
-    padding-bottom: 30px;
-    border-radius: 18px;
-    background: linear-gradient(180deg,#f8fbff,#eef2ff);
-}
+    .bc-act-btn.del {
+      color: #ff4d6d;
+      border-color: rgba(255, 77, 109, .3);
+    }
 
-  .rows-grid {
-    gap: 10px;
-    padding-bottom: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
+    .bc-act-btn.del:hover {
+      background: rgba(255, 77, 109, .15);
+    }
 
-  /* SMALLER ROWS */
-  .data-row {
-    width: 100%;
-    padding: 12px;
-    border-radius: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    background: rgba(255,255,255,0.92);
-    border: 1px solid #dbeafe;
-    box-shadow:
-      0 4px 14px rgba(15,23,42,0.05),
-      0 1px 2px rgba(15,23,42,0.04);
-    backdrop-filter: blur(8px);
-}
+    /* Empty state */
+    .bc-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #2a3050;
+      text-align: center;
+      padding: 24px;
+    }
 
-.row-dt {
-    word-break: break-word;
-    font-size: 11px;
-    line-height: 1.6;
-    color: #334155;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-}
+    .bc-empty-icon {
+      font-size: 36px;
+      opacity: .3;
+    }
 
-  .val-pill {
-    width: 100%;
-    font-size: 18px;
-    padding: 10px 14px;
-    border-radius: 14px;
-    min-height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    letter-spacing: 1px;
-    box-shadow: inset 0 -2px 0 rgba(255,255,255,0.15);
-}
+    .bc-empty-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #3a4060;
+    }
 
-  /* GAUGE */
-  .gauge-card {
-    margin-top: 10px;
-    border-top: 1px solid #dbeafe;
-    padding: 14px 10px;
-  }
+    .bc-empty-sub {
+      font-size: 11px;
+      color: #2a3050;
+      line-height: 1.5;
+    }
 
-  .gauge-card-title {
-    font-size: 15px;
-  }
+    /* Compose area */
+    .bc-compose {
+      border-top: 1px solid rgba(2, 163, 254, .1);
+      padding: 10px 12px;
+      background: rgba(9, 9, 21, .5);
+      flex-shrink: 0;
+    }
 
-  .gauge-wrapper {
-    width: 100%;
-    max-width: 240px;
-    margin: auto;
-  }
+    .bc-compose-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
 
-  canvas#gauge {
-    width: 100% !important;
-    height: auto !important;
-  }
+    .bc-textarea {
+      flex: 1;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid rgba(2, 163, 254, .18);
+      border-radius: 22px;
+      color: #e8eaf0;
+      font-family: 'Poppins', sans-serif;
+      font-size: 11px;
+      padding: 9px 16px;
+      resize: none;
+      height: 38px;
+      max-height: 100px;
+      outline: none;
+      line-height: 1.5;
+      transition: border-color .2s, box-shadow .2s;
+    }
 
-  .gauge-value-display {
-    font-size: 22px;
-    bottom: 14px;
-  }
+    .bc-textarea:focus {
+      border-color: rgba(2, 163, 254, .45);
+      box-shadow: 0 0 0 3px rgba(2, 163, 254, .07);
+    }
 
-  .gauge-ticks {
-    font-size: 8px;
-  }
+    .bc-textarea::placeholder {
+      color: #2a3050;
+    }
 
-  /* DOWNLOADS */
-  .download-card {
-    margin: 8px;
-    border-radius: 14px;
-    padding: 10px;
-  }
+    .bc-send-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #02a3fe, #0082cc);
+      border: none;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+      transition: all .2s;
+      box-shadow: 0 4px 14px rgba(2, 163, 254, .35);
+    }
 
-  .dl-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
+    .bc-send-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 20px rgba(2, 163, 254, .5);
+    }
 
-  .dl-btn {
-    width: 100%;
-    text-align: center;
-  }
+    .bc-send-btn:active {
+      transform: scale(.95);
+    }
 
-  /* MARKET CLOSED */
-  .market-closed-box {
-    width: 100%;
-    padding: 18px 12px;
-    border-radius: 16px;
-  }
+    .bc-send-btn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
 
-  .market-title {
-    font-size: 17px;
-  }
+    .bc-compose-hint {
+      font-size: 9px;
+      color: #2a3050;
+      text-align: center;
+      margin-top: 6px;
+    }
 
-  .market-desc {
-    font-size: 12px;
-  }
+    /* User read-only bar */
+    .bc-readonly {
+      border-top: 1px solid rgba(0, 212, 170, .08);
+      padding: 9px 14px;
+      background: rgba(0, 212, 170, .03);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 10px;
+      color: #2a5048;
+      flex-shrink: 0;
+    }
 
-  .market-time {
-    font-size: 14px;
-    width: 100%;
-  }
+    .bc-readonly-icon {
+      font-size: 12px;
+    }
 
-  .market-sub {
-    font-size: 11px;
-  }
+    /* New message notification badge */
+    .bc-new-badge {
+      display: none;
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #02a3fe, #0082cc);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(2, 163, 254, .4);
+      animation: bcBadgePop .3s ease;
+      z-index: 10;
+      white-space: nowrap;
+    }
 
-  /* REMOVE EXTRA CHART */
-  h3,
-  #sensexChart {
-    display: none;
-  }
+    .bc-new-badge.show {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-  /* BETTER SCROLLBAR */
-  .rows-scroll::-webkit-scrollbar {
-    width: 4px;
-  }
+    @keyframes bcBadgePop {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(8px)
+      }
 
-  .rows-scroll::-webkit-scrollbar-thumb {
-    background: #94a3b8;
-    border-radius: 10px;
-  }
-}
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0)
+      }
+    }
+
+    @media(max-width:768px) {
+
+      html,
+      body {
+        overflow-y: auto;
+        height: auto;
+      }
+
+      .main-grid {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+      }
+
+      .left-panel,
+      .right-panel {
+        overflow: visible;
+        width: 100%;
+      }
+
+      .right-panel {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        padding: 10px;
+      }
+
+      .top-combined-box {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+      }
+
+      .gauge-card,
+      .download-card,
+      .bc-wrap {
+        width: 100%;
+        height: auto;
+        min-height: auto;
+      }
+
+      .gauge-wrapper {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      canvas#gauge {
+        width: 100% !important;
+        max-width: 280px;
+        height: auto !important;
+      }
+
+      .gauge-value-display {
+        font-size: 20px;
+        bottom: 20px;
+      }
+
+      .rows-scroll {
+        max-height: 55vh;
+      }
+
+      .bc-wrap {
+        min-height: 400px;
+      }
+    }
+
+    .quick-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(235, 66, 1, .12);
+      border: 1px solid rgba(235, 66, 1, .3);
+      color: #eb4201;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      transition: all .2s;
+      position: absolute;
+      right: 50px;
+      bottom: 3px;
+    }
+
+    .quick-btn:hover {
+      background: rgba(235, 66, 1, .22);
+      border-color: #eb4201;
+      transform: scale(1.05);
+    }
+
+    .quick-btn.open {
+      background: rgba(235, 66, 1, .22);
+      border-color: #eb4201;
+      transform: rotate(45deg);
+    }
+
+    .quick-menu {
+      position: absolute;
+      bottom: 50px;
+      left: 0;
+      right: 50px;
+      background: #0f0f22;
+      border: 1px solid rgba(2, 163, 254, .2);
+      border-radius: 12px;
+      overflow: hidden;
+      z-index: 100;
+      box-shadow: 0 -8px 32px rgba(0, 0, 0, .5);
+      display: none;
+    }
+
+    .quick-menu.show {
+      display: block;
+      animation: qmUp .2s ease;
+    }
+
+    @keyframes qmUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .quick-menu-header {
+      padding: 8px 14px 6px;
+      border-bottom: 1px solid rgba(2, 163, 254, .1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .quick-menu-title {
+      font-size: 9px;
+      font-weight: 700;
+      color: #02a3fe;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .quick-menu-title::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #eb4201;
+    }
+
+    .quick-menu-close {
+      background: none;
+      border: none;
+      color: #2a3050;
+      cursor: pointer;
+      font-size: 14px;
+      transition: color .15s;
+    }
+
+    .quick-menu-close:hover {
+      color: #e8eaf0;
+    }
+
+    .quick-menu-list {
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .quick-menu-list::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .quick-menu-list::-webkit-scrollbar-thumb {
+      background: rgba(2, 163, 254, .2);
+      border-radius: 2px;
+    }
+
+    .quick-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      cursor: pointer;
+      transition: background .15s;
+      border-bottom: 1px solid rgba(255, 255, 255, .03);
+    }
+
+    .quick-item:last-child {
+      border-bottom: none;
+    }
+
+    .quick-item:hover {
+      background: rgba(2, 163, 254, .07);
+    }
+
+    .quick-item:hover .qi-text {
+      color: #fff;
+    }
+
+    .qi-num {
+      min-width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(2, 163, 254, .1);
+      border: 1px solid rgba(2, 163, 254, .2);
+      font-size: 9px;
+      font-weight: 700;
+      color: #02a3fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .qi-text {
+      font-size: 11px;
+      color: #8090b8;
+      line-height: 1.4;
+      transition: color .15s;
+      flex: 1;
+    }
+
+    .qi-arrow {
+      font-size: 10px;
+      color: #2a3050;
+      flex-shrink: 0;
+      transition: color .15s;
+    }
+
+    .quick-item:hover .qi-arrow {
+      color: #02a3fe;
+    }
+
+
+    /* ── Active Users Widget ── */
+    .active-users-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(0, 212, 170, .08);
+      border: 1px solid rgba(0, 212, 170, .25);
+      padding: 5px 13px;
+      border-radius: 30px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: .5px;
+      cursor: default;
+      transition: border-color .3s;
+    }
+
+    .active-users-pill .au-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      flex-shrink: 0;
+      animation: pulse 2s infinite;
+    }
+
+    .active-users-pill .au-count {
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--green);
+      min-width: 18px;
+      text-align: center;
+    }
   </style>
 </head>
 
 <body>
 
-  <div
-    style="text-align: center; padding: 10px; font-weight: bold; font-size: 18px; background-color: #1a2a3a; color: white;">
-    Welcome to the Black Box Developed by TraderBro.in
-  </div>
+  <div class="welcome-bar">Welcome to the Black-Box-Engine Developed by TraderBro.in</div>
 
   <header class="header">
     <div class="logo-block">
-      <div class="logo-title">📈 TraderBro Dashboard</div>
-      <div class="logo-sub">SENSEX SENTIMENT LIVE</div>
+      <a href="/">
+        <div class="logo-icon"></div>
+      </a>
+      <div class="logo-text-wrap">
+        <div class="logo-title">Trader<span>Bro.in</span></div>
+        <div class="logo-sub">Black-Box-Engine Dashboard</div>
+      </div>
     </div>
     <div class="header-divider"></div>
     <div class="header-indices">
       <div class="idx-item">
-        <div class="idx-label">SENSEX</div>
+        <div class="idx-label">Sensex</div>
         <div class="idx-val" id="h-ltp">—</div>
       </div>
       <div class="idx-item">
-        <div class="idx-label">EXPIRY</div>
-        <div class="idx-val" id="h-expiry" style="font-size:13px">—</div>
+        <div class="idx-label">Expiry</div>
+        <div class="idx-val" id="h-expiry" style="font-size:11px">—</div>
       </div>
     </div>
     <div class="header-right">
-      <div class="live-badge"><span class="live-dot"></span>LIVE</div>
+      <!-- Active users pill — visible to everyone on dashboard -->
+      <div class="active-users-pill" title="Users currently on dashboard">
+        <span class="au-dot"></span>
+        <span class="au-count" id="au-count">—</span>
+        <span>on dashboard</span>
+      </div>
+      <a href="/" class="chat-toggle-btn"><i class="fa-solid fa-house"></i><span>HOME</span></a>
+      <div class="live-badge"><span class="live-dot"></span>Live</div>
       <div class="ts-block">
-        <div class="ts-label">LAST UPDATED</div>
+        <div class="ts-label">Last Updated</div>
         <div class="ts-val" id="h-ts">—</div>
       </div>
-      <!-- <a href="/admin" class="admin-btn">⚙ Admin</a> -->
     </div>
   </header>
 
   <div class="main-grid">
 
+    <!-- ── LEFT PANEL ── -->
     <div class="left-panel">
       <div class="panel-header">
         <div class="panel-header-top">
-          <div class="panel-title">📊 Black Box Engine</div>
+          <div class="panel-title">Black-Box-Engine</div>
         </div>
         <div class="atm-hero">
           <div class="atm-dt-box">
-            <div class="atm-dt-label">ATM STRIKE &amp; TIMESTAMP</div>
-            <div class="atm-dt-val" id="atm-dt">
-              Waiting for market session...
-            </div>
+            <div class="atm-dt-label">ATM Strike &amp; Timestamp</div>
+            <div class="atm-dt-val" id="atm-dt">Waiting for market session...</div>
           </div>
           <div class="atm-run-box atm-run-zero" id="atm-run-box">
-            <span id="atm-run-val">—</span>
+            <span class="run-label">Running</span>
+            <span class="run-val" id="atm-run-val">—</span>
           </div>
         </div>
         <div class="market-note" id="market-note" style="display:none;">
-          ⏰ Values are generated from 9:16 AM to 12:00 PM and remain visible till 8:30 AM next trading day.
-      </div>
+          <i class="fas fa-clock"></i>Values generated 9:16 AM – 12 PM IST · Visible till next trading session
+        </div>
       </div>
       <div class="rows-scroll">
         <div class="rows-grid" id="rows-grid">
           <div class="market-closed-box">
-
-              <div class="market-icon">
-                  ⏰
-              </div>
-
-              <div class="market-title">
-                  Market Insight Window Closed
-              </div>
-
-              <div class="market-desc">
-                  Live Black Box values are generated during active market analysis hours.
-              </div>
-
-              <div class="market-time">
-                  9:16 AM → 12:00 PM
-              </div>
-
-              <div class="market-sub">
-                  Previous values remain visible till next trading day 8:30 AM
-              </div>
-
+            <div class="market-icon">⏰</div>
+            <div class="market-title">Market Insight Window Closed</div>
+            <div class="market-desc">Live Black-Box-Engine values are generated during active market analysis hours.
+            </div>
+            <div class="market-time">9:16 AM → 12 PM</div>
+            <div class="market-sub">Previous values remain visible till next trading day 8:30 AM</div>
           </div>
         </div>
       </div>
+      <div
+        style="padding:8px 14px;background:rgba(235,66,1,.06);border-top:1px solid rgba(235,66,1,.12);font-size:20px;color:#5a3020;text-align:center;flex-shrink:0;">
+        ⚠️ Traderbro.in is an educational platform. Not SEBI registered as RA or IA. No investment advice provided.
+      </div>
     </div>
 
+    <!-- ── RIGHT PANEL ── -->
     <div class="right-panel">
-      <div class="gauge-card">
-        <div class="gauge-card-title">Sentimental Dial Gauge</div>
-        <div class="gauge-wrapper">
-          <canvas id="gauge" width="600" height="330"></canvas>
-          <div class="gauge-value-display" id="gauge-val">0</div>
-        </div>
-        <div class="gauge-ticks">
-          <span>-180</span><span>-120</span><span>-60</span>
-          <span>0</span>
-          <span>+60</span><span>+120</span><span>+180</span>
-        </div>
-        <div class="sentiment-text" id="sentiment-text">◆ </div>
-      </div>
-      <div class="download-card">
-        <div class="dl-title">📥 Historical Data Downloads</div>
-        <div id="dl-list">
-          <div class="no-files">Loading...</div>
-        </div>
-      </div>
-    </div>
 
+      <!-- TOP: gauge + downloads -->
+      <div class="top-combined-box">
+        <div class="gauge-card">
+          <div class="gauge-card-title">Sentimental Dial Gauge</div>
+          <div class="gauge-wrapper">
+            <canvas id="gauge" width="600" height="370"></canvas>
+            <div class="gauge-value-display" id="gauge-val" style="color:var(--gold)">0</div>
+          </div>
+          <div class="sentiment-text" id="sentiment-text">
+            <span class="sentiment-badge"
+              style="background:rgba(245,166,35,.1);color:var(--gold);border:1px solid rgba(245,166,35,.3);">◆
+              Neutral</span>
+          </div>
+        </div>
+
+        <div class="download-card">
+          <div class="dl-title"><i class="fas fa-download"></i>Historical Data Downloads</div>
+          <div class="plan-strip plan-free" id="plan-strip">
+            <span class="plan-strip-label" id="plan-strip-label">⭕ Free Plan</span>
+            <span class="plan-strip-status" id="plan-strip-status">⛔ Downloads Locked</span>
+          </div>
+          <button class="today-dl-btn" id="today-dl-btn" onclick="downloadTodayExcel()" style="display:none;">
+            <i class="fas fa-file-excel"></i>Download Today's Dashboard Data (Excel)
+          </button>
+          <div class="dl-scroll" id="dl-list">
+            <div class="no-files"><i class="fas fa-circle-notch fa-spin"></i>Loading files…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM: broadcast chatbox -->
+      <div class="bc-wrap" id="bc-wrap">
+
+        <!-- Header -->
+        <div class="bc-header">
+          <div class="bc-avatar">📢</div>
+          <div class="bc-header-info">
+            <div class="bc-header-name">TraderBro Admin</div>
+            <div class="bc-header-sub"><span class="bc-online-dot"></span><span id="bc-status-text">Broadcast
+                Channel</span></div>
+          </div>
+          <div class="bc-header-right">
+            <span class="bc-msg-count" id="bc-msg-count"></span>
+            <span class="bc-tab active" id="tab-all" onclick="setMsgTab('all')">All</span>
+            <span class="bc-tab" id="tab-pinned" onclick="setMsgTab('pinned')">📌 Pinned</span>
+          </div>
+        </div>
+
+        <!-- Pinned banner -->
+        <div class="bc-pinned" id="bc-pinned" onclick="setMsgTab('pinned')">
+          <span class="bc-pinned-icon"><i class="fas fa-thumbtack"></i></span>
+          <span class="bc-pinned-label">Pinned</span>
+          <span class="bc-pinned-text" id="bc-pinned-text"></span>
+        </div>
+
+        <!-- New message notification (for users who scrolled up) -->
+        <div class="bc-new-badge" id="bc-new-badge" onclick="scrollToLatest()">
+          <i class="fas fa-arrow-down"></i><span id="bc-new-badge-text">New message</span>
+        </div>
+
+        <!-- Messages -->
+        <div class="bc-messages" id="bc-messages">
+          <div class="bc-empty">
+            <div class="bc-empty-icon">📢</div>
+            <div class="bc-empty-title">No broadcasts yet</div>
+            <div class="bc-empty-sub">Admin messages will appear here instantly</div>
+          </div>
+        </div>
+
+        <!-- Admin compose -->
+        <div class="bc-compose" id="bc-compose" style="display:none;">
+          <div class="bc-compose-row">
+            <textarea id="bc-input" class="bc-textarea" placeholder="Type a broadcast message…" maxlength="500"
+              onkeydown="bcKeydown(event)" oninput="bcAutoResize(this)"></textarea>
+            <button class="quick-btn" id="quickBtn" onclick="bcToggleQuick()" title="Quick messages">＋</button>
+            <button class="bc-send-btn" id="bc-send-btn" onclick="bcSend()" title="Send (Ctrl+Enter)">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+            <div class="quick-menu" id="quickMenu">
+              <div class="quick-menu-header">
+                <span class="quick-menu-title">Quick broadcasts</span>
+                <button class="quick-menu-close" onclick="bcToggleQuick()">✕</button>
+              </div>
+              <div class="quick-menu-list" id="quickMenuList"></div>
+            </div>
+          </div>
+          <div class="bc-compose-hint">Ctrl+Enter to send &nbsp;·&nbsp; <span id="bc-char-count"
+              style="color:#3a4060;">0/500</span></div>
+        </div>
+
+        <!-- User read-only bar -->
+        <div class="bc-readonly" id="bc-readonly" style="display:none;">
+          <span class="bc-readonly-icon">🔒</span>
+          <span>Read-only &nbsp;·&nbsp; Only admin can broadcast</span>
+        </div>
+
+      </div>
+
+    </div>
   </div>
 
-  <h3>📈 Live Sensex Chart</h3>
-  <canvas id="sensexChart" height="100"></canvas>
+  <!-- Upgrade modal -->
+  <div class="upgrade-overlay" id="upgrade-overlay">
+    <div class="upgrade-modal">
+      <button class="upgrade-modal-close" onclick="closeUpgradeModal()"><i class="fas fa-times"></i></button>
+      <div class="upgrade-icon">🔒</div>
+      <div class="upgrade-title">Upgrade to Download</div>
+      <div class="upgrade-desc">Historical data files are available exclusively to <strong
+          style="color:var(--primary)">Pro</strong> and <strong style="color:var(--gold)">Premium</strong> members.
+      </div>
+      <div class="upgrade-plans">
+        <div class="upgrade-plan-card plan-pro">
+          <div class="upgrade-plan-name">Pro</div>
+          <div class="upgrade-plan-feature">22 trading days<br>Full data access</div>
+        </div>
+        <div class="upgrade-plan-card plan-premium">
+          <div class="upgrade-plan-name">Premium</div>
+          <div class="upgrade-plan-feature">250 trading days<br>Full data access</div>
+        </div>
+      </div>
+      <a href="/trading-plan" class="upgrade-cta"><i class="fas fa-arrow-up"></i> &nbsp;Upgrade My Plan</a>
+    </div>
+  </div>
 
-
-  <!-- It will only access when in market time or else not -->
   <script>
+    /* ══════════════════════════════════════════════════════════
+       GLOBALS
+    ══════════════════════════════════════════════════════════ */
+    let _refreshTimer = null;
+    let _dashboardRows = [];
+    let _userPlan = "free";
+    let _marketCloseTriggered = false;
 
+    /* ══════════════════════════════════════════════════════════
+       BROADCAST STATE
+    ══════════════════════════════════════════════════════════ */
+    let _bcIsAdmin = false;
+    let _bcMessages = [];        // full list from server
+    let _bcTab = 'all';
+    let _bcPollTimer = null;
+    let _bcLastId = 0;         // highest message id seen
+    let _bcAtBottom = true;      // is user scrolled to bottom?
+    let _bcNewCount = 0;         // unseen messages while scrolled up
+
+    /* ══════════════════════════════════════════════════════════
+       MARKET HELPERS
+    ══════════════════════════════════════════════════════════ */
+    function getIST() {
+      const now = new Date();
+      return new Date(now.getTime() + now.getTimezoneOffset() * 60000 + 5.5 * 60 * 60 * 1000);
+    }
     function isMarketOpen() {
-      let now = new Date();
-      let hour = now.getHours();
-      let minutes = now.getMinutes();
-
-      const isAfter915 = (hour > 9) || (hour === 9 && minutes >= 15);
-      const isBefore12 = (hour < 12) || (hour === 12 && minutes === 0);
-
-      return isAfter915 && isBefore12;
+      const ist = getIST(); const mins = ist.getHours() * 60 + ist.getMinutes();
+      return mins >= 9 * 60 + 16 && mins <= 12 * 60 + 30;
+    }
+    // REPLACE WITH:
+    function isJustAfterMarketClose() {
+      const ist = getIST(); const mins = ist.getHours() * 60 + ist.getMinutes();
+      return mins >= 12 * 60 + 0 && mins <= 12 * 60 + 30;   // 12:00 PM – 12:30 PM IST
     }
 
-    // 🚨 CHECK ACCESS (Commented out for testing so you can view the dashboard anytime)
-    /*
-    if (!isMarketOpen()) {
-      alert("Market is closed. Access available only between 9:00 AM - 3:30 PM");
-      window.location.href = "/";
+    async function checkMarketCloseAutoSave() {
+      if (_marketCloseTriggered) return;
+      if (!isJustAfterMarketClose()) return;
+      _marketCloseTriggered = true;
+      try {
+        const res = await fetch('/api/trigger-eod-save', { method: 'POST', credentials: 'include' });
+        if (res.ok) {
+          console.log('✅ EOD Excel saved at market close');
+          setTimeout(loadDownloads, 3000);
+          setTimeout(loadDownloads, 8000);
+        }
+      } catch (e) { console.error('EOD save error:', e); }
     }
-    */
 
-  </script>
+    /* ══════════════════════════════════════════════════════════
+       BROADCAST — CORE
+    ══════════════════════════════════════════════════════════ */
+    function escH(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
 
+    function scrollToLatest() {
+      const el = document.getElementById('bc-messages');
+      if (el) el.scrollTop = el.scrollHeight;
+      hideBadge();
+    }
 
-  <script>
-    /*
-      Dashboard reads `running` (cumulative) directly from DB.
-      simple.html now saves the PREVIOUS row (with corrected diff_prev + running)
-      to DB BEFORE saving the current row, so values are always consistent.
-    */
+    function hideBadge() {
+      _bcNewCount = 0;
+      const b = document.getElementById('bc-new-badge');
+      if (b) b.classList.remove('show');
+    }
 
-    let refreshTimer = null;
+    function setMsgTab(tab) {
+      _bcTab = tab;
+      document.getElementById('tab-all').className = 'bc-tab' + (tab === 'all' ? ' active' : '');
+      document.getElementById('tab-pinned').className = 'bc-tab' + (tab === 'pinned' ? ' active' : '');
+      renderBroadcasts();
+      if (tab !== 'pinned') scrollToLatest();
+    }
 
+    function renderBroadcasts() {
+      const container = document.getElementById('bc-messages');
+      const pinnedEl = document.getElementById('bc-pinned');
+      const pinnedText = document.getElementById('bc-pinned-text');
+      const countEl = document.getElementById('bc-msg-count');
+      if (!container) return;
+
+      // Update pinned banner
+      const pinnedMsg = _bcMessages.find(m => m.pinned);
+      if (pinnedMsg) {
+        pinnedText.textContent = pinnedMsg.message;
+        pinnedEl.classList.add('show');
+      } else {
+        pinnedEl.classList.remove('show');
+      }
+
+      // Filter & sort
+      let shown = _bcTab === 'pinned'
+        ? _bcMessages.filter(m => m.pinned)
+        : [..._bcMessages];
+      shown.sort((a, b) => a.id - b.id);
+
+      if (countEl) countEl.textContent = shown.length ? shown.length + (shown.length === 1 ? ' msg' : ' msgs') : '';
+
+      // Empty state
+      if (!shown.length) {
+        container.innerHTML = `
+      <div class="bc-empty">
+        <div class="bc-empty-icon">📢</div>
+        <div class="bc-empty-title">${_bcTab === 'pinned' ? 'No pinned messages' : 'No broadcasts yet'}</div>
+        <div class="bc-empty-sub">${_bcTab === 'pinned' ? 'Pin a message to highlight it' : 'Admin messages will appear here instantly'}</div>
+      </div>`;
+        return;
+      }
+
+      let html = '';
+      let lastDate = '';
+
+      shown.forEach(msg => {
+        const rawDate = (msg.timestamp || '').split(' ')[0] || '';
+        const timeStr = (msg.timestamp || '').split(' ')[1] || '';
+        const todayStr = getIST().toISOString().slice(0, 10);
+        const dispDate = rawDate === todayStr ? 'Today' : rawDate;
+
+        if (dispDate !== lastDate) {
+          html += `<div class="bc-date-sep"><span>${dispDate}</span></div>`;
+          lastDate = dispDate;
+        }
+
+        const adminBtns = _bcIsAdmin ? `
+      <div class="bc-actions">
+        <button class="bc-act-btn pin" onclick="bcPin(${msg.id},${msg.pinned ? 0 : 1})">
+          <i class="fas fa-thumbtack"></i> ${msg.pinned ? 'Unpin' : 'Pin'}
+        </button>
+        <button class="bc-act-btn del" onclick="bcDel(${msg.id})">
+          <i class="fas fa-trash"></i> Delete
+        </button>
+      </div>` : '';
+
+        html += `
+      <div class="bc-msg" id="bcm-${msg.id}">
+        <div class="bc-msg-meta">
+          <span class="bc-msg-sender">🛡️ TraderBro Admin</span>
+          <span class="bc-msg-time">${timeStr}</span>
+          ${msg.pinned ? '<span class="bc-msg-pin-tag"><i class="fas fa-thumbtack"></i> Pinned</span>' : ''}
+        </div>
+        <div class="bc-msg-body-row">
+          <div class="bc-bubble${msg.pinned ? ' is-pinned' : ''}">
+            ${escH(msg.message)}
+            <div class="bc-bubble-footer">
+              <span class="bc-bubble-ts">${timeStr}</span>
+              <span class="bc-ticks">✓✓</span>
+            </div>
+          </div>
+          ${adminBtns}
+        </div>
+      </div>`;
+      });
+
+      const wasAtBottom = _bcAtBottom;
+      container.innerHTML = html;
+      if (wasAtBottom) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+
+    /* ── Load from server ── */
+    async function loadBroadcasts(silent) {
+      try {
+        const res = await fetch('/api/broadcast', { credentials: 'include' });
+        if (res.status === 401) return;
+        const data = await res.json();
+
+        _bcIsAdmin = data.is_admin || false;
+        const msgs = data.messages || [];
+
+        // Sort by id ascending
+        msgs.sort((a, b) => a.id - b.id);
+
+        // Detect new messages
+        const maxId = msgs.length ? Math.max(...msgs.map(m => m.id)) : 0;
+        const hasNew = maxId > _bcLastId && _bcLastId > 0;
+        _bcLastId = maxId;
+
+        _bcMessages = msgs;
+
+        // Show/hide compose vs readonly
+        const compose = document.getElementById('bc-compose');
+        const readonly = document.getElementById('bc-readonly');
+        const statusEl = document.getElementById('bc-status-text');
+        if (_bcIsAdmin) {
+          if (compose) compose.style.display = 'block';
+          if (readonly) readonly.style.display = 'none';
+          if (statusEl) statusEl.textContent = 'Admin · Broadcast Channel';
+        } else {
+          if (compose) compose.style.display = 'none';
+          if (readonly) readonly.style.display = 'flex';
+          if (statusEl) statusEl.textContent = 'Read-only · Broadcast Channel';
+        }
+
+        // New message badge for users who scrolled up
+        if (hasNew && !_bcAtBottom && !_bcIsAdmin) {
+          _bcNewCount++;
+          const badge = document.getElementById('bc-new-badge');
+          const badgeText = document.getElementById('bc-new-badge-text');
+          if (badge) {
+            badgeText.textContent = _bcNewCount === 1 ? 'New message ↓' : `${_bcNewCount} new messages ↓`;
+            badge.classList.add('show');
+          }
+        }
+
+        renderBroadcasts();
+
+        // Auto-scroll if at bottom
+        if (_bcAtBottom) scrollToLatest();
+
+      } catch (e) { console.error('loadBroadcasts:', e); }
+    }
+
+    /* ── Track scroll position ── */
+    (function () {
+      document.addEventListener('DOMContentLoaded', () => {
+        const el = document.getElementById('bc-messages');
+        if (!el) return;
+        el.addEventListener('scroll', () => {
+          _bcAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+          if (_bcAtBottom) hideBadge();
+        });
+      });
+    })();
+
+    /* ── Send message (admin) ── */
+    async function bcSend() {
+      const inp = document.getElementById('bc-input');
+      const btn = document.getElementById('bc-send-btn');
+      const text = inp ? inp.value.trim() : '';
+      if (!text) return;
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+
+      try {
+        const res = await fetch('/api/admin/broadcast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ message: text, pinned: 0 })
+        });
+        const data = await res.json();
+        if (data.success) {
+          inp.value = '';
+          bcUpdateCharCount('');
+          inp.style.height = '38px';
+          _bcAtBottom = true;
+          await loadBroadcasts();
+        }
+      } catch (e) { console.error('bcSend:', e); }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+      inp.focus();
+    }
+
+    /* ── Delete ── */
+    async function bcDel(id) {
+      if (!confirm('Delete this broadcast message?')) return;
+      try {
+        await fetch(`/api/admin/broadcast/${id}`, { method: 'DELETE', credentials: 'include' });
+        await loadBroadcasts();
+      } catch (e) { }
+    }
+
+    /* ── Pin / Unpin ── */
+    async function bcPin(id, val) {
+      try {
+        await fetch(`/api/admin/broadcast/${id}/pin`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ pinned: val })
+        });
+        await loadBroadcasts();
+      } catch (e) { }
+    }
+
+    /* ── Compose helpers ── */
+    function bcKeydown(e) {
+      if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); bcSend(); }
+    }
+    function bcAutoResize(el) {
+      el.style.height = '38px';
+      el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+      bcUpdateCharCount(el.value);
+    }
+    function bcUpdateCharCount(val) {
+      const el = document.getElementById('bc-char-count');
+      if (!el) return;
+      const n = val.length;
+      el.textContent = n + '/500';
+      el.style.color = n > 450 ? '#f5a623' : n > 490 ? '#ff4d6d' : '#2a3050';
+    }
+
+    /* ── Start polling ──
+       Admin: every 8s (they don't need instant feedback, they send)
+       User:  every 4s (near-instant delivery)
+    ─────────────────────────────────────────── */
+    function startBcPoll() {
+      loadBroadcasts();
+      if (_bcPollTimer) clearInterval(_bcPollTimer);
+      // Start at 4s; after first load we know if admin and can adjust
+      _bcPollTimer = setInterval(() => loadBroadcasts(true), 4000);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       LIVE DATA
+    ══════════════════════════════════════════════════════════ */
     function loadData() {
       fetch('/api/get-running')
         .then(r => r.json())
         .then(d => {
-          let rawRows = d.rows || [];
-
-          const rows = rawRows;
-          rows.sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
-          
-          if (rows.length === 0) {
-
+          const rows = (d.rows || []).sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+          if (!rows.length) {
+            _dashboardRows = [];
             document.getElementById("rows-grid").innerHTML = `
-
-                <div class="market-closed-box">
-
-                    <div class="market-icon">
-                        ⏰
-                    </div>
-
-                    <div class="market-title">
-                        Market Insight Window Closed
-                    </div>
-
-                    <div class="market-desc">
-                        Live Black Box values are generated during active market analysis hours.
-                    </div>
-
-                    <div class="market-time">
-                        9:16 AM → 12:00 PM
-                    </div>
-
-                    <div class="market-sub">
-                        Previous values remain visible till next trading day 8:30 AM
-                    </div>
-
-                </div>
-            `;
-
+          <div class="market-closed-box">
+            <div class="market-icon">⏰</div>
+            <div class="market-title">Market Insight Window Closed</div>
+            <div class="market-desc">Live Black-Box-Engine values are generated during active market analysis hours.</div>
+            <div class="market-time">9:16 AM → 12 PM</div>
+            <div class="market-sub">Previous values remain visible till next trading day 8:30 AM</div>
+          </div>`;
             return;
-        }
-
-          // Latest row is the current/tail row
-          const top = rawRows[rawRows.length - 1];
-
-          // Update header
-          document.getElementById("h-ltp").textContent = top.index_ltp || "—";
-          document.getElementById("h-expiry").textContent = top.expiry || "—";
-          document.getElementById("h-ts").textContent = top.datetime || "—";
-
-          // ATM hero — show latest cumulative from DB
-          document.getElementById("atm-dt").innerHTML =
-          `
-          ${top.datetime}
-          &nbsp;&nbsp;|&nbsp;&nbsp;
-          Strike: ${top.strike}
-          &nbsp;&nbsp;|&nbsp;&nbsp;
-          Sensex: ${parseFloat(top.index_ltp || 0).toFixed(2)}
-          `;
-
-          const rv = parseFloat(top.running || 0);
-          document.getElementById("atm-run-val").textContent = rv.toFixed(2);
+          }
+          const pendingRow = rows[rows.length - 1];
+          const displayableRows = rows.length >= 2 ? rows.slice(0, -1) : rows;
+          const heroRow = displayableRows[displayableRows.length - 1] || pendingRow;
+          const heroRunning = parseFloat(heroRow.running || 0);
+          _dashboardRows = rows.map(r => ({ datetime: r.datetime || '', strike: r.strike || '', index_ltp: r.index_ltp || '', running: r.running || 0 })); document.getElementById("h-ltp").textContent = pendingRow.index_ltp || "—";
+          document.getElementById("h-expiry").textContent = pendingRow.expiry || "—";
+          document.getElementById("h-ts").textContent = pendingRow.datetime || "—";
+          const parts = (pendingRow.datetime || '').split(' ');
+          document.getElementById("atm-dt").innerHTML = `
+        <span style="color:#fff">${parts[0] || ''}</span>
+        <span style="color:#fff;margin:0 6px">|</span>
+        <span style="color:#fff">${parts[1] || pendingRow.datetime}</span><br>
+        <span style="color:#ff6b35">Strike: </span><span class="strike-highlight">${pendingRow.strike}</span>
+        <span style="color:var(--text-muted);margin:0 8px">·</span>
+        <span style="color:#ff6b35">Sensex: </span><span style="color:var(--primary)">${parseFloat(pendingRow.index_ltp || 0).toFixed(2)}</span>`;
           const box = document.getElementById("atm-run-box");
-          box.className = "atm-run-box " +
-            (rv > 0 ? "atm-run-pos" : rv < 0 ? "atm-run-neg" : "atm-run-zero");
-
-          // All rows except tail → show in scrollable list
-          const displayRows = [...rows];
-          displayRows.pop(); // remove latest/current row
-          displayRows.reverse(); // latest old rows on top
-          let html = "";
-          displayRows.forEach(r => {
-            const val = parseFloat(r.running || 0);
-            const cls = val > 0 ? "val-pos" : val < 0 ? "val-neg" : "val-zero";
-            html += `
-            <div class="data-row">
-
-                <div class="row-dt">
-                    ${r.datetime}
-                    &nbsp;&nbsp;&nbsp;
-                    Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)}
-                </div>
-
-                <div class="val-pill ${cls}">
-                    ${val.toFixed(2)}
-                </div>
-
-            </div>`;
-          });
-
-          const grid = document.getElementById("rows-grid");
-          grid.innerHTML = html;
-          const scrollBox = document.querySelector(".rows-scroll");
-          scrollBox.scrollTop = scrollBox.scrollHeight;
-
-          // Gauge = average of last 6 running values
-          const last6 = rows.slice(-6);
-          const avg6 = last6.reduce((s, r) => s + parseFloat(r.running || 0), 0) / last6.length;
-          updateGauge(avg6);
+          if (heroRunning === null) {
+            document.getElementById("atm-run-val").textContent = "—";
+            box.className = "atm-run-box atm-run-zero";
+            box.querySelector('.run-label').textContent = '◆ Neutral';
+          } else {
+            document.getElementById("atm-run-val").textContent = heroRunning.toFixed(2);
+            if (heroRunning > 0) { box.className = "atm-run-box atm-run-pos"; box.querySelector('.run-label').textContent = '▲ Bullish'; }
+            else if (heroRunning < 0) { box.className = "atm-run-box atm-run-neg"; box.querySelector('.run-label').textContent = '▼ Bearish'; }
+            else { box.className = "atm-run-box atm-run-zero"; box.querySelector('.run-label').textContent = '◆ Neutral'; }
+          }
+          const displayRows = [...displayableRows].reverse();
+          if (!displayRows.length) {
+            document.getElementById("rows-grid").innerHTML = `<div class="market-closed-box">.<div class="market-icon">⏳</div><div class="market-title">Waiting for next tick…</div><div class="market-desc">First confirmed value will appear after the next data point arrives.</div></div>`;
+          } else {
+            let html = "";
+            displayRows.forEach(r => {
+              const val = parseFloat(r.running || 0);
+              const cls = val > 0 ? "val-pos" : val < 0 ? "val-neg" : "val-zero";
+              const rcls = val > 0 ? "row-pos" : val < 0 ? "row-neg" : "row-zero";
+              const dt = (r.datetime || '').split(' ');
+              html += `<div class="data-row ${rcls}">
+            <div class="row-dt"><span class="row-time">${dt[1] || r.datetime}</span><span class="row-sensex">Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)}</span></div>
+            <div class="val-pill ${cls}">${val > 0 ? '+' : ''}${val.toFixed(2)}</div>
+          </div>`;
+            });
+            document.getElementById("rows-grid").innerHTML = html;
+          }
+          const last6 = displayableRows.slice(-6);
+          if (last6.length) updateGauge(last6.reduce((s, r) => s + parseFloat(r.running || 0), 0) / last6.length);
+          checkMarketCloseAutoSave();
         })
-        .catch(err => console.error("loadData error", err));
+        .catch(e => console.error("loadData:", e));
     }
 
-    function startAutoRefresh(ms = 3000) {
-      if (refreshTimer) clearInterval(refreshTimer);
-      loadData();
-      refreshTimer = setInterval(loadData, ms);
-    }
+    function startAutoRefresh(ms) { if (_refreshTimer) clearTimeout(_refreshTimer); doRefresh(ms); }
+    function doRefresh(ms) { loadData(); _refreshTimer = setTimeout(() => doRefresh(ms), ms); }
 
-    // ── GAUGE ──────────────────────────────────────────────────────────────────
+    /* ══════════════════════════════════════════════════════════
+       GAUGE
+    ══════════════════════════════════════════════════════════ */
     function drawGauge() {
-      const canvas = document.getElementById("gauge");
-      const ctx = canvas.getContext("2d");
-      const w = canvas.width, h = canvas.height;
+      const cv = document.getElementById("gauge"), ctx = cv.getContext("2d"), w = cv.width, h = cv.height;
       ctx.clearRect(0, 0, w, h);
-      const cx = w / 2, cy = h * 0.9, r = w * 0.4;
-
-      ctx.beginPath(); ctx.strokeStyle = "#dc2626"; ctx.lineWidth = 30;
-      ctx.arc(cx, cy, r, Math.PI, Math.PI * 1.5); ctx.stroke();
-
-      ctx.beginPath(); ctx.strokeStyle = "#d97706"; ctx.lineWidth = 30;
-      ctx.arc(cx, cy, r, Math.PI * 1.5, Math.PI * 1.75); ctx.stroke();
-
-      ctx.beginPath(); ctx.strokeStyle = "#16a34a"; ctx.lineWidth = 30;
-      ctx.arc(cx, cy, r, Math.PI * 1.75, Math.PI * 2); ctx.stroke();
-    }
-
-    function updateGauge(val) {
-      val = parseFloat(val || 0);
-      if (isNaN(val)) val = 0;
-      val = Math.max(-180, Math.min(180, val));
-
-      drawGauge();
-
-      const canvas = document.getElementById("gauge");
-      const ctx = canvas.getContext("2d");
-      const w = canvas.width, h = canvas.height;
-      const cx = w / 2, cy = h * 0.9, r = w * 0.35;
-      const angle = Math.PI + ((val + 180) / 360) * Math.PI;
-
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
-      ctx.strokeStyle = "#111"; ctx.lineWidth = 4; ctx.stroke();
-
-      ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2);
-      ctx.fillStyle = "#333"; ctx.fill();
-
-      document.getElementById("gauge-val").textContent = Math.round(val);
-      const s = document.getElementById("sentiment-text");
-      s.style.color = val > 0 ? "#16a34a" : val < 0 ? "#dc2626" : "#d97706";
-    }
-
-    // ── DOWNLOADS ──────────────────────────────────────────────────────────────
-    function loadDownloads() {
-      fetch('/api/downloads')
-        .then(res => res.json())
-        .then(files => {
-          const container = document.getElementById("dl-list");
-          if (!files.length) {
-            container.innerHTML = `<div class="no-files">No historical files</div>`;
-            return;
-          }
-          container.innerHTML = files.map(f => `
-            <div class="dl-item">
-                <div>
-                    <div class="dl-name">${f.name}</div>
-                    <div class="dl-date">${f.date}</div>
-                </div>
-                <a href="${f.url}" class="dl-btn">⬇ Download</a>
-            </div>
-        `).join('');
-        })
-        .catch(() => {
-          document.getElementById("dl-list").innerHTML =
-            `<div class="no-files">Error loading</div>`;
-        });
-    }
-
-    // ── INIT ───────────────────────────────────────────────────────────────────
-    drawGauge();
-    updateGauge(0);
-    loadDownloads();
-    startAutoRefresh(15000);
-    setInterval(loadDownloads, 30000);
-  </script>
-
-  <script>
-
-    async function checkDashboardAccess() {
-
-      try {
-
-        const res = await fetch("/api/me", {
-          credentials: "include"
-        });
-
-        const user = await res.json();
-
-        // NOT LOGGED IN
-        if (!user.username) {
-
-          alert("Please login first");
-          window.location.href = "/user-login";
-          return;
-
-        }
-
-        // NO PLAN
-        if (!user.plan) {
-
-          alert("Please buy a subscription plan");
-          window.location.href = "/trading-plan";
-          return;
-
-        }
-
-        // PLAN EXPIRY CHECK
-        if (user.plan_expiry) {
-
-          const today = new Date();
-          const expiry = new Date(user.plan_expiry);
-
-          if (today > expiry) {
-
-            alert("Your plan has expired");
-            window.location.href = "/trading-plan";
-            return;
-
-          }
-        }
-
-        console.log("Dashboard access granted");
-
-      } catch (err) {
-
-        console.log(err);
-        alert("Session error");
-
-        window.location.href = "/user-login";
-
+      const cx = w / 2, cy = h * .82, r = w * .36, arcW = 30;
+      ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = arcW + 4; ctx.arc(cx, cy, r, Math.PI, 0); ctx.stroke();
+      const rg = ctx.createLinearGradient(cx - r, cy, cx - r * .3, cy);
+      rg.addColorStop(0, '#ff2d55'); rg.addColorStop(1, '#ff6b35');
+      ctx.beginPath(); ctx.strokeStyle = rg; ctx.lineWidth = arcW; ctx.arc(cx, cy, r, Math.PI, Math.PI * (1 + 2 / 6)); ctx.stroke();
+      ctx.beginPath(); ctx.strokeStyle = '#f5a623'; ctx.lineWidth = arcW; ctx.arc(cx, cy, r, Math.PI * (1 + 2 / 6), Math.PI * (1 + 4 / 6)); ctx.stroke();
+      const gg = ctx.createLinearGradient(cx + r * .3, cy, cx + r, cy);
+      gg.addColorStop(0, '#00c9a7'); gg.addColorStop(1, '#00d4aa');
+      ctx.beginPath(); ctx.strokeStyle = gg; ctx.lineWidth = arcW; ctx.arc(cx, cy, r, Math.PI * (1 + 4 / 6), 0); ctx.stroke();
+      ctx.beginPath(); ctx.strokeStyle = 'rgba(2,163,254,0.07)'; ctx.lineWidth = 2; ctx.arc(cx, cy, r + arcW / 2 + 10, Math.PI, 0); ctx.stroke();
+      [-180, -120, -60, 0, 60, 120, 180].forEach(lv => {
+        const frac = (lv + 180) / 360, angle = Math.PI + frac * Math.PI, c = Math.cos(angle), s = Math.sin(angle);
+        ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 2;
+        ctx.moveTo(cx + (r - arcW / 2 - 4) * c, cy + (r - arcW / 2 - 4) * s); ctx.lineTo(cx + (r + arcW / 2 + 4) * c, cy + (r + arcW / 2 + 4) * s); ctx.stroke();
+        const lr = r + arcW / 2 + 22;
+        ctx.font = 'bold 16px "Roboto Mono",monospace'; ctx.fillStyle = 'rgba(150,160,185,0.85)';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(lv === 0 ? '0' : (lv > 0 ? '+' + lv : '' + lv), cx + lr * c, cy + lr * s);
+      });
+      for (let i = 1; i <= 11; i += 2) {
+        const angle = Math.PI + (i / 12) * Math.PI, c = Math.cos(angle), s = Math.sin(angle);
+        ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
+        ctx.moveTo(cx + (r - arcW / 2 - 1) * c, cy + (r - arcW / 2 - 1) * s); ctx.lineTo(cx + (r + arcW / 2 + 2) * c, cy + (r + arcW / 2 + 2) * s); ctx.stroke();
       }
     }
 
-    checkDashboardAccess();
-
-  </script>
-
-  <script>
-
-function updateMarketMessage(){
-
-    const note = document.getElementById("market-note");
-
-    const now = new Date();
-
-    const h = now.getHours();
-    const m = now.getMinutes();
-
-    // MARKET HOURS
-    const marketOpen =
-        (h > 9 || (h === 9 && m >= 16));
-
-    const marketClose =
-        (h < 12 || (h === 12 && m === 0));
-
-    // DURING MARKET
-    if(marketOpen && marketClose){
-
-        note.style.display = "none";
-
-    }else{
-
-        note.style.display = "block";
+    function updateGauge(val) {
+      val = Math.max(-180, Math.min(180, parseFloat(val) || 0));
+      drawGauge();
+      const cv = document.getElementById("gauge"), ctx = cv.getContext("2d"), w = cv.width, h = cv.height;
+      const cx = w / 2, cy = h * .82, nr = w * .30, frac = (val + 180) / 360, angle = Math.PI + frac * Math.PI;
+      const nc = val > 0 ? '#00d4aa' : val < 0 ? '#ff4d6d' : '#f5a623';
+      ctx.shadowBlur = 14; ctx.shadowColor = nc;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + nr * Math.cos(angle), cy + nr * Math.sin(angle));
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.stroke(); ctx.shadowBlur = 0;
+      ctx.beginPath(); ctx.arc(cx, cy, 13, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fillStyle = nc; ctx.fill();
+      const gv = document.getElementById("gauge-val");
+      gv.textContent = (val > 0 ? '+' : '') + Math.round(val); gv.style.color = val > 0 ? 'var(--green)' : val < 0 ? 'var(--red)' : 'var(--gold)';
+      let label, bg, border, color;
+      if (val > 60) { label = '▲ Strong Bullish'; bg = 'rgba(0,212,170,0.1)'; border = 'rgba(0,212,170,0.3)'; color = 'var(--green)'; }
+      else if (val > 0) { label = '▲ Mildly Bullish'; bg = 'rgba(0,212,170,0.08)'; border = 'rgba(0,212,170,0.2)'; color = 'var(--green)'; }
+      else if (val < -60) { label = '▼ Strong Bearish'; bg = 'rgba(255,77,109,0.1)'; border = 'rgba(255,77,109,0.3)'; color = 'var(--red)'; }
+      else if (val < 0) { label = '▼ Mildly Bearish'; bg = 'rgba(255,77,109,0.08)'; border = 'rgba(255,77,109,0.2)'; color = 'var(--red)'; }
+      else { label = '◆ Neutral'; bg = 'rgba(245,166,35,0.1)'; border = 'rgba(245,166,35,0.3)'; color = 'var(--gold)'; }
+      document.getElementById("sentiment-text").innerHTML = `<span class="sentiment-badge" style="background:${bg};color:${color};border:1px solid ${border}">${label}</span>`;
     }
-}
 
-updateMarketMessage();
+    /* ══════════════════════════════════════════════════════════
+       DOWNLOADS
+    ══════════════════════════════════════════════════════════ */
+    function loadDownloads() {
+      fetch('/api/downloads', { credentials: 'include' })
+        .then(res => { if (res.status === 401) { window.location.href = '/user-login'; return null; } return res.json(); })
+        .then(data => {
+          if (!data) return;
+          const plan = (data.plan || "free").toLowerCase(); const files = data.files || [];
+          const canDl = (plan === "pro" || plan === "premium"); _userPlan = plan;
+          document.getElementById("plan-strip").className = `plan-strip plan-${plan}`;
+          const labels = { pro: '⚡ Pro Plan', premium: '👑 Premium Plan', essential: '🟡 Essential Plan', basic: '🔵 Basic Plan', free: '⭕ Free Plan' };
+          document.getElementById("plan-strip-label").innerHTML = labels[plan] || ('Plan: ' + plan);
+          document.getElementById("plan-strip-status").textContent = canDl ? '✅ Downloads Unlocked' : '⛔ Downloads Locked';
+          document.getElementById("today-dl-btn").style.display = canDl ? "flex" : "none";
+          const container = document.getElementById("dl-list");
+          if (!files.length) { container.innerHTML = `<div class="no-files"><i class="fas fa-folder-open"></i>No historical files yet.<br><span style="font-size:10px;margin-top:4px;display:block">Auto-saved after each market session (3:31 PM IST)</span></div>`; return; }
+          container.innerHTML = files.map(f => {
+            const icon = canDl ? '📊' : '🔒';
+            const btn = canDl ? `<a href="${f.url}" class="dl-btn"><i class="fas fa-file-excel"></i> Download</a>` : `<button class="dl-upgrade-btn" onclick="showUpgradeModal()"><i class="fas fa-lock"></i> Upgrade</button>`;
+            return `<div class="dl-item"><div class="dl-item-left"><span class="dl-item-icon">${icon}</span><div><div class="dl-name">${f.display_date}</div><div class="dl-date">${f.name}</div></div></div>${btn}</div>`;
+          }).join('');
+        })
+        .catch(() => { document.getElementById("dl-list").innerHTML = `<div class="no-files"><i class="fas fa-exclamation-triangle"></i>Error loading files.</div>`; });
+    }
 
-setInterval(updateMarketMessage, 60000);
+    /* ══════════════════════════════════════════════════════════
+       TODAY EXCEL DOWNLOAD
+    ══════════════════════════════════════════════════════════ */
+    function downloadTodayExcel() {
+      if (_userPlan !== "pro" && _userPlan !== "premium") { showUpgradeModal(); return; }
+      if (!_dashboardRows.length) { alert("No dashboard data to export yet."); return; }
+      const btn = document.getElementById("today-dl-btn");
+      btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating Excel…';
+      try {
+        const ist = getIST(); const dateStr = ist.toISOString().slice(0, 10);
+        const dayName = ist.toLocaleDateString("en-IN", { weekday: "long" });
+        const fileName = `TraderBro_Dashboard_${dateStr}.xlsx`;
+        const headers = ["DateTime", "Strike", "Sensex (Index LTP)", "Running Value"];
+        const dataRows = _dashboardRows.map(r => [r.datetime || '', r.strike || '', parseFloat(r.index_ltp || 0), parseFloat(r.running || 0)]);
+        const lastRow = _dashboardRows[_dashboardRows.length - 1];
+        const finalRunning = parseFloat(lastRow ? lastRow.running || 0 : 0);
+        const fv = (finalRunning > 0 ? '+' : '') + finalRunning.toFixed(2);
+        const wsData = [[`TraderBro — Black-Box-Engine Dashboard  |  ${dateStr}  (${dayName})`], [`Market Session: 09:16 AM → 03:30 PM IST  |  traderbro.in`], [], headers, ...dataRows, [], [`Final Running Value: ${fv}`]];
+        const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(wsData);
+        ws["!cols"] = [{ wch: 22 }, { wch: 10 }, { wch: 18 }, { wch: 14 }];
+        ws["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }, { s: { r: wsData.length - 1, c: 0 }, e: { r: wsData.length - 1, c: 3 } }];
+        XLSX.utils.book_append_sheet(wb, ws, dateStr);
+        XLSX.writeFile(wb, fileName, { bookType: "xlsx", cellStyles: true });
+      } catch (e) { console.error("Excel error:", e); alert("Export failed: " + e.message); }
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-file-excel"></i> Download Today\'s Dashboard Data (Excel)';
+    }
 
-</script>
+    /* ══════════════════════════════════════════════════════════
+       UPGRADE MODAL
+    ══════════════════════════════════════════════════════════ */
+    function showUpgradeModal() { document.getElementById("upgrade-overlay").classList.add("active"); }
+    function closeUpgradeModal() { document.getElementById("upgrade-overlay").classList.remove("active"); }
+    document.getElementById("upgrade-overlay").addEventListener("click", function (e) { if (e.target === this) closeUpgradeModal(); });
 
+    /* ══════════════════════════════════════════════════════════
+       MARKET NOTE
+    ══════════════════════════════════════════════════════════ */
+    function updateMarketMessage() {
+      const note = document.getElementById("market-note"), ist = getIST(), h = ist.getHours(), m = ist.getMinutes();
+      note.style.display = ((h > 9 || (h === 9 && m >= 16)) && (h < 15 || (h === 12 && m <=00))) ? "none" : "flex";
+    }
 
+    /* ══════════════════════════════════════════════════════════
+       AUTH CHECK
+    ══════════════════════════════════════════════════════════ */
+    async function checkDashboardAccess() {
+      try {
+        const res = await fetch("/api/me");
+        const data = await res.json();
+        if (!data.username) { window.location.href = "/user-login"; return false; }
+        if (data.is_admin === true) return true;
+        if (!data.plan || data.plan === "free") { window.location.href = "/trading-plan"; return false; }
+        return true;
+      } catch (err) { window.location.href = "/user-login"; return false; }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       INIT
+    ══════════════════════════════════════════════════════════ */
+    drawGauge();
+    updateGauge(0);
+    checkDashboardAccess();
+    loadDownloads();
+    startAutoRefresh(15000);
+    setInterval(loadDownloads, 30000);
+    updateMarketMessage();
+    setInterval(updateMarketMessage, 60000);
+    setInterval(checkMarketCloseAutoSave, 60000);
+
+    // Broadcast — start after DOM ready to ensure scroll tracking works
+    document.addEventListener('DOMContentLoaded', () => {
+      const msgEl = document.getElementById('bc-messages');
+      if (msgEl) {
+        msgEl.addEventListener('scroll', () => {
+          _bcAtBottom = msgEl.scrollHeight - msgEl.scrollTop - msgEl.clientHeight < 40;
+          if (_bcAtBottom) hideBadge();
+        });
+      }
+      startBcPoll();
+    });
+    // Fallback if DOMContentLoaded already fired
+    if (document.readyState !== 'loading') {
+      const msgEl = document.getElementById('bc-messages');
+      if (msgEl && !msgEl._scrollBound) {
+        msgEl._scrollBound = true;
+        msgEl.addEventListener('scroll', () => {
+          _bcAtBottom = msgEl.scrollHeight - msgEl.scrollTop - msgEl.clientHeight < 40;
+          if (_bcAtBottom) hideBadge();
+        });
+      }
+      startBcPoll();
+    }
+
+    const BC_QUICK_MSGS = [
+      "Anticipating Bullish Movement",
+      "Anticipating Bearish Movement",
+      "TraderBro.in anticipating liquidity sweep at break-down of 3min candle",
+      "TraderBro.in anticipating liquidity sweep at break-out of 3min candle",
+      "Site is facing technical failure, Sorry for inconvenience.",
+    ];
+
+    (function bcBuildQuickMenu() {
+      const list = document.getElementById('quickMenuList');
+      if (!list) return;
+      BC_QUICK_MSGS.forEach((msg, i) => {
+        const el = document.createElement('div');
+        el.className = 'quick-item';
+        el.innerHTML = `<span class="qi-num">${i + 1}</span><span class="qi-text">${msg}</span><span class="qi-arrow">→</span>`;
+        el.onclick = () => bcInsertQuick(msg);
+        list.appendChild(el);
+      });
+    })();
+
+    function bcToggleQuick() {
+      const menu = document.getElementById('quickMenu');
+      const btn = document.getElementById('quickBtn');
+      const open = menu.classList.toggle('show');
+      btn.classList.toggle('open', open);
+    }
+
+    function bcInsertQuick(text) {
+      const inp = document.getElementById('bc-input');
+      inp.value = text;
+      bcUpdateCharCount(text);
+      inp.style.height = '38px';
+      inp.style.height = Math.min(inp.scrollHeight, 100) + 'px';
+      inp.focus();
+      document.getElementById('quickMenu').classList.remove('show');
+      document.getElementById('quickBtn').classList.remove('open');
+    }
+
+    // Close quick menu on outside click
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.bc-compose')) {
+        const menu = document.getElementById('quickMenu');
+        const btn = document.getElementById('quickBtn');
+        if (menu) menu.classList.remove('show');
+        if (btn) btn.classList.remove('open');
+      }
+    });
+
+    /* ══════════════════════════════════════════════════════════
+       ACTIVE USERS — heartbeat + counter
+    ══════════════════════════════════════════════════════════ */
+    (function () {
+      // Send heartbeat every 20 seconds
+      async function sendHeartbeat() {
+        try {
+          await fetch('/api/heartbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ page: 'dashboard' })
+          });
+        } catch (e) { }
+      }
+
+      // Fetch and display active user count
+      async function fetchActiveUsers() {
+        try {
+          const res = await fetch('/api/active-users', { credentials: 'include' });
+          if (!res.ok) return;
+          const data = await res.json();
+          const el = document.getElementById('au-count');
+          if (el) el.textContent = data.total ?? '—';
+        } catch (e) { }
+      }
+
+      sendHeartbeat();
+      fetchActiveUsers();
+      setInterval(sendHeartbeat, 20000);
+      setInterval(fetchActiveUsers, 20000);
+    })();
+  </script>
 </body>
 
 </html>

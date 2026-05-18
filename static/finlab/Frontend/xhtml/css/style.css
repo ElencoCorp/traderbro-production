@@ -10474,7 +10474,95 @@ section {
       top: 0;
       background-color: #ffffff;
       margin: 0;
-      z-index: 99; } }
+      z-index: 99; } 
+
+       .mobile-auth-buttons .btn{
+
+        height:50px;
+
+        border-radius:14px !important;
+
+        font-size:15px;
+
+        font-weight:600;
+
+        display:flex;
+
+        align-items:center;
+
+        justify-content:center;
+
+        border:none !important;
+
+        transition:all .25s ease;
+
+        letter-spacing:.2px;
+    }
+
+    /* DASHBOARD */
+
+    .mobile-auth-buttons .btn-primary{
+
+        background-color: #11B011;
+
+        color:white !important;
+
+        box-shadow:
+            0 10px 25px rgba(6,163,245,0.22);
+    }
+
+    .mobile-auth-buttons .btn-primary:hover{
+
+        transform:translateY(-2px);
+
+        box-shadow:
+            0 15px 30px rgba(6,163,245,0.32);
+    }
+
+    /* ACCOUNT */
+
+    .mobile-auth-buttons .btn-outline-primary{
+
+        background: #EB4201;
+
+        border:
+            1px solid rgba(255,255,255,0.08) !important;
+
+        color:#ffffff !important;
+    }
+
+    .mobile-auth-buttons .btn-outline-primary:hover{
+
+        background:
+            rgba(2,163,254,0.12) !important;
+
+        border-color:
+            rgba(2,163,254,0.25) !important;
+
+        color:#02A3FE !important;
+    }
+
+    /* LOGOUT */
+
+    .mobile-auth-buttons .btn-danger{
+
+        background:
+            rgba(255,77,79,0.12) !important;
+
+        border:
+            1px solid rgba(255,77,79,0.22) !important;
+
+        color:#ff6b6b !important;
+    }
+
+    .mobile-auth-buttons .btn-danger:hover{
+
+        background:
+            rgba(255,77,79,0.18) !important;
+    }
+    
+    
+    }
   @media only screen and (max-width: 991px) {
     .header-nav.show {
       left: -1px;

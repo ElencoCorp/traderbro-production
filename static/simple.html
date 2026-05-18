@@ -1,736 +1,559 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Live Running Tracker</title>
-    <style>
+  <title>Live Running Tracker</title>
+  <link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
-body{
-    background:
-        radial-gradient(circle at top left,#132238,#050816 60%);
-    color:#fff;
-    font-family:'Poppins',sans-serif;
-    padding:24px;
-}
-
-/* HEADER */
-.topbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:25px;
-}
-
-.title{
-    font-size:34px;
-    font-weight:700;
-    letter-spacing:0.5px;
-}
-
-.subtitle{
-    color:#9db0c7;
-    margin-top:5px;
-    font-size:14px;
-}
-
-/* CARD */
-.card{
-    background:rgba(15,23,42,0.75);
-    border:1px solid rgba(255,255,255,0.08);
-    backdrop-filter:blur(18px);
-
-    border-radius:24px;
-
-    padding:22px;
-
-    box-shadow:
-        0 10px 40px rgba(0,0,0,0.45);
-
-    overflow:hidden;
-}
-
-/* CONTROLS */
-.controls{
-    display:flex;
-    gap:12px;
-    align-items:center;
-    flex-wrap:wrap;
-    margin-bottom:18px;
-}
-
-input{
-    width:90px;
-    padding:10px 12px;
-    border:none;
-    border-radius:10px;
-    background:#0f172a;
-    color:#fff;
-    font-size:15px;
-    outline:none;
-    border:1px solid rgba(255,255,255,0.08);
-}
-
-button{
-    border:none;
-    border-radius:10px;
-    padding:10px 18px;
-    cursor:pointer;
-    color:white;
-    font-weight:600;
-    transition:0.25s;
-    font-size:14px;
-}
-
-button:hover{
-    transform:translateY(-2px);
-    opacity:0.92;
-}
-
-.btn-primary{
-    background:linear-gradient(135deg,#2563eb,#1d4ed8);
-}
-
-.btn-download{
-    background:linear-gradient(135deg,#0f766e,#0d9488);
-}
-
-/* STATUS */
-#loading{
-    margin-top:10px;
-    margin-bottom:16px;
-    padding:14px;
-    border-radius:12px;
-    background:rgba(255,255,255,0.05);
-    color:#ffe082;
-    font-size:15px;
-    border:1px solid rgba(255,255,255,0.08);
-}
-
-/* TABLE */
-.table-wrap{
-    overflow:auto;
-    border-radius:16px;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-    min-width:1000px;
-}
-
-/* HEADERS */
-thead th{
-    position:sticky;
-    top:0;
-    z-index:5;
-
-    background:linear-gradient(
-        135deg,
-        #0f172a,
-        #132238
-    );
-
-    color:#dbeafe;
-
-    font-size:13px;
-    font-weight:700;
-
-    padding:14px 10px;
-
-    border-bottom:1px solid rgba(255,255,255,0.08);
-}
-
-/* BODY */
-tbody td{
-    padding:12px 10px;
-    text-align:center;
-    border-bottom:1px solid rgba(255,255,255,0.05);
-    font-size:13px;
-}
-
-/* ROW COLORS */
-tbody tr:nth-child(even){
-    background:rgba(255,255,255,0.02);
-}
-
-tbody tr:hover{
-    background:rgba(37,99,235,0.08);
-}
-
-/* STRIKE COLUMN */
-td:nth-child(8),
-th:nth-child(8){
-    background:#0f172a;
-    color:#60a5fa;
-    font-weight:700;
-}
-
-/* POSITIVE */
-.green{
-    background:#166534 !important;
-    color:white;
-    font-weight:700;
-}
-
-/* NEGATIVE */
-.red{
-    background:#b91c1c !important;
-    color:white;
-    font-weight:700;
-}
-
-/* SCROLLBAR */
-::-webkit-scrollbar{
-    height:10px;
-    width:10px;
-}
-
-::-webkit-scrollbar-thumb{
-    background:#1e3a5f;
-    border-radius:20px;
-}
-
-::-webkit-scrollbar-track{
-    background:#08101f;
-}
-
-/* MOBILE */
-@media(max-width:768px){
-
-    .title{
-        font-size:24px;
+    body {
+      background: radial-gradient(circle at top left, #132238, #050816 60%);
+      color: #fff;
+      font-family: "Poppins", sans-serif;
+      padding: 24px;
     }
 
-    body{
-        padding:14px;
+    /* ── TOPBAR ── */
+    .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; }
+    .title   { font-size:28px; font-weight:700; letter-spacing:.5px; }
+    .subtitle{ color:#9db0c7; margin-top:5px; font-size:13px; }
+
+    /* ── CARD ── */
+    .card {
+      background: rgba(15,23,42,0.75);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(18px);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+      overflow: hidden;
     }
 
-    button{
-        width:100%;
+    /* ── CONTROLS ── */
+    .controls { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:18px; }
+
+    input {
+      width:90px; padding:10px 12px;
+      border:1px solid rgba(255,255,255,0.08); border-radius:10px;
+      background:#0f172a !important; color:#fff !important;
+      font-size:15px; font-weight:700; outline:none; text-align:center;
+      -webkit-text-fill-color:#fff !important;
+    }
+    input::placeholder { color:#94a3b8; }
+
+    button {
+      border:none; border-radius:10px; padding:10px 18px;
+      cursor:pointer; color:white; font-weight:600;
+      transition:.25s; font-size:14px;
+    }
+    button:hover { transform:translateY(-2px); opacity:.92; }
+    .btn-primary  { background:linear-gradient(135deg,#2563eb,#1d4ed8); }
+    .btn-download { background:linear-gradient(135deg,#0f766e,#0d9488); }
+    .btn-admin    { background:linear-gradient(135deg,#7c3aed,#6d28d9); padding:12px 22px; border-radius:12px; font-size:14px; font-weight:700; }
+
+    /* ── STATUS BAR ── */
+    #loading {
+      margin-bottom:16px; padding:14px; border-radius:12px;
+      background:rgba(255,255,255,0.05); color:#ffe082; font-size:14px;
+      border:1px solid rgba(255,255,255,0.08);
     }
 
-    input{
-        width:100%;
-    }
+    /* ── TABLE ── */
+    .table-wrap { overflow:auto; border-radius:16px; max-height:calc(100vh - 260px); }
+    table { width:100%; border-collapse:collapse; min-width:1400px; }
 
-    .controls{
-        flex-direction:column;
-        align-items:stretch;
+    thead th {
+      position:sticky; top:0; z-index:5;
+      background:linear-gradient(135deg,#0f172a,#132238);
+      color:#dbeafe; font-size:12px; font-weight:700;
+      padding:13px 8px; border-bottom:1px solid rgba(255,255,255,0.08);
+      white-space:nowrap;
     }
-}
+    tbody td {
+      padding:11px 8px; text-align:center;
+      border-bottom:1px solid rgba(255,255,255,0.05); font-size:12px;
+      white-space:nowrap;
+    }
+    tbody tr:nth-child(even) { background:rgba(255,255,255,0.02); }
+    tbody tr:hover { background:rgba(37,99,235,0.08); }
 
-</style>
-    <link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    /* Strike column */
+    td:nth-child(8), th:nth-child(8) { background:#0f172a; color:#60a5fa; font-weight:700; }
+
+    /* Running cell colours */
+    .cell-pos { background:#166534 !important; color:white; font-weight:700; }
+    .cell-neg { background:#b91c1c !important; color:white; font-weight:700; }
+    .cell-pending { color:#888; font-style:italic; }
+
+    ::-webkit-scrollbar { height:8px; width:8px; }
+    ::-webkit-scrollbar-thumb { background:#1e3a5f; border-radius:20px; }
+    ::-webkit-scrollbar-track { background:#08101f; }
+
+    @media(max-width:768px){
+      .title{font-size:22px;} body{padding:14px;}
+      button,input{width:100%;} .controls{flex-direction:column;align-items:stretch;}
+    }
+  </style>
 </head>
 <body>
 
 <div class="topbar">
-
-    <div>
-        <div class="title">📊 Live Running (ATM)</div>
-        <div class="subtitle">
-            TraderBro Live Market Recorder
-        </div>
-    </div>
-
+  <div>
+    <div class="title">📊 Live Running (ATM)</div>
+    <div class="subtitle">TraderBro Live Market Recorder</div>
+  </div>
+  <button class="btn-admin" onclick="window.location.href='/admin'">⚙ Admin Panel</button>
 </div>
+
 <div class="card">
+  <div class="controls">
+    <input type="number" id="interval" value="15" min="1">
+    <button class="btn-primary"  onclick="setIntervalTime()">⚡ Set Interval</button>
+    <button class="btn-download" onclick="downloadExcel()">⬇ Download Excel</button>
+  </div>
 
-<div class="controls">
+  <div id="loading">
+    ⏰ Live values are generated from 9:16 AM to 3:30 PM IST and remain visible till next trading session.
+  </div>
 
-<input
-    type="number"
-    id="interval"
-    value="15"
-/>
-
-<button
-    class="btn-primary"
-    onclick="setIntervalTime()"
->
-    ⚡ Set Interval
-</button>
-
-<button
-    class="btn-download"
-    onclick="downloadCSV()"
->
-    ⬇ Download CSV
-</button>
-
-</div>
-<!-- <button onclick="startRecording()">▶ Start</button> -->
-<!-- <button onclick="stopRecording()" style="background:#c62828;">⛔ Stop</button> -->
-<!-- <button onclick="resetAll()" style="background:#e65100;">🗑 Reset</button> -->
-
-<div id="loading" class="market-note">
-    ⏰ Values are generated from 9:16 AM to 12:00 PM and remain visible till 8:30 AM next trading day.
-</div>
-<div class="table-wrap">
-<table>
-<thead>
-<tr>
-    <th>Date Time</th><th>Expiry</th>
-    <th>CE LTP</th><th>Δ</th><th>Γ</th><th>Θ</th><th>V</th>
-    <th>STRIKE</th>
-    <th>PE LTP</th><th>Δ</th><th>Γ</th><th>Θ</th><th>V</th>
-    <th>Delta Ratio</th><th>Index LTP</th>
-    <th>Reference</th><th>Stretched</th><th>Difference</th>
-    <th>Diff Prev</th><th>Cumulative</th>
-</tr>
-</thead>
-<tbody id="tbl"></tbody>
-</table>
+  <div class="table-wrap">
+    <table id="main-table">
+      <thead>
+        <tr>
+          <th>Date Time</th>
+          <th>Expiry</th>
+          <th>CE LTP</th>
+          <th>CE Δ</th>
+          <th>CE Γ</th>
+          <th>CE Θ</th>
+          <th>CE V</th>
+          <th>STRIKE</th>
+          <th>PE LTP</th>
+          <th>PE Δ</th>
+          <th>PE Γ</th>
+          <th>PE Θ</th>
+          <th>PE V</th>
+          <th>Delta Ratio</th>
+          <th>Index LTP</th>
+          <th>Reference</th>
+          <th>Stretched</th>
+          <th>Difference</th>
+          <th>Diff Prev</th>
+          <th>Running</th>
+        </tr>
+      </thead>
+      <tbody id="tbl"></tbody>
+    </table>
+  </div>
 </div>
 
 <script>
-/*
-  FLOW:
-    Admin API → fetchData() → calculate diff_prev + cumulative → save to DB → dashboard reads DB
-
-  FORMULA:
-    diff_prev[N]  = difference[N+1] - difference[N]     ← set when next row arrives
-    cumulative[N] = cumulative[N-1] + diff_prev[N]      ← prev cumulative + THIS row's diff_prev
-
-  SAVE ORDER (critical for dashboard correctness):
-    When row N arrives:
-      1. Fix prev row (N-1): set diff_prev & cumulative
-      2. Save prev row (N-1) to DB FIRST  ← dashboard now sees correct prev values
-      3. Then compute & save current row N to DB
-*/
-
-let records     = [];
+/* ════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════ */
+let records     = [];   // full server records (all columns)
 let intervalSec = 15;
+let autoTimer   = null;
 
-// ── RESET ──────────────────────────────────────────────────────────────────
+// Market-close auto-save guard — fires once per session after 15:30 IST
+let _marketCloseSaved = false;
 
-
-// ── INTERVAL ───────────────────────────────────────────────────────────────
-async function setIntervalTime() {
-
-    const btn = event.target;
-
-    const val = parseInt(
-        document.getElementById("interval").value
-    );
-
-    if (val <= 0) {
-        alert("Invalid interval");
-        return;
-    }
-
-    // DISABLE BUTTON TEMPORARILY
-    btn.disabled = true;
-    btn.innerText = "Updating...";
-
-    try {
-
-        const res = await fetch("/api/set-interval", {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                interval: val
-            })
-
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-
-            // FAST POPUP
-            alert(
-                "Interval updated to " +
-                val +
-                " sec"
-            );
-
-            // BACKGROUND TIMER RESET
-            setTimeout(() => {
-
-                startAutoRefresh();
-
-            }, 100);
-
-        } else {
-
-            alert("Update failed");
-
-        }
-
-    } catch (e) {
-
-        console.log(e);
-
-        alert("Failed");
-
-    }
-
-    // ENABLE BUTTON AGAIN
-    btn.disabled = false;
-    btn.innerText = "Set Interval";
-}
-// ── SAVE ROW TO DB ─────────────────────────────────────────────────────────
-// Returns a Promise so we can await it and control save order
-
-
-// const TEST_MODE = true;
-// ── MAIN FETCH ─────────────────────────────────────────────────────────────
-async function fetchData() {
-
-    try {
-
-        const res = await fetch("/api/simple-data");
-
-        const data = await res.json();
-
-        if (
-            data.error ||
-            data.ce_ltp === null ||
-            data.ce_ltp === undefined ||
-            data.pe_ltp === null ||
-            data.pe_ltp === undefined
-        )
-        {
-
-            document.getElementById("loading").innerHTML =
-                "⏰ Values are generated from 9:16 AM to 12:00 PM and remain visible till 8:30 AM next trading day.";
-
-            return;
-        }
-
-        document.getElementById("loading").style.display = "none";
-
-       const row = {
-
-            datetime: data.datetime,
-            expiry: data.expiry || "-",
-
-            ce_ltp: data.ce_ltp || 0,
-            ce_delta: data.ce_delta || 0,
-            ce_gamma: data.ce_gamma || 0,
-            ce_theta: data.ce_theta || 0,
-            ce_vega: data.ce_vega || 0,
-
-            strike: data.strike || 0,
-
-            pe_ltp: data.pe_ltp || 0,
-            pe_delta: data.pe_delta || 0,
-            pe_gamma: data.pe_gamma || 0,
-            pe_theta: data.pe_theta || 0,
-            pe_vega: data.pe_vega || 0,
-
-            delta_ratio: data.delta_ratio || 0,
-            index_ltp: data.index_ltp || 0,
-
-            reference: data.reference || 0,
-            stretched: data.stretched || 0,
-
-            difference: Number(data.difference || 0),
-
-            diff_prev: 0,
-            running: 0
-        };
-
-        // PREVIOUS RECORD CALCULATION
-        if (records.length > 0) {
-
-            let prev = records[records.length - 1];
-
-            // CURRENT - PREVIOUS DIFFERENCE
-            row.diff_prev =
-                Number(
-                    (
-                        row.difference -
-                        Number(prev.difference || 0)
-                    ).toFixed(2)
-                );
-
-            // CUMULATIVE RUNNING
-            row.running =
-                Number(
-                    (
-                        Number(prev.running || 0) +
-                        row.diff_prev
-                    ).toFixed(2)
-                );
-        }
-
-        await fetch("/api/save-running", {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify(row)
-
-        });
-
-        await loadLiveData();
-
-    } catch (e) {
-
-        console.log("FETCH ERROR", e);
-
-    }
-}
-// ── BUILD ROW HTML ─────────────────────────────────────────────────────────
-function buildRowHTML(r) {
-    const color = r.running > 0 ? "#1b5e20" : r.running < 0 ? "#b71c1c" : "#555";
-    return `
-        <td>${r.datetime}</td>
-        <td>${r.expiry}</td>
-        <td>${r.ce_ltp}</td>
-        <td>${r.ce_delta}</td>
-        <td>${r.ce_gamma}</td>
-        <td>${r.ce_theta}</td>
-        <td>${r.ce_vega}</td>
-        <td><b>${r.strike}</b></td>
-        <td>${r.pe_ltp}</td>
-        <td>${r.pe_delta}</td>
-        <td>${r.pe_gamma}</td>
-        <td>${r.pe_theta}</td>
-        <td>${r.pe_vega}</td>
-        <td>${r.delta_ratio}</td>
-        <td>${r.index_ltp}</td>
-        <td>${r.reference}</td>
-        <td>${r.stretched}</td>
-        <td>${r.difference}</td>
-        <td>${r.diff_prev.toFixed(2)}</td>
-        <td style="background:${color};color:white;">${r.running.toFixed(2)}</td>
-    `;
+/* ════════════════════════════════════════════
+   MARKET HOURS HELPERS
+════════════════════════════════════════════ */
+function getISTTime() {
+  const now = new Date();
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  return new Date(utc + istOffset);
 }
 
-// ── APPEND NEW ROW ─────────────────────────────────────────────────────────
-function appendRow(r, idx) {
-    const tbody = document.getElementById("tbl");
-    const tr    = document.createElement("tr");
-    tr.setAttribute("data-idx", idx);
-    tr.innerHTML = buildRowHTML(r);
-    tbody.appendChild(tr);
-    tr.scrollIntoView({ behavior: "smooth" });
+function isMarketOpen() {
+  const ist  = getISTTime();
+  const mins = ist.getHours() * 60 + ist.getMinutes();
+  return mins >= (9 * 60 + 16) && mins <= (15 * 60 + 30);
 }
 
-// ── RE-RENDER A ROW IN DOM ─────────────────────────────────────────────────
-function rerenderRow(idx, r) {
-    const tr = document.querySelector(`tr[data-idx="${idx}"]`);
-    if (tr) tr.innerHTML = buildRowHTML(r);
+function isJustAfterMarketClose() {
+  const ist  = getISTTime();
+  const mins = ist.getHours() * 60 + ist.getMinutes();
+  // 5-minute window: 15:30 to 15:35
+  return mins >= (15 * 60 + 30) && mins <= (15 * 60 + 35);
 }
 
-// ── CSV ────────────────────────────────────────────────────────────────────
-function downloadCSV() {
-    let csv = "DateTime,Expiry,Difference,DiffPrev,Cumulative\n";
-    records.forEach(r => {
-        csv += `${r.datetime},${r.expiry},${r.difference},${r.diff_prev.toFixed(2)},${r.running.toFixed(2)}\n`;
+/* ════════════════════════════════════════════
+   MARKET CLOSE AUTO-SAVE
+   After 15:30 IST, trigger server-side Excel save
+   (via admin endpoint; also download locally for
+    the user currently viewing this page).
+════════════════════════════════════════════ */
+async function checkMarketCloseAutoSave() {
+  if (_marketCloseSaved) return;
+  if (!isJustAfterMarketClose()) return;
+  if (records.length === 0) return;
+
+  _marketCloseSaved = true;
+  console.log('⏰ Market closed — triggering auto-save…');
+
+  // 1. Trigger server-side Excel save (so /api/downloads gets the file)
+  try {
+    await fetch('/api/admin/trigger-excel-save', {
+      method: 'POST',
+      credentials: 'include'
     });
-    const blob = new Blob([csv], { type: "text/csv" });
-    const a    = document.createElement("a");
-    a.href     = URL.createObjectURL(blob);
-    a.download = "running_data.csv";
-    a.click();
+    console.log('✅ Server-side Excel save triggered.');
+  } catch (e) {
+    console.log('Server save attempted:', e.message);
+  }
 }
 
+/* ════════════════════════════════════════════
+   SET INTERVAL
+════════════════════════════════════════════ */
+async function setIntervalTime() {
+  const btn = event.target;
+  const val = parseInt(document.getElementById("interval").value);
+  if (!val || val < 1) { alert("Invalid interval"); return; }
+  btn.disabled = true; btn.innerText = "Updating…";
+  try {
+    const res  = await fetch("/api/set-interval", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({interval: val})
+    });
+    const data = await res.json();
+    if (data.success) {
+      intervalSec = val;
+      restartTimer();
+      alert("Interval updated to " + val + "s");
+    } else {
+      alert("Update failed: " + (data.error || "unknown"));
+    }
+  } catch(e) { alert("Network error"); }
+  btn.disabled = false; btn.innerText = "⚡ Set Interval";
+}
+
+/* ════════════════════════════════════════════
+   BUILD ONE TABLE ROW
+════════════════════════════════════════════ */
+function buildRow(r, isPending) {
+  const runVal = parseFloat(r.running || 0);
+  const runCls = isPending ? "cell-pending"
+               : runVal > 0 ? "cell-pos"
+               : runVal < 0 ? "cell-neg" : "";
+  const fmt = v => (v === null || v === undefined || v === '') ? "—" : v;
+  return `
+    <td>${fmt(r.datetime)}</td>
+    <td>${fmt(r.expiry)}</td>
+    <td>${fmt(r.ce_ltp)}</td>
+    <td>${fmt(r.ce_delta)}</td>
+    <td>${fmt(r.ce_gamma)}</td>
+    <td>${fmt(r.ce_theta)}</td>
+    <td>${fmt(r.ce_vega)}</td>
+    <td><b>${fmt(r.strike)}</b></td>
+    <td>${fmt(r.pe_ltp)}</td>
+    <td>${fmt(r.pe_delta)}</td>
+    <td>${fmt(r.pe_gamma)}</td>
+    <td>${fmt(r.pe_theta)}</td>
+    <td>${fmt(r.pe_vega)}</td>
+    <td>${fmt(r.delta_ratio)}</td>
+    <td>${fmt(r.index_ltp)}</td>
+    <td>${fmt(r.reference)}</td>
+    <td>${fmt(r.stretched)}</td>
+    <td>${fmt(r.difference)}</td>
+    <td class="${isPending ? 'cell-pending' : ''}">${isPending ? "—" : Number(r.diff_prev || 0).toFixed(2)}</td>
+    <td class="${runCls}">${isPending ? "—" : runVal.toFixed(2)}</td>
+  `;
+}
+
+/* ════════════════════════════════════════════
+   LOAD & RENDER
+════════════════════════════════════════════ */
 async function loadLiveData() {
+  try {
+    const res  = await fetch("/api/get-running?t=" + Date.now());
+    const data = await res.json();
+    if (!data.rows || !data.rows.length) return;
 
-    try {
+    const newRecords = data.rows; // already sorted oldest→newest from server
+    const tbody = document.getElementById("tbl");
 
-        const res = await fetch("/api/get-running");
-
-        const data = await res.json();
-
-        if (!data.rows) return;
-
-        const tbody = document.getElementById("tbl");
-
-        // ONLY FIRST LOAD
-        if (records.length === 0) {
-
-            tbody.innerHTML = "";
-
-            records = data.rows;
-<<<<<<< HEAD
-
-            records.forEach((r, idx) => {
-                appendRow(r, idx);
-            });
-
-            return;
-        }
-
-        // APPEND ONLY NEW ROWS
-        if (data.rows.length > records.length) {
-
-            const newRows =
-                data.rows.slice(records.length);
-
-            newRows.forEach((r) => {
-
-                records.push(r);
-
-                appendRow(r, records.length - 1);
-
-            });
-
-        }
-=======
->>>>>>> f986732 (fixed vps background market worker)
-
-            records.forEach((r, idx) => {
-                appendRow(r, idx);
-            });
-
-            return;
-        }
-
-        // APPEND ONLY NEW ROWS
-        if (data.rows.length > records.length) {
-
-            const newRows =
-                data.rows.slice(records.length);
-
-            newRows.forEach((r) => {
-
-                records.push(r);
-
-                appendRow(r, records.length - 1);
-
-            });
-
-        }
-
-    } catch (e) {
-
-        console.log("LIVE LOAD ERROR", e);
-
+    // Incremental update: only one new row arrived
+    if (records.length > 0 && newRecords.length === records.length + 1) {
+      const prevIdx = records.length - 1;
+      const prevTr  = tbody.querySelector(`tr[data-idx="${prevIdx}"]`);
+      if (prevTr) {
+        prevTr.innerHTML = buildRow(newRecords[prevIdx], false);
+      }
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-idx", String(newRecords.length - 1));
+      tr.innerHTML = buildRow(newRecords[newRecords.length - 1], true);
+      tbody.appendChild(tr);
+      records = newRecords;
+      return;
     }
+
+    // Full re-render
+    records = newRecords;
+    tbody.innerHTML = "";
+    records.forEach((r, idx) => {
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-idx", String(idx));
+      tr.innerHTML = buildRow(r, idx === records.length - 1);
+      tbody.appendChild(tr);
+    });
+
+  } catch(e) { console.error("loadLiveData:", e); }
 }
 
-<<<<<<< HEAD
-// INITIAL LOAD
-// INITIAL LOAD
-// AUTO REFRESH TIMER
-
-
-function getISTTime() {
-
-    return new Date(
-        new Date().toLocaleString(
-            "en-US",
-            { timeZone: "Asia/Kolkata" }
-        )
-    );
-
+/* ════════════════════════════════════════════
+   FETCH CYCLE
+════════════════════════════════════════════ */
+async function fetchCycle() {
+  try {
+    const res  = await fetch("/api/simple-data");
+    const data = await res.json();
+    if (data.error) {
+      document.getElementById("loading").innerHTML =
+        "⏰ Live values are generated from 9:16 AM to 3:30 PM IST and remain visible till next trading session.";
+      document.getElementById("loading").style.display = "";
+    } else {
+      document.getElementById("loading").style.display = "none";
+    }
+    await loadLiveData();
+    // Check for market-close auto-save on every cycle
+    checkMarketCloseAutoSave();
+  } catch(e) { console.error("fetchCycle:", e); }
 }
 
-let autoRefreshTimer = null;
-let isFetching = false;
+function restartTimer() {
+  if (autoTimer) clearTimeout(autoTimer);
+  (async function loop() {
+    await fetchCycle();
+    autoTimer = setTimeout(loop, intervalSec * 1000);
+  })();
+}
 
-async function startAutoRefresh() {
-
-    if (autoRefreshTimer) {
-        clearInterval(autoRefreshTimer);
-    }
-=======
+/* ════════════════════════════════════════════
+   LOAD SAVED INTERVAL
+════════════════════════════════════════════ */
 async function loadInterval() {
->>>>>>> f986732 (fixed vps background market worker)
-
-    try {
-
-        const res = await fetch("/api/get-interval");
-
-        const data = await res.json();
-
-<<<<<<< HEAD
-        const interval = data.interval || 15;
-
-        console.log("AUTO REFRESH RUNNING:", interval);
-
-        autoRefreshTimer = setInterval(async () => {
-
-            if (isFetching) return;
-
-            isFetching = true;
-
-            console.log("FETCHING NEW VALUES");
-
-            try {
-
-                await fetchData();
-
-            } catch(e) {
-
-                console.log(e);
-
-            }
-
-            isFetching = false;
-
-        }, interval * 1000);
-=======
-        document.getElementById("interval").value =
-            data.interval;
->>>>>>> f986732 (fixed vps background market worker)
-
-    } catch(e) {
-
-        console.log(e);
-
+  try {
+    const res  = await fetch("/api/get-interval");
+    const data = await res.json();
+    if (data.interval && data.interval > 0) {
+      intervalSec = data.interval;
+      document.getElementById("interval").value = intervalSec;
     }
+  } catch(e) { /* use default 15 */ }
 }
 
-<<<<<<< HEAD
-window.addEventListener("load", async () => {
+/* ════════════════════════════════════════════
+   EXCEL DOWNLOAD — ALL 20 COLUMNS (FIXED)
+   Uses full server records stored in `records`
+════════════════════════════════════════════ */
+function downloadExcel() {
+  if (!records.length) { alert("No data to download yet."); return; }
 
-    await loadInterval();
+  const ist      = getISTTime();
+  const dateStr  = ist.toISOString().slice(0, 10);
+  const dayName  = ist.toLocaleDateString("en-IN", {weekday: "long"});
+  const fileName = `TraderBro_LiveRunning_${dateStr}.xlsx`;
 
-    await loadLiveData();
+  // ── All 20 columns matching LIVE_RUNNING_RECORDS structure ──
+  const headers = [
+    "DateTime", "Expiry",
+    "CE LTP", "CE Delta", "CE Gamma", "CE Theta", "CE Vega",
+    "Strike",
+    "PE LTP", "PE Delta", "PE Gamma", "PE Theta", "PE Vega",
+    "Delta Ratio", "Index LTP", "Reference", "Stretched", "Difference",
+    "Diff Prev", "Running"
+  ];
 
-    await fetchData();
+  const titleRow = [`TraderBro — Black-Box-Engine  |  Live Running Data  |  ${dateStr}  (${dayName})`];
+  const subRow   = ["Market Session: 09:16 AM → 03:30 PM IST  |  traderbro.in"];
+  const blankRow = [];
 
-    startAutoRefresh();
-=======
-// INITIAL LOAD
-// INITIAL LOAD
-// AUTO REFRESH TIMER
+  const fmtNum = (v) => {
+    if (v === null || v === undefined || v === '') return '';
+    const n = parseFloat(v);
+    return isNaN(n) ? '' : n;
+  };
 
+  const dataRows = records.map((r, idx) => {
+    const isPending = idx === records.length - 1;
+    return [
+      r.datetime    ?? '',
+      r.expiry      ?? '',
+      fmtNum(r.ce_ltp),
+      fmtNum(r.ce_delta),
+      fmtNum(r.ce_gamma),
+      fmtNum(r.ce_theta),
+      fmtNum(r.ce_vega),
+      r.strike      ?? '',
+      fmtNum(r.pe_ltp),
+      fmtNum(r.pe_delta),
+      fmtNum(r.pe_gamma),
+      fmtNum(r.pe_theta),
+      fmtNum(r.pe_vega),
+      fmtNum(r.delta_ratio),
+      fmtNum(r.index_ltp),
+      fmtNum(r.reference),
+      fmtNum(r.stretched),
+      fmtNum(r.difference),
+      isPending ? '' : fmtNum(r.diff_prev),
+      isPending ? '' : fmtNum(r.running),
+    ];
+  });
 
-function getISTTime() {
+  const lastSettled  = records.length >= 2 ? records[records.length - 2] : null;
+  const finalRunning = lastSettled ? Number(lastSettled.running || 0) : 0;
+  const fv           = finalRunning.toFixed(2);
+  const summaryRow   = [`Final Running Value: ${finalRunning > 0 ? "+" : ""}${fv}`];
 
-    return new Date(
-        new Date().toLocaleString(
-            "en-US",
-            { timeZone: "Asia/Kolkata" }
-        )
-    );
+  const wsData = [titleRow, subRow, blankRow, headers, ...dataRows, blankRow, summaryRow];
 
+  // ── Create workbook ──
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Column widths
+  ws["!cols"] = [
+    {wch:22},{wch:13},
+    {wch:9},{wch:10},{wch:10},{wch:11},{wch:9},
+    {wch:9},
+    {wch:9},{wch:10},{wch:10},{wch:11},{wch:9},
+    {wch:12},{wch:11},{wch:11},{wch:12},{wch:11},
+    {wch:10},{wch:10}
+  ];
+
+  // Merge title, sub-title, summary
+  ws["!merges"] = [
+    {s:{r:0,c:0}, e:{r:0,c:19}},
+    {s:{r:1,c:0}, e:{r:1,c:19}},
+    {s:{r:wsData.length-1,c:0}, e:{r:wsData.length-1,c:9}},
+  ];
+
+  // ── Cell styles ──
+  function styleCell(ws, addr, style) { if (ws[addr]) ws[addr].s = style; }
+
+  const HDR_STYLE = {
+    fill: {patternType:"solid", fgColor:{rgb:"090915"}},
+    font: {bold:true, color:{rgb:"02A3FE"}, sz:10, name:"Arial"},
+    alignment: {horizontal:"center", vertical:"center"},
+    border: {
+      top:    {style:"medium", color:{rgb:"02A3FE"}},
+      bottom: {style:"medium", color:{rgb:"02A3FE"}},
+      left:   {style:"thin",   color:{rgb:"1A1A35"}},
+      right:  {style:"thin",   color:{rgb:"1A1A35"}},
+    }
+  };
+  const TITLE_STYLE = {
+    fill: {patternType:"solid", fgColor:{rgb:"EB4201"}},
+    font: {bold:true, color:{rgb:"FFFFFF"}, sz:14, name:"Arial"},
+    alignment: {horizontal:"center", vertical:"center"}
+  };
+  const SUB_STYLE = {
+    fill: {patternType:"solid", fgColor:{rgb:"090915"}},
+    font: {italic:true, color:{rgb:"E8EAF0"}, sz:10, name:"Arial"},
+    alignment: {horizontal:"center", vertical:"center"}
+  };
+  const POS_STYLE = {
+    fill: {patternType:"solid", fgColor:{rgb:"00291F"}},
+    font: {bold:true, color:{rgb:"00D4AA"}, sz:10, name:"Arial"},
+    alignment: {horizontal:"center"}
+  };
+  const NEG_STYLE = {
+    fill: {patternType:"solid", fgColor:{rgb:"2D0010"}},
+    font: {bold:true, color:{rgb:"FF4D6D"}, sz:10, name:"Arial"},
+    alignment: {horizontal:"center"}
+  };
+  const DT_STYLE = {
+    font: {color:{rgb:"FF6B35"}, sz:10, name:"Arial"},
+    alignment: {horizontal:"center"}
+  };
+  const STRIKE_STYLE = {
+    font: {bold:true, color:{rgb:"02A3FE"}, sz:10, name:"Arial"},
+    alignment: {horizontal:"center"}
+  };
+  const NORMAL_STYLE = {
+    font: {color:{rgb:"E8EAF0"}, sz:10, name:"Arial"},
+    alignment: {horizontal:"center"}
+  };
+
+  // Title + Sub (Excel rows 1, 2)
+  styleCell(ws, "A1", TITLE_STYLE);
+  styleCell(ws, "A2", SUB_STYLE);
+
+  // Header row (Excel row 4)
+  "ABCDEFGHIJKLMNOPQRST".split('').forEach(col => styleCell(ws, col + "4", HDR_STYLE));
+
+  // Data rows (start Excel row 5)
+  dataRows.forEach((row, ridx) => {
+    const excelRow = 5 + ridx;
+    const runVal   = parseFloat(row[19] || 0);
+    const rowBg    = runVal > 0 ? "00291F" : runVal < 0 ? "2D0010" : "0A0A18";
+    const rowFill  = {patternType:"solid", fgColor:{rgb: rowBg}};
+    const thin     = {style:"thin", color:{rgb:"1A1A35"}};
+    const thinBorder = {left:thin, right:thin, top:thin, bottom:thin};
+
+    "ABCDEFGHIJKLMNOPQRST".split('').forEach((col, cidx) => {
+      const addr = col + excelRow;
+      if (!ws[addr]) return;
+      let style;
+      if      (cidx === 0)  { style = {...DT_STYLE,     fill:rowFill, border:thinBorder}; }
+      else if (cidx === 7)  { style = {...STRIKE_STYLE, fill:rowFill, border:thinBorder}; }
+      else if (cidx === 19) {
+        style = runVal > 0 ? {...POS_STYLE, border:thinBorder}
+              : runVal < 0 ? {...NEG_STYLE, border:thinBorder}
+              : {...NORMAL_STYLE, fill:rowFill, border:thinBorder};
+      } else {
+        style = {...NORMAL_STYLE, fill:rowFill, border:thinBorder};
+      }
+      ws[addr].s = style;
+    });
+  });
+
+  // Summary row style
+  const sumAddr    = "A" + wsData.length;
+  const sumRunning = finalRunning;
+  styleCell(ws, sumAddr, {
+    fill: {patternType:"solid", fgColor:{rgb: sumRunning > 0 ? "00291F" : sumRunning < 0 ? "2D0010" : "1A1A35"}},
+    font: {bold:true, color:{rgb: sumRunning > 0 ? "00D4AA" : sumRunning < 0 ? "FF4D6D" : "F5A623"}, sz:12, name:"Arial"},
+    alignment: {horizontal:"center"}
+  });
+
+  XLSX.utils.book_append_sheet(wb, ws, dateStr);
+  XLSX.writeFile(wb, fileName, {bookType:"xlsx", cellStyles:true});
 }
 
-
+/* ════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════ */
 window.addEventListener("load", async () => {
-
-    await loadInterval();
-
-    await loadLiveData();
->>>>>>> f986732 (fixed vps background market worker)
-
+  await loadInterval();
+  restartTimer();
+  // Also check market-close every minute
+  setInterval(checkMarketCloseAutoSave, 60000);
 });
+
+/* ── Heartbeat so admin can see simple.html users too ── */
+(function() {
+  async function sendHeartbeat() {
+    try {
+      await fetch('/api/heartbeat', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({ page: 'simple' })
+      });
+    } catch(e) {}
+  }
+  sendHeartbeat();
+  setInterval(sendHeartbeat, 20000);
+})();
 </script>
-
-
 </body>
 </html>

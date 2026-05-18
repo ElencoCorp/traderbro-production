@@ -23,7 +23,7 @@
 }
 
 body{
-  font-family:'Poppins',sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   background:var(--bg);
   color:var(--text);
 }
@@ -161,7 +161,7 @@ td:nth-child(8) {
 tbody td {
   padding: 8px 6px;
   text-align: center;
-  font-family: 'Roboto Mono', monospace;
+  font-family: "Plus Jakarta Sans", sans-serif;
   border-bottom: 1px solid #edf2f7;
   transition: all 0.2s ease;
 }
@@ -196,6 +196,81 @@ tbody tr:hover td {
   font-weight: 700;
 }
 
+/* ── Active Users Panel (Admin) ── */
+.au-admin-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.au-admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.au-admin-header h3 {
+  font-size: 14px;
+  font-weight: 700;
+}
+.au-total-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 4px 14px;
+  border-radius: 20px;
+  border: 1px solid #bbf7d0;
+}
+.au-dot-green {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #16a34a;
+  box-shadow: 0 0 5px #16a34a;
+  animation: auPulse 1.5s infinite;
+}
+@keyframes auPulse {
+  0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)}
+}
+.au-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 28px;
+}
+.au-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0369a1;
+}
+.au-chip .au-chip-page {
+  font-size: 9px;
+  color: #6b7f96;
+  background: #e0f2fe;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+.au-chip.is-admin {
+  background: #fef9c3;
+  border-color: #fde047;
+  color: #854d0e;
+}
+.au-empty {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
 </style>
 </head>
 
@@ -209,11 +284,28 @@ tbody tr:hover td {
     <a href="/simple">
       <button class="btn">Recorder Page</button>
     </a>
+    <a href="/admin/users">
+  <button class="btn">👥 User Management</button>
+</a>
   </div>
 </div>
 
 <div class="container">
 
+
+  <!-- ── ACTIVE USERS (Admin View) ── -->
+<div class="au-admin-card">
+  <div class="au-admin-header">
+    <h3>🟢 Active Users on Dashboard</h3>
+    <div class="au-total-badge">
+      <span class="au-dot-green"></span>
+      <span id="au-admin-total">—</span> online
+    </div>
+  </div>
+  <div class="au-list" id="au-admin-list">
+    <span class="au-empty">Loading…</span>
+  </div>
+</div>
 <!-- CONTROLS -->
 <div class="card">
   <h3>⚙ Controls</h3>
@@ -395,7 +487,9 @@ async function refreshTable() {
   ind.innerHTML = "⟳ Refreshing...";
 
   try {
-    const res = await fetch(`/api/full-chain?expiry=${encodeURIComponent(currentExpiry)}`);
+    const res = await fetch(
+      `/api/full-chain?expiry=${encodeURIComponent(currentExpiry)}&live=1`
+    );
     const data = await res.json();
 
     if (data.error) {
@@ -417,14 +511,28 @@ async function refreshTable() {
   }
 }
 // ── AUTO REFRESH ───────────────────────────────
+// let refreshTimer = null;
+
 function startAutoRefresh() {
-  if (refreshTimer) clearInterval(refreshTimer);
-  refreshTimer = setInterval(refreshTable, 5000);
-  refreshTable();
+    if (refreshTimer) {
+        clearTimeout(refreshTimer);
+        refreshTimer = null;
+    }
+    // Fetch immediately, then chain
+    doRefresh();
+}
+
+async function doRefresh() {
+    await refreshTable();
+    // Schedule next run 5 seconds after THIS fetch finishes
+    refreshTimer = setTimeout(doRefresh, 5000);
 }
 
 function stopAutoRefresh() {
-  if (refreshTimer) clearInterval(refreshTimer);
+    if (refreshTimer) {
+        clearTimeout(refreshTimer);
+        refreshTimer = null;
+    }
 }
 
 // ── CHANGE EXPIRY ──────────────────────────────
@@ -456,6 +564,58 @@ function goLive() {
 
 // ── INIT ──────────────────────────────────────
 loadExpiries();  // this will call startAutoRefresh internally
+
+/* ══════════════════════════════════════════════════════
+   ACTIVE USERS — admin heartbeat + detailed panel
+══════════════════════════════════════════════════════ */
+(function() {
+  async function sendAdminHeartbeat() {
+    try {
+      await fetch('/api/heartbeat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({ page: 'admin' })
+      });
+    } catch(e) {}
+  }
+
+  async function fetchAdminActiveUsers() {
+    try {
+      const res = await fetch('/api/active-users', { credentials: 'include' });
+      if (!res.ok) return;
+      const data = await res.json();
+
+      // Total count
+      const totalEl = document.getElementById('au-admin-total');
+      if (totalEl) totalEl.textContent = data.total;
+
+      // Detailed chips
+      const listEl = document.getElementById('au-admin-list');
+      if (!listEl) return;
+      const detail = data.detail || [];
+
+      // Filter to dashboard users only for the list
+      const dashUsers = detail.filter(u => !u.is_admin && u.pages.includes('dashboard'));
+
+      if (!dashUsers.length) {
+        listEl.innerHTML = '<span class="au-empty">No users currently on dashboard</span>';
+        return;
+      }
+      listEl.innerHTML = dashUsers.map(u => `
+        <div class="au-chip${u.is_admin ? ' is-admin' : ''}">
+          👤 ${u.username}
+          ${u.pages.map(p => `<span class="au-chip-page">${p}</span>`).join('')}
+        </div>
+      `).join('');
+    } catch(e) {}
+  }
+
+  sendAdminHeartbeat();
+  fetchAdminActiveUsers();
+  setInterval(sendAdminHeartbeat, 20000);
+  setInterval(fetchAdminActiveUsers, 20000);
+})();
 </script>
 
 </body>
