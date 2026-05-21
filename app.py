@@ -233,34 +233,34 @@ def auto_market_recorder():
                 current_diff = 0
 
             row = {
-                "datetime": str(r["DateTime"]),
-                "expiry": str(r["Expiry"]),
-                "ce_ltp": r["CE_LTP"],
-                "ce_delta": r["CE_Delta"],
-                "ce_gamma": r["CE_Gamma"],
-                "ce_theta": r["CE_Theta"],
-                "ce_vega": r["CE_Vega"],
-                "strike": int(r["Strike"]),
-                "pe_ltp": r["PE_LTP"],
-                "pe_delta": r["PE_Delta"],
-                "pe_gamma": r["PE_Gamma"],
-                "pe_theta": r["PE_Theta"],
-                "pe_vega": r["PE_Vega"],
+                "datetime":   str(r["DateTime"]),
+                "expiry":     str(r["Expiry"]),
+                "ce_ltp":     r["CE_LTP"],
+                "ce_delta":   r["CE_Delta"],
+                "ce_gamma":   r["CE_Gamma"],
+                "ce_theta":   r["CE_Theta"],
+                "ce_vega":    r["CE_Vega"],
+                "strike":     int(r["Strike"]),
+                "pe_ltp":     r["PE_LTP"],
+                "pe_delta":   r["PE_Delta"],
+                "pe_gamma":   r["PE_Gamma"],
+                "pe_theta":   r["PE_Theta"],
+                "pe_vega":    r["PE_Vega"],
                 "delta_ratio": r["Delta_Ratio"],
-                "index_ltp": ltp,
-                "reference": r["Reference"],
-                "stretched": r["Stretched"],
+                "index_ltp":  ltp,
+                "reference":  r["Reference"],
+                "stretched":  r["Stretched"],
                 "difference": current_diff,
-                "diff_prev": 0,
-                "running": LIVE_RUNNING_RECORDS[-1]["running"] if LIVE_RUNNING_RECORDS else 0
+                "diff_prev":  0,
+                "running":    0,
             }
 
             if len(LIVE_RUNNING_RECORDS) > 0:
                 prev = LIVE_RUNNING_RECORDS[-1]
-                prev_diff = current_diff - prev["difference"]
-                prev["diff_prev"] = round(prev_diff, 2)
-                prev["running"] = round(prev.get("running", 0) + prev_diff, 2)
-                row["running"] = prev["running"]
+                diff_change = current_diff - prev["difference"]
+                row["diff_prev"] = round(diff_change, 2)
+                row["running"]   = round(prev.get("running", 0) + diff_change, 2)
+            # First record: running stays 0 (baseline)
 
             # DUPLICATE TIMESTAMP PROTECTION
             if len(LIVE_RUNNING_RECORDS) > 0:
@@ -271,7 +271,7 @@ def auto_market_recorder():
                     return
 
             LIVE_RUNNING_RECORDS.append(row)
-            LIVE_RUNNING_RECORDS = LIVE_RUNNING_RECORDS[-500:]
+            LIVE_RUNNING_RECORDS = LIVE_RUNNING_RECORDS[-2000:]
 
             with open(RUNNING_FILE, "w") as f:
                 json.dump(LIVE_RUNNING_RECORDS, f)
