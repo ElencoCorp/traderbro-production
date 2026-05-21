@@ -2438,68 +2438,80 @@ let _shownSystemMsgs = new Set();  // track which ones we've injected this sessi
         .then(r => r.json())
         .then(d => {
           const rows = (d.rows || []).sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+    
           if (!rows.length) {
             _dashboardRows = [];
             document.getElementById("rows-grid").innerHTML = `
-          <div class="market-closed-box">
-            <div class="market-icon">⏰</div>
-            <div class="market-title">Market Insight Window Closed</div>
-            <div class="market-desc">Live Black-Box-Engine values are generated during active market analysis hours.</div>
-            <div class="market-time">9:16 AM → 12 PM</div>
-            <div class="market-sub">Previous values remain visible till next trading day 8:30 AM</div>
-          </div>`;
+              <div class="market-closed-box">
+                <div class="market-icon">⏰</div>
+                <div class="market-title">Market Insight Window Closed</div>
+                <div class="market-desc">Live Black-Box-Engine values are generated during active market analysis hours.</div>
+                <div class="market-time">9:16 AM → 12 PM</div>
+                <div class="market-sub">Previous values remain visible till next trading day 8:30 AM</div>
+              </div>`;
             return;
           }
-          const pendingRow = rows[rows.length - 1];
-          const displayableRows = rows.length >= 2 ? rows.slice(0, -1) : rows;
-          const heroRow = displayableRows[displayableRows.length - 1] || pendingRow;
+    
+          // ── FIX: use ALL rows — don't drop the last "pending" row ──
+          const displayableRows = rows;                          // ← was: rows.slice(0, -1)
+          const heroRow = displayableRows[displayableRows.length - 1];
           const heroRunning = parseFloat(heroRow.running || 0);
-          _dashboardRows = rows.map(r => ({ datetime: r.datetime || '', strike: r.strike || '', index_ltp: r.index_ltp || '', running: r.running || 0 })); document.getElementById("h-ltp").textContent = pendingRow.index_ltp || "—";
-          document.getElementById("h-expiry").textContent = pendingRow.expiry || "—";
-          document.getElementById("h-ts").textContent = pendingRow.datetime || "—";
-          const parts = (pendingRow.datetime || '').split(' ');
+    
+          // Store all rows for Excel export
+          _dashboardRows = rows.map(r => ({
+            datetime:  r.datetime  || '',
+            strike:    r.strike    || '',
+            index_ltp: r.index_ltp || '',
+            running:   r.running   || 0
+          }));
+    
+          document.getElementById("h-ltp").textContent     = heroRow.index_ltp || "—";
+          document.getElementById("h-expiry").textContent  = heroRow.expiry    || "—";
+          document.getElementById("h-ts").textContent      = heroRow.datetime  || "—";
+    
+          const parts = (heroRow.datetime || '').split(' ');
           document.getElementById("atm-dt").innerHTML = `
-        <span style="color:#fff">${parts[0] || ''}</span>
-        <span style="color:#fff;margin:0 6px">|</span>
-        <span style="color:#fff">${parts[1] || pendingRow.datetime}</span><br>
-        <span style="color:#ff6b35">Strike: </span><span class="strike-highlight">${pendingRow.strike}</span>
-        <span style="color:var(--text-muted);margin:0 8px">·</span>
-        <span style="color:#ff6b35">Sensex: </span><span style="color:var(--primary)">${parseFloat(pendingRow.index_ltp || 0).toFixed(2)}</span>`;
+            <span style="color:#fff">${parts[0] || ''}</span>
+            <span style="color:#fff;margin:0 6px">|</span>
+            <span style="color:#fff">${parts[1] || heroRow.datetime}</span><br>
+            <span style="color:#ff6b35">Strike: </span><span class="strike-highlight">${heroRow.strike}</span>
+            <span style="color:var(--text-muted);margin:0 8px">·</span>
+            <span style="color:#ff6b35">Sensex: </span><span style="color:var(--primary)">${parseFloat(heroRow.index_ltp || 0).toFixed(2)}</span>`;
+    
           const box = document.getElementById("atm-run-box");
-          if (heroRunning === null) {
-            document.getElementById("atm-run-val").textContent = "—";
-            box.className = "atm-run-box atm-run-zero";
-            box.querySelector('.run-label').textContent = '◆ Neutral';
-          } else {
-            document.getElementById("atm-run-val").textContent = heroRunning.toFixed(2);
-            if (heroRunning > 0) { box.className = "atm-run-box atm-run-pos"; box.querySelector('.run-label').textContent = '▲ Bullish'; }
-            else if (heroRunning < 0) { box.className = "atm-run-box atm-run-neg"; box.querySelector('.run-label').textContent = '▼ Bearish'; }
-            else { box.className = "atm-run-box atm-run-zero"; box.querySelector('.run-label').textContent = '◆ Neutral'; }
-          }
+          document.getElementById("atm-run-val").textContent = heroRunning.toFixed(2);
+          if (heroRunning > 0)      { box.className = "atm-run-box atm-run-pos"; box.querySelector('.run-label').textContent = '▲ Bullish'; }
+          else if (heroRunning < 0) { box.className = "atm-run-box atm-run-neg"; box.querySelector('.run-label').textContent = '▼ Bearish'; }
+          else                      { box.className = "atm-run-box atm-run-zero"; box.querySelector('.run-label').textContent = '◆ Neutral'; }
+    
+          // Show newest first in the list
           const displayRows = [...displayableRows].reverse();
-          if (!displayRows.length) {
-            document.getElementById("rows-grid").innerHTML = `<div class="market-closed-box">.<div class="market-icon">⏳</div><div class="market-title">Waiting for next tick…</div><div class="market-desc">First confirmed value will appear after the next data point arrives.</div></div>`;
-          } else {
-            let html = "";
-            displayRows.forEach(r => {
-              const val = parseFloat(r.running || 0);
-              const cls = val > 0 ? "val-pos" : val < 0 ? "val-neg" : "val-zero";
-              const rcls = val > 0 ? "row-pos" : val < 0 ? "row-neg" : "row-zero";
-              const dt = (r.datetime || '').split(' ');
-              html += `<div class="data-row ${rcls}">
-            <div class="row-dt"><span class="row-time">${dt[1] || r.datetime}</span><span class="row-sensex">Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)}</span></div>
-            <div class="val-pill ${cls}">${val > 0 ? '+' : ''}${val.toFixed(2)}</div>
-          </div>`;
-            });
-            document.getElementById("rows-grid").innerHTML = html;
-          }
+    
+          let html = "";
+          displayRows.forEach(r => {
+            const val  = parseFloat(r.running || 0);
+            const cls  = val > 0 ? "val-pos"  : val < 0 ? "val-neg"  : "val-zero";
+            const rcls = val > 0 ? "row-pos"  : val < 0 ? "row-neg"  : "row-zero";
+            const dt   = (r.datetime || '').split(' ');
+            html += `<div class="data-row ${rcls}">
+              <div class="row-dt">
+                <span class="row-time">${dt[1] || r.datetime}</span>
+                <span class="row-sensex">Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)}</span>
+              </div>
+              <div class="val-pill ${cls}">${val > 0 ? '+' : ''}${val.toFixed(2)}</div>
+            </div>`;
+          });
+          document.getElementById("rows-grid").innerHTML = html;
+    
           const last6 = displayableRows.slice(-6);
-          if (last6.length) updateGauge(last6.reduce((s, r) => s + parseFloat(r.running || 0), 0) / last6.length);
+          if (last6.length) {
+            updateGauge(last6.reduce((s, r) => s + parseFloat(r.running || 0), 0) / last6.length);
+          }
+    
           checkMarketCloseAutoSave();
         })
         .catch(e => console.error("loadData:", e));
     }
-
     function startAutoRefresh(ms) { if (_refreshTimer) clearTimeout(_refreshTimer); doRefresh(ms); }
     function doRefresh(ms) { loadData(); _refreshTimer = setTimeout(() => doRefresh(ms), ms); }
 
