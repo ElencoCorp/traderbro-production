@@ -3,22 +3,9 @@ dhan_token_manager.py
 ─────────────────────────────────────────────────────────────────────────────
 Automatic Dhan API token renewal system for TraderBro.
 
-FIXES in this version:
-  1. .env is always the source of truth on startup — token_state.json is only
-     used to restore renewal_count / timestamps, NEVER to overwrite a manually
-     updated .env token.  This means pasting a new token in .env and restarting
-     the server is always sufficient.
-  2. set_token_from_env() endpoint lets admin hot-reload the .env token into
-     memory WITHOUT restarting the server — no more stale in-memory token.
-  3. Smart renewal scheduling: on weekdays the first renewal is attempted at
-     09:00 IST (before market opens); on weekends / after 401 the scheduler
-     backs off and retries the next weekday morning instead of hammering Dhan
-     with expired-token calls every 18 h.
-  4. renew_token() detects 401 (expired/invalid token) and immediately stops
-     retrying — it logs a clear message and waits for the next weekday window
-     or for the admin to inject a fresh token via /api/admin/set-token.
-  5. Countdown and progress bar in the UI now reflect the *actual* next-run
-     time stored in the APScheduler job, not a stale string in state.
+Renewal cadence: every 20 hours after each successful renewal, 7 days a week.
+On 401 (expired token): retries stop, scheduler backs off to next weekday 9 AM,
+and the admin is prompted to inject a fresh token.
 ─────────────────────────────────────────────────────────────────────────────
 """
 
@@ -44,8 +31,8 @@ LOG_FILE               = Path("token_renewal.log")
 TOKEN_STATE_FILE       = Path("token_state.json")
 
 DHAN_RENEW_URL         = "https://api.dhan.co/v2/RenewToken"
-RENEWAL_INTERVAL_HOURS = 18   # normal cadence
-RENEWAL_HOUR_IST       = 9    # preferred daily renewal hour (9 AM IST)
+RENEWAL_INTERVAL_HOURS = 20   # renew 20 h after each successful renewal
+RENEWAL_HOUR_IST       = 9    # fallback hour for error-recovery scheduling (9 AM IST)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # LOGGER
@@ -267,8 +254,8 @@ def renew_token(force: bool = False) -> dict:
             now_ist = datetime.now(IST)
             _state["last_renewed_at"] = now_ist.strftime("%Y-%m-%d %H:%M:%S IST")
 
-            # Next renewal: prefer next weekday 09:00, fall back to +18 h
-            next_run = _next_weekday_morning(now_ist + timedelta(hours=RENEWAL_INTERVAL_HOURS))
+            # Next renewal: exactly 20 hours from now, every time
+            next_run = now_ist + timedelta(hours=RENEWAL_INTERVAL_HOURS)
             _state["next_renewal_at"] = next_run.strftime("%Y-%m-%d %H:%M:%S IST")
 
             # ── Update live HEADERS dict in app.py ─────────────────────
@@ -420,7 +407,24 @@ def init_token_manager(app, scheduler, headers_dict: dict):
         headers_dict["access-token"]     = env_token
 
     # ── Step 3: Schedule first renewal ───────────────────────────────────
-    next_run = _next_weekday_morning()
+    # If we have a last_renewed_at timestamp, schedule 20h after that.
+    # This prevents an immediate re-renewal right after server restart.
+    next_run = None
+    if _state.get("last_renewed_at"):
+        try:
+            last_str = _state["last_renewed_at"].replace(" IST", "").replace(" (manual)", "")
+            last_dt  = datetime.strptime(last_str, "%Y-%m-%d %H:%M:%S")
+            last_dt  = IST.localize(last_dt)
+            candidate = last_dt + timedelta(hours=RENEWAL_INTERVAL_HOURS)
+            now_ist   = datetime.now(IST)
+            # If candidate is in the past, renew soon (2 min from now)
+            next_run = candidate if candidate > now_ist else now_ist + timedelta(minutes=2)
+        except Exception:
+            next_run = None
+
+    if next_run is None:
+        next_run = datetime.now(IST) + timedelta(hours=RENEWAL_INTERVAL_HOURS)
+
     _schedule_renewal(scheduler, next_run_time=next_run)
 
     logger.info(
@@ -525,8 +529,8 @@ def reload_env_token(request: Request):
     if _state["headers_ref"] is not None:
         _state["headers_ref"]["access-token"] = new_token
 
-    # Reschedule renewal so the next run uses the fresh token
-    next_run = _next_weekday_morning()
+    # Reschedule renewal 20 h from now using the fresh token
+    next_run = datetime.now(IST) + timedelta(hours=RENEWAL_INTERVAL_HOURS)
     _schedule_renewal(_state["scheduler_ref"], next_run_time=next_run)
 
     _save_state()
@@ -577,8 +581,8 @@ async def set_token_manually(request: Request):
     os.environ["ACCESS_TOKEN"] = token
     _update_env_file(token)
 
-    # Reschedule with the fresh token
-    next_run = _next_weekday_morning()
+    # Reschedule 20 h from now with the fresh token
+    next_run = datetime.now(IST) + timedelta(hours=RENEWAL_INTERVAL_HOURS)
     _schedule_renewal(_state["scheduler_ref"], next_run_time=next_run)
 
     _save_state()
