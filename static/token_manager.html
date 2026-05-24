@@ -241,7 +241,7 @@
   <div class="icon">🔐</div>
   <div>
     <h1>Dhan Token Manager</h1>
-    <p>Automatic renewal — weekday mornings at 9:00 AM IST</p>
+    <p>Automatic renewal — every 20 hours after each successful renewal</p>
   </div>
 </div>
 
@@ -263,7 +263,7 @@
   <div class="steps">
     <div class="step">
       <div class="step-num">1</div>
-      <div class="step-text">Renewal runs every weekday at <strong>09:00 AM IST</strong> (18-hour interval). Weekends are skipped — the job waits until the next Monday.</div>
+      <div class="step-text">Renewal runs <strong>every 20 hours</strong> after each successful renewal — 7 days a week, including weekends. Dhan tokens last 24 h, so this keeps a 4-hour safety buffer.</div>
     </div>
     <div class="step">
       <div class="step-num">2</div>
@@ -450,7 +450,7 @@ function updateProgress() {
 
   if (!nextRenewalISO) return;
   const now    = new Date();
-  const total  = 18 * 60 * 60 * 1000;
+  const total  = 20 * 60 * 60 * 1000;
   const remain = nextRenewalISO - now;
   const used   = Math.max(0, total - remain);
   const pct    = Math.min(100, (used / total) * 100);
