@@ -52,6 +52,29 @@
   }
   .page-header p { color: var(--muted); font-size: 0.85rem; margin-top: 2px; }
 
+  /* ─── Alert banner ─── */
+  .alert-banner {
+    display: none;
+    background: #ff4d6d18;
+    border: 1px solid #ff4d6d55;
+    border-left: 4px solid var(--red);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    font-size: 0.87rem;
+    line-height: 1.7;
+  }
+  .alert-banner strong { color: var(--red); }
+  .alert-banner code {
+    background: #ffffff12;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.82rem;
+    color: var(--gold);
+  }
+  .alert-banner.show { display: block; }
+
   /* ─── Status card ─── */
   .status-card {
     background: var(--card);
@@ -75,8 +98,9 @@
     font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;
     margin-bottom: 18px;
   }
-  .status-pill.ok    { background: #00d4aa22; color: var(--green); border: 1px solid #00d4aa44; }
-  .status-pill.error { background: #ff4d6d22; color: var(--red);   border: 1px solid #ff4d6d44; }
+  .status-pill.ok      { background: #00d4aa22; color: var(--green); border: 1px solid #00d4aa44; }
+  .status-pill.error   { background: #ff4d6d22; color: var(--red);   border: 1px solid #ff4d6d44; }
+  .status-pill.invalid { background: #ff6b3522; color: var(--orange); border: 1px solid #ff6b3544; }
   .status-pill.loading { background: #02a3fe22; color: var(--accent); border: 1px solid #02a3fe44; }
   .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor;
          animation: pulse 1.5s infinite; }
@@ -98,22 +122,22 @@
     font-family: 'Courier New', monospace;
     word-break: break-all;
   }
-  .info-value.green { color: var(--green); }
-  .info-value.red   { color: var(--red);   }
-  .info-value.gold  { color: var(--gold);  }
+  .info-value.green  { color: var(--green); }
+  .info-value.red    { color: var(--red);   }
+  .info-value.gold   { color: var(--gold);  }
+  .info-value.orange { color: var(--orange);}
 
   /* ─── Progress bar ─── */
   .renewal-progress { margin-bottom: 20px; }
   .renewal-progress label { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; display: block; }
-  .bar-track {
-    height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;
-  }
+  .bar-track { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
   .bar-fill {
     height: 100%; border-radius: 4px;
     background: linear-gradient(90deg, var(--accent), var(--green));
     transition: width 0.5s ease;
   }
   .bar-fill.warning { background: linear-gradient(90deg, var(--orange), var(--gold)); }
+  .bar-fill.invalid { background: linear-gradient(90deg, var(--red), var(--orange)); width: 100% !important; }
 
   /* ─── Buttons ─── */
   .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
@@ -123,8 +147,12 @@
     display: flex; align-items: center; gap: 8px;
     transition: all 0.2s;
   }
-  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary   { background: var(--accent); color: #000; }
   .btn-primary:hover { background: #00c0ff; transform: translateY(-1px); }
+  .btn-success   { background: var(--green); color: #000; }
+  .btn-success:hover { background: #00ffcc; transform: translateY(-1px); }
+  .btn-warn      { background: var(--orange); color: #000; }
+  .btn-warn:hover { background: #ff8855; transform: translateY(-1px); }
   .btn-secondary {
     background: transparent; color: var(--text);
     border: 1px solid var(--border);
@@ -138,6 +166,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     overflow: hidden;
+    margin-bottom: 20px;
   }
   .log-header {
     display: flex; align-items: center; justify-content: space-between;
@@ -160,26 +189,11 @@
   .log-body::-webkit-scrollbar-track { background: transparent; }
   .log-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-  .log-line { padding: 1px 0; }
+  .log-line         { padding: 1px 0; }
   .log-line.ok      { color: var(--green); }
   .log-line.err     { color: var(--red); }
   .log-line.warn    { color: var(--gold); }
   .log-line.info    { color: #8899cc; }
-
-  /* ─── Toast ─── */
-  .toast {
-    position: fixed; bottom: 28px; right: 28px;
-    padding: 13px 22px; border-radius: 10px;
-    font-size: 0.87rem; font-weight: 600;
-    box-shadow: 0 4px 20px #0009;
-    transform: translateY(80px); opacity: 0;
-    transition: all 0.35s cubic-bezier(.34,1.56,.64,1);
-    z-index: 9999; max-width: 340px;
-  }
-  .toast.show { transform: translateY(0); opacity: 1; }
-  .toast.success { background: #00d4aa; color: #000; }
-  .toast.fail    { background: #ff4d6d; color: #fff; }
-  .toast.info    { background: var(--accent); color: #000; }
 
   /* ─── How it works ─── */
   .how-card {
@@ -191,7 +205,7 @@
   }
   .how-card h3 { font-size: 0.9rem; font-weight: 600; color: var(--accent); margin-bottom: 12px; }
   .steps { display: flex; flex-direction: column; gap: 10px; }
-  .step { display: flex; gap: 12px; align-items: flex-start; }
+  .step  { display: flex; gap: 12px; align-items: flex-start; }
   .step-num {
     width: 24px; height: 24px; border-radius: 50%;
     background: var(--accent); color: #000;
@@ -200,6 +214,22 @@
   }
   .step-text { font-size: 0.84rem; color: var(--muted); line-height: 1.5; }
   .step-text strong { color: var(--text); }
+
+  /* ─── Toast ─── */
+  .toast {
+    position: fixed; bottom: 28px; right: 28px;
+    padding: 13px 22px; border-radius: 10px;
+    font-size: 0.87rem; font-weight: 600;
+    box-shadow: 0 4px 20px #0009;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.35s cubic-bezier(.34,1.56,.64,1);
+    z-index: 9999; max-width: 340px;
+  }
+  .toast.show    { transform: translateY(0); opacity: 1; }
+  .toast.success { background: #00d4aa; color: #000; }
+  .toast.fail    { background: #ff4d6d; color: #fff; }
+  .toast.info    { background: var(--accent); color: #000; }
+  .toast.warn    { background: var(--orange); color: #000; }
 
   /* countdown */
   #countdown { font-weight: 700; color: var(--accent); }
@@ -211,8 +241,20 @@
   <div class="icon">🔐</div>
   <div>
     <h1>Dhan Token Manager</h1>
-    <p>Automatic 12-hour renewal — zero manual intervention</p>
+    <p>Automatic renewal — weekday mornings at 9:00 AM IST</p>
   </div>
+</div>
+
+<!-- Invalid-token alert banner -->
+<div class="alert-banner" id="invalidBanner">
+  <strong>⛔ Token is Expired / Invalid</strong><br>
+  The last auto-renewal got a <strong>401</strong> from Dhan — the current token cannot be renewed.<br><br>
+  <strong>Fix options (choose one):</strong>
+  <ol style="margin-top:8px;padding-left:20px;line-height:2">
+    <li>Generate a fresh token on <strong>dhan.co → My Profile → Access Token</strong>.</li>
+    <li>Paste it into <code>.env</code> → <code>ACCESS_TOKEN=eyJ0eX…</code> → click <strong>"Reload from .env"</strong> below (no server restart needed).</li>
+    <li><em>Or</em> paste it directly into the <strong>"Set Token"</strong> box below.</li>
+  </ol>
 </div>
 
 <!-- How it works -->
@@ -221,15 +263,15 @@
   <div class="steps">
     <div class="step">
       <div class="step-num">1</div>
-      <div class="step-text">Your Dhan token lives for <strong>24 hours</strong> — this system renews it every <strong>18 hours</strong> for a 6-hour safety margin.</div>
+      <div class="step-text">Renewal runs every weekday at <strong>09:00 AM IST</strong> (18-hour interval). Weekends are skipped — the job waits until the next Monday.</div>
     </div>
     <div class="step">
       <div class="step-num">2</div>
-      <div class="step-text">On renewal, the new token is written to <strong>.env</strong>, loaded into memory, and all API calls immediately use it.</div>
+      <div class="step-text">On renewal the new token is written to <strong>.env</strong>, loaded into memory, and all API calls immediately use it.</div>
     </div>
     <div class="step">
       <div class="step-num">3</div>
-      <div class="step-text">If renewal fails, the <strong>old token keeps working</strong> until the next retry — you'll see an error badge here.</div>
+      <div class="step-text">If the token is expired/invalid (401), <strong>automatic retries stop</strong>. Paste a fresh token and click <em>Reload from .env</em> or use <em>Set Token</em> below.</div>
     </div>
   </div>
 </div>
@@ -280,16 +322,36 @@
     <strong>⚠️ Last Error:</strong> <span id="lastError"></span>
   </div>
 
+  <!-- Action buttons -->
   <div class="btn-row">
     <button class="btn btn-primary" id="renewBtn" onclick="manualRenew()">
       🔄 Renew Token Now
     </button>
-    <button class="btn btn-secondary" onclick="loadStatus()">
-      ↻ Refresh Status
+    <button class="btn btn-success" id="reloadEnvBtn" onclick="reloadFromEnv()">
+      📂 Reload from .env
     </button>
-    <button class="btn btn-secondary" onclick="loadLogs()">
-      📋 Load Logs
-    </button>
+    <button class="btn btn-secondary" onclick="loadStatus()">↻ Refresh Status</button>
+    <button class="btn btn-secondary" onclick="loadLogs()">📋 Load Logs</button>
+  </div>
+</div>
+
+<!-- Emergency: paste token directly -->
+<div class="log-card">
+  <div class="log-header">
+    <h3>🚨 Emergency: Paste Fresh Token</h3>
+  </div>
+  <div style="padding:16px 20px;background:#06060f;">
+    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px;">
+      Paste a fresh token from the Dhan portal here. It will be applied to memory <em>and</em> written to <code>.env</code> immediately.
+    </p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <input id="pasteTokenInput" type="text" placeholder="eyJ0eXAiOiJKV1Qi…"
+        style="flex:1;min-width:260px;padding:10px 14px;border-radius:8px;
+               background:var(--surface);border:1px solid var(--border);
+               color:var(--text);font-family:'Courier New',monospace;font-size:0.82rem;" />
+      <button class="btn btn-warn" onclick="pasteToken()">⚡ Apply Token</button>
+    </div>
+    <div id="pasteResult" style="margin-top:10px;font-size:0.82rem;color:var(--green);display:none;"></div>
   </div>
 </div>
 
@@ -300,7 +362,7 @@
     <button class="btn btn-secondary" style="padding:6px 14px;font-size:0.78rem;" onclick="loadLogs()">Refresh</button>
   </div>
   <div class="log-body" id="logBody">
-    Click "Load Logs" or "Refresh" above to see renewal history.
+    Click "Load Logs" or "Refresh" to see renewal history.
   </div>
 </div>
 
@@ -309,13 +371,14 @@
 
 <script>
 let nextRenewalISO = null;
+let isTokenInvalid = false;
 
 // ── Toast ──────────────────────────────────────────────────────────────
-function showToast(msg, type='info') {
+function showToast(msg, type = 'info') {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = `toast ${type} show`;
-  setTimeout(() => t.classList.remove('show'), 3500);
+  setTimeout(() => t.classList.remove('show'), 4000);
 }
 
 // ── Load status ────────────────────────────────────────────────────────
@@ -323,27 +386,35 @@ async function loadStatus() {
   try {
     const r = await fetch('/api/admin/token-status');
     const d = await r.json();
-
     if (d.error) { showToast(d.error, 'fail'); return; }
+
+    isTokenInvalid = !!d.token_invalid;
+
+    // Banner
+    document.getElementById('invalidBanner').classList.toggle('show', isTokenInvalid);
 
     // Pill
     const pill = document.getElementById('statusPill');
     const card = document.getElementById('statusCard');
-    if (d.status === 'ok') {
-      pill.className = 'status-pill ok';
-      document.getElementById('statusText').textContent = 'Token Healthy';
-      card.classList.remove('error');
-    } else {
+    if (isTokenInvalid) {
+      pill.className = 'status-pill invalid';
+      document.getElementById('statusText').textContent = 'Token Invalid — Action Required';
+      card.classList.add('error');
+    } else if (d.status === 'error') {
       pill.className = 'status-pill error';
       document.getElementById('statusText').textContent = 'Error — Check Logs';
       card.classList.add('error');
+    } else {
+      pill.className = 'status-pill ok';
+      document.getElementById('statusText').textContent = 'Token Healthy';
+      card.classList.remove('error');
     }
 
-    document.getElementById('tokenMasked').textContent   = d.token_masked || '—';
-    document.getElementById('clientId').textContent      = d.client_id    || '—';
-    document.getElementById('lastRenewed').textContent   = d.last_renewed_at;
-    document.getElementById('nextRenewal').textContent   = d.next_renewal_at;
-    document.getElementById('renewalCount').textContent  = `#${d.renewal_count}`;
+    document.getElementById('tokenMasked').textContent  = d.token_masked    || '—';
+    document.getElementById('clientId').textContent     = d.client_id       || '—';
+    document.getElementById('lastRenewed').textContent  = d.last_renewed_at || '—';
+    document.getElementById('nextRenewal').textContent  = d.next_renewal_at || '—';
+    document.getElementById('renewalCount').textContent = `#${d.renewal_count}`;
 
     // Error box
     const eb = document.getElementById('errorBox');
@@ -362,21 +433,28 @@ async function loadStatus() {
 
     updateProgress();
 
-  } catch(e) {
+  } catch (e) {
     showToast('Could not reach /api/admin/token-status', 'fail');
   }
 }
 
 // ── Progress bar + countdown ───────────────────────────────────────────
 function updateProgress() {
-  if (!nextRenewalISO) return;
-  const now     = new Date();
-  const total   = 18 * 60 * 60 * 1000;           // 18 h in ms
-  const remain  = nextRenewalISO - now;
-  const used    = Math.max(0, total - remain);
-  const pct     = Math.min(100, (used / total) * 100);
-
   const bar = document.getElementById('progressBar');
+
+  if (isTokenInvalid) {
+    bar.className = 'bar-fill invalid';
+    document.getElementById('countdown').textContent = 'Token invalid — renewal paused';
+    return;
+  }
+
+  if (!nextRenewalISO) return;
+  const now    = new Date();
+  const total  = 18 * 60 * 60 * 1000;
+  const remain = nextRenewalISO - now;
+  const used   = Math.max(0, total - remain);
+  const pct    = Math.min(100, (used / total) * 100);
+
   bar.style.width = pct + '%';
   bar.className = 'bar-fill' + (pct > 80 ? ' warning' : '');
 
@@ -406,12 +484,70 @@ async function manualRenew() {
       await loadLogs();
     } else {
       showToast('❌ Renewal failed: ' + (d.error || 'Unknown error'), 'fail');
+      await loadStatus();
     }
-  } catch(e) {
+  } catch (e) {
     showToast('Network error during renewal', 'fail');
   } finally {
     btn.disabled = false;
     btn.innerHTML = '🔄 Renew Token Now';
+  }
+}
+
+// ── Reload from .env ───────────────────────────────────────────────────
+async function reloadFromEnv() {
+  const btn = document.getElementById('reloadEnvBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Reloading…';
+  try {
+    const r = await fetch('/api/admin/reload-env-token');
+    const d = await r.json();
+    if (d.success) {
+      showToast('✅ ' + d.message, 'success');
+      await loadStatus();
+      await loadLogs();
+    } else {
+      showToast('❌ ' + (d.error || 'Reload failed'), 'fail');
+    }
+  } catch (e) {
+    showToast('Network error during reload', 'fail');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '📂 Reload from .env';
+  }
+}
+
+// ── Paste token directly ───────────────────────────────────────────────
+async function pasteToken() {
+  const token = document.getElementById('pasteTokenInput').value.trim();
+  if (!token || token.length < 20) {
+    showToast('Please paste a valid token first', 'warn');
+    return;
+  }
+  try {
+    const r = await fetch('/api/admin/set-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ access_token: token }),
+    });
+    const d = await r.json();
+    const res = document.getElementById('pasteResult');
+    if (d.success) {
+      res.style.color = 'var(--green)';
+      res.textContent = `✅ Token applied! Renewal #${d.renewal_count}. Next: ${d.next_renewal}`;
+      res.style.display = 'block';
+      document.getElementById('pasteTokenInput').value = '';
+      showToast('✅ Fresh token applied successfully!', 'success');
+      await loadStatus();
+      await loadLogs();
+    } else {
+      res.style.color = 'var(--red)';
+      res.textContent = '❌ ' + (d.error || 'Failed');
+      res.style.display = 'block';
+      showToast('❌ Failed: ' + (d.error || ''), 'fail');
+    }
+  } catch (e) {
+    showToast('Network error', 'fail');
   }
 }
 
@@ -429,15 +565,14 @@ async function loadLogs() {
 
     el.innerHTML = d.lines.reverse().map(line => {
       let cls = 'info';
-      if (line.includes('✅') || line.includes('renewed') || line.includes('updated')) cls = 'ok';
-      else if (line.includes('❌') || line.includes('ERROR') || line.includes('failed')) cls = 'err';
-      else if (line.includes('⚠️') || line.includes('WARNING')) cls = 'warn';
+      if (line.includes('✅') || line.includes('renewed') || line.includes('updated') || line.includes('synced') || line.includes('hot-reload')) cls = 'ok';
+      else if (line.includes('❌') || line.includes('ERROR') || line.includes('failed') || line.includes('401') || line.includes('invalid')) cls = 'err';
+      else if (line.includes('⚠️') || line.includes('WARNING') || line.includes('backing off')) cls = 'warn';
       return `<div class="log-line ${cls}">${escHtml(line)}</div>`;
     }).join('');
 
-    // Auto-scroll to top (newest first)
     el.scrollTop = 0;
-  } catch(e) {
+  } catch (e) {
     document.getElementById('logBody').innerHTML =
       '<span style="color:var(--red)">Error loading logs.</span>';
   }
@@ -450,7 +585,7 @@ function escHtml(s) {
 // ── Init ───────────────────────────────────────────────────────────────
 loadStatus();
 loadLogs();
-setInterval(loadStatus, 30_000);  // auto-refresh status every 30 s
+setInterval(loadStatus, 30_000);
 </script>
 </body>
 </html>
