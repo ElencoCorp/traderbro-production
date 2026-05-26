@@ -1716,7 +1716,7 @@ def live_data():
                 rows = json.load(f)
 
                 return {
-                    "rows": rows[-100:]
+                    "rows": rows[-2000:]
                 }
 
         return {
@@ -1950,7 +1950,7 @@ async def save_running(request: Request):
         rows.append(data)
 
         # LIMIT
-        rows = rows[-500:]
+        rows = rows[-2000:]
 
         with open(RUNNING_FILE, "w") as f:
 
@@ -2015,7 +2015,7 @@ def get_running():
                 rows = json.load(f)
 
                 return {
-                    "rows": rows[-500:]
+                    "rows": rows[-2000:]
                 }
 
         return {
