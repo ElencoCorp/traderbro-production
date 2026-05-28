@@ -8,848 +8,499 @@
 
     <title>TraderBro - Account</title>
 
+    <link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png">
+
     <!-- FINLAB CSS -->
     <link href="/static/finlab/Frontend/xhtml/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/finlab/Frontend/xhtml/css/style.css" rel="stylesheet">
 
-
     <style>
 
-.subscription-grid{
-
-    display:grid;
-
-    grid-template-columns:
-        repeat(auto-fit,minmax(180px,1fr));
-
-    gap:28px;
-
-    align-items:start;
-
-    margin-top:10px;
+/* ── SUBSCRIPTION GRID ─────────────────────────────────────── */
+.subscription-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    align-items: start;
+    margin-top: 10px;
 }
 
-.subscription-item{
-
-    text-align:center;
+@media (max-width: 992px) {
+    .subscription-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 576px) {
+    .subscription-grid { grid-template-columns: 1fr; }
 }
 
-.subscription-label{
+.subscription-item { text-align: center; }
 
-    color:#94a3b8;
-
-    font-size:13px;
-
-    font-weight:600;
-
-    margin-bottom:14px;
-
-    letter-spacing:0.4px;
+.subscription-label {
+    color: #94a3b8;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
 }
 
-.subscription-value{
-
-    font-size:24px;
-
-    font-weight:700;
-
-    color:#0f172a;
-
-    line-height:1.6;
+.subscription-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.5;
 }
 
-.plan-tag{
-
-    display:inline-flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    padding:10px 18px;
-
-    border-radius:999px;
-
-    background:linear-gradient(
-        135deg,
-        #0ea5e9,
-        #2563eb
-    );
-
-    color:white;
-
-    font-size:13px;
-
-    font-weight:700;
-
-    min-width:120px;
-
-    min-height:42px;
-
-    box-shadow:
-        0 8px 20px rgba(37,99,235,0.25);
+/* ── PLAN TAG ──────────────────────────────────────────────── */
+.plan-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border-radius: 999px;
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    min-width: 120px;
+    min-height: 42px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 8px 20px rgba(37,99,235,0.25);
 }
 
-.status-tag{
+.plan-tag.free    { background: linear-gradient(135deg,#64748b,#475569); box-shadow:none; }
+.plan-tag.basic   { background: linear-gradient(135deg,#0ea5e9,#0284c7); box-shadow:0 8px 20px rgba(14,165,233,0.3); }
+.plan-tag.essential { background: linear-gradient(135deg,#8b5cf6,#6d28d9); box-shadow:0 8px 20px rgba(109,40,217,0.3); }
+.plan-tag.pro     { background: linear-gradient(135deg,#f59e0b,#d97706); box-shadow:0 8px 20px rgba(245,158,11,0.3); }
+.plan-tag.premium { background: linear-gradient(135deg,#ec4899,#db2777); box-shadow:0 8px 20px rgba(236,72,153,0.3); }
 
-    display:inline-flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    padding:10px 18px;
-
-    border-radius:999px;
-
-    font-size:13px;
-
-    font-weight:700;
-
-    min-width:130px;
-
-    min-height:42px;
+/* ── STATUS TAG ────────────────────────────────────────────── */
+.status-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    min-width: 120px;
+    min-height: 42px;
 }
 
-.status-tag.active{
+.status-tag.active   { background: linear-gradient(135deg,#22c55e,#16a34a); color:white; box-shadow:0 8px 20px rgba(34,197,94,0.25); }
+.status-tag.expired  { background: linear-gradient(135deg,#ef4444,#dc2626); color:white; }
+.status-tag.inactive { background: #64748b; color:white; }
 
-    background:linear-gradient(
-        135deg,
-        #22c55e,
-        #16a34a
-    );
-
-    color:white;
-
-    box-shadow:
-        0 8px 20px rgba(34,197,94,0.25);
+/* ── LIVE INDICATOR ────────────────────────────────────────── */
+.live-indicator {
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
 }
+.live-indicator.active  { background: linear-gradient(135deg,#22c55e,#16a34a); box-shadow:0 8px 20px rgba(34,197,94,0.25); }
+.live-indicator.expired { background: linear-gradient(135deg,#ef4444,#dc2626); }
+.live-indicator.inactive{ background: #64748b; }
 
-.status-tag.expired{
-
-    background:linear-gradient(
-        135deg,
-        #ef4444,
-        #dc2626
-    );
-
-    color:white;
+/* ── SUBSCRIPTION CARD ─────────────────────────────────────── */
+.subscription-card {
+    background: linear-gradient(145deg,#ffffff,#f8fbff);
+    border: none;
+    border-radius: 28px;
+    padding: 36px;
+    box-shadow: 0 20px 50px rgba(15,23,42,0.08);
+    position: relative;
+    overflow: hidden;
 }
-
-.status-tag.inactive{
-
-    background:#64748b;
-
-    color:white;
-}
-
-@media(max-width:768px){
-
-    .subscription-grid{
-
-        grid-template-columns:1fr;
-
-        gap:22px;
-    }
-
-    .subscription-value{
-
-        font-size:18px;
-    }
-}
-
-.subscription-card{
-
-    background:
-        linear-gradient(
-            145deg,
-            #ffffff,
-            #f8fbff
-        );
-
-    border:none;
-
-    border-radius:28px;
-
-    padding:36px;
-
-    box-shadow:
-        0 20px 50px rgba(15,23,42,0.08);
-
-    position:relative;
-
-    overflow:hidden;
-}
-
-.subscription-card::before{
-
+.subscription-card::before {
     content:"";
-
     position:absolute;
-
-    top:-120px;
-    right:-120px;
-
-    width:240px;
-    height:240px;
-
-    background:
-        radial-gradient(
-            rgba(37,99,235,0.12),
-            transparent 70%
-        );
+    top:-120px; right:-120px;
+    width:240px; height:240px;
+    background: radial-gradient(rgba(37,99,235,0.1),transparent 70%);
 }
 
-.subscription-header{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    margin-bottom:36px;
-
-    flex-wrap:wrap;
-
-    gap:18px;
+.subscription-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 14px;
 }
 
-.subscription-title{
-
-    font-size:32px;
-
-    font-weight:800;
-
-    color:#0f172a;
-
-    margin-bottom:6px;
+.subscription-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 4px;
 }
 
-.subscription-subtitle{
-
-    color:#64748b;
-
-    font-size:14px;
-
-    margin:0;
+.subscription-subtitle {
+    color: #64748b;
+    font-size: 13px;
+    margin: 0;
 }
 
-.live-indicator{
+/* ── UPGRADE BUTTON ────────────────────────────────────────── */
+.upgrade-btn {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    border-radius: 18px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 16px;
+    color: white;
+    background: linear-gradient(135deg,#0ea5e9,#2563eb);
+    transition: 0.3s ease;
+    box-shadow: 0 15px 35px rgba(37,99,235,0.25);
+}
+.upgrade-btn:hover { transform: translateY(-2px); color: white; }
 
-    background:
-        linear-gradient(
-            135deg,
-            #22c55e,
-            #16a34a
-        );
-
-    color:white;
-
-    padding:10px 18px;
-
-    border-radius:999px;
-
-    font-size:13px;
-
-    font-weight:700;
-
-    box-shadow:
-        0 8px 20px rgba(34,197,94,0.25);
+/* ── PROFILE CARD ──────────────────────────────────────────── */
+.profile-card {
+    position: relative;
+    overflow: hidden;
+    border: none;
+    border-radius: 30px;
+    background: linear-gradient(145deg,#0f172a,#111827);
+    min-height: 100%;
+    box-shadow: 0 25px 60px rgba(15,23,42,0.18);
 }
 
-.upgrade-btn{
-
-    width:100%;
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:center;
-
-    padding:16px;
-
-    border-radius:18px;
-
-    text-decoration:none;
-
-    font-weight:700;
-
-    font-size:16px;
-
-    color:white;
-
-    background:
-        linear-gradient(
-            135deg,
-            #0ea5e9,
-            #2563eb
-        );
-
-    transition:0.3s ease;
-
-    box-shadow:
-        0 15px 35px rgba(37,99,235,0.25);
+.profile-glow {
+    position: absolute;
+    top: -100px; right: -100px;
+    width: 260px; height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(rgba(59,130,246,0.35),transparent 70%);
 }
 
-.upgrade-btn:hover{
-
-    transform:translateY(-2px);
-
-    color:white;
+.profile-avatar {
+    width: 110px; height: 110px;
+    margin: 0 auto 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    font-weight: 800;
+    color: white;
+    box-shadow: 0 15px 35px rgba(0,114,255,0.35);
+    /* background set dynamically by JS */
+    background: linear-gradient(135deg,#00c6ff,#0072ff);
 }
 
-.profile-card{
+.profile-name  { color: white; font-size: 30px; font-weight: 800; margin-bottom: 8px; }
+.profile-email { color: #94a3b8; font-size: 14px; margin-bottom: 16px; }
 
-    position:relative;
-
-    overflow:hidden;
-
-    border:none;
-
-    border-radius:30px;
-
-    background:
-        linear-gradient(
-            145deg,
-            #0f172a,
-            #111827
-        );
-
-    min-height:100%;
-
-    box-shadow:
-        0 25px 60px rgba(15,23,42,0.18);
+.profile-phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 10px 16px;
+    border-radius: 14px;
+    color: #e2e8f0;
+    font-size: 14px;
+    margin-bottom: 20px;
 }
 
-.profile-glow{
-
-    position:absolute;
-
-    top:-100px;
-    right:-100px;
-
-    width:260px;
-    height:260px;
-
-    border-radius:50%;
-
-    background:
-        radial-gradient(
-            rgba(59,130,246,0.35),
-            transparent 70%
-        );
+.member-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    border-radius: 999px;
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 28px;
+    box-shadow: 0 10px 25px rgba(249,115,22,0.3);
+    /* background set dynamically */
+    background: linear-gradient(135deg,#f59e0b,#f97316);
 }
 
-.profile-avatar{
-
-    width:110px;
-    height:110px;
-
-    margin:auto;
-
-    border-radius:50%;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    background:
-        linear-gradient(
-            135deg,
-            #00c6ff,
-            #0072ff
-        );
-
-    color:white;
-
-    font-size:42px;
-
-    font-weight:800;
-
-    box-shadow:
-        0 15px 35px rgba(0,114,255,0.35);
-
-    margin-bottom:24px;
+.profile-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 8px;
 }
 
-.profile-name{
-
-    color:white;
-
-    font-size:34px;
-
-    font-weight:800;
-
-    margin-bottom:10px;
+.profile-stat {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 18px;
+    padding: 18px;
 }
 
-.profile-email{
+.profile-stat h4 { color: white; font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+.profile-stat p  { color: #94a3b8; font-size: 12px; margin: 0; }
 
-    color:#94a3b8;
-
-    font-size:15px;
-
-    margin-bottom:18px;
+/* ── COUNTDOWN TIMER ───────────────────────────────────────── */
+#countdown {
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 10px;
+    font-weight: 500;
 }
+#countdown span { color: #0ea5e9; font-weight: 700; }
 
-.profile-phone{
-
-    display:inline-flex;
-
-    align-items:center;
-
-    gap:8px;
-
-    background:
-        rgba(255,255,255,0.08);
-
-    border:1px solid rgba(255,255,255,0.08);
-
-    padding:12px 18px;
-
-    border-radius:14px;
-
-    color:#e2e8f0;
-
-    font-size:14px;
-
-    margin-bottom:22px;
-}
-
-.member-badge{
-
-    display:inline-flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    padding:10px 18px;
-
-    border-radius:999px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #f59e0b,
-            #f97316
-        );
-
-    color:white;
-
-    font-size:13px;
-
-    font-weight:700;
-
-    margin-bottom:30px;
-
-    box-shadow:
-        0 10px 25px rgba(249,115,22,0.3);
-}
-
-.profile-stats{
-
-    display:grid;
-
-    grid-template-columns:1fr 1fr;
-
-    gap:16px;
-
-    margin-top:10px;
-}
-
-.profile-stat{
-
-    background:
-        rgba(255,255,255,0.05);
-
-    border:1px solid rgba(255,255,255,0.06);
-
-    border-radius:18px;
-
-    padding:20px;
-}
-
-.profile-stat h4{
-
-    color:white;
-
-    font-size:22px;
-
-    font-weight:800;
-
-    margin-bottom:8px;
-}
-
-.profile-stat p{
-
-    color:#94a3b8;
-
-    font-size:13px;
-
-    margin:0;
-}
-
-@media(max-width:768px){
-
-    .profile-name{
-
-        font-size:26px;
-    }
-
-    .profile-avatar{
-
-        width:90px;
-        height:90px;
-
-        font-size:34px;
-    }
-}
-</style>
+    </style>
 </head>
 
 <body>
 
+<div class="page-wraper">
 
-    <div class="page-wraper">
+    <!-- Header -->
+		<header class="site-header mo-left header header-transparent ">
+			<!-- Main Header -->
+			<div class="sticky-header main-bar-wraper navbar-expand-lg">
+				<div class="main-bar clearfix ">
+					<div class="container clearfix">
 
-        <!-- Header -->
-        <header class="site-header mo-left header header-transparent ">
-            <!-- Main Header -->
-            <div class="sticky-header main-bar-wraper navbar-expand-lg">
-                <div class="main-bar clearfix ">
-                    <div class="container clearfix">
+						<!-- Website Logo -->
+						<div class="logo-header">
+							<a href="/" class="logo-light"><img
+									src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
+									alt="Traderbro.in"></a>
+							<a href="/" class="logo-dark"><img
+									src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
+									alt="Traderbro.in"></a>
+						</div>
 
-                        <!-- Website Logo -->
-                        <div class="logo-header">
-                            <a href="/" class="logo-light"><img
-                                    src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
-                                    alt="TraderBro"></a>
-                            <a href="/" class="logo-dark"><img
-                                    src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
-                                    alt="TraderBro"></a>
-                        </div>
+						<!-- Nav Toggle Button -->
+						<button class="navbar-toggler collapsed navicon justify-content-end" type="button"
+							data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
+							aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+							<span></span>
+							<span></span>
+							<span></span>
+						</button>
 
-                        <!-- Nav Toggle Button -->
-                        <button class="navbar-toggler collapsed navicon justify-content-end" type="button"
-                            data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
-                            aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </button>
+						<!-- Extra Nav -->
+						<div class="extra-nav">
+							<div class="extra-cell d-flex align-items-center" id="navAuth"></div>
+						</div>
 
-                        <!-- Extra Nav -->
-                        <div class="extra-nav">
-                            <div class="extra-cell" id="navAuth"></div>
-                        </div>
+						<!-- Header Nav -->
+						<div class="header-nav navbar-collapse collapse justify-content-end" id="navbarNavDropdown">
+						
+							<!-- MOBILE LOGO -->
+							<div class="mobile-logo d-lg-none">
+								<a href="/">
+									<img src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png" alt="Traderbro.in">
+								</a>
+							</div>
+						
+							<!-- NAVIGATION -->
+							<ul class="nav navbar-nav navbar navbar-left">
+						
+								<li>
+									<a href="/about-us">About Us</a>
+								</li>
+						
+								<li>
+									<a href="/trading-plan">
+										Subscriptions
+									</a>
+								</li>
+						
+								<li>
+									<a href="/contact-us">
+										Contact Us
+									</a>
+								</li>
+						
+							</ul>
+						
+							<!-- MOBILE AUTH -->
+							<div class="mobile-auth-wrapper d-lg-none">
+						
+								<div class="mobile-auth-buttons" id="mobileNavAuth">
+						
+									<!-- Dynamic buttons -->
+						
+								</div>
+						
+							</div>
+						
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- Main Header End -->
+		</header>
+		<!-- Header End -->
 
-                        <!-- Header Nav -->
-                        <div class="header-nav navbar-collapse collapse justify-content-end" id="navbarNavDropdown">
-                            <div class="logo-header">
-                                <a href="index.html" class="logo-dark"><img
-                                        src="/static/finlab/images/logotraderbro.png" alt="TraderBro"></a>
-                            </div>
-                            <ul class="nav navbar-nav navbar navbar-left">
-                                <!-- <li><a href="/">Home</a></li> -->
-                                <li><a href="/about-us">About Us</a></li>
-                                <li><a href="/static/finlab/Frontend/xhtml//trading-plan.html">Trading Plans</a></li>
-                                <!-- <li class="sub-menu-down"><a href="javascript:void(0);">Our Blogs</a>
-								<ul class="sub-menu">
-									<li><a href="/static/finlab/Frontend/xhtml//blog-list.html">Blog List</a></li>
-									<li><a href="/static/finlab/Frontend/xhtml//blog-grid.html">Blog Grid</a></li>
-									<li><a href="/static/finlab/Frontend/xhtml//blog-details.html">Blog Details</a></li>
-								</ul>
-							</li> -->
-                                <li><a href="/static/finlab/Frontend/xhtml//contact-us.html">Contact Us</a></li>
-                                <li><a href="/account">My Account</a></li>
+    <div class="page-content">
 
-                            </ul>
-                        </div>
-                    </div>
+        <!-- Banner -->
+        <div class="dz-bnr-inr dz-bnr-inr-sm text-center position-relative"
+             style="background-image:url('/static/finlab/Frontend/xhtml/images/background/bg2.jpg');">
+            <div class="container">
+                <div class="dz-bnr-inr-entry">
+                    <h1>My TraderBro Account</h1>
+                    <nav aria-label="breadcrumb" class="breadcrumb-row m-t15">
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/">Home</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">My Account</li>
+                        </ul>
+                    </nav>
                 </div>
             </div>
-            <!-- Main Header End -->
-        </header>
-        <!-- Header End -->
-
-
-        <div class="page-content">
-
-            <!-- Banner  -->
-            <div class="dz-bnr-inr dz-bnr-inr-sm text-center position-relative"
-                style="background-image:url('/static/finlab/Frontend/xhtml/images/background/bg2.jpg');">
-                <div class="container">
-                    <div class="dz-bnr-inr-entry">
-                        <h1>My TraderBro Account</h1>
-                        <!-- Breadcrumb Row -->
-                        <nav aria-label="breadcrumb" class="breadcrumb-row m-t15">
-                            <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="index.html">Home</a></li>
-                                <li class="breadcrumb-item active" aria-current="page">My Account</li>
-                            </ul>
-                        </nav>
-                        <!-- Breadcrumb Row End -->
-                    </div>
-                </div>
-                <img class="shape1" src="/static/finlab/Frontend/xhtml/images/home-banner/shape1.svg" alt="">
-            </div>
-            <!-- Banner End -->
-
-            <div class="container mt-5 mb-5">
-
-
-
-                <div class="row g-4">
-
-                    <!-- PROFILE CARD -->
-                    <!-- PROFILE CARD -->
-<div class="col-xl-4 col-lg-4">
-
-    <div class="card profile-card">
-
-        <!-- GLOW -->
-        <div class="profile-glow"></div>
-
-        <div class="card-body text-center position-relative">
-
-            <!-- AVATAR -->
-            <div class="profile-avatar">
-
-                <span id="avatar">
-                    A
-                </span>
-
-            </div>
-
-            <!-- NAME -->
-            <h2 class="profile-name" id="username">
-                Username
-            </h2>
-
-            <!-- EMAIL -->
-            <p class="profile-email" id="email">
-                email@gmail.com
-            </p>
-
-            <!-- PHONE -->
-            <div class="profile-phone">
-
-                📱 <span id="phone">9876543210</span>
-
-            </div>
-
-            <!-- MEMBER BADGE -->
-            <div class="member-badge">
-
-                ⭐ Premium Trader
-
-            </div>
-
-            <!-- STATS -->
-            <div class="profile-stats">
-
-                <div class="profile-stat">
-
-                    <h4 id="planMini">
-                        ESSENTIAL
-                    </h4>
-
-                    <p>Current Plan</p>
-
-                </div>
-
-                <div class="profile-stat">
-
-                    <h4 id="statusMini">
-                        Active
-                    </h4>
-
-                    <p>Status</p>
-
-                </div>
-
-            </div>
-
+            <img class="shape1" src="/static/finlab/Frontend/xhtml/images/home-banner/shape1.svg" alt="">
         </div>
 
-    </div>
+        <div class="container mt-5 mb-5">
 
-</div>
+            <div class="row g-4">
 
-                    <!-- SUBSCRIPTION -->
-                    <div class="col-xl-8 col-lg-8">
+                <!-- ── LEFT: PROFILE CARD ─────────────────────────────── -->
+                <div class="col-xl-4 col-lg-4">
+                    <div class="card profile-card">
+                        <div class="profile-glow"></div>
+                        <div class="card-body text-center position-relative">
 
-                        <div class="card subscription-card">
-
-                            <!-- HEADER -->
-                            <div class="subscription-header">
-
-                                <div>
-
-                                    <h3 class="subscription-title">
-                                        🚀 TraderBro Membership
-                                    </h3>
-
-                                    <p class="subscription-subtitle">
-                                        Premium Trading Access & Session Validity
-                                    </p>
-
-                                </div>
-
-                                <div class="live-indicator">
-                                    ● Active
-                                </div>
-
+                            <div class="profile-avatar" id="avatarCircle">
+                                <span id="avatar">?</span>
                             </div>
 
-                            <!-- GRID -->
-                            <div class="subscription-grid">
+                            <h2 class="profile-name" id="username">—</h2>
+                            <p class="profile-email" id="email">—</p>
 
-                                <!-- PLAN -->
-                                <div class="subscription-item">
-
-                                    <p class="subscription-label">
-                                        Current Plan
-                                    </p>
-
-                                    <div id="planTag" class="plan-tag">
-                                        ESSENTIAL
-                                    </div>
-
-                                </div>
-
-                                <!-- START -->
-                                <div class="subscription-item">
-
-                                    <p class="subscription-label">
-                                        Start Date & Time
-                                    </p>
-
-                                    <div id="start" class="subscription-value">
-                                        --
-                                    </div>
-
-                                </div>
-
-                                <!-- EXPIRY -->
-                                <div class="subscription-item">
-
-                                    <p class="subscription-label">
-                                        Expiry Date & Time
-                                    </p>
-
-                                    <div id="expiry" class="subscription-value">
-                                        --
-                                    </div>
-
-                                </div>
-
-                                <!-- STATUS -->
-                                <div class="subscription-item">
-
-                                    <p class="subscription-label">
-                                        Account Status
-                                    </p>
-
-                                    <div id="statusTag" class="status-tag active">
-                                        Active ✅
-                                    </div>
-
-                                </div>
-
+                            <div class="profile-phone">
+                                📱 <span id="phone">—</span>
                             </div>
 
-                            <!-- BUTTON -->
-                            <div class="mt-5">
+                            <!-- badge changes with plan -->
+                            <div class="member-badge" id="memberBadge">
+                                ⭐ Member
+                            </div>
 
-                                <a href="/trading-plan?current=advanced"
-                                class="upgrade-btn">
+                            <div class="profile-stats">
+                                <div class="profile-stat">
+                                    <h4 id="planMini">—</h4>
+                                    <p>Current Plan</p>
+                                </div>
+                                <div class="profile-stat">
+                                    <h4 id="statusMini">—</h4>
+                                    <p>Status</p>
+                                </div>
+                            </div>
 
-                                    Upgrade Membership 🚀
+                        </div>
+                    </div>
+                </div>
 
-                                </a>
+                <!-- ── RIGHT: SUBSCRIPTION CARD ──────────────────────── -->
+                <div class="col-xl-8 col-lg-8">
+                    <div class="card subscription-card">
 
+                        <!-- Header row -->
+                        <div class="subscription-header">
+                            <div>
+                                <h3 class="subscription-title">🚀 TraderBro Membership</h3>
+                                <p class="subscription-subtitle">Premium Trading Access & Session Validity</p>
+                            </div>
+                            <!-- live indicator syncs with status -->
+                            <div class="live-indicator inactive" id="liveIndicator">● Loading…</div>
+                        </div>
+
+                        <!-- 4-column info grid -->
+                        <div class="subscription-grid">
+
+                            <div class="subscription-item">
+                                <p class="subscription-label">Current Plan</p>
+                                <div id="planTag" class="plan-tag free">FREE</div>
+                            </div>
+
+                            <div class="subscription-item">
+                                <p class="subscription-label">Start Date & Time</p>
+                                <div id="start" class="subscription-value">—</div>
+                            </div>
+
+                            <div class="subscription-item">
+                                <p class="subscription-label">Expiry Date & Time</p>
+                                <div id="expiry" class="subscription-value">—</div>
+                            </div>
+
+                            <div class="subscription-item">
+                                <p class="subscription-label">Account Status</p>
+                                <div id="statusTag" class="status-tag inactive">—</div>
                             </div>
 
                         </div>
 
-                    </div>
+                        <!-- Countdown timer row -->
+                        <div id="countdown" class="text-center mt-3"></div>
 
-                </div>
-
-                <div class="mt-4 p-3"
-                    style="
-                        background:#fff7ed;
-                        border:1px solid #fed7aa;
-                        border-radius:14px;
-                        color:#9a3412;
-                        font-size:13px;
-                        line-height:1.7;
-                    ">
-
-                    ⏰ Trading sessions are active between
-                    <b>9:16 AM → 12:00 PM</b>.
-
-                    <br>
-
-                    Subscription validity is calculated using
-                    trading days only.
-
-                </div>
-
-                <!-- SETTINGS -->
-                <div class="row mt-4 g-4">
-
-                    <div class="col-xl-6">
-                        <div class="card">
-
-                            <div class="card-header">
-                                <h4 class="card-title">Account Settings</h4>
-                            </div>
-
-                            <div class="card-body">
-
-                                <input class="form-control mb-3" id="editName" placeholder="Update Name">
-                                <input class="form-control mb-3" id="editPhone" placeholder="Update Phone">
-
-                                <button class="btn btn-primary w-100" onclick="updateProfile()">Save Changes</button>
-
-                            </div>
+                        <!-- CTA -->
+                        <div class="mt-4">
+                            <a href="/trading-plan" class="upgrade-btn" id="upgradeBtn">
+                                Upgrade Membership 🚀
+                            </a>
                         </div>
-                    </div>
 
-                    <div class="col-xl-6">
-                        <div class="card">
-
-                            <div class="card-header">
-                                <h4 class="card-title">Security</h4>
-                            </div>
-
-                            <div class="card-body text-center">
-
-                                <button class="btn btn-danger w-100" onclick="logout()">Logout</button>
-
-                            </div>
-                        </div>
                     </div>
                 </div>
+
+            </div><!-- /row -->
+
+            <!-- Info strip -->
+            <div class="mt-4 p-3" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;color:#9a3412;font-size:13px;line-height:1.7;">
+                ⏰ Trading sessions are active between <b>9:16 AM → 12:00 PM</b>.
+                Subscription validity is calculated using trading days only.
             </div>
-            <!-- Footer -->
-            <footer class="site-footer">
+
+            <!-- ── SETTINGS ─────────────────────────────────────────── -->
+            <div class="row mt-4 g-4">
+
+                <div class="col-xl-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="card-title">Account Settings</h4>
+                        </div>
+                        <div class="card-body">
+                            <input class="form-control mb-3" id="editName"  placeholder="Update Name">
+                            <input class="form-control mb-3" id="editPhone" placeholder="Update Phone">
+                            <div id="saveMsg" style="display:none;margin-bottom:10px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;"></div>
+                            <button class="btn btn-primary w-100" onclick="updateProfile()">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="card-title">Security</h4>
+                        </div>
+                        <div class="card-body text-center">
+                            <button class="btn btn-danger w-100" onclick="logout()">Logout</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div><!-- /container -->
+
+        <!-- Footer -->
+		<footer class="site-footer">
 			<div class="footer-top">
 				<div class="container">
 					<div class="row">
 						<div class="col-lg-4 col-md-12 col-sm-12">
 							<div class="widget widget_about wow fadeInUp" data-wow-delay="0.4s">
-								<h6 class="footer-title mb-3">Welcome to TraderBro</h6>
+								<h6 class="footer-title mb-3">Welcome to Traderbro.in</h6>
 								<a href="/" class="logo-light"><img
 										src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
-										alt="TraderBro"></a>
+										alt="Traderbro.in"></a>
 
 								<!-- <form class="dzSubscribe ft-subscribe mb-4" action="script/mailchamp.php" method="post">
 								<div class="dzSubscribeMsg"></div>
@@ -860,7 +511,7 @@
 									</button>
 								</div>
 							</form> -->
-								<!-- <p class="text-primary font-13 mb-2">Download the TraderBro App</p>
+								<!-- <p class="text-primary font-13 mb-2">Download the Traderbro.in App</p>
 							<div>
 								<a href="https://appstore.com/" class="me-2"><img src="/static/finlab/Frontend/xhtml/images//app-store.png" alt="Download on App Store"></a>
 								<a href="https://playstore.com/"><img src="/static/finlab/Frontend/xhtml/images//play-store.png" alt="Get it on Google Play"></a>
@@ -874,18 +525,19 @@
 									<li><a href="/about-us">About Us</a></li>
 									<li><a href="/privacy-policy">Privacy Policy</a></li>
 									<li><a href="/terms-and-conditions">Terms of Service</a></li>
-									<li><a href="/static/finlab/Frontend/xhtml/contact-us.html">Contact Us</a></li>
+									<li><a href="/disclaimer">Disclaimer</a></li>
+									<li><a href="/refund-policy">Refund-Policy</a></li>
 								</ul>
 							</div>
 						</div>
 						<div class="col-lg-2 col-md-3 col-6">
 							<div class="widget widget_links wow fadeInUp" data-wow-delay="0.8s">
-								<h6 class="footer-title">Trading Plans</h6>
+								<h6 class="footer-title">Subscriptions</h6>
 								<ul>
-									<li><a href="trading-plan.html">Basic</a></li>
-									<li><a href="trading-plan.html">Essential</a></li>
-									<li><a href="trading-plan.html">Advance</a></li>
-									<li><a href="trading-plan.html">Pro</a></li>
+									<li><a href="trading-plan">Basic</a></li>
+									<li><a href="trading-plan">Essential</a></li>
+									<li><a href="trading-plan">Advance</a></li>
+									<li><a href="trading-plan">Pro</a></li>
 								</ul>
 							</div>
 						</div>
@@ -893,7 +545,7 @@
 							<div class="widget widget_links wow fadeInUp" data-wow-delay="1.2s">
 								<h6 class="footer-title">Support</h6>
 								<ul>
-									<li><a href="javascript:void(0);">FAQ</a></li>
+									<!-- <li><a href="javascript:void(0);">FAQ</a></li> -->
 									<li><a href="static/finlab/Frontend/xhtml/contact-us.html">Contact Us</a></li>
 								</ul>
 							</div>
@@ -931,7 +583,7 @@
 								</span>
 
 								<span class="ticker-item text-danger">
-									TraderBro is an educational platform. We are not SEBI registered as a Research
+									Traderbro.in is an educational platform. We are not SEBI registered as a Research
 									Analyst (RA) or Investment Adviser (IA). No investment or trading advice is
 									provided.
 								</span>
@@ -944,7 +596,7 @@
 								</span>
 
 								<span class="ticker-item text-danger">
-									TraderBro is an educational platform. We are not SEBI registered as a Research
+									Traderbro.in is an educational platform. We are not SEBI registered as a Research
 									Analyst (RA) or Investment Adviser (IA). No investment or trading advice is
 									provided.
 								</span>
@@ -996,329 +648,422 @@
 			<div class="footer-bottom">
 				<div class="container">
 					<div class="footer-inner text-center">
-						<p class="copyright-text wow fadeInUp" data-wow-delay="1.6s">Copyright &copy; 2026 TraderBro —
+						<p class="copyright-text wow fadeInUp" data-wow-delay="1.6s">Copyright &copy; 2026 Traderbro.in —
 							Stock Market Education Platform. All Rights Reserved.</p>
 					</div>
 				</div>
 			</div>
 		</footer>
-            <!-- Footer End -->
+		<!-- Footer End -->
 
-            <!-- JS -->
-            <script src="/static/finlab/Frontend/xhtml/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-            <script>
+    </div><!-- /page-content -->
+</div><!-- /page-wraper -->
 
-let user = null;
+<!-- ── SCRIPTS ────────────────────────────────────────────────────────── -->
+<script src="/static/finlab/Frontend/xhtml/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// PLAN CONFIG — single source of truth
+// ═══════════════════════════════════════════════════════════════════════
+const PLAN_COLORS = {
+    free:      { badge: "⭐ Member",           avatarGrad: "linear-gradient(135deg,#64748b,#475569)" },
+    basic:     { badge: "⭐ Basic Trader",      avatarGrad: "linear-gradient(135deg,#0ea5e9,#0284c7)" },
+    essential: { badge: "🚀 Essential Trader", avatarGrad: "linear-gradient(135deg,#8b5cf6,#6d28d9)" },
+    pro:       { badge: "💎 Pro Trader",        avatarGrad: "linear-gradient(135deg,#f59e0b,#d97706)" },
+    premium:   { badge: "👑 Premium Trader",    avatarGrad: "linear-gradient(135deg,#ec4899,#db2777)" },
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// DATE FORMATTER  (IST, readable)
+// ═══════════════════════════════════════════════════════════════════════
+function fmtDate(isoStr) {
+    if (!isoStr) return "—";
+    try {
+        const d = new Date(isoStr);
+        return d.toLocaleString("en-IN", {
+            timeZone: "Asia/Kolkata",
+            day:      "2-digit",
+            month:    "2-digit",
+            year:     "numeric",
+            hour:     "2-digit",
+            minute:   "2-digit",
+            second:   "2-digit",
+            hour12:   true
+        });
+    } catch { return "—"; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// COUNTDOWN  (live, ticks every second)
+// ═══════════════════════════════════════════════════════════════════════
+let _countdownInterval = null;
+
+function startCountdown(expiryIso) {
+    const el = document.getElementById("countdown");
+    if (!el || !expiryIso) return;
+
+    const expiryMs = new Date(expiryIso).getTime();
+
+    function tick() {
+        const diff = expiryMs - Date.now();
+        if (diff <= 0) {
+            el.innerHTML = "⏰ Plan has expired";
+            clearInterval(_countdownInterval);
+            return;
+        }
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor((diff % 86400000) / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        el.innerHTML = `⏳ Expires in <span>${d}d ${h}h ${m}m ${s}s</span>`;
+    }
+
+    tick();
+    clearInterval(_countdownInterval);
+    _countdownInterval = setInterval(tick, 1000);
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MAIN  loadUser()  —  single function, all elements updated together
+// ═══════════════════════════════════════════════════════════════════════
 async function loadUser() {
-
-    const res = await fetch("/api/me", {
-        credentials: "include"
-    });
-
+    const res  = await fetch("/api/me", { credentials: "include" });
     const data = await res.json();
 
     if (!data.username) {
-
         window.location.href = "/user-login";
         return;
-
     }
 
-    user = data;
+    /* ── 1. Basic profile ──────────────────────────────────── */
+    const plan   = (data.plan || "free").toLowerCase();
+    const cfg    = PLAN_COLORS[plan] || PLAN_COLORS["free"];
+    const isActive = isPlanActive(data.plan, data.plan_expiry);
+    const statusStr = !data.plan_expiry
+        ? "inactive"
+        : isActive ? "active" : "expired";
 
-    // PROFILE
-    document.getElementById("username").innerText =
-        user.username || "User";
+    document.getElementById("username").innerText = data.username || "User";
+    document.getElementById("email").innerText    = data.email    || "—";
+    document.getElementById("phone").innerText    = data.phone    || "—";
+    document.getElementById("avatar").innerText   = (data.username || "?").charAt(0).toUpperCase();
 
-    document.getElementById("email").innerText =
-        user.email || "N/A";
+    // Pre-fill settings inputs
+    document.getElementById("editName").value  = data.username || "";
+    document.getElementById("editPhone").value = data.phone    || "";
 
-    document.getElementById("phone").innerText =
-        user.phone || "N/A";
+    /* ── 2. Avatar circle colour  (matches plan) ───────────── */
+    document.getElementById("avatarCircle").style.background = cfg.avatarGrad;
 
-    document.getElementById("editName").value =
-        user.username || "";
+    /* ── 3. Member badge ───────────────────────────────────── */
+    document.getElementById("memberBadge").innerText = cfg.badge;
 
-    document.getElementById("editPhone").value =
-        user.phone || "";
+    /* ── 4. Left stat boxes ────────────────────────────────── */
+    document.getElementById("planMini").innerText   = plan.toUpperCase();
+    document.getElementById("statusMini").innerText = statusStr === "active"
+        ? "ACTIVE" : statusStr === "expired" ? "EXPIRED" : "NO PLAN";
 
-    document.getElementById("avatar").innerText =
-        user.username.charAt(0).toUpperCase();
+    /* ── 5. Right card — Plan Tag ──────────────────────────── */
+    const planTagEl = document.getElementById("planTag");
+    planTagEl.innerText  = plan.toUpperCase();   // ← THE FIX: always overwrite text
+    planTagEl.className  = "plan-tag " + plan;   // ← THE FIX: apply colour class
 
-    // PLAN
-    const planEl = document.getElementById("planTag");
+    /* ── 6. Right card — Start & Expiry ───────────────────── */
+    document.getElementById("start").innerHTML  = data.plan_start
+        ? fmtDate(data.plan_start).replace(",", ",<br>")
+        : "—";
 
-    if (user.plan && user.plan !== "free") {
+    document.getElementById("expiry").innerHTML = data.plan_expiry
+        ? fmtDate(data.plan_expiry).replace(",", ",<br>")
+        : "—";
 
-        document.getElementById("planMini").innerText =
-            user.plan.toUpperCase();
+    /* ── 7. Right card — Status tag + Live indicator ───────── */
+    const statusTagEl  = document.getElementById("statusTag");
+    const liveEl       = document.getElementById("liveIndicator");
 
-        planEl.classList.remove("bg-secondary");
-        planEl.classList.add("bg-primary");
-
+    if (statusStr === "active") {
+        statusTagEl.innerText = "Active ✅";
+        statusTagEl.className = "status-tag active";
+        liveEl.innerText      = "● Active";
+        liveEl.className      = "live-indicator active";
+        startCountdown(data.plan_expiry);
+    } else if (statusStr === "expired") {
+        statusTagEl.innerText = "Expired ❌";
+        statusTagEl.className = "status-tag expired";
+        liveEl.innerText      = "● Expired";
+        liveEl.className      = "live-indicator expired";
+        document.getElementById("countdown").innerHTML =
+            "⚠️ Your plan has expired. Please renew.";
     } else {
-
-        planEl.innerText = "FREE";
-
-        planEl.classList.remove("bg-primary");
-        planEl.classList.add("bg-secondary");
-
+        statusTagEl.innerText = "No Active Plan";
+        statusTagEl.className = "status-tag inactive";
+        liveEl.innerText      = "● Inactive";
+        liveEl.className      = "live-indicator inactive";
+        document.getElementById("countdown").innerHTML = "";
     }
 
-
-    // START DATE
-        if (user.plan_start) {
-
-            const start = new Date(user.plan_start);
-
-            document.getElementById("start").innerText =
-                start.toLocaleString("en-IN", {
-                    timeZone: "Asia/Kolkata",
-                    year: "numeric",
-                    month: "2-digit",
-                    day: "2-digit",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    hour12: true
-                });
-
-        } else {
-
-            document.getElementById("start").innerText = "--";
-        }
-    // EXPIRY
-    if (user.plan_expiry) {
-
-        const expiry = new Date(user.plan_expiry);
-
-        document.getElementById("expiry").innerText =
-            expiry.toLocaleString("en-IN", {
-                timeZone: "Asia/Kolkata",
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: true
-            });
-
-        // STATUS
-        const now = new Date();
-
-        const statusEl = document.getElementById("statusTag");
-
-        if (now > expiry) {
-
-            document.getElementById("statusMini").innerText = "EXPIRED";
-
-            statusEl.className =
-                "status-tag expired";
-
-        } else {
-
-            document.getElementById("statusMini").innerText =
-                "ACTIVE";
-
-            statusEl.className =
-                "status-tag active";
-
-        }
-
+    /* ── 8. Upgrade button label ───────────────────────────── */
+    const upgradeBtn = document.getElementById("upgradeBtn");
+    if (statusStr === "expired") {
+        upgradeBtn.textContent = "Renew Membership 🔄";
+    } else if (statusStr === "active") {
+        upgradeBtn.textContent = "Upgrade Membership 🚀";
     } else {
-
-        document.getElementById("expiry").innerText = "--";
-
-        document.getElementById("statusMini").innerText = "No Active Plan";
-
-        const statusEl = document.getElementById("statusTag");
-
-        statusEl.innerText = "No Active Plan";
-
-        statusEl.className =
-            "status-tag inactive";
+        upgradeBtn.textContent = "Get a Plan 🚀";
     }
 }
 
-loadUser();
+/* ── Helper: is plan currently valid? ──────────────────────── */
+function isPlanActive(plan, expiryIso) {
+    if (!plan || plan === "free") return false;
+    if (!expiryIso) return true;   // plan set but no expiry = always active
+    return new Date() < new Date(expiryIso);
+}
 
+// Boot
+loadUser();
 </script>
 
-
+<!-- ── NAVBAR ────────────────────────────────────────────────────────── -->
 <script>
-		async function renderNavbar() {
-			const res = await fetch("/api/me");
+	async function renderNavbar() {
+
+		try {
+
+			const res = await fetch("/api/me", {
+				credentials: "include"
+			});
+
 			const data = await res.json();
 
 			const nav = document.getElementById("navAuth");
+			const mobileNav = document.getElementById("mobileNavAuth");
 
-			if (!nav) return;
+			if (!nav || !mobileNav) return;
+
+			// =========================
+			// LOGGED IN USER
+			// =========================
 
 			if (data.username) {
 
-    const firstLetter = data.username.charAt(0).toUpperCase();
+				const firstLetter = data.username.charAt(0).toUpperCase();
 
-    nav.innerHTML = `
+				const desktopHTML = `
 
-    <div class="d-flex align-items-center gap-3">
+				<div class="d-flex align-items-center gap-3">
 
-        <!-- USER DASHBOARD BUTTON -->
+					<a href="/dashboard"
+					   class="btn btn-success"
+					   style="
+							border-radius:12px;
+							font-weight:600;
+							padding:10px 18px;
+							box-shadow:0 4px 15px rgba(0,255,120,0.25);
+					   ">
+						📊 User Dashboard
+					</a>
 
-        <a href="/dashboard"
-           class="btn btn-success"
-           style="
-                border-radius:12px;
-                font-weight:600;
-                padding:10px 18px;
-                box-shadow:0 4px 15px rgba(0,255,120,0.25);
-           ">
-            📊 User Dashboard
-        </a>
+					${data.role === "admin" ? `
+						<a href="/admin"
+						   class="btn btn-warning"
+						   style="
+								border-radius:12px;
+								font-weight:600;
+								padding:10px 18px;
+						   ">
+							⚙ Admin
+						</a>
+					` : ""}
 
-        <!-- ADMIN BUTTON -->
+					<div class="dropdown">
 
-        ${data.role === "admin" ? `
-            <a href="/admin"
-               class="btn btn-warning"
-               style="
-                    border-radius:12px;
-                    font-weight:600;
-                    padding:10px 18px;
-               ">
-                ⚙ Admin
-            </a>
-        ` : ""}
+						<div class="d-flex align-items-center"
+							 style="cursor:pointer;"
+							 data-bs-toggle="dropdown">
 
-        <!-- PROFILE -->
+							<div style="
+								width:42px;
+								height:42px;
+								border-radius:50%;
+								background:linear-gradient(135deg,#00c6ff,#0072ff);
+								display:flex;
+								align-items:center;
+								justify-content:center;
+								color:#fff;
+								font-weight:700;
+								margin-right:10px;
+							">
+								${firstLetter}
+							</div>
 
-        <div class="dropdown">
+							<span class="text-white fw-bold">
+								${data.username}
+							</span>
 
-            <div class="d-flex align-items-center"
-                 style="cursor:pointer;"
-                 data-bs-toggle="dropdown">
+						</div>
 
-                <div style="
-                    width:42px;
-                    height:42px;
-                    border-radius:50%;
-                    background:linear-gradient(135deg,#00c6ff,#0072ff);
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    color:#fff;
-                    font-weight:700;
-                    margin-right:10px;
-                    box-shadow:0 4px 12px rgba(0,114,255,0.35);
-                ">
-                    ${firstLetter}
-                </div>
+						<ul class="dropdown-menu dropdown-menu-end">
 
-                <span class="text-white fw-bold">
-                    ${data.username}
-                </span>
+							<li>
+								<a class="dropdown-item" href="/account">
+									👤 My Account
+								</a>
+							</li>
 
-            </div>
+							<li>
+								<a class="dropdown-item" href="/dashboard">
+									📊 Dashboard
+								</a>
+							</li>
 
-            <ul class="dropdown-menu dropdown-menu-end">
+							<li><hr class="dropdown-divider"></li>
 
-                <li>
-                    <a class="dropdown-item" href="/account">
-                        👤 My Account
-                    </a>
-                </li>
+							<li>
+								<a class="dropdown-item text-danger"
+								   href="#"
+								   onclick="logout()">
+									🚪 Logout
+								</a>
+							</li>
 
-                <li>
-                    <a class="dropdown-item" href="/dashboard">
-                        📊 Dashboard
-                    </a>
-                </li>
+						</ul>
 
-                <li><hr class="dropdown-divider"></li>
+					</div>
 
-                <li>
-                    <a class="dropdown-item text-danger"
-                       href="#"
-                       onclick="logout()">
-                        🚪 Logout
-                    </a>
-                </li>
+				</div>
+				`;
 
-            </ul>
+				const mobileHTML = `
 
-        </div>
+				<div class="w-100 d-flex flex-column gap-2">
 
-    </div>
-    `;
-}
-			else {
-				nav.innerHTML = `
-            <a class="btn btn-outline-primary me-2" href="/user-login">Login</a>
-            <a class="btn btn-primary" href="/register">Register</a>
-        `;
+					<a href="/dashboard"
+					   class="btn btn-primary w-100">
+						📊 User Dashboard
+					</a>
+
+					<a href="/account"
+					   class="btn btn-outline-primary w-100">
+						👤 My Account
+					</a>
+
+					${data.role === "admin" ? `
+						<a href="/admin"
+						   class="btn btn-warning w-100">
+							⚙ Admin Panel
+						</a>
+					` : ""}
+
+					<button onclick="logout()"
+							class="btn btn-danger w-100">
+						🚪 Logout
+					</button>
+
+				</div>
+				`;
+
+				nav.innerHTML = desktopHTML;
+				mobileNav.innerHTML = mobileHTML;
+
 			}
+
+			// =========================
+			// GUEST USER
+			// =========================
+
+			else {
+
+				const guestHTML = `
+					<a class="btn btn-outline-primary me-2"
+					   href="/user-login">
+						Login
+					</a>
+
+					<a class="btn btn-primary"
+					   href="/register">
+						Register
+					</a>
+				`;
+
+				const mobileGuestHTML = `
+					<div class="w-100 d-flex flex-column gap-2">
+
+						<a href="/user-login"
+						   class="btn btn-primary w-100">
+							Login
+						</a>
+
+						<a href="/register"
+						   class="btn btn-outline-primary w-100">
+							Register
+						</a>
+
+					</div>
+				`;
+
+				nav.innerHTML = guestHTML;
+				mobileNav.innerHTML = mobileGuestHTML;
+			}
+
 		}
 
-		function logout() {
-			fetch("/logout").then(() => window.location.href = "/");
+		catch (error) {
+
+			console.error("Navbar Error:", error);
+
 		}
+	}
 
-		renderNavbar();
-	</script>
+	function logout() {
 
+    window.location.href = "/logout";
+
+}
+
+	renderNavbar();
+</script>
+
+<!-- ── UPDATE PROFILE ────────────────────────────────────────────────── -->
 <script>
-
 async function updateProfile() {
+    const name  = document.getElementById("editName").value.trim();
+    const phone = document.getElementById("editPhone").value.trim();
+    const msg   = document.getElementById("saveMsg");
 
     try {
-
-        const name = document.getElementById("editName").value;
-        const phone = document.getElementById("editPhone").value;
-
-        const response = await fetch("/update-profile", {
-
+        const res  = await fetch("/update-profile", {
             method: "POST",
-
             credentials: "include",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                username: name,
-                phone: phone
-            })
-
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: name, phone: phone })
         });
+        const data = await res.json();
 
-        const data = await response.json();
-
+        msg.style.display = "block";
         if (data.success) {
-
-            alert("Profile updated successfully ✅");
-
-            loadUser();
-
+            msg.style.background = "#d1fae5";
+            msg.style.color      = "#065f46";
+            msg.style.border     = "1px solid #6ee7b7";
+            msg.innerText        = "✅ Profile updated successfully!";
+            loadUser();   // refresh all fields from server
         } else {
-
-            alert(data.message || "Update failed");
-
+            msg.style.background = "#fee2e2";
+            msg.style.color      = "#991b1b";
+            msg.style.border     = "1px solid #fca5a5";
+            msg.innerText        = "❌ " + (data.message || "Update failed");
         }
-
+        setTimeout(() => msg.style.display = "none", 3500);
     } catch (err) {
-
-        console.log(err);
-
-        alert("Something went wrong");
-
+        msg.style.display    = "block";
+        msg.style.background = "#fee2e2";
+        msg.style.color      = "#991b1b";
+        msg.innerText        = "❌ Network error. Please try again.";
     }
 }
-
 </script>
 
 </body>
-
 </html>
