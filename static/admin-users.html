@@ -6,1506 +6,464 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>TraderBro — User Management</title>
   <link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png">
-  <link
-    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=DM+Mono:wght@400;500&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     :root {
-      --blue: #02A3FE;
-      --blue-d: #0082cc;
-      --green: #00d4aa;
-      --red: #ff4d6d;
-      --gold: #f5a623;
-      --purple: #a855f7;
-      --orange: #ff6b35;
-      --bg: #070714;
-      --s1: #0d0d1f;
-      --s2: #111126;
-      --s3: #161630;
-      --border: rgba(255, 255, 255, 0.06);
-      --bord2: rgba(2, 163, 254, 0.2);
-      --text: #e8eaf0;
-      --dim: #8890aa;
-      --muted: #4a5068;
-      --r: 10px;
-      --rl: 16px;
+      --blue:#02A3FE; --blue-d:#0082cc; --green:#00d4aa; --red:#ff4d6d;
+      --gold:#f5a623; --purple:#a855f7; --orange:#ff6b35;
+      --bg:#070714; --s1:#0d0d1f; --s2:#111126; --s3:#161630;
+      --border:rgba(255,255,255,0.06); --bord2:rgba(2,163,254,0.2);
+      --text:#e8eaf0; --dim:#8890aa; --muted:#4a5068;
+      --r:10px; --rl:16px;
     }
-
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html {
-      height: 100%;
-      scroll-behavior: smooth;
-    }
-
+    *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+    html { height:100%; scroll-behavior:smooth; }
     body {
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-      font-family: "Poppins", sans-serif;
-      font-size: 14px;
-      line-height: 1.5;
+      min-height:100vh; background:var(--bg); color:var(--text);
+      font-family:"DM Sans",sans-serif; font-size:14px; line-height:1.5;
       background-image:
-        radial-gradient(ellipse 60% 40% at 5% 10%, rgba(2, 163, 254, .06) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 35% at 95% 90%, rgba(255, 107, 53, .05) 0%, transparent 60%);
+        radial-gradient(ellipse 60% 40% at 5% 10%,rgba(2,163,254,.06) 0%,transparent 60%),
+        radial-gradient(ellipse 50% 35% at 95% 90%,rgba(255,107,53,.05) 0%,transparent 60%);
     }
-
-    /* ─── SCROLLBAR ─── */
-    ::-webkit-scrollbar {
-      width: 4px;
-      height: 4px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: var(--s3);
-      border-radius: 4px;
-    }
+    ::-webkit-scrollbar { width:4px; height:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--s3); border-radius:4px; }
 
     /* ─── HEADER ─── */
     .hdr {
-      position: sticky;
-      top: 0;
-      z-index: 300;
-      height: 56px;
-      background: rgba(7, 7, 20, .9);
-      backdrop-filter: blur(24px);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      gap: 12px;
+      position:sticky; top:0; z-index:300; height:56px;
+      background:rgba(7,7,20,.96); backdrop-filter:blur(24px);
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; padding:0 16px; gap:12px;
     }
-
     .hdr::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--blue), var(--orange), transparent);
-      opacity: .4;
+      content:''; position:absolute; bottom:0; left:0; right:0; height:1px;
+      background:linear-gradient(90deg,transparent,var(--blue),var(--orange),transparent);
+      opacity:.4;
     }
 
-    .brand {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
+    /* ── LOGO ── */
+    .hdr-logo {
+      display:flex; align-items:center; gap:10px; text-decoration:none;
+      flex-shrink:0;
     }
-
-    .brand-name {
-      font-size: 17px;
-      font-weight: 800;
-      letter-spacing: -.3px;
-      color: #fff;
+    .hdr-logo img {
+      height:34px; width:auto; object-fit:contain;
+      filter:brightness(1.1);
     }
+    .brand { display:flex; flex-direction:column; gap:0; }
+    .brand-name { font-size:17px; font-weight:800; letter-spacing:-.3px; color:#fff; }
+    .brand-name span { color:var(--blue); }
+    .brand-sub { font-size:9px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; font-weight:600; }
 
-    .brand-name span {
-      color: var(--blue);
-    }
+    .hdr-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
 
-    .brand-sub {
-      font-size: 9px;
-      color: var(--muted);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-
-    .hdr-right {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
+    /* ── HEADER BUTTONS — always visible on desktop ── */
     .hbtn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border-radius: 30px;
-      border: 1px solid;
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: none;
-      letter-spacing: .3px;
-      transition: all .2s;
-      white-space: nowrap;
+      display:flex; align-items:center; gap:6px;
+      padding:6px 14px; border-radius:30px; border:1px solid;
+      font-size:11px; font-weight:700; cursor:pointer;
+      text-decoration:none; letter-spacing:.3px;
+      transition:all .2s; white-space:nowrap; font-family:inherit;
     }
+    .hbtn-blue { background:rgba(2,163,254,.1); border-color:rgba(2,163,254,.3); color:var(--blue); }
+    .hbtn-blue:hover { background:rgba(2,163,254,.2); }
+    .hbtn-org  { background:rgba(255,107,53,.1);  border-color:rgba(255,107,53,.3);  color:var(--orange); }
+    .hbtn-org:hover  { background:rgba(255,107,53,.2); }
 
-    .hbtn-blue {
-      background: rgba(2, 163, 254, .1);
-      border-color: rgba(2, 163, 254, .3);
-      color: var(--blue);
-    }
-
-    .hbtn-blue:hover {
-      background: rgba(2, 163, 254, .2);
-    }
-
-    .hbtn-org {
-      background: rgba(255, 107, 53, .1);
-      border-color: rgba(255, 107, 53, .3);
-      color: var(--orange);
-    }
-
-    .hbtn-org:hover {
-      background: rgba(255, 107, 53, .2);
-    }
-
+    /* hamburger button — hidden on desktop */
     .hdr-menu-btn {
-      display: none;
-      width: 36px;
-      height: 36px;
-      align-items: center;
-      justify-content: center;
-      background: var(--s2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-      color: var(--dim);
+      display:none; width:36px; height:36px;
+      align-items:center; justify-content:center;
+      background:var(--s2); border:1px solid var(--border);
+      border-radius:8px; cursor:pointer; font-size:16px; color:var(--dim);
+      flex-shrink:0;
     }
 
     /* ─── MOBILE DRAWER ─── */
     .mob-drawer {
-      display: none;
-      position: fixed;
-      inset: 56px 0 0 0;
-      background: rgba(7, 7, 20, .98);
-      z-index: 250;
-      flex-direction: column;
-      gap: 8px;
-      padding: 16px;
-      border-top: 1px solid var(--border);
-      overflow-y: auto;
+      display:none;
+      position:fixed; top:56px; left:0; right:0; bottom:0;
+      background:rgba(7,7,20,.99);
+      z-index:290;
+      flex-direction:column; gap:10px;
+      padding:20px 16px;
+      border-top:1px solid var(--border);
+      overflow-y:auto;
     }
+    .mob-drawer.open { display:flex; }
 
-    .mob-drawer.open {
-      display: flex;
+    /* drawer items — standalone styles, NOT inheriting .hbtn display:none */
+    .drawer-item {
+      display:flex !important;   /* force visible even if .hbtn is hidden */
+      align-items:center;
+      gap:10px;
+      padding:14px 18px;
+      border-radius:12px;
+      border:1px solid;
+      font-size:14px;
+      font-weight:600;
+      cursor:pointer;
+      text-decoration:none;
+      letter-spacing:.2px;
+      transition:all .2s;
+      font-family:inherit;
+      width:100%;
+      justify-content:center;
     }
+    .drawer-item-blue {
+      background:rgba(2,163,254,.1); border-color:rgba(2,163,254,.3);
+      color:var(--blue);
+    }
+    .drawer-item-blue:hover { background:rgba(2,163,254,.18); }
+    .drawer-item-org {
+      background:rgba(255,107,53,.1); border-color:rgba(255,107,53,.3);
+      color:var(--orange);
+    }
+    .drawer-item-org:hover { background:rgba(255,107,53,.18); }
+    .drawer-item-red {
+      background:rgba(255,77,109,.1); border-color:rgba(255,77,109,.3);
+      color:var(--red);
+    }
+    .drawer-item-red:hover { background:rgba(255,77,109,.18); }
 
-    .mob-drawer .hbtn {
-      justify-content: center;
-      padding: 12px 14px;
-      border-radius: 10px;
+    .drawer-divider {
+      height:1px; background:var(--border); margin:4px 0;
     }
 
     /* ─── LAYOUT ─── */
-    .page {
-      max-width: 1440px;
-      margin: 0 auto;
-      padding: 20px 20px 40px;
-    }
+    .page { max-width:1440px; margin:0 auto; padding:20px 20px 40px; }
 
     /* ─── STATS ─── */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
+    .stats { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:20px; }
     .sc {
-      background: var(--s1);
-      border: 1px solid var(--border);
-      border-radius: var(--rl);
-      padding: 16px;
-      position: relative;
-      overflow: hidden;
-      cursor: pointer;
-      transition: border-color .2s, transform .15s;
+      background:var(--s1); border:1px solid var(--border); border-radius:var(--rl);
+      padding:16px; position:relative; overflow:hidden; cursor:pointer;
+      transition:border-color .2s,transform .15s;
     }
-
-    .sc:hover {
-      border-color: rgba(255, 255, 255, .12);
-      transform: translateY(-1px);
-    }
-
-    .sc::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-    }
-
-    .sc.c-blue::before {
-      background: var(--blue);
-    }
-
-    .sc.c-green::before {
-      background: var(--green);
-    }
-
-    .sc.c-red::before {
-      background: var(--red);
-    }
-
-    .sc.c-gold::before {
-      background: var(--gold);
-    }
-
-    .sc.c-purple::before {
-      background: var(--purple);
-    }
-
-    .sc.c-orange::before {
-      background: var(--orange);
-    }
-
-    .sc-icon {
-      position: absolute;
-      right: 12px;
-      top: 14px;
-      font-size: 20px;
-      opacity: .1;
-    }
-
-    .sc-label {
-      font-size: 9px;
-      color: var(--muted);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .sc-val {
-      font-size: 30px;
-      font-weight: 800;
-      line-height: 1;
-    }
-
-    .sc-val.c-blue {
-      color: var(--blue);
-    }
-
-    .sc-val.c-green {
-      color: var(--green);
-    }
-
-    .sc-val.c-red {
-      color: var(--red);
-    }
-
-    .sc-val.c-gold {
-      color: var(--gold);
-    }
-
-    .sc-val.c-purple {
-      color: var(--purple);
-    }
-
-    .sc-val.c-orange {
-      color: var(--orange);
-    }
-
-    .sc-sub {
-      font-size: 10px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
+    .sc:hover { border-color:rgba(255,255,255,.12); transform:translateY(-1px); }
+    .sc::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+    .sc.c-blue::before  { background:var(--blue); }
+    .sc.c-green::before { background:var(--green); }
+    .sc.c-red::before   { background:var(--red); }
+    .sc.c-gold::before  { background:var(--gold); }
+    .sc.c-purple::before{ background:var(--purple); }
+    .sc.c-orange::before{ background:var(--orange); }
+    .sc-icon { position:absolute; right:12px; top:14px; font-size:20px; opacity:.1; }
+    .sc-label { font-size:9px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; font-weight:700; margin-bottom:6px; }
+    .sc-val { font-size:30px; font-weight:800; line-height:1; }
+    .sc-val.c-blue   { color:var(--blue); }
+    .sc-val.c-green  { color:var(--green); }
+    .sc-val.c-red    { color:var(--red); }
+    .sc-val.c-gold   { color:var(--gold); }
+    .sc-val.c-purple { color:var(--purple); }
+    .sc-val.c-orange { color:var(--orange); }
+    .sc-sub { font-size:10px; color:var(--muted); margin-top:4px; }
 
     /* ─── TOOLBAR ─── */
     .toolbar {
-      background: var(--s1);
-      border: 1px solid var(--border);
-      border-radius: var(--rl);
-      padding: 12px;
-      margin-bottom: 14px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
+      background:var(--s1); border:1px solid var(--border); border-radius:var(--rl);
+      padding:12px; margin-bottom:14px;
+      display:flex; flex-wrap:wrap; gap:10px; align-items:center;
     }
-
     .search-box {
-      flex: 1;
-      min-width: 200px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--s2);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 0 14px;
-      transition: border-color .2s;
+      flex:1; min-width:200px;
+      display:flex; align-items:center; gap:10px;
+      background:var(--s2); border:1px solid var(--border); border-radius:var(--r);
+      padding:0 14px; transition:border-color .2s;
     }
-
-    .search-box:focus-within {
-      border-color: var(--bord2);
-    }
-
-    .search-box i {
-      color: var(--muted);
-      font-size: 12px;
-      flex-shrink: 0;
-    }
-
+    .search-box:focus-within { border-color:var(--bord2); }
+    .search-box i { color:var(--muted); font-size:12px; flex-shrink:0; }
     .search-box input {
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--text);
-      font-size: 13px;
-      font-family: "Poppins", sans-serif;
-      padding: 9px 0;
-      width: 100%;
+      background:transparent; border:none; outline:none; color:var(--text);
+      font-size:13px; font-family:inherit; padding:9px 0; width:100%;
     }
-
-    .search-box input::placeholder {
-      color: var(--muted);
-    }
-
+    .search-box input::placeholder { color:var(--muted); }
     .fsel {
-      background: var(--s2);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      color: var(--text);
-      font-size: 12px;
-      padding: 8px 12px;
-      outline: none;
-      cursor: pointer;
-      font-family: "Poppins", sans-serif;
-      transition: border-color .2s;
+      background:var(--s2); border:1px solid var(--border); border-radius:var(--r);
+      color:var(--text); font-size:12px; padding:8px 12px; outline:none;
+      cursor:pointer; font-family:inherit; transition:border-color .2s;
     }
-
-    .fsel:focus {
-      border-color: var(--bord2);
-    }
-
+    .fsel:focus { border-color:var(--bord2); }
     .tbtn {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 9px 16px;
-      border-radius: var(--r);
-      border: 1px solid;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all .2s;
-      letter-spacing: .3px;
-      white-space: nowrap;
+      display:flex; align-items:center; gap:7px; padding:9px 16px;
+      border-radius:var(--r); border:1px solid; font-size:12px; font-weight:700;
+      cursor:pointer; transition:all .2s; letter-spacing:.3px; white-space:nowrap;
+      font-family:inherit;
     }
-
-    .tbtn-primary {
-      background: var(--blue);
-      border-color: var(--blue);
-      color: #000;
-      box-shadow: 0 4px 16px rgba(2, 163, 254, .3);
-    }
-
-    .tbtn-primary:hover {
-      background: #00c4ff;
-      transform: translateY(-1px);
-    }
-
-    .tbtn-ghost {
-      background: var(--s2);
-      border-color: var(--border);
-      color: var(--dim);
-    }
-
-    .tbtn-ghost:hover {
-      border-color: var(--bord2);
-      color: var(--blue);
-    }
-
-    .tbtn-green {
-      background: rgba(0, 212, 170, .1);
-      border-color: rgba(0, 212, 170, .3);
-      color: var(--green);
-    }
-
-    .tbtn-green:hover {
-      background: rgba(0, 212, 170, .18);
-    }
+    .tbtn-primary { background:var(--blue); border-color:var(--blue); color:#000; box-shadow:0 4px 16px rgba(2,163,254,.3); }
+    .tbtn-primary:hover { background:#00c4ff; transform:translateY(-1px); }
+    .tbtn-ghost { background:var(--s2); border-color:var(--border); color:var(--dim); }
+    .tbtn-ghost:hover { border-color:var(--bord2); color:var(--blue); }
 
     /* ─── TABLE CARD ─── */
-    .tcard {
-      background: var(--s1);
-      border: 1px solid var(--border);
-      border-radius: var(--rl);
-      overflow: hidden;
-    }
-
+    .tcard { background:var(--s1); border:1px solid var(--border); border-radius:var(--rl); overflow:hidden; }
     .tcard-hdr {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+      flex-wrap:wrap; gap:10px; padding:14px 18px; border-bottom:1px solid var(--border);
     }
-
     .tcard-title {
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      color: var(--blue);
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      font-size:11px; font-weight:800; letter-spacing:2.5px; text-transform:uppercase;
+      color:var(--blue); display:flex; align-items:center; gap:8px;
     }
-
     .tcard-title::before {
-      content: '';
-      width: 3px;
-      height: 14px;
-      background: linear-gradient(180deg, var(--blue), var(--orange));
-      border-radius: 2px;
+      content:''; width:3px; height:14px;
+      background:linear-gradient(180deg,var(--blue),var(--orange)); border-radius:2px;
     }
+    .tcard-count { font-size:11px; color:var(--muted); }
 
-    .tcard-count {
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .tscroll {
-      overflow-x: auto;
-      max-height: calc(100vh - 370px);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 900px;
-      font-size: 13px;
-    }
-
+    .tscroll { overflow-x:auto; max-height:calc(100vh - 370px); }
+    table { width:100%; border-collapse:collapse; min-width:900px; font-size:13px; }
     thead th {
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      background: var(--s2);
-      color: var(--muted);
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 1.8px;
-      text-transform: uppercase;
-      padding: 11px 14px;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-      white-space: nowrap;
+      position:sticky; top:0; z-index:5; background:var(--s2); color:var(--muted);
+      font-size:9px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase;
+      padding:11px 14px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap;
     }
-
-    thead th.tc {
-      text-align: center;
-    }
-
-    tbody td {
-      padding: 12px 14px;
-      border-bottom: 1px solid rgba(255, 255, 255, .03);
-      vertical-align: middle;
-      white-space: nowrap;
-    }
-
-    tbody tr {
-      transition: background .12s;
-    }
-
-    tbody tr:hover td {
-      background: rgba(2, 163, 254, .04);
-    }
-
-    tbody tr:last-child td {
-      border-bottom: none;
-    }
+    thead th.tc { text-align:center; }
+    tbody td { padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.03); vertical-align:middle; white-space:nowrap; }
+    tbody tr { transition:background .12s; }
+    tbody tr:hover td { background:rgba(2,163,254,.04); }
+    tbody tr:last-child td { border-bottom:none; }
 
     /* ─── USER CELL ─── */
-    .ucell {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-    }
-
+    .ucell { display:flex; align-items:center; gap:10px; cursor:pointer; }
     .ava {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 800;
-      border: 1px solid rgba(255, 255, 255, .08);
+      width:34px; height:34px; border-radius:50%; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:12px; font-weight:800; border:1px solid rgba(255,255,255,.08);
     }
-
-    .uname {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .uemail {
-      font-size: 10px;
-      color: var(--muted);
-      margin-top: 1px;
-      max-width: 180px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+    .uname { font-size:13px; font-weight:600; color:var(--text); }
+    .uemail { font-size:10px; color:var(--muted); margin-top:1px; max-width:180px; overflow:hidden; text-overflow:ellipsis; }
 
     /* ─── BADGES ─── */
     .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 3px 9px;
-      border-radius: 20px;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .3px;
-      border: 1px solid;
+      display:inline-flex; align-items:center; gap:4px; padding:3px 9px;
+      border-radius:20px; font-size:10px; font-weight:700; letter-spacing:.3px; border:1px solid;
     }
-
-    .b-premium {
-      background: rgba(245, 166, 35, .1);
-      border-color: rgba(245, 166, 35, .3);
-      color: var(--gold);
-    }
-
-    .b-pro {
-      background: rgba(2, 163, 254, .1);
-      border-color: rgba(2, 163, 254, .3);
-      color: var(--blue);
-    }
-
-    .b-essential {
-      background: rgba(0, 212, 170, .1);
-      border-color: rgba(0, 212, 170, .3);
-      color: var(--green);
-    }
-
-    .b-basic {
-      background: rgba(168, 85, 247, .1);
-      border-color: rgba(168, 85, 247, .3);
-      color: var(--purple);
-    }
-
-    .b-free {
-      background: rgba(255, 255, 255, .04);
-      border-color: rgba(255, 255, 255, .1);
-      color: var(--muted);
-    }
-
-    .b-admin {
-      background: rgba(255, 77, 109, .1);
-      border-color: rgba(255, 77, 109, .3);
-      color: var(--red);
-    }
-
-    .b-active {
-      background: rgba(0, 212, 170, .1);
-      border-color: rgba(0, 212, 170, .3);
-      color: var(--green);
-    }
-
-    .b-expired {
-      background: rgba(255, 77, 109, .08);
-      border-color: rgba(255, 77, 109, .25);
-      color: var(--red);
-    }
-
-    .b-noplan {
-      background: rgba(255, 255, 255, .04);
-      border-color: rgba(255, 255, 255, .08);
-      color: var(--muted);
-    }
-
-    .b-user {
-      background: rgba(255, 255, 255, .04);
-      border-color: rgba(255, 255, 255, .08);
-      color: var(--dim);
-    }
+    .b-premium { background:rgba(245,166,35,.1); border-color:rgba(245,166,35,.3); color:var(--gold); }
+    .b-pro      { background:rgba(2,163,254,.1);  border-color:rgba(2,163,254,.3);  color:var(--blue); }
+    .b-essential{ background:rgba(0,212,170,.1);  border-color:rgba(0,212,170,.3);  color:var(--green); }
+    .b-basic    { background:rgba(168,85,247,.1); border-color:rgba(168,85,247,.3); color:var(--purple); }
+    .b-free     { background:rgba(255,255,255,.04); border-color:rgba(255,255,255,.1); color:var(--muted); }
+    .b-admin    { background:rgba(255,77,109,.1); border-color:rgba(255,77,109,.3); color:var(--red); }
+    .b-active   { background:rgba(0,212,170,.1);  border-color:rgba(0,212,170,.3);  color:var(--green); }
+    .b-expired  { background:rgba(255,77,109,.08);border-color:rgba(255,77,109,.25);color:var(--red); }
+    .b-noplan   { background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:var(--muted); }
+    .b-user     { background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:var(--dim); }
 
     /* ─── DAYS LEFT ─── */
-    .dl {
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .dl.ok {
-      color: var(--green);
-    }
-
-    .dl.warn {
-      color: var(--gold);
-    }
-
-    .dl.exp {
-      color: var(--red);
-    }
-
-    .dl.none {
-      color: var(--muted);
-    }
-
-    /* ─── MONO ─── */
-    .mono {
-      font-family: "Poppins", sans-serif;
-      font-size: 11px;
-      color: var(--dim);
-    }
+    .dl { font-size:11px; font-weight:700; }
+    .dl.ok   { color:var(--green); }
+    .dl.warn { color:var(--gold); }
+    .dl.exp  { color:var(--red); }
+    .dl.none { color:var(--muted); }
+    .mono { font-family:"DM Mono",monospace; font-size:11px; color:var(--dim); }
 
     /* ─── ROW ACTIONS ─── */
-    .actions {
-      display: flex;
-      gap: 5px;
-      justify-content: center;
-    }
-
+    .actions { display:flex; gap:5px; justify-content:center; }
     .ibtn {
-      width: 28px;
-      height: 28px;
-      border-radius: 7px;
-      border: 1px solid;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 10px;
-      transition: all .15s;
-      flex-shrink: 0;
+      width:28px; height:28px; border-radius:7px; border:1px solid;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; font-size:10px; transition:all .15s; flex-shrink:0;
     }
-
-    .ibtn-eye {
-      border-color: rgba(2, 163, 254, .25);
-      color: var(--blue);
-      background: rgba(2, 163, 254, .07);
-    }
-
-    .ibtn-eye:hover {
-      background: rgba(2, 163, 254, .18);
-    }
-
-    .ibtn-crown {
-      border-color: rgba(245, 166, 35, .25);
-      color: var(--gold);
-      background: rgba(245, 166, 35, .07);
-    }
-
-    .ibtn-crown:hover {
-      background: rgba(245, 166, 35, .18);
-    }
-
-    .ibtn-key {
-      border-color: rgba(168, 85, 247, .25);
-      color: var(--purple);
-      background: rgba(168, 85, 247, .07);
-    }
-
-    .ibtn-key:hover {
-      background: rgba(168, 85, 247, .18);
-    }
-
-    .ibtn-trash {
-      border-color: rgba(255, 77, 109, .25);
-      color: var(--red);
-      background: rgba(255, 77, 109, .07);
-    }
-
-    .ibtn-trash:hover {
-      background: rgba(255, 77, 109, .18);
-    }
+    .ibtn-eye   { border-color:rgba(2,163,254,.25);  color:var(--blue);   background:rgba(2,163,254,.07); }
+    .ibtn-eye:hover   { background:rgba(2,163,254,.18); }
+    .ibtn-crown { border-color:rgba(245,166,35,.25); color:var(--gold);   background:rgba(245,166,35,.07); }
+    .ibtn-crown:hover { background:rgba(245,166,35,.18); }
+    .ibtn-key   { border-color:rgba(168,85,247,.25); color:var(--purple); background:rgba(168,85,247,.07); }
+    .ibtn-key:hover   { background:rgba(168,85,247,.18); }
+    .ibtn-trash { border-color:rgba(255,77,109,.25); color:var(--red);    background:rgba(255,77,109,.07); }
+    .ibtn-trash:hover { background:rgba(255,77,109,.18); }
 
     /* ─── PAGINATION ─── */
     .pag {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
-      padding: 12px 18px;
-      border-top: 1px solid var(--border);
-      font-size: 11px;
-      color: var(--muted);
+      display:flex; align-items:center; justify-content:space-between;
+      flex-wrap:wrap; gap:10px; padding:12px 18px;
+      border-top:1px solid var(--border); font-size:11px; color:var(--muted);
     }
-
-    .pag-btns {
-      display: flex;
-      gap: 5px;
-    }
-
+    .pag-btns { display:flex; gap:5px; }
     .pbtn {
-      min-width: 30px;
-      height: 30px;
-      padding: 0 8px;
-      border-radius: 7px;
-      border: 1px solid var(--border);
-      background: var(--s2);
-      color: var(--dim);
-      cursor: pointer;
-      font-size: 11px;
-      transition: all .15s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      min-width:30px; height:30px; padding:0 8px; border-radius:7px;
+      border:1px solid var(--border); background:var(--s2); color:var(--dim);
+      cursor:pointer; font-size:11px; transition:all .15s;
+      display:flex; align-items:center; justify-content:center;
     }
+    .pbtn:hover { border-color:var(--bord2); color:var(--blue); }
+    .pbtn.active { background:var(--blue); border-color:var(--blue); color:#000; font-weight:700; }
+    .pbtn:disabled { opacity:.35; cursor:not-allowed; }
 
-    .pbtn:hover {
-      border-color: var(--bord2);
-      color: var(--blue);
-    }
-
-    .pbtn.active {
-      background: var(--blue);
-      border-color: var(--blue);
-      color: #000;
-      font-weight: 700;
-    }
-
-    .pbtn:disabled {
-      opacity: .35;
-      cursor: not-allowed;
-    }
-
-    /* ══════════════════════════════════════
-   MODALS
-══════════════════════════════════════ */
+    /* ─── MODALS ─── */
     .overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, .8);
-      backdrop-filter: blur(10px);
-      z-index: 500;
-      align-items: flex-end;
-      justify-content: center;
-      padding: 0;
+      display:none; position:fixed; inset:0; background:rgba(0,0,0,.8);
+      backdrop-filter:blur(10px); z-index:500;
+      align-items:flex-end; justify-content:center; padding:0;
     }
-
-    .overlay.open {
-      display: flex;
-    }
-
-    @media(min-width:640px) {
-      .overlay {
-        align-items: center;
-        padding: 20px;
-      }
-    }
+    .overlay.open { display:flex; }
+    @media(min-width:640px) { .overlay { align-items:center; padding:20px; } }
 
     .modal {
-      background: var(--s1);
-      border: 1px solid var(--bord2);
-      width: 100%;
-      max-width: 560px;
-      border-radius: var(--rl) var(--rl) 0 0;
-      max-height: 92vh;
-      overflow-y: auto;
-      animation: slideUp .3s cubic-bezier(.32, 1.2, .64, 1);
+      background:var(--s1); border:1px solid var(--bord2); width:100%; max-width:560px;
+      border-radius:var(--rl) var(--rl) 0 0; max-height:92vh; overflow-y:auto;
+      animation:slideUp .3s cubic-bezier(.32,1.2,.64,1);
     }
-
-    @media(min-width:640px) {
-      .modal {
-        border-radius: var(--rl);
-        animation: popIn .25s cubic-bezier(.34, 1.56, .64, 1);
-      }
-    }
-
-    .modal-wide {
-      max-width: 720px;
-    }
-
-    @keyframes slideUp {
-      from {
-        transform: translateY(100%)
-      }
-
-      to {
-        transform: translateY(0)
-      }
-    }
-
-    @keyframes popIn {
-      from {
-        opacity: 0;
-        transform: scale(.94)
-      }
-
-      to {
-        opacity: 1;
-        transform: scale(1)
-      }
-    }
+    @media(min-width:640px) { .modal { border-radius:var(--rl); animation:popIn .25s cubic-bezier(.34,1.56,.64,1); } }
+    .modal-wide { max-width:720px; }
+    @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    @keyframes popIn   { from{opacity:0;transform:scale(.94)} to{opacity:1;transform:scale(1)} }
 
     .m-hdr {
-      padding: 18px 20px 14px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      background: var(--s1);
-      z-index: 10;
+      padding:18px 20px 14px; border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; background:var(--s1); z-index:10;
     }
-
-    .m-title {
-      font-size: 15px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
+    .m-title { font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px; }
     .m-close {
-      width: 28px;
-      height: 28px;
-      border-radius: 7px;
-      background: rgba(255, 255, 255, .05);
-      border: 1px solid rgba(255, 255, 255, .08);
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all .15s;
+      width:28px; height:28px; border-radius:7px; background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.08); color:var(--muted); cursor:pointer;
+      font-size:13px; display:flex; align-items:center; justify-content:center; transition:all .15s;
     }
+    .m-close:hover { background:rgba(255,77,109,.15); border-color:rgba(255,77,109,.3); color:var(--red); }
+    .m-handle { width:36px; height:4px; background:var(--s3); border-radius:2px; margin:10px auto 0; }
+    @media(min-width:640px) { .m-handle { display:none; } }
 
-    .m-close:hover {
-      background: rgba(255, 77, 109, .15);
-      border-color: rgba(255, 77, 109, .3);
-      color: var(--red);
-    }
-
-    /* drag handle on mobile */
-    .m-handle {
-      width: 36px;
-      height: 4px;
-      background: var(--s3);
-      border-radius: 2px;
-      margin: 10px auto 0;
-    }
-
-    @media(min-width:640px) {
-      .m-handle {
-        display: none;
-      }
-    }
-
-    /* TABS inside modal */
     .m-tabs {
-      display: flex;
-      gap: 0;
-      border-bottom: 1px solid var(--border);
-      background: var(--s2);
-      padding: 0 20px;
+      display:flex; gap:0; border-bottom:1px solid var(--border);
+      background:var(--s2); padding:0 20px;
     }
-
     .m-tab {
-      padding: 11px 14px;
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      color: var(--muted);
-      letter-spacing: .5px;
-      transition: all .2s;
-      margin-bottom: -1px;
-      white-space: nowrap;
+      padding:11px 14px; font-size:11px; font-weight:700; cursor:pointer;
+      border-bottom:2px solid transparent; color:var(--muted); letter-spacing:.5px;
+      transition:all .2s; margin-bottom:-1px; white-space:nowrap;
     }
-
-    .m-tab.active {
-      color: var(--blue);
-      border-bottom-color: var(--blue);
-    }
-
-    .m-body {
-      padding: 18px 20px;
-    }
-
+    .m-tab.active { color:var(--blue); border-bottom-color:var(--blue); }
+    .m-body  { padding:18px 20px; }
     .m-footer {
-      padding: 14px 20px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-      flex-wrap: wrap;
+      padding:14px 20px; border-top:1px solid var(--border);
+      display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;
     }
 
     /* ─── FORM ─── */
-    .fg {
-      margin-bottom: 14px;
-    }
-
-    .fg label {
-      display: block;
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--muted);
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-
-    .fi {
-      width: 100%;
-      background: var(--s2);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      color: var(--text);
-      font-size: 13px;
-      font-family: "Poppins", sans-serif;
-      padding: 10px 13px;
-      outline: none;
-      transition: border-color .2s;
-    }
-
-    .fi:focus {
-      border-color: var(--bord2);
-    }
-
-    .fi::placeholder {
-      color: var(--muted);
-    }
-
-    .fi-mono {
-      font-family: "Poppins", sans-serif;
-    }
-
-    .fi-hint {
-      font-size: 10px;
-      color: var(--muted);
-      margin-top: 5px;
-    }
-
-    .frow {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    @media(max-width:480px) {
-      .frow {
-        grid-template-columns: 1fr;
-      }
-    }
+    .fg { margin-bottom:14px; }
+    .fg label { display:block; font-size:10px; font-weight:700; color:var(--muted); letter-spacing:1.2px; text-transform:uppercase; margin-bottom:6px; }
+    .fi { width:100%; background:var(--s2); border:1px solid var(--border); border-radius:var(--r); color:var(--text); font-size:13px; font-family:inherit; padding:10px 13px; outline:none; transition:border-color .2s; }
+    .fi:focus { border-color:var(--bord2); }
+    .fi::placeholder { color:var(--muted); }
+    .fi-hint { font-size:10px; color:var(--muted); margin-top:5px; }
+    .frow { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media(max-width:480px) { .frow { grid-template-columns:1fr; } }
 
     /* ─── DETAIL GRID ─── */
-    .dg {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-
-    .di {
-      background: var(--s2);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 11px 13px;
-    }
-
-    .di-key {
-      font-size: 9px;
-      color: var(--muted);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .di-val {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .di.full {
-      grid-column: span 2;
-    }
-
-    @media(max-width:400px) {
-      .dg {
-        grid-template-columns: 1fr;
-      }
-
-      .di.full {
-        grid-column: 1;
-      }
-    }
+    .dg { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+    .di { background:var(--s2); border:1px solid var(--border); border-radius:var(--r); padding:11px 13px; }
+    .di-key { font-size:9px; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; font-weight:700; margin-bottom:4px; }
+    .di-val { font-size:13px; font-weight:600; color:var(--text); }
+    .di.full { grid-column:span 2; }
+    @media(max-width:400px) { .dg { grid-template-columns:1fr; } .di.full { grid-column:1; } }
 
     /* ─── PLAN GRID ─── */
-    .plang {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 9px;
-    }
+    .plang { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+    .po { border:1px solid var(--border); border-radius:11px; padding:13px; cursor:pointer; transition:all .2s; position:relative; }
+    .po input[type=radio] { display:none; }
+    .po.sel-premium { border-color:var(--gold);   background:rgba(245,166,35,.07); }
+    .po.sel-pro     { border-color:var(--blue);   background:rgba(2,163,254,.07); }
+    .po.sel-essential{ border-color:var(--green); background:rgba(0,212,170,.07); }
+    .po.sel-basic   { border-color:var(--purple); background:rgba(168,85,247,.07); }
+    .po.sel-free    { border-color:rgba(255,255,255,.15); background:rgba(255,255,255,.02); }
+    .po-name { font-size:13px; font-weight:700; margin-bottom:2px; }
+    .po-desc { font-size:10px; color:var(--muted); }
+    .po-days { font-size:9px; font-weight:800; letter-spacing:1px; margin-top:6px; }
+    .po.full { grid-column:span 2; }
 
-    .po {
-      border: 1px solid var(--border);
-      border-radius: 11px;
-      padding: 13px;
-      cursor: pointer;
-      transition: all .2s;
-      position: relative;
-    }
-
-    .po input[type=radio] {
-      display: none;
-    }
-
-    .po.sel-premium {
-      border-color: var(--gold);
-      background: rgba(245, 166, 35, .07);
-    }
-
-    .po.sel-pro {
-      border-color: var(--blue);
-      background: rgba(2, 163, 254, .07);
-    }
-
-    .po.sel-essential {
-      border-color: var(--green);
-      background: rgba(0, 212, 170, .07);
-    }
-
-    .po.sel-basic {
-      border-color: var(--purple);
-      background: rgba(168, 85, 247, .07);
-    }
-
-    .po.sel-free {
-      border-color: rgba(255, 255, 255, .15);
-      background: rgba(255, 255, 255, .02);
-    }
-
-    .po-name {
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 2px;
-    }
-
-    .po-desc {
-      font-size: 10px;
-      color: var(--muted);
-    }
-
-    .po-days {
-      font-size: 9px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      margin-top: 6px;
-    }
-
-    .po.full {
-      grid-column: span 2;
-    }
-
-    /* ─── HISTORY TABLE inside modal ─── */
-    .history-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-
-    .hl-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 11px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, .04);
-    }
-
-    .hl-item:last-child {
-      border-bottom: none;
-    }
-
-    .hl-dot {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-    }
-
-    .hl-dot.join {
-      background: rgba(2, 163, 254, .15);
-      color: var(--blue);
-    }
-
-    .hl-dot.plan {
-      background: rgba(245, 166, 35, .15);
-      color: var(--gold);
-    }
-
-    .hl-dot.exp {
-      background: rgba(255, 77, 109, .15);
-      color: var(--red);
-    }
-
-    .hl-dot.ok {
-      background: rgba(0, 212, 170, .15);
-      color: var(--green);
-    }
-
-    .hl-dot.note {
-      background: rgba(168, 85, 247, .15);
-      color: var(--purple);
-    }
-
-    .hl-content {
-      flex: 1;
-    }
-
-    .hl-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .hl-date {
-      font-size: 10px;
-      color: var(--muted);
-      margin-top: 1px;
-    }
-
-    .hl-badge {
-      margin-left: auto;
-    }
+    /* ─── HISTORY ─── */
+    .history-list { display:flex; flex-direction:column; gap:0; }
+    .hl-item { display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+    .hl-item:last-child { border-bottom:none; }
+    .hl-dot { width:30px; height:30px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:11px; }
+    .hl-dot.join { background:rgba(2,163,254,.15); color:var(--blue); }
+    .hl-dot.plan { background:rgba(245,166,35,.15); color:var(--gold); }
+    .hl-dot.exp  { background:rgba(255,77,109,.15); color:var(--red); }
+    .hl-dot.ok   { background:rgba(0,212,170,.15);  color:var(--green); }
+    .hl-content { flex:1; }
+    .hl-title { font-size:12px; font-weight:600; color:var(--text); }
+    .hl-date  { font-size:10px; color:var(--muted); margin-top:1px; }
 
     /* ─── CONFIRM MODAL ─── */
-    .conf-icon {
-      font-size: 44px;
-      text-align: center;
-      margin-bottom: 10px;
-    }
+    .conf-icon { font-size:44px; text-align:center; margin-bottom:10px; }
+    .conf-title { font-size:18px; font-weight:800; text-align:center; color:var(--red); margin-bottom:6px; }
+    .conf-desc  { font-size:13px; color:var(--dim); text-align:center; line-height:1.6; margin-bottom:16px; }
+    .ucard { display:flex; align-items:center; gap:12px; background:var(--s2); border:1px solid var(--border); border-radius:var(--r); padding:12px 14px; margin-bottom:14px; }
 
-    .conf-title {
-      font-size: 18px;
-      font-weight: 800;
-      text-align: center;
-      color: var(--red);
-      margin-bottom: 6px;
-    }
+    /* ─── MOBILE CARDS ─── */
+    .mob-cards { display:none; flex-direction:column; gap:10px; padding:12px; }
+    .mob-card { background:var(--s2); border:1px solid var(--border); border-radius:var(--r); padding:14px; transition:border-color .2s; }
+    .mob-card:hover { border-color:var(--bord2); }
+    .mob-card-top { display:flex; align-items:flex-start; gap:10px; margin-bottom:12px; }
+    .mob-card-info { flex:1; min-width:0; }
+    .mob-card-name  { font-size:14px; font-weight:700; color:var(--text); overflow:hidden; text-overflow:ellipsis; }
+    .mob-card-email { font-size:11px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; }
+    .mob-card-badges { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px; }
+    .mob-card-row { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:5px; }
+    .mob-card-row span:last-child { color:var(--dim); font-weight:600; }
+    .mob-card-actions { display:flex; gap:7px; justify-content:flex-end; margin-top:12px; padding-top:10px; border-top:1px solid var(--border); }
+    .mob-card-actions .ibtn { width:34px; height:34px; font-size:12px; }
 
-    .conf-desc {
-      font-size: 13px;
-      color: var(--dim);
-      text-align: center;
-      line-height: 1.6;
-      margin-bottom: 16px;
-    }
-
-    .ucard {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: var(--s2);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 12px 14px;
-      margin-bottom: 14px;
-    }
-
-    /* ─── MOBILE CARD VIEW ─── */
-    .mob-cards {
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-      padding: 12px;
-    }
-
-    .mob-card {
-      background: var(--s2);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 14px;
-      transition: border-color .2s;
-    }
-
-    .mob-card:hover {
-      border-color: var(--bord2);
-    }
-
-    .mob-card-top {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .mob-card-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .mob-card-name {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text);
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .mob-card-email {
-      font-size: 11px;
-      color: var(--muted);
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .mob-card-badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      margin-bottom: 10px;
-    }
-
-    .mob-card-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      color: var(--muted);
-      margin-bottom: 5px;
-    }
-
-    .mob-card-row span:last-child {
-      color: var(--dim);
-      font-weight: 600;
-    }
-
-    .mob-card-actions {
-      display: flex;
-      gap: 7px;
-      justify-content: flex-end;
-      margin-top: 12px;
-      padding-top: 10px;
-      border-top: 1px solid var(--border);
-    }
-
-    .mob-card-actions .ibtn {
-      width: 34px;
-      height: 34px;
-      font-size: 12px;
-    }
-
-    /* ─── USER INFO BANNER (in detail modal) ─── */
-    .ubanner {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      background: var(--s2);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 14px;
-      margin-bottom: 16px;
-    }
-
-    .ubanner-ava {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 17px;
-      font-weight: 800;
-    }
-
-    .ubanner-info {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .ubanner-name {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    .ubanner-email {
-      font-size: 11px;
-      color: var(--muted);
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .ubanner-badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      margin-top: 5px;
-    }
+    /* ─── UBANNER ─── */
+    .ubanner { display:flex; align-items:center; gap:14px; background:var(--s2); border:1px solid var(--border); border-radius:var(--r); padding:14px; margin-bottom:16px; }
+    .ubanner-ava { width:48px; height:48px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; }
+    .ubanner-info { flex:1; min-width:0; }
+    .ubanner-name  { font-size:15px; font-weight:700; color:var(--text); }
+    .ubanner-email { font-size:11px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; }
+    .ubanner-badges { display:flex; flex-wrap:wrap; gap:5px; margin-top:5px; }
 
     /* ─── TOAST ─── */
-    .tw {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-      max-width: 320px;
-    }
-
+    .tw { position:fixed; bottom:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:7px; max-width:320px; }
     .toast {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--s1);
-      border: 1px solid;
-      border-radius: 10px;
-      padding: 11px 15px;
-      font-size: 12px;
-      font-weight: 600;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, .6);
-      animation: tin .3s ease;
+      display:flex; align-items:center; gap:10px; background:var(--s1); border:1px solid;
+      border-radius:10px; padding:11px 15px; font-size:12px; font-weight:600;
+      box-shadow:0 8px 32px rgba(0,0,0,.6); animation:tin .3s ease;
     }
-
-    .toast.success {
-      border-color: rgba(0, 212, 170, .4);
-      color: var(--green);
-    }
-
-    .toast.error {
-      border-color: rgba(255, 77, 109, .4);
-      color: var(--red);
-    }
-
-    .toast.info {
-      border-color: rgba(2, 163, 254, .4);
-      color: var(--blue);
-    }
-
-    @keyframes tin {
-      from {
-        opacity: 0;
-        transform: translateX(16px)
-      }
-
-      to {
-        opacity: 1;
-        transform: translateX(0)
-      }
-    }
-
-    @media(max-width:500px) {
-      .tw {
-        left: 12px;
-        right: 12px;
-      }
-    }
+    .toast.success { border-color:rgba(0,212,170,.4); color:var(--green); }
+    .toast.error   { border-color:rgba(255,77,109,.4); color:var(--red); }
+    .toast.info    { border-color:rgba(2,163,254,.4);  color:var(--blue); }
+    @keyframes tin { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:translateX(0)} }
+    @media(max-width:500px) { .tw { left:12px; right:12px; } }
 
     /* ─── SPINNER ─── */
-    .spin {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(255, 255, 255, .15);
-      border-top-color: var(--blue);
-      border-radius: 50%;
-      animation: rot .7s linear infinite;
-    }
-
-    @keyframes rot {
-      to {
-        transform: rotate(360deg)
-      }
-    }
+    .spin { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,.15); border-top-color:var(--blue); border-radius:50%; animation:rot .7s linear infinite; }
+    @keyframes rot { to{transform:rotate(360deg)} }
 
     /* ─── EMPTY ─── */
-    .empty {
-      padding: 48px 20px;
-      text-align: center;
-    }
+    .empty { padding:48px 20px; text-align:center; }
+    .empty i { font-size:36px; opacity:.15; margin-bottom:12px; display:block; }
+    .empty-t { font-size:14px; font-weight:700; color:var(--dim); margin-bottom:6px; }
+    .empty-s { font-size:12px; color:var(--muted); }
 
-    .empty i {
-      font-size: 36px;
-      opacity: .15;
-      margin-bottom: 12px;
-      display: block;
-    }
-
-    .empty-t {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--dim);
-      margin-bottom: 6px;
-    }
-
-    .empty-s {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    /* ─── RESPONSIVE BREAKPOINTS ─── */
-    @media(max-width:1100px) {
-      .stats {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
+    /* ══════════════════
+       RESPONSIVE
+    ══════════════════ */
+    @media(max-width:1100px) { .stats { grid-template-columns:repeat(3,1fr); } }
 
     @media(max-width:700px) {
-      .stats {
-        grid-template-columns: repeat(2, 1fr);
-      }
+      .stats { grid-template-columns:repeat(2,1fr); }
+      .sc-val { font-size:24px; }
 
-      .sc-val {
-        font-size: 24px;
-      }
+      /* hide desktop header buttons */
+      .hbtn { display:none; }
 
-      .hbtn {
-        display: none;
-      }
+      /* show hamburger */
+      .hdr-menu-btn { display:flex; }
 
-      .hdr-menu-btn {
-        display: flex;
-      }
-
-      .tscroll {
-        display: none;
-      }
-
-      .mob-cards {
-        display: flex;
-      }
-
-      .tcard-hdr {
-        padding: 12px 14px;
-      }
-
-      .pag {
-        padding: 10px 14px;
-      }
+      /* switch table→cards */
+      .tscroll  { display:none; }
+      .mob-cards { display:flex; }
+      .tcard-hdr { padding:12px 14px; }
+      .pag { padding:10px 14px; }
     }
 
     @media(max-width:400px) {
-      .stats {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .page {
-        padding: 12px 12px 40px;
-      }
+      .stats { grid-template-columns:1fr 1fr; }
+      .page  { padding:12px 12px 40px; }
     }
   </style>
 </head>
@@ -1514,26 +472,44 @@
 
   <!-- HEADER -->
   <header class="hdr">
+    <!-- LOGO -->
+    <a href="/" class="hdr-logo">
+      <img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="TraderBro Logo">
+    </a>
     <div class="brand">
       <div class="brand-name">Trader<span>Bro</span></div>
       <div class="brand-sub">User Management</div>
     </div>
+
     <div class="hdr-right">
+      <!-- Desktop buttons -->
       <a href="/admin" class="hbtn hbtn-blue"><i class="fas fa-chart-line"></i> Chain</a>
       <a href="/simple" class="hbtn hbtn-blue"><i class="fas fa-table"></i> Recorder</a>
       <button class="hbtn hbtn-org" onclick="exportCSV()"><i class="fas fa-file-csv"></i> Export</button>
       <a href="/logout" class="hbtn hbtn-org"><i class="fas fa-sign-out-alt"></i> Logout</a>
-      <button class="hdr-menu-btn" onclick="toggleMobMenu()" id="mob-menu-btn"><i class="fas fa-bars"></i></button>
+      <!-- Hamburger -->
+      <button class="hdr-menu-btn" onclick="toggleMobMenu()" id="mob-menu-btn">
+        <i class="fas fa-bars" id="mob-icon"></i>
+      </button>
     </div>
   </header>
 
-  <!-- MOBILE DRAWER -->
+  <!-- MOBILE DRAWER — uses .drawer-item, NOT .hbtn, so display:none doesn't affect it -->
   <div class="mob-drawer" id="mob-drawer">
-    <a href="/admin" class="hbtn hbtn-blue"><i class="fas fa-chart-line"></i> Option Chain</a>
-    <a href="/simple" class="hbtn hbtn-blue"><i class="fas fa-table"></i> Recorder</a>
-    <button class="hbtn hbtn-org" onclick="exportCSV();toggleMobMenu()"><i class="fas fa-file-csv"></i> Export
-      CSV</button>
-    <a href="/logout" class="hbtn hbtn-org"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    <a href="/admin" class="drawer-item drawer-item-blue" onclick="toggleMobMenu()">
+      <i class="fas fa-chart-line"></i> Option Chain
+    </a>
+    <a href="/simple" class="drawer-item drawer-item-blue" onclick="toggleMobMenu()">
+      <i class="fas fa-table"></i> Recorder
+    </a>
+    <div class="drawer-divider"></div>
+    <button class="drawer-item drawer-item-org" onclick="exportCSV();toggleMobMenu()">
+      <i class="fas fa-file-csv"></i> Export CSV
+    </button>
+    <div class="drawer-divider"></div>
+    <a href="/logout" class="drawer-item drawer-item-red">
+      <i class="fas fa-sign-out-alt"></i> Logout
+    </a>
   </div>
 
   <div class="page">
@@ -1622,22 +598,14 @@
         <table>
           <thead>
             <tr>
-              <th>#</th>
-              <th>User</th>
-              <th>Phone</th>
-              <th>Role</th>
-              <th class="tc">Plan</th>
-              <th class="tc">Status</th>
-              <th>Plan Start</th>
-              <th>Expiry</th>
-              <th>Days Left</th>
+              <th>#</th><th>User</th><th>Phone</th><th>Role</th>
+              <th class="tc">Plan</th><th class="tc">Status</th>
+              <th>Plan Start</th><th>Expiry</th><th>Days Left</th>
               <th class="tc">Actions</th>
             </tr>
           </thead>
           <tbody id="tbody">
-            <tr>
-              <td colspan="10" style="text-align:center;padding:40px;color:var(--muted)"><span class="spin"></span></td>
-            </tr>
+            <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)"><span class="spin"></span></td></tr>
           </tbody>
         </table>
       </div>
@@ -1668,18 +636,15 @@
         <button class="m-close" onclick="closeModal('ov-detail')"><i class="fas fa-times"></i></button>
       </div>
       <div class="m-tabs">
-        <div class="m-tab active" onclick="dtab('overview')" id="dt-overview">📋 Overview</div>
-        <div class="m-tab" onclick="dtab('history')" id="dt-history">📅 History</div>
-        <div class="m-tab" onclick="dtab('plan')" id="dt-plan">👑 Plan Details</div>
+        <div class="m-tab active" onclick="dtab('overview')"  id="dt-overview">📋 Overview</div>
+        <div class="m-tab"        onclick="dtab('history')"   id="dt-history">📅 History</div>
+        <div class="m-tab"        onclick="dtab('plan')"      id="dt-plan">👑 Plan Details</div>
       </div>
       <div class="m-body" id="detail-body"></div>
       <div class="m-footer">
-        <button class="tbtn tbtn-ghost" id="d-del-btn" onclick="delFromDetail()"><i class="fas fa-trash"></i>
-          Delete</button>
-        <button class="tbtn tbtn-ghost" id="d-plan-btn" onclick="planFromDetail()"><i class="fas fa-crown"></i> Change
-          Plan</button>
-        <button class="tbtn tbtn-primary" id="d-edit-btn" onclick="editFromDetail()"><i class="fas fa-edit"></i> Edit
-          User</button>
+        <button class="tbtn tbtn-ghost"   id="d-del-btn"  onclick="delFromDetail()"><i class="fas fa-trash"></i> Delete</button>
+        <button class="tbtn tbtn-ghost"   id="d-plan-btn" onclick="planFromDetail()"><i class="fas fa-crown"></i> Change Plan</button>
+        <button class="tbtn tbtn-primary" id="d-edit-btn" onclick="editFromDetail()"><i class="fas fa-edit"></i> Edit User</button>
       </div>
     </div>
   </div>
@@ -1696,11 +661,10 @@
         <input type="hidden" id="e-id">
         <div class="frow">
           <div class="fg"><label>Username *</label><input class="fi" id="e-un" placeholder="johndoe"></div>
-          <div class="fg"><label>Email *</label><input class="fi" type="email" id="e-em" placeholder="john@example.com">
-          </div>
+          <div class="fg"><label>Email *</label><input class="fi" type="email" id="e-em" placeholder="john@example.com"></div>
         </div>
         <div class="frow">
-          <div class="fg"><label>Phone</label><input class="fi fi-mono" id="e-ph" placeholder="+91 9999999999"></div>
+          <div class="fg"><label>Phone</label><input class="fi" id="e-ph" placeholder="+91 9999999999"></div>
           <div class="fg"><label>Role</label>
             <select class="fi" id="e-role">
               <option value="user">👤 User</option>
@@ -1715,9 +679,8 @@
         </div>
       </div>
       <div class="m-footer">
-        <button class="tbtn tbtn-ghost" onclick="closeModal('ov-edit')"><i class="fas fa-times"></i> Cancel</button>
-        <button class="tbtn tbtn-primary" onclick="saveUser()"><i class="fas fa-save"></i> <span
-            id="save-txt">Save</span></button>
+        <button class="tbtn tbtn-ghost"   onclick="closeModal('ov-edit')"><i class="fas fa-times"></i> Cancel</button>
+        <button class="tbtn tbtn-primary" onclick="saveUser()"><i class="fas fa-save"></i> <span id="save-txt">Save</span></button>
       </div>
     </div>
   </div>
@@ -1743,36 +706,11 @@
         <div class="fg">
           <label>Select Plan</label>
           <div class="plang">
-            <label class="po" id="po-premium" onclick="selPlan('premium')">
-              <input type="radio" name="pc" value="premium">
-              <div class="po-name" style="color:var(--gold)">👑 Premium</div>
-              <div class="po-desc">Full access + historical data</div>
-              <div class="po-days" style="color:var(--gold)">250 TRADING DAYS</div>
-            </label>
-            <label class="po" id="po-pro" onclick="selPlan('pro')">
-              <input type="radio" name="pc" value="pro">
-              <div class="po-name" style="color:var(--blue)">⚡ Pro</div>
-              <div class="po-desc">Full access + downloads</div>
-              <div class="po-days" style="color:var(--blue)">22 TRADING DAYS</div>
-            </label>
-            <label class="po" id="po-essential" onclick="selPlan('essential')">
-              <input type="radio" name="pc" value="essential">
-              <div class="po-name" style="color:var(--green)">🟢 Essential</div>
-              <div class="po-desc">Dashboard access</div>
-              <div class="po-days" style="color:var(--green)">5 TRADING DAYS</div>
-            </label>
-            <label class="po" id="po-basic" onclick="selPlan('basic')">
-              <input type="radio" name="pc" value="basic">
-              <div class="po-name" style="color:var(--purple)">🔵 Basic</div>
-              <div class="po-desc">Trial access</div>
-              <div class="po-days" style="color:var(--purple)">1 TRADING DAY</div>
-            </label>
-            <label class="po full" id="po-free" onclick="selPlan('free')">
-              <input type="radio" name="pc" value="free">
-              <div class="po-name" style="color:var(--muted)">⭕ Remove / Free</div>
-              <div class="po-desc">Revoke subscription access</div>
-              <div class="po-days" style="color:var(--muted)">NO ACTIVE ACCESS</div>
-            </label>
+            <label class="po" id="po-premium" onclick="selPlan('premium')"><input type="radio" name="pc" value="premium"><div class="po-name" style="color:var(--gold)">👑 Premium</div><div class="po-desc">Full access + historical data</div><div class="po-days" style="color:var(--gold)">250 TRADING DAYS</div></label>
+            <label class="po" id="po-pro"     onclick="selPlan('pro')">    <input type="radio" name="pc" value="pro">    <div class="po-name" style="color:var(--blue)">⚡ Pro</div>    <div class="po-desc">Full access + downloads</div>       <div class="po-days" style="color:var(--blue)">22 TRADING DAYS</div></label>
+            <label class="po" id="po-essential" onclick="selPlan('essential')"><input type="radio" name="pc" value="essential"><div class="po-name" style="color:var(--green)">🟢 Essential</div><div class="po-desc">Dashboard access</div><div class="po-days" style="color:var(--green)">5 TRADING DAYS</div></label>
+            <label class="po" id="po-basic"   onclick="selPlan('basic')">  <input type="radio" name="pc" value="basic">  <div class="po-name" style="color:var(--purple)">🔵 Basic</div><div class="po-desc">Trial access</div>              <div class="po-days" style="color:var(--purple)">1 TRADING DAY</div></label>
+            <label class="po full" id="po-free" onclick="selPlan('free')"> <input type="radio" name="pc" value="free">   <div class="po-name" style="color:var(--muted)">⭕ Remove / Free</div><div class="po-desc">Revoke subscription access</div><div class="po-days" style="color:var(--muted)">NO ACTIVE ACCESS</div></label>
           </div>
         </div>
         <div class="fg" id="ceg" style="display:none">
@@ -1786,7 +724,7 @@
         </div>
       </div>
       <div class="m-footer">
-        <button class="tbtn tbtn-ghost" onclick="closeModal('ov-plan')"><i class="fas fa-times"></i> Cancel</button>
+        <button class="tbtn tbtn-ghost"   onclick="closeModal('ov-plan')"><i class="fas fa-times"></i> Cancel</button>
         <button class="tbtn tbtn-primary" onclick="assignPlan()"><i class="fas fa-crown"></i> Assign Plan</button>
       </div>
     </div>
@@ -1802,522 +740,456 @@
         <div class="conf-desc">This is permanent. All user data will be removed and cannot be recovered.</div>
         <div class="ucard">
           <div class="ava" id="d-ava" style="background:rgba(255,77,109,.15);color:var(--red)">?</div>
-          <div>
-            <div style="font-weight:700" id="d-name">—</div>
-            <div style="font-size:11px;color:var(--muted)" id="d-email">—</div>
-          </div>
+          <div><div style="font-weight:700" id="d-name">—</div><div style="font-size:11px;color:var(--muted)" id="d-email">—</div></div>
         </div>
         <input type="hidden" id="d-uid">
       </div>
       <div class="m-footer">
         <button class="tbtn tbtn-ghost" onclick="closeModal('ov-del')"><i class="fas fa-times"></i> Cancel</button>
-        <button class="tbtn"
-          style="background:rgba(255,77,109,.15);border:1px solid rgba(255,77,109,.3);color:var(--red)"
-          onclick="confirmDelete()"><i class="fas fa-trash"></i> Delete Forever</button>
+        <button class="tbtn" style="background:rgba(255,77,109,.15);border:1px solid rgba(255,77,109,.3);color:var(--red)" onclick="confirmDelete()"><i class="fas fa-trash"></i> Delete Forever</button>
       </div>
     </div>
   </div>
 
   <script>
-    /* ════════════════════
-       STATE
-    ════════════════════ */
+    /* ════════ STATE ════════ */
     let ALL = [], FIL = [], _du = null, _sp = '', PAGE = 1;
     const PP = 20;
 
-    /* ════════════════════
-       HELPERS
-    ════════════════════ */
-    function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-    function fdate(d) { if (!d) return '—'; try { return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }); } catch { return d; } }
-    function fdatetime(d) { if (!d) return '—'; try { return new Date(d).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch { return d; } }
-    function dleft(e) { if (!e) return null; return Math.ceil((new Date(e) - new Date()) / 86400000); }
-    function avaColor(u) { const c = ['rgba(2,163,254,.2)', 'rgba(0,212,170,.2)', 'rgba(245,166,35,.2)', 'rgba(168,85,247,.2)', 'rgba(255,107,53,.2)']; return c[(u || '').charCodeAt(0) % c.length]; }
-    function avaFg(u) { const c = ['#02A3FE', '#00d4aa', '#f5a623', '#a855f7', '#ff6b35']; return c[(u || '').charCodeAt(0) % c.length]; }
-    function avaT(u) { return (u || '?').substring(0, 2).toUpperCase(); }
+    /* ════════ HELPERS ════════ */
+    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function fdate(d) { if(!d) return '—'; try{return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}catch{return d;} }
+    function fdatetime(d) { if(!d) return '—'; try{return new Date(d).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch{return d;} }
+    function dleft(e) { if(!e) return null; return Math.ceil((new Date(e)-new Date())/86400000); }
+    function avaColor(u) { const c=['rgba(2,163,254,.2)','rgba(0,212,170,.2)','rgba(245,166,35,.2)','rgba(168,85,247,.2)','rgba(255,107,53,.2)']; return c[(u||'').charCodeAt(0)%c.length]; }
+    function avaFg(u)    { const c=['#02A3FE','#00d4aa','#f5a623','#a855f7','#ff6b35']; return c[(u||'').charCodeAt(0)%c.length]; }
+    function avaT(u)     { return (u||'?').substring(0,2).toUpperCase(); }
 
-    async function api(path, opts = {}) {
-      const r = await fetch(path, { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...opts });
-      if (r.status === 401) { window.location.href = '/admin-login'; throw new Error('Auth'); }
+    async function api(path, opts={}) {
+      const r = await fetch(path,{credentials:'include',headers:{'Content-Type':'application/json'},...opts});
+      if(r.status===401){window.location.href='/admin-login';throw new Error('Auth');}
       return r.json();
     }
 
-    function toast(msg, type = 'info') {
-      const icons = { success: '✅', error: '❌', info: 'ℹ️' };
-      const el = document.createElement('div');
-      el.className = `toast ${type}`;
-      el.innerHTML = `<span>${icons[type]}</span><span>${esc(msg)}</span>`;
+    function toast(msg,type='info') {
+      const icons={success:'✅',error:'❌',info:'ℹ️'};
+      const el=document.createElement('div');
+      el.className=`toast ${type}`;
+      el.innerHTML=`<span>${icons[type]}</span><span>${esc(msg)}</span>`;
       document.getElementById('tw').appendChild(el);
-      setTimeout(() => el.remove(), 4000);
+      setTimeout(()=>el.remove(),4000);
     }
 
-    function openModal(id) {
-      document.getElementById(id).classList.add('open');
-    }
+    function openModal(id)  { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-    function closeModal(id) {
-      document.getElementById(id).classList.remove('open');
-    }
-    document.querySelectorAll('.overlay').forEach(el => {
-      el.addEventListener('click', e => {
-        if (e.target === el) {
-          el.classList.remove('open');
-        }
-      });
+    document.querySelectorAll('.overlay').forEach(el=>{
+      el.addEventListener('click',e=>{ if(e.target===el) el.classList.remove('open'); });
     });
 
-    /* ════════════════════
-       MOBILE MENU
-    ════════════════════ */
+    /* ════════ MOBILE MENU ════════ */
     let _mob = false;
     function toggleMobMenu() {
       _mob = !_mob;
       document.getElementById('mob-drawer').classList.toggle('open', _mob);
-      document.getElementById('mob-menu-btn').innerHTML = _mob ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+      document.getElementById('mob-icon').className = _mob ? 'fas fa-times' : 'fas fa-bars';
     }
+    // Close drawer when clicking page content
+    document.addEventListener('click', function(e) {
+      if (_mob && !e.target.closest('.mob-drawer') && !e.target.closest('#mob-menu-btn')) {
+        _mob = false;
+        document.getElementById('mob-drawer').classList.remove('open');
+        document.getElementById('mob-icon').className = 'fas fa-bars';
+      }
+    });
 
-    /* ════════════════════
-       LOAD
-    ════════════════════ */
+    /* ════════ LOAD ════════ */
     async function loadUsers() {
       const ic = document.getElementById('ri');
       ic.className = 'fas fa-circle-notch fa-spin';
       try {
         const d = await api('/api/admin/users');
         ALL = d.users || [];
-        applyFilters();
-        updateStats();
-      } catch (e) { toast('Failed to load users', 'error'); }
+        applyFilters(); updateStats();
+      } catch(e) { toast('Failed to load users','error'); }
       ic.className = 'fas fa-sync-alt';
     }
 
     function updateStats() {
       const now = new Date();
-      let active = 0, expired = 0, premium = 0, pro = 0, free = 0;
+      let active=0, expired=0, premium=0, pro=0, free=0;
       ALL.forEach(u => {
-        if (u.role === 'admin') return;
-        const pl = (u.plan || '').toLowerCase();
-        const ex = u.plan_expiry ? new Date(u.plan_expiry) : null;
-        const paid = pl && pl !== 'free';
-        const alive = ex ? ex > now : false;
-        if (paid && alive) active++;
-        else if (paid && !alive) expired++;
+        if(u.role==='admin') return;
+        const pl=(u.plan||'').toLowerCase();
+        const ex=u.plan_expiry?new Date(u.plan_expiry):null;
+        const paid=pl&&pl!=='free';
+        const alive=ex?ex>now:false;
+        if(paid&&alive) active++;
+        else if(paid&&!alive) expired++;
         else free++;
-        if (pl === 'premium') premium++;
-        if (pl === 'pro') pro++;
+        if(pl==='premium') premium++;
+        if(pl==='pro') pro++;
       });
-      const total = ALL.filter(u => u.role !== 'admin').length;
-      document.getElementById('st-total').textContent = total;
-      document.getElementById('st-active').textContent = active;
+      const total=ALL.filter(u=>u.role!=='admin').length;
+      document.getElementById('st-total').textContent   = total;
+      document.getElementById('st-active').textContent  = active;
       document.getElementById('st-expired').textContent = expired;
       document.getElementById('st-premium').textContent = premium;
-      document.getElementById('st-pro').textContent = pro;
-      document.getElementById('st-free').textContent = free + expired;
+      document.getElementById('st-pro').textContent     = pro;
+      document.getElementById('st-free').textContent    = free+expired;
     }
 
-    /* ════════════════════
-       FILTER SHORTCUTS (stat cards)
-    ════════════════════ */
-    function filterByPlan(plan) { document.getElementById('f-plan').value = plan; applyFilters(); }
-    function filterByStatus(st) { document.getElementById('f-status').value = st; applyFilters(); }
-    function clearFilters() { document.getElementById('f-plan').value = ''; document.getElementById('f-status').value = ''; document.getElementById('srch').value = ''; applyFilters(); }
+    function filterByPlan(plan)   { document.getElementById('f-plan').value=plan;   applyFilters(); }
+    function filterByStatus(st)   { document.getElementById('f-status').value=st;   applyFilters(); }
+    function clearFilters()       { document.getElementById('f-plan').value=''; document.getElementById('f-status').value=''; document.getElementById('srch').value=''; applyFilters(); }
 
-    /* ════════════════════
-       FILTERS & SORT
-    ════════════════════ */
     function planStatus(u) {
-      const now = new Date();
-      const ex = u.plan_expiry ? new Date(u.plan_expiry) : null;
-      const paid = u.plan && u.plan !== 'free';
-      if (!paid || !u.plan) return 'no-plan';
-      if (ex && ex > now) return 'active';
+      const now=new Date();
+      const ex=u.plan_expiry?new Date(u.plan_expiry):null;
+      const paid=u.plan&&u.plan!=='free';
+      if(!paid||!u.plan) return 'no-plan';
+      if(ex&&ex>now) return 'active';
       return 'expired';
     }
 
     function applyFilters() {
-      const q = document.getElementById('srch').value.toLowerCase();
+      const q  = document.getElementById('srch').value.toLowerCase();
       const fp = document.getElementById('f-plan').value;
       const fs = document.getElementById('f-status').value;
       const so = document.getElementById('f-sort').value;
 
       FIL = ALL.filter(u => {
-        if (u.role === 'admin') return false;
-        const mq = !q || [u.username, u.email, u.phone].some(v => (v || '').toLowerCase().includes(q));
-        const mp = !fp || (u.plan || '').toLowerCase() === fp;
-        const ms = !fs || planStatus(u) === fs;
-        return mq && mp && ms;
+        if(u.role==='admin') return false;
+        const mq=!q||[u.username,u.email,u.phone].some(v=>(v||'').toLowerCase().includes(q));
+        const mp=!fp||(u.plan||'').toLowerCase()===fp;
+        const ms=!fs||planStatus(u)===fs;
+        return mq&&mp&&ms;
       });
 
-      FIL.sort((a, b) => {
-        if (so === 'oldest') return a.id - b.id;
-        if (so === 'name') return (a.username || '').localeCompare(b.username || '');
-        if (so === 'plan') return (a.plan || '').localeCompare(b.plan || '');
-        if (so === 'expiry-asc') return new Date(a.plan_expiry || 0) - new Date(b.plan_expiry || 0);
-        if (so === 'expiry-desc') return new Date(b.plan_expiry || 0) - new Date(a.plan_expiry || 0);
-        return b.id - a.id;
+      FIL.sort((a,b) => {
+        if(so==='oldest')      return a.id-b.id;
+        if(so==='name')        return (a.username||'').localeCompare(b.username||'');
+        if(so==='plan')        return (a.plan||'').localeCompare(b.plan||'');
+        if(so==='expiry-asc')  return new Date(a.plan_expiry||0)-new Date(b.plan_expiry||0);
+        if(so==='expiry-desc') return new Date(b.plan_expiry||0)-new Date(a.plan_expiry||0);
+        return b.id-a.id;
       });
-
-      PAGE = 1; render();
+      PAGE=1; render();
     }
 
-    /* ════════════════════
-       RENDER
-    ════════════════════ */
+    /* ════════ RENDER ════════ */
     function planBadge(p) {
-      const mp = { premium: ['b-premium', '👑 Premium'], pro: ['b-pro', '⚡ Pro'], essential: ['b-essential', '🟢 Essential'], basic: ['b-basic', '🔵 Basic'], free: ['b-free', '⭕ Free'] };
-      const [c, l] = mp[(p || 'free').toLowerCase()] || ['b-free', '⭕ Free'];
+      const mp={premium:['b-premium','👑 Premium'],pro:['b-pro','⚡ Pro'],essential:['b-essential','🟢 Essential'],basic:['b-basic','🔵 Basic'],free:['b-free','⭕ Free']};
+      const [c,l]=mp[(p||'free').toLowerCase()]||['b-free','⭕ Free'];
       return `<span class="badge ${c}">${l}</span>`;
     }
     function statusBadge(u) {
-      const st = planStatus(u);
-      if (st === 'active') return '<span class="badge b-active">✅ Active</span>';
-      if (st === 'expired') return '<span class="badge b-expired">❌ Expired</span>';
+      const st=planStatus(u);
+      if(st==='active')  return '<span class="badge b-active">✅ Active</span>';
+      if(st==='expired') return '<span class="badge b-expired">❌ Expired</span>';
       return '<span class="badge b-noplan">No Plan</span>';
     }
     function dlBadge(ex) {
-      const d = dleft(ex);
-      if (d === null) return '<span class="dl none">—</span>';
-      if (d <= 0) return '<span class="dl exp">Expired</span>';
-      if (d <= 5) return `<span class="dl warn">${d}d left</span>`;
-      if (d <= 14) return `<span class="dl warn">${d}d left</span>`;
+      const d=dleft(ex);
+      if(d===null)  return '<span class="dl none">—</span>';
+      if(d<=0)      return '<span class="dl exp">Expired</span>';
+      if(d<=14)     return `<span class="dl warn">${d}d left</span>`;
       return `<span class="dl ok">${d}d left</span>`;
     }
 
     function render() {
-      const total = FIL.length;
-      const pages = Math.ceil(total / PP) || 1;
-      PAGE = Math.min(PAGE, pages);
-      const sl = FIL.slice((PAGE - 1) * PP, PAGE * PP);
+      const total=FIL.length;
+      const pages=Math.ceil(total/PP)||1;
+      PAGE=Math.min(PAGE,pages);
+      const sl=FIL.slice((PAGE-1)*PP, PAGE*PP);
 
-      document.getElementById('tcnt').textContent = `${total} user${total !== 1 ? 's' : ''}`;
-      document.getElementById('pinfo').textContent = total ? `Showing ${(PAGE - 1) * PP + 1}–${Math.min(PAGE * PP, total)} of ${total}` : 'No users';
+      document.getElementById('tcnt').textContent = `${total} user${total!==1?'s':''}`;
+      document.getElementById('pinfo').textContent = total ? `Showing ${(PAGE-1)*PP+1}–${Math.min(PAGE*PP,total)} of ${total}` : 'No users';
 
-      // Pagination
-      const pb = document.getElementById('pbtns'); pb.innerHTML = '';
-      const addPB = (lbl, pg, dis = false, act = false) => {
-        const b = document.createElement('button');
-        b.className = 'pbtn' + (act ? ' active' : '');
-        b.innerHTML = lbl; b.disabled = dis;
-        if (!dis) b.onclick = () => { PAGE = pg; render(); };
+      const pb=document.getElementById('pbtns'); pb.innerHTML='';
+      const addPB=(lbl,pg,dis=false,act=false)=>{
+        const b=document.createElement('button');
+        b.className='pbtn'+(act?' active':''); b.innerHTML=lbl; b.disabled=dis;
+        if(!dis) b.onclick=()=>{PAGE=pg;render();};
         pb.appendChild(b);
       };
-      addPB('<i class="fas fa-chevron-left"></i>', PAGE - 1, PAGE <= 1);
-      for (let p = 1; p <= pages; p++) {
-        if (pages <= 7 || Math.abs(p - PAGE) <= 2 || p === 1 || p === pages) addPB(p, p, false, p === PAGE);
-        else if (Math.abs(p - PAGE) === 3) pb.innerHTML += '<span style="color:var(--muted);padding:0 4px">…</span>';
+      addPB('<i class="fas fa-chevron-left"></i>',PAGE-1,PAGE<=1);
+      for(let p=1;p<=pages;p++) {
+        if(pages<=7||Math.abs(p-PAGE)<=2||p===1||p===pages) addPB(p,p,false,p===PAGE);
+        else if(Math.abs(p-PAGE)===3) pb.innerHTML+='<span style="color:var(--muted);padding:0 4px">…</span>';
       }
-      addPB('<i class="fas fa-chevron-right"></i>', PAGE + 1, PAGE >= pages);
+      addPB('<i class="fas fa-chevron-right"></i>',PAGE+1,PAGE>=pages);
 
-      if (!sl.length) {
-        const empty = `<tr><td colspan="10"><div class="empty"><i class="fas fa-search"></i><div class="empty-t">No users found</div><div class="empty-s">Try adjusting search or filters</div></div></td></tr>`;
-        document.getElementById('tbody').innerHTML = empty;
-        document.getElementById('mob-cards').innerHTML = `<div class="empty"><i class="fas fa-search"></i><div class="empty-t">No users found</div><div class="empty-s">Try adjusting your filters</div></div>`;
+      if(!sl.length) {
+        const e=`<tr><td colspan="10"><div class="empty"><i class="fas fa-search"></i><div class="empty-t">No users found</div><div class="empty-s">Try adjusting search or filters</div></div></td></tr>`;
+        document.getElementById('tbody').innerHTML=e;
+        document.getElementById('mob-cards').innerHTML=`<div class="empty"><i class="fas fa-search"></i><div class="empty-t">No users found</div><div class="empty-s">Try adjusting your filters</div></div>`;
         return;
       }
 
-      // Desktop rows
-      document.getElementById('tbody').innerHTML = sl.map((u, i) => `
-    <tr>
-      <td style="color:var(--muted);font-size:11px">${(PAGE - 1) * PP + i + 1}</td>
-      <td><div class="ucell" onclick="openDetail(${u.id})">
-        <div class="ava" style="background:${avaColor(u.username)};color:${avaFg(u.username)}">${avaT(u.username)}</div>
-        <div><div class="uname">${esc(u.username)}</div><div class="uemail">${esc(u.email || '—')}</div></div>
-      </div></td>
-      <td><span class="mono">${esc(u.phone || '—')}</span></td>
-      <td>${u.role === 'admin' ? '<span class="badge b-admin">🛡️ Admin</span>' : '<span class="badge b-user">👤 User</span>'}</td>
-      <td style="text-align:center">${planBadge(u.plan)}</td>
-      <td style="text-align:center">${statusBadge(u)}</td>
-      <td style="font-size:11px;color:var(--muted)">${fdate(u.plan_start)}</td>
-      <td style="font-size:11px;color:var(--dim)">${fdate(u.plan_expiry)}</td>
-      <td>${dlBadge(u.plan_expiry)}</td>
-      <td><div class="actions">
-        <div class="ibtn ibtn-eye" title="View" onclick="openDetail(${u.id})"><i class="fas fa-eye"></i></div>
-        <div class="ibtn ibtn-crown" title="Plan" onclick="openPlan(${u.id})"><i class="fas fa-crown"></i></div>
-        <div class="ibtn ibtn-key" title="Edit" onclick="openEdit(${u.id})"><i class="fas fa-key"></i></div>
-        <div class="ibtn ibtn-trash" title="Delete" onclick="openDel(${u.id})"><i class="fas fa-trash"></i></div>
-      </div></td>
-    </tr>`).join('');
+      document.getElementById('tbody').innerHTML = sl.map((u,i) => `
+        <tr>
+          <td style="color:var(--muted);font-size:11px">${(PAGE-1)*PP+i+1}</td>
+          <td><div class="ucell" onclick="openDetail(${u.id})">
+            <div class="ava" style="background:${avaColor(u.username)};color:${avaFg(u.username)}">${avaT(u.username)}</div>
+            <div><div class="uname">${esc(u.username)}</div><div class="uemail">${esc(u.email||'—')}</div></div>
+          </div></td>
+          <td><span class="mono">${esc(u.phone||'—')}</span></td>
+          <td>${u.role==='admin'?'<span class="badge b-admin">🛡️ Admin</span>':'<span class="badge b-user">👤 User</span>'}</td>
+          <td style="text-align:center">${planBadge(u.plan)}</td>
+          <td style="text-align:center">${statusBadge(u)}</td>
+          <td style="font-size:11px;color:var(--muted)">${fdate(u.plan_start)}</td>
+          <td style="font-size:11px;color:var(--dim)">${fdate(u.plan_expiry)}</td>
+          <td>${dlBadge(u.plan_expiry)}</td>
+          <td><div class="actions">
+            <div class="ibtn ibtn-eye"   title="View"   onclick="openDetail(${u.id})"><i class="fas fa-eye"></i></div>
+            <div class="ibtn ibtn-crown" title="Plan"   onclick="openPlan(${u.id})"><i class="fas fa-crown"></i></div>
+            <div class="ibtn ibtn-key"   title="Edit"   onclick="openEdit(${u.id})"><i class="fas fa-key"></i></div>
+            <div class="ibtn ibtn-trash" title="Delete" onclick="openDel(${u.id})"><i class="fas fa-trash"></i></div>
+          </div></td>
+        </tr>`).join('');
 
-      // Mobile cards
-      document.getElementById('mob-cards').innerHTML = sl.map((u, i) => {
-        const dl2 = dleft(u.plan_expiry);
-        const dlc = dl2 === null ? 'none' : dl2 <= 0 ? 'exp' : dl2 <= 7 ? 'warn' : 'ok';
+      document.getElementById('mob-cards').innerHTML = sl.map((u,i) => {
+        const dl2=dleft(u.plan_expiry);
+        const dlc=dl2===null?'none':dl2<=0?'exp':dl2<=7?'warn':'ok';
         return `<div class="mob-card">
-      <div class="mob-card-top">
-        <div class="ava" style="background:${avaColor(u.username)};color:${avaFg(u.username)};width:42px;height:42px;font-size:14px">${avaT(u.username)}</div>
-        <div class="mob-card-info">
-          <div class="mob-card-name">${esc(u.username)}</div>
-          <div class="mob-card-email">${esc(u.email || '—')}</div>
-        </div>
-        <div style="font-size:10px;color:var(--muted)">#${(PAGE - 1) * PP + i + 1}</div>
-      </div>
-      <div class="mob-card-badges">
-        ${planBadge(u.plan)} ${statusBadge(u)}
-        ${u.role === 'admin' ? '<span class="badge b-admin">🛡️ Admin</span>' : ''}
-      </div>
-      <div class="mob-card-row"><span>Phone</span><span class="mono">${esc(u.phone || '—')}</span></div>
-      <div class="mob-card-row"><span>Plan Start</span><span>${fdate(u.plan_start)}</span></div>
-      <div class="mob-card-row"><span>Expiry</span><span>${fdate(u.plan_expiry)}</span></div>
-      <div class="mob-card-row"><span>Days Left</span><span class="dl ${dlc}">${dl2 === null ? '—' : dl2 <= 0 ? 'Expired' : dl2 + 'd left'}</span></div>
-      <div class="mob-card-actions">
-        <div class="ibtn ibtn-eye" onclick="openDetail(${u.id})" title="View"><i class="fas fa-eye"></i></div>
-        <div class="ibtn ibtn-crown" onclick="openPlan(${u.id})" title="Plan"><i class="fas fa-crown"></i></div>
-        <div class="ibtn ibtn-key" onclick="openEdit(${u.id})" title="Edit"><i class="fas fa-key"></i></div>
-        <div class="ibtn ibtn-trash" onclick="openDel(${u.id})" title="Delete"><i class="fas fa-trash"></i></div>
-      </div>
-    </div>`;
+          <div class="mob-card-top">
+            <div class="ava" style="background:${avaColor(u.username)};color:${avaFg(u.username)};width:42px;height:42px;font-size:14px">${avaT(u.username)}</div>
+            <div class="mob-card-info">
+              <div class="mob-card-name">${esc(u.username)}</div>
+              <div class="mob-card-email">${esc(u.email||'—')}</div>
+            </div>
+            <div style="font-size:10px;color:var(--muted)">#${(PAGE-1)*PP+i+1}</div>
+          </div>
+          <div class="mob-card-badges">${planBadge(u.plan)} ${statusBadge(u)} ${u.role==='admin'?'<span class="badge b-admin">🛡️ Admin</span>':''}</div>
+          <div class="mob-card-row"><span>Phone</span><span class="mono">${esc(u.phone||'—')}</span></div>
+          <div class="mob-card-row"><span>Plan Start</span><span>${fdate(u.plan_start)}</span></div>
+          <div class="mob-card-row"><span>Expiry</span><span>${fdate(u.plan_expiry)}</span></div>
+          <div class="mob-card-row"><span>Days Left</span><span class="dl ${dlc}">${dl2===null?'—':dl2<=0?'Expired':dl2+'d left'}</span></div>
+          <div class="mob-card-actions">
+            <div class="ibtn ibtn-eye"   onclick="openDetail(${u.id})" title="View"><i class="fas fa-eye"></i></div>
+            <div class="ibtn ibtn-crown" onclick="openPlan(${u.id})"   title="Plan"><i class="fas fa-crown"></i></div>
+            <div class="ibtn ibtn-key"   onclick="openEdit(${u.id})"   title="Edit"><i class="fas fa-key"></i></div>
+            <div class="ibtn ibtn-trash" onclick="openDel(${u.id})"    title="Delete"><i class="fas fa-trash"></i></div>
+          </div>
+        </div>`;
       }).join('');
     }
 
-    /* ════════════════════
-       DETAIL MODAL
-    ════════════════════ */
+    /* ════════ DETAIL MODAL ════════ */
     function openDetail(id) {
-      _du = ALL.find(u => u.id === id);
-      if (!_du) return;
-      document.getElementById('detail-title').innerHTML = `<i class="fas fa-user" style="color:var(--blue)"></i> ${esc(_du.username)}`;
-      dtab('overview');
-      openModal('ov-detail');
+      _du=ALL.find(u=>u.id===id); if(!_du) return;
+      document.getElementById('detail-title').innerHTML=`<i class="fas fa-user" style="color:var(--blue)"></i> ${esc(_du.username)}`;
+      dtab('overview'); openModal('ov-detail');
     }
     function dtab(t) {
-      ['overview', 'history', 'plan'].forEach(x => {
-        document.getElementById('dt-' + x).classList.toggle('active', x === t);
+      ['overview','history','plan'].forEach(x=>{
+        document.getElementById('dt-'+x).classList.toggle('active',x===t);
       });
-      const u = _du; if (!u) return;
-      const now = new Date();
-      const ex = u.plan_expiry ? new Date(u.plan_expiry) : null;
-      const dl2 = ex ? Math.ceil((ex - now) / 86400000) : null;
-      const st = planStatus(u);
+      const u=_du; if(!u) return;
+      const now=new Date();
+      const ex=u.plan_expiry?new Date(u.plan_expiry):null;
+      const dl2=ex?Math.ceil((ex-now)/86400000):null;
+      const st=planStatus(u);
 
-      if (t === 'overview') {
-        document.getElementById('detail-body').innerHTML = `
-      <div class="ubanner">
-        <div class="ubanner-ava" style="background:${avaColor(u.username)};color:${avaFg(u.username)}">${avaT(u.username)}</div>
-        <div class="ubanner-info">
-          <div class="ubanner-name">${esc(u.username)}</div>
-          <div class="ubanner-email">${esc(u.email || '—')}</div>
-          <div class="ubanner-badges">${planBadge(u.plan)} ${statusBadge(u)} ${u.role === 'admin' ? '<span class="badge b-admin">🛡️ Admin</span>' : ''}</div>
-        </div>
-      </div>
-      <div class="dg">
-        <div class="di"><div class="di-key">User ID</div><div class="di-val mono">#${u.id}</div></div>
-        <div class="di"><div class="di-key">Role</div><div class="di-val">${u.role === 'admin' ? '🛡️ Admin' : '👤 User'}</div></div>
-        <div class="di full"><div class="di-key">Email</div><div class="di-val">${esc(u.email || '—')}</div></div>
-        <div class="di"><div class="di-key">Phone</div><div class="di-val mono">${esc(u.phone || '—')}</div></div>
-        <div class="di"><div class="di-key">Consent</div><div class="di-val">${u.consent ? '✅ Given' : '❌ Not given'}</div></div>
-        <div class="di"><div class="di-key">Current Plan</div><div class="di-val">${planBadge(u.plan)}</div></div>
-        <div class="di"><div class="di-key">Status</div><div class="di-val">${statusBadge(u)}</div></div>
-        <div class="di"><div class="di-key">Days Remaining</div><div class="di-val">
-          <span class="dl ${dl2 === null ? 'none' : dl2 <= 0 ? 'exp' : dl2 <= 7 ? 'warn' : 'ok'}">${dl2 === null ? 'No plan' : dl2 <= 0 ? 'Expired' : dl2 + ' days'}</span>
-        </div></div>
-        <div class="di"><div class="di-key">Plan Start</div><div class="di-val">${fdate(u.plan_start)}</div></div>
-      </div>`;
-      } else if (t === 'history') {
-        const events = [];
-        events.push({ type: 'join', label: 'Account created', sub: `User #${u.id} registered`, date: null });
-        if (u.plan_start && u.plan && u.plan !== 'free')
-          events.push({ type: 'plan', label: `"${(u.plan || '').toUpperCase()}" plan activated`, sub: 'Subscription started', date: u.plan_start });
-        if (u.plan_expiry)
-          events.push({
-            type: ex && ex > now ? 'ok' : 'exp',
-            label: ex && ex > now ? `Plan expires on ${fdate(u.plan_expiry)}` : `Plan expired on ${fdate(u.plan_expiry)}`,
-            sub: dl2 !== null && dl2 > 0 ? dl2 + ' days remaining' : dl2 === 0 ? 'Expires today' : 'Subscription ended',
-            date: u.plan_expiry
-          });
-
-        document.getElementById('detail-body').innerHTML = `
-      <div class="ubanner" style="margin-bottom:14px">
-        <div class="ubanner-ava" style="background:${avaColor(u.username)};color:${avaFg(u.username)};font-size:14px">${avaT(u.username)}</div>
-        <div><div class="ubanner-name">${esc(u.username)}</div><div class="ubanner-email">Activity & subscription history</div></div>
-      </div>
-      <div class="history-list">
-        ${events.map(ev => `<div class="hl-item">
-          <div class="hl-dot ${ev.type}">
-            <i class="fas fa-${ev.type === 'join' ? 'user' : ev.type === 'plan' ? 'crown' : ev.type === 'ok' ? 'check' : 'times'}"></i>
+      if(t==='overview') {
+        document.getElementById('detail-body').innerHTML=`
+          <div class="ubanner">
+            <div class="ubanner-ava" style="background:${avaColor(u.username)};color:${avaFg(u.username)}">${avaT(u.username)}</div>
+            <div class="ubanner-info">
+              <div class="ubanner-name">${esc(u.username)}</div>
+              <div class="ubanner-email">${esc(u.email||'—')}</div>
+              <div class="ubanner-badges">${planBadge(u.plan)} ${statusBadge(u)} ${u.role==='admin'?'<span class="badge b-admin">🛡️ Admin</span>':''}</div>
+            </div>
           </div>
-          <div class="hl-content">
-            <div class="hl-title">${esc(ev.label)}</div>
-            <div class="hl-date">${ev.sub}${ev.date ? ' · ' + fdatetime(ev.date) : ''}</div>
+          <div class="dg">
+            <div class="di"><div class="di-key">User ID</div><div class="di-val mono">#${u.id}</div></div>
+            <div class="di"><div class="di-key">Role</div><div class="di-val">${u.role==='admin'?'🛡️ Admin':'👤 User'}</div></div>
+            <div class="di full"><div class="di-key">Email</div><div class="di-val">${esc(u.email||'—')}</div></div>
+            <div class="di"><div class="di-key">Phone</div><div class="di-val mono">${esc(u.phone||'—')}</div></div>
+            <div class="di"><div class="di-key">Consent</div><div class="di-val">${u.consent?'✅ Given':'❌ Not given'}</div></div>
+            <div class="di"><div class="di-key">Current Plan</div><div class="di-val">${planBadge(u.plan)}</div></div>
+            <div class="di"><div class="di-key">Status</div><div class="di-val">${statusBadge(u)}</div></div>
+            <div class="di"><div class="di-key">Days Remaining</div><div class="di-val">
+              <span class="dl ${dl2===null?'none':dl2<=0?'exp':dl2<=7?'warn':'ok'}">${dl2===null?'No plan':dl2<=0?'Expired':dl2+' days'}</span>
+            </div></div>
+            <div class="di"><div class="di-key">Plan Start</div><div class="di-val">${fdate(u.plan_start)}</div></div>
+          </div>`;
+      } else if(t==='history') {
+        const events=[];
+        events.push({type:'join',label:'Account created',sub:`User #${u.id} registered`,date:null});
+        if(u.plan_start&&u.plan&&u.plan!=='free')
+          events.push({type:'plan',label:`"${(u.plan||'').toUpperCase()}" plan activated`,sub:'Subscription started',date:u.plan_start});
+        if(u.plan_expiry)
+          events.push({type:ex&&ex>now?'ok':'exp',label:ex&&ex>now?`Plan expires on ${fdate(u.plan_expiry)}`:`Plan expired on ${fdate(u.plan_expiry)}`,sub:dl2!==null&&dl2>0?dl2+' days remaining':dl2===0?'Expires today':'Subscription ended',date:u.plan_expiry});
+        document.getElementById('detail-body').innerHTML=`
+          <div class="ubanner" style="margin-bottom:14px">
+            <div class="ubanner-ava" style="background:${avaColor(u.username)};color:${avaFg(u.username)};font-size:14px">${avaT(u.username)}</div>
+            <div><div class="ubanner-name">${esc(u.username)}</div><div class="ubanner-email">Activity & subscription history</div></div>
           </div>
-        </div>`).join('')}
-      </div>`;
+          <div class="history-list">
+            ${events.map(ev=>`<div class="hl-item">
+              <div class="hl-dot ${ev.type}"><i class="fas fa-${ev.type==='join'?'user':ev.type==='plan'?'crown':ev.type==='ok'?'check':'times'}"></i></div>
+              <div class="hl-content"><div class="hl-title">${esc(ev.label)}</div><div class="hl-date">${ev.sub}${ev.date?' · '+fdatetime(ev.date):''}</div></div>
+            </div>`).join('')}
+          </div>`;
       } else {
-        // Plan details tab
-        const planColors = { premium: 'var(--gold)', pro: 'var(--blue)', essential: 'var(--green)', basic: 'var(--purple)', free: 'var(--muted)' };
-        const planColor = planColors[(u.plan || 'free').toLowerCase()] || 'var(--muted)';
-        const planDays = { premium: 250, pro: 22, essential: 5, basic: 1, free: 0 };
-        const pd = planDays[(u.plan || 'free').toLowerCase()] || 0;
-        const used = dl2 !== null && pd > 0 ? Math.max(0, pd - Math.max(0, dl2)) : pd;
-        const pct = pd > 0 ? Math.min(100, Math.round((used / pd) * 100)) : 0;
-
-        document.getElementById('detail-body').innerHTML = `
-      <div class="ubanner" style="margin-bottom:16px">
-        <div style="width:48px;height:48px;border-radius:10px;background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.25);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">
-          ${u.plan === 'premium' ? '👑' : u.plan === 'pro' ? '⚡' : u.plan === 'essential' ? '🟢' : u.plan === 'basic' ? '🔵' : '⭕'}
-        </div>
-        <div>
-          <div class="ubanner-name" style="color:${planColor}">${(u.plan || 'free').toUpperCase()} PLAN</div>
-          <div class="ubanner-email">${pd > 0 ? pd + ' trading days total' : 'No active plan'}</div>
-          <div class="ubanner-badges">${statusBadge(u)}</div>
-        </div>
-      </div>
-      <div class="dg">
-        <div class="di"><div class="di-key">Plan Start</div><div class="di-val">${fdate(u.plan_start) || '—'}</div></div>
-        <div class="di"><div class="di-key">Plan Expiry</div><div class="di-val">${fdate(u.plan_expiry) || '—'}</div></div>
-        <div class="di"><div class="di-key">Days Used</div><div class="di-val">${pd > 0 ? used + ' / ' + pd + ' days' : '—'}</div></div>
-        <div class="di"><div class="di-key">Days Remaining</div><div class="di-val">
-          <span class="dl ${dl2 === null ? 'none' : dl2 <= 0 ? 'exp' : dl2 <= 5 ? 'warn' : 'ok'}">${dl2 === null ? '—' : dl2 <= 0 ? 'Expired' : dl2 + ' days'}</span>
-        </div></div>
-        ${pd > 0 ? `<div class="di full"><div class="di-key">Plan Usage</div>
-          <div style="margin-top:8px;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden">
-            <div style="height:100%;width:${pct}%;background:${planColor};border-radius:3px;transition:width .5s"></div>
+        const planColors={premium:'var(--gold)',pro:'var(--blue)',essential:'var(--green)',basic:'var(--purple)',free:'var(--muted)'};
+        const planColor=planColors[(u.plan||'free').toLowerCase()]||'var(--muted)';
+        const planDays={premium:250,pro:22,essential:5,basic:1,free:0};
+        const pd=planDays[(u.plan||'free').toLowerCase()]||0;
+        const used=dl2!==null&&pd>0?Math.max(0,pd-Math.max(0,dl2)):pd;
+        const pct=pd>0?Math.min(100,Math.round((used/pd)*100)):0;
+        document.getElementById('detail-body').innerHTML=`
+          <div class="ubanner" style="margin-bottom:16px">
+            <div style="width:48px;height:48px;border-radius:10px;background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.25);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">
+              ${u.plan==='premium'?'👑':u.plan==='pro'?'⚡':u.plan==='essential'?'🟢':u.plan==='basic'?'🔵':'⭕'}
+            </div>
+            <div>
+              <div class="ubanner-name" style="color:${planColor}">${(u.plan||'free').toUpperCase()} PLAN</div>
+              <div class="ubanner-email">${pd>0?pd+' trading days total':'No active plan'}</div>
+              <div class="ubanner-badges">${statusBadge(u)}</div>
+            </div>
           </div>
-          <div style="font-size:10px;color:var(--muted);margin-top:5px">${pct}% of plan used</div>
-        </div>`: ''}
-      </div>
-      <div style="text-align:center;padding-top:4px">
-        <button class="tbtn tbtn-primary" onclick="closeModal('ov-detail');openPlan(${u.id})" style="margin:0 auto">
-          <i class="fas fa-crown"></i> Extend / Change Plan
-        </button>
-      </div>`;
+          <div class="dg">
+            <div class="di"><div class="di-key">Plan Start</div><div class="di-val">${fdate(u.plan_start)||'—'}</div></div>
+            <div class="di"><div class="di-key">Plan Expiry</div><div class="di-val">${fdate(u.plan_expiry)||'—'}</div></div>
+            <div class="di"><div class="di-key">Days Used</div><div class="di-val">${pd>0?used+' / '+pd+' days':'—'}</div></div>
+            <div class="di"><div class="di-key">Days Remaining</div><div class="di-val">
+              <span class="dl ${dl2===null?'none':dl2<=0?'exp':dl2<=5?'warn':'ok'}">${dl2===null?'—':dl2<=0?'Expired':dl2+' days'}</span>
+            </div></div>
+            ${pd>0?`<div class="di full"><div class="di-key">Plan Usage</div>
+              <div style="margin-top:8px;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden">
+                <div style="height:100%;width:${pct}%;background:${planColor};border-radius:3px;transition:width .5s"></div>
+              </div>
+              <div style="font-size:10px;color:var(--muted);margin-top:5px">${pct}% of plan used</div>
+            </div>`:''}
+          </div>
+          <div style="text-align:center;padding-top:4px">
+            <button class="tbtn tbtn-primary" onclick="closeModal('ov-detail');openPlan(${u.id})" style="margin:0 auto">
+              <i class="fas fa-crown"></i> Extend / Change Plan
+            </button>
+          </div>`;
       }
     }
 
-    function editFromDetail() { if (_du) { closeModal('ov-detail'); openEdit(_du.id); } }
-    function planFromDetail() { if (_du) { closeModal('ov-detail'); openPlan(_du.id); } }
-    function delFromDetail() { if (_du) { closeModal('ov-detail'); openDel(_du.id); } }
+    function editFromDetail() { if(_du){closeModal('ov-detail');openEdit(_du.id);} }
+    function planFromDetail() { if(_du){closeModal('ov-detail');openPlan(_du.id);} }
+    function delFromDetail()  { if(_du){closeModal('ov-detail');openDel(_du.id);} }
 
-    /* ════════════════════
-       ADD / EDIT MODAL
-    ════════════════════ */
+    /* ════════ ADD / EDIT ════════ */
     function openAdd() {
-      document.getElementById('edit-title').innerHTML = '<i class="fas fa-user-plus" style="color:var(--blue)"></i> Add New User';
-      document.getElementById('save-txt').textContent = 'Create User';
-      document.getElementById('pw-label').innerHTML = 'Password <span style="color:var(--red)">*</span>';
-      document.getElementById('pw-hint').textContent = 'Minimum 8 characters, 1 uppercase, 1 digit';
-      document.getElementById('e-id').value = '';
-      ['e-un', 'e-em', 'e-ph', 'e-pw'].forEach(i => document.getElementById(i).value = '');
-      document.getElementById('e-role').value = 'user';
+      document.getElementById('edit-title').innerHTML='<i class="fas fa-user-plus" style="color:var(--blue)"></i> Add New User';
+      document.getElementById('save-txt').textContent='Create User';
+      document.getElementById('pw-label').innerHTML='Password <span style="color:var(--red)">*</span>';
+      document.getElementById('pw-hint').textContent='Minimum 8 characters, 1 uppercase, 1 digit';
+      document.getElementById('e-id').value='';
+      ['e-un','e-em','e-ph','e-pw'].forEach(i=>document.getElementById(i).value='');
+      document.getElementById('e-role').value='user';
       openModal('ov-edit');
     }
-
     function openEdit(id) {
-      const u = ALL.find(x => x.id === id); if (!u) return;
-      document.getElementById('edit-title').innerHTML = '<i class="fas fa-user-edit" style="color:var(--blue)"></i> Edit User';
-      document.getElementById('save-txt').textContent = 'Save Changes';
-      document.getElementById('pw-label').innerHTML = 'New Password <span style="color:var(--muted);font-weight:400">(leave blank to keep)</span>';
-      document.getElementById('pw-hint').textContent = '';
-      document.getElementById('e-id').value = u.id;
-      document.getElementById('e-un').value = u.username || '';
-      document.getElementById('e-em').value = u.email || '';
-      document.getElementById('e-ph').value = u.phone || '';
-      document.getElementById('e-pw').value = '';
-      document.getElementById('e-role').value = u.role || 'user';
+      const u=ALL.find(x=>x.id===id); if(!u) return;
+      document.getElementById('edit-title').innerHTML='<i class="fas fa-user-edit" style="color:var(--blue)"></i> Edit User';
+      document.getElementById('save-txt').textContent='Save Changes';
+      document.getElementById('pw-label').innerHTML='New Password <span style="color:var(--muted);font-weight:400">(leave blank to keep)</span>';
+      document.getElementById('pw-hint').textContent='';
+      document.getElementById('e-id').value=u.id;
+      document.getElementById('e-un').value=u.username||'';
+      document.getElementById('e-em').value=u.email||'';
+      document.getElementById('e-ph').value=u.phone||'';
+      document.getElementById('e-pw').value='';
+      document.getElementById('e-role').value=u.role||'user';
       openModal('ov-edit');
     }
-
     async function saveUser() {
-      const id = document.getElementById('e-id').value;
-      const un = document.getElementById('e-un').value.trim();
-      const em = document.getElementById('e-em').value.trim();
-      const ph = document.getElementById('e-ph').value.trim();
-      const role = document.getElementById('e-role').value;
-      const pw = document.getElementById('e-pw').value;
-      if (!un || !em) { toast('Username and email are required', 'error'); return; }
-      const payload = { username: un, email: em, phone: ph, role };
-      if (pw) payload.password = pw;
-      if (id) payload.id = parseInt(id);
+      const id=document.getElementById('e-id').value;
+      const un=document.getElementById('e-un').value.trim();
+      const em=document.getElementById('e-em').value.trim();
+      const ph=document.getElementById('e-ph').value.trim();
+      const role=document.getElementById('e-role').value;
+      const pw=document.getElementById('e-pw').value;
+      if(!un||!em){toast('Username and email are required','error');return;}
+      const payload={username:un,email:em,phone:ph,role};
+      if(pw) payload.password=pw;
+      if(id) payload.id=parseInt(id);
       try {
-        const d = await api(id ? '/api/admin/user/update' : '/api/admin/user/create', { method: 'POST', body: JSON.stringify(payload) });
-        if (d.success) { toast(id ? 'User updated' : 'User created', 'success'); closeModal('ov-edit'); loadUsers(); }
-        else toast(d.error || 'Failed', 'error');
-      } catch { toast('Server error', 'error'); }
+        const d=await api(id?'/api/admin/user/update':'/api/admin/user/create',{method:'POST',body:JSON.stringify(payload)});
+        if(d.success){toast(id?'User updated':'User created','success');closeModal('ov-edit');loadUsers();}
+        else toast(d.error||'Failed','error');
+      } catch{toast('Server error','error');}
     }
 
-    /* ════════════════════
-       PLAN MODAL
-    ════════════════════ */
+    /* ════════ PLAN MODAL ════════ */
     function selPlan(p) {
-      _sp = p;
-      ['premium', 'pro', 'essential', 'basic', 'free'].forEach(x => {
-        document.getElementById('po-' + x).className = 'po' + (x === p ? ` sel-${x}` : '') + (x === 'free' ? ' full' : '');
+      _sp=p;
+      ['premium','pro','essential','basic','free'].forEach(x=>{
+        document.getElementById('po-'+x).className='po'+(x===p?` sel-${x}`:'')+(x==='free'?' full':'');
       });
-      document.getElementById('ceg').style.display = p !== 'free' ? 'block' : 'none';
+      document.getElementById('ceg').style.display=p!=='free'?'block':'none';
     }
-
     function openPlan(id) {
-      const u = ALL.find(x => x.id === id); if (!u) return;
-      document.getElementById('p-uid').value = u.id;
-      document.getElementById('p-name').textContent = u.username || '—';
-      document.getElementById('p-email').textContent = u.email || '—';
-      document.getElementById('p-ava').textContent = avaT(u.username);
-      document.getElementById('p-ava').style.background = avaColor(u.username);
-      document.getElementById('p-ava').style.color = avaFg(u.username);
-      document.getElementById('p-cur-plan').innerHTML = planBadge(u.plan) + ' ' + statusBadge(u);
-      document.getElementById('p-note').value = '';
-      document.getElementById('cex').value = '';
-      selPlan(u.plan || 'free');
+      const u=ALL.find(x=>x.id===id); if(!u) return;
+      document.getElementById('p-uid').value=u.id;
+      document.getElementById('p-name').textContent=u.username||'—';
+      document.getElementById('p-email').textContent=u.email||'—';
+      document.getElementById('p-ava').textContent=avaT(u.username);
+      document.getElementById('p-ava').style.background=avaColor(u.username);
+      document.getElementById('p-ava').style.color=avaFg(u.username);
+      document.getElementById('p-cur-plan').innerHTML=planBadge(u.plan)+' '+statusBadge(u);
+      document.getElementById('p-note').value='';
+      document.getElementById('cex').value='';
+      selPlan(u.plan||'free');
       openModal('ov-plan');
     }
-
     async function assignPlan() {
-      const id = document.getElementById('p-uid').value;
-      if (!id) return;
-      if (!_sp) { toast('Select a plan', 'error'); return; }
-      const payload = { user_id: parseInt(id), plan: _sp, note: document.getElementById('p-note').value.trim(), custom_expiry: document.getElementById('cex').value || null };
+      const id=document.getElementById('p-uid').value; if(!id) return;
+      if(!_sp){toast('Select a plan','error');return;}
+      const payload={user_id:parseInt(id),plan:_sp,note:document.getElementById('p-note').value.trim(),custom_expiry:document.getElementById('cex').value||null};
       try {
-        const d = await api('/api/admin/user/assign-plan', { method: 'POST', body: JSON.stringify(payload) });
-        if (d.success) { toast(`"${_sp}" plan assigned`, 'success'); closeModal('ov-plan'); loadUsers(); }
-        else toast(d.error || 'Failed', 'error');
-      } catch { toast('Server error', 'error'); }
+        const d=await api('/api/admin/user/assign-plan',{method:'POST',body:JSON.stringify(payload)});
+        if(d.success){toast(`"${_sp}" plan assigned`,'success');closeModal('ov-plan');loadUsers();}
+        else toast(d.error||'Failed','error');
+      } catch{toast('Server error','error');}
     }
 
-    /* ════════════════════
-       DELETE MODAL
-    ════════════════════ */
+    /* ════════ DELETE MODAL ════════ */
     function openDel(id) {
-      const u = ALL.find(x => x.id === id); if (!u) return;
-      document.getElementById('d-uid').value = u.id;
-      document.getElementById('d-name').textContent = u.username || '—';
-      document.getElementById('d-email').textContent = u.email || '—';
-      document.getElementById('d-ava').textContent = avaT(u.username);
+      const u=ALL.find(x=>x.id===id); if(!u) return;
+      document.getElementById('d-uid').value=u.id;
+      document.getElementById('d-name').textContent=u.username||'—';
+      document.getElementById('d-email').textContent=u.email||'—';
+      document.getElementById('d-ava').textContent=avaT(u.username);
       openModal('ov-del');
     }
-
     async function confirmDelete() {
-      const id = document.getElementById('d-uid').value; if (!id) return;
+      const id=document.getElementById('d-uid').value; if(!id) return;
       try {
-        const d = await api('/api/admin/user/delete', { method: 'POST', body: JSON.stringify({ user_id: parseInt(id) }) });
-        if (d.success) { toast('User deleted', 'success'); closeModal('ov-del'); loadUsers(); }
-        else toast(d.error || 'Failed', 'error');
-      } catch { toast('Server error', 'error'); }
+        const d=await api('/api/admin/user/delete',{method:'POST',body:JSON.stringify({user_id:parseInt(id)})});
+        if(d.success){toast('User deleted','success');closeModal('ov-del');loadUsers();}
+        else toast(d.error||'Failed','error');
+      } catch{toast('Server error','error');}
     }
 
-    /* ════════════════════
-       EXPORT CSV
-    ════════════════════ */
+    /* ════════ EXPORT CSV ════════ */
     function exportCSV() {
-      if (!FIL.length) { toast('No users to export', 'error'); return; }
-      const now = new Date();
-      const hdrs = ['ID', 'Username', 'Email', 'Phone', 'Role', 'Plan', 'Status', 'Plan Start', 'Plan Expiry', 'Days Left'];
-      const rows = FIL.map(u => {
-        const dl2 = u.plan_expiry ? Math.ceil((new Date(u.plan_expiry) - now) / 86400000) : null;
-        return [u.id, u.username, u.email, u.phone || '', u.role, u.plan || 'free', planStatus(u), u.plan_start || '', u.plan_expiry || '', dl2 !== null ? dl2 : ''];
+      if(!FIL.length){toast('No users to export','error');return;}
+      const now=new Date();
+      const hdrs=['ID','Username','Email','Phone','Role','Plan','Status','Plan Start','Plan Expiry','Days Left'];
+      const rows=FIL.map(u=>{
+        const dl2=u.plan_expiry?Math.ceil((new Date(u.plan_expiry)-now)/86400000):null;
+        return [u.id,u.username,u.email,u.phone||'',u.role,u.plan||'free',planStatus(u),u.plan_start||'',u.plan_expiry||'',dl2!==null?dl2:''];
       });
-      const csv = [hdrs, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
-      const a = document.createElement('a');
-      a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-      a.download = `traderbro_users_${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
-      toast('CSV exported', 'success');
+      const csv=[hdrs,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const a=document.createElement('a');
+      a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+      a.download=`traderbro_users_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click(); toast('CSV exported','success');
     }
 
-    /* ════════════════════
-       INIT
-    ════════════════════ */
+    /* ════════ INIT ════════ */
     loadUsers();
     setInterval(loadUsers, 60000);
   </script>
 </body>
-
 </html>
