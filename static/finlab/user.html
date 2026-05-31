@@ -1,348 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <title>TraderBro - Account</title>
-
     <link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png">
-
-    <!-- FINLAB CSS -->
     <link href="/static/finlab/Frontend/xhtml/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/finlab/Frontend/xhtml/css/style.css" rel="stylesheet">
-
     <style>
+.subscription-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;align-items:start;margin-top:10px}
+@media(max-width:992px){.subscription-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:576px){.subscription-grid{grid-template-columns:1fr}}
+.subscription-item{text-align:center}
+.subscription-label{color:#94a3b8;font-size:12px;font-weight:600;margin-bottom:12px;letter-spacing:.4px;text-transform:uppercase}
+.subscription-value{font-size:18px;font-weight:700;color:#0f172a;line-height:1.5}
+.plan-tag{display:inline-flex;align-items:center;justify-content:center;padding:10px 20px;border-radius:999px;color:white;font-size:13px;font-weight:700;min-width:120px;min-height:42px;letter-spacing:.5px;box-shadow:0 8px 20px rgba(37,99,235,.25)}
+.plan-tag.free{background:linear-gradient(135deg,#64748b,#475569);box-shadow:none}
+.plan-tag.basic{background:linear-gradient(135deg,#0ea5e9,#0284c7);box-shadow:0 8px 20px rgba(14,165,233,.3)}
+.plan-tag.essential{background:linear-gradient(135deg,#8b5cf6,#6d28d9);box-shadow:0 8px 20px rgba(109,40,217,.3)}
+.plan-tag.pro{background:linear-gradient(135deg,#f59e0b,#d97706);box-shadow:0 8px 20px rgba(245,158,11,.3)}
+.plan-tag.premium{background:linear-gradient(135deg,#ec4899,#db2777);box-shadow:0 8px 20px rgba(236,72,153,.3)}
+.status-tag{display:inline-flex;align-items:center;justify-content:center;padding:10px 20px;border-radius:999px;font-size:13px;font-weight:700;min-width:120px;min-height:42px}
+.status-tag.active{background:linear-gradient(135deg,#22c55e,#16a34a);color:white;box-shadow:0 8px 20px rgba(34,197,94,.25)}
+.status-tag.expired{background:linear-gradient(135deg,#ef4444,#dc2626);color:white}
+.status-tag.inactive{background:#64748b;color:white}
+.live-indicator{padding:10px 18px;border-radius:999px;font-size:13px;font-weight:700;color:white}
+.live-indicator.active{background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 8px 20px rgba(34,197,94,.25)}
+.live-indicator.expired{background:linear-gradient(135deg,#ef4444,#dc2626)}
+.live-indicator.inactive{background:#64748b}
+.subscription-card{background:linear-gradient(145deg,#ffffff,#f8fbff);border:none;border-radius:28px;padding:36px;box-shadow:0 20px 50px rgba(15,23,42,.08);position:relative;overflow:hidden}
+.subscription-card::before{content:"";position:absolute;top:-120px;right:-120px;width:240px;height:240px;background:radial-gradient(rgba(37,99,235,.1),transparent 70%)}
+.subscription-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;flex-wrap:wrap;gap:14px}
+.subscription-title{font-size:28px;font-weight:800;color:#0f172a;margin-bottom:4px}
+.subscription-subtitle{color:#64748b;font-size:13px;margin:0}
+.upgrade-btn{width:100%;display:flex;justify-content:center;align-items:center;padding:16px;border-radius:18px;text-decoration:none;font-weight:700;font-size:16px;color:white;background:linear-gradient(135deg,#0ea5e9,#2563eb);transition:.3s ease;box-shadow:0 15px 35px rgba(37,99,235,.25)}
+.upgrade-btn:hover{transform:translateY(-2px);color:white}
+.profile-card{position:relative;overflow:hidden;border:none;border-radius:30px;background:linear-gradient(145deg,#0f172a,#111827);min-height:100%;box-shadow:0 25px 60px rgba(15,23,42,.18)}
+.profile-glow{position:absolute;top:-100px;right:-100px;width:260px;height:260px;border-radius:50%;background:radial-gradient(rgba(59,130,246,.35),transparent 70%)}
+.profile-avatar{width:110px;height:110px;margin:0 auto 24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:800;color:white;box-shadow:0 15px 35px rgba(0,114,255,.35);background:linear-gradient(135deg,#00c6ff,#0072ff)}
+.profile-name{color:white;font-size:30px;font-weight:800;margin-bottom:8px}
+.profile-email{color:#94a3b8;font-size:14px;margin-bottom:16px}
+.profile-phone{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);padding:10px 16px;border-radius:14px;color:#e2e8f0;font-size:14px;margin-bottom:20px}
+.member-badge{display:inline-flex;align-items:center;justify-content:center;padding:10px 18px;border-radius:999px;color:white;font-size:13px;font-weight:700;margin-bottom:28px;box-shadow:0 10px 25px rgba(249,115,22,.3);background:linear-gradient(135deg,#f59e0b,#f97316)}
+.profile-stats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+.profile-stat{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:18px}
+.profile-stat h4{color:white;font-size:20px;font-weight:800;margin-bottom:6px}
+.profile-stat p{color:#94a3b8;font-size:12px;margin:0}
+#countdown{font-size:13px;color:#64748b;margin-top:10px;font-weight:500}
+#countdown span{color:#0ea5e9;font-weight:700}
+.sub-history-card{background:#fff;border:none;border-radius:24px;box-shadow:0 10px 40px rgba(15,23,42,.07);overflow:hidden}
+.sub-history-header{background:linear-gradient(135deg,#0f172a,#1e293b);padding:22px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.sub-history-header h4{color:white;font-size:18px;font-weight:800;margin:0}
+.sub-count-badge{background:rgba(255,255,255,.12);color:white;padding:4px 14px;border-radius:999px;font-size:12px;font-weight:600}
+.sub-table-wrap{overflow-x:auto}
+.sub-table{width:100%;border-collapse:collapse;font-size:13px;min-width:700px}
+.sub-table thead th{padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#64748b;background:#f8fafc;border-bottom:2px solid #e2e8f0;white-space:nowrap}
+.sub-table tbody td{padding:14px 16px;vertical-align:middle;border-bottom:1px solid #f1f5f9}
+.sub-table tbody tr:last-child td{border-bottom:none}
+.sub-table tbody tr:hover{background:#fafbff}
+.sub-row-active{background:#f0fdf4}
+.sub-row-queued{background:#eff6ff}
+.sub-row-expired{background:#f9fafb}
+.plan-pill{display:inline-block;padding:3px 12px;border-radius:999px;color:white;font-size:11px;font-weight:700;letter-spacing:.3px}
+.plan-pill.free{background:#64748b}
+.plan-pill.basic{background:#0ea5e9}
+.plan-pill.essential{background:#8b5cf6}
+.plan-pill.pro{background:#f59e0b}
+.plan-pill.premium{background:#ec4899}
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700}
+.status-pill.active{background:#dcfce7;color:#166534}
+.status-pill.queued{background:#dbeafe;color:#1d4ed8}
+.status-pill.expired{background:#f1f5f9;color:#64748b}
+.meta-chip{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#f1f5f9;color:#475569;margin:2px}
+.sub-empty{padding:50px 20px;text-align:center;color:#94a3b8}
+.sub-empty .sub-empty-icon{font-size:48px;margin-bottom:12px}
+.sub-empty p{font-size:14px;margin:0 0 16px}
+.next-badge{display:inline-block;background:#eff6ff;color:#2563eb;border:1px dashed #93c5fd;padding:2px 10px;border-radius:6px;font-size:11px;font-weight:600;margin-left:6px}
+.loading-ring{display:inline-block;width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#2563eb;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── SUBSCRIPTION GRID ─────────────────────────────────────── */
-.subscription-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-    align-items: start;
-    margin-top: 10px;
-}
-
-@media (max-width: 992px) {
-    .subscription-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 576px) {
-    .subscription-grid { grid-template-columns: 1fr; }
-}
-
-.subscription-item { text-align: center; }
-
-.subscription-label {
-    color: #94a3b8;
-    font-size: 12px;
-    font-weight: 600;
-    margin-bottom: 12px;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-}
-
-.subscription-value {
-    font-size: 18px;
-    font-weight: 700;
-    color: #0f172a;
-    line-height: 1.5;
-}
-
-/* ── PLAN TAG ──────────────────────────────────────────────── */
-.plan-tag {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 20px;
-    border-radius: 999px;
-    color: white;
-    font-size: 13px;
-    font-weight: 700;
-    min-width: 120px;
-    min-height: 42px;
-    letter-spacing: 0.5px;
-    box-shadow: 0 8px 20px rgba(37,99,235,0.25);
-}
-
-.plan-tag.free    { background: linear-gradient(135deg,#64748b,#475569); box-shadow:none; }
-.plan-tag.basic   { background: linear-gradient(135deg,#0ea5e9,#0284c7); box-shadow:0 8px 20px rgba(14,165,233,0.3); }
-.plan-tag.essential { background: linear-gradient(135deg,#8b5cf6,#6d28d9); box-shadow:0 8px 20px rgba(109,40,217,0.3); }
-.plan-tag.pro     { background: linear-gradient(135deg,#f59e0b,#d97706); box-shadow:0 8px 20px rgba(245,158,11,0.3); }
-.plan-tag.premium { background: linear-gradient(135deg,#ec4899,#db2777); box-shadow:0 8px 20px rgba(236,72,153,0.3); }
-
-/* ── STATUS TAG ────────────────────────────────────────────── */
-.status-tag {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 20px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 700;
-    min-width: 120px;
-    min-height: 42px;
-}
-
-.status-tag.active   { background: linear-gradient(135deg,#22c55e,#16a34a); color:white; box-shadow:0 8px 20px rgba(34,197,94,0.25); }
-.status-tag.expired  { background: linear-gradient(135deg,#ef4444,#dc2626); color:white; }
-.status-tag.inactive { background: #64748b; color:white; }
-
-/* ── LIVE INDICATOR ────────────────────────────────────────── */
-.live-indicator {
-    padding: 10px 18px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 700;
-    color: white;
-}
-.live-indicator.active  { background: linear-gradient(135deg,#22c55e,#16a34a); box-shadow:0 8px 20px rgba(34,197,94,0.25); }
-.live-indicator.expired { background: linear-gradient(135deg,#ef4444,#dc2626); }
-.live-indicator.inactive{ background: #64748b; }
-
-/* ── SUBSCRIPTION CARD ─────────────────────────────────────── */
-.subscription-card {
-    background: linear-gradient(145deg,#ffffff,#f8fbff);
-    border: none;
-    border-radius: 28px;
-    padding: 36px;
-    box-shadow: 0 20px 50px rgba(15,23,42,0.08);
-    position: relative;
-    overflow: hidden;
-}
-.subscription-card::before {
-    content:"";
-    position:absolute;
-    top:-120px; right:-120px;
-    width:240px; height:240px;
-    background: radial-gradient(rgba(37,99,235,0.1),transparent 70%);
-}
-
-.subscription-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 32px;
-    flex-wrap: wrap;
-    gap: 14px;
-}
-
-.subscription-title {
-    font-size: 28px;
-    font-weight: 800;
-    color: #0f172a;
-    margin-bottom: 4px;
-}
-
-.subscription-subtitle {
-    color: #64748b;
-    font-size: 13px;
-    margin: 0;
-}
-
-/* ── UPGRADE BUTTON ────────────────────────────────────────── */
-.upgrade-btn {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 16px;
-    border-radius: 18px;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 16px;
-    color: white;
-    background: linear-gradient(135deg,#0ea5e9,#2563eb);
-    transition: 0.3s ease;
-    box-shadow: 0 15px 35px rgba(37,99,235,0.25);
-}
-.upgrade-btn:hover { transform: translateY(-2px); color: white; }
-
-/* ── PROFILE CARD ──────────────────────────────────────────── */
-.profile-card {
-    position: relative;
-    overflow: hidden;
-    border: none;
-    border-radius: 30px;
-    background: linear-gradient(145deg,#0f172a,#111827);
-    min-height: 100%;
-    box-shadow: 0 25px 60px rgba(15,23,42,0.18);
-}
-
-.profile-glow {
-    position: absolute;
-    top: -100px; right: -100px;
-    width: 260px; height: 260px;
-    border-radius: 50%;
-    background: radial-gradient(rgba(59,130,246,0.35),transparent 70%);
-}
-
-.profile-avatar {
-    width: 110px; height: 110px;
-    margin: 0 auto 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 42px;
-    font-weight: 800;
-    color: white;
-    box-shadow: 0 15px 35px rgba(0,114,255,0.35);
-    /* background set dynamically by JS */
-    background: linear-gradient(135deg,#00c6ff,#0072ff);
-}
-
-.profile-name  { color: white; font-size: 30px; font-weight: 800; margin-bottom: 8px; }
-.profile-email { color: #94a3b8; font-size: 14px; margin-bottom: 16px; }
-
-.profile-phone {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.08);
-    padding: 10px 16px;
-    border-radius: 14px;
-    color: #e2e8f0;
-    font-size: 14px;
-    margin-bottom: 20px;
-}
-
-.member-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 18px;
-    border-radius: 999px;
-    color: white;
-    font-size: 13px;
-    font-weight: 700;
-    margin-bottom: 28px;
-    box-shadow: 0 10px 25px rgba(249,115,22,0.3);
-    /* background set dynamically */
-    background: linear-gradient(135deg,#f59e0b,#f97316);
-}
-
-.profile-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-top: 8px;
-}
-
-.profile-stat {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 18px;
-    padding: 18px;
-}
-
-.profile-stat h4 { color: white; font-size: 20px; font-weight: 800; margin-bottom: 6px; }
-.profile-stat p  { color: #94a3b8; font-size: 12px; margin: 0; }
-
-/* ── COUNTDOWN TIMER ───────────────────────────────────────── */
-#countdown {
-    font-size: 13px;
-    color: #64748b;
-    margin-top: 10px;
-    font-weight: 500;
-}
-#countdown span { color: #0ea5e9; font-weight: 700; }
-
+/* ── UPCOMING HOLIDAYS SECTION ── */
+.holiday-section{background:linear-gradient(145deg,#0f172a,#1e293b);border-radius:24px;overflow:hidden;margin-top:20px}
+.holiday-section-header{padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06)}
+.holiday-section-header h4{color:white;font-size:16px;font-weight:800;margin:0}
+.holiday-count{background:rgba(255,255,255,.1);color:#94a3b8;padding:3px 12px;border-radius:999px;font-size:11px;font-weight:600}
+.holiday-list{padding:6px 24px 16px}
+.holiday-item{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.holiday-item:last-child{border-bottom:none}
+.holiday-date-box{min-width:48px;text-align:center;background:rgba(255,255,255,.07);border-radius:10px;padding:6px 4px;flex-shrink:0}
+.holiday-date-day{font-size:18px;font-weight:800;color:#e8eaf0;line-height:1}
+.holiday-date-mon{font-size:9px;color:#94a3b8;font-weight:600;margin-top:1px}
+.holiday-name{font-size:13px;font-weight:700;color:#f8fafc}
+.holiday-dow{font-size:10px;color:#64748b;margin-top:2px}
+.holiday-days-away{font-size:11px;font-weight:700;text-align:right;min-width:80px}
+.today-holiday-banner{background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.3);border-radius:12px;padding:12px 16px;margin:12px 24px 4px;display:flex;align-items:center;gap:10px}
     </style>
 </head>
-
 <body>
-
 <div class="page-wraper">
-
-    <!-- Header -->
-		<header class="site-header mo-left header header-transparent ">
-			<!-- Main Header -->
-			<div class="sticky-header main-bar-wraper navbar-expand-lg">
-				<div class="main-bar clearfix ">
-					<div class="container clearfix">
-
-						<!-- Website Logo -->
-						<div class="logo-header">
-							<a href="/" class="logo-light"><img
-									src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
-									alt="Traderbro.in"></a>
-							<a href="/" class="logo-dark"><img
-									src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
-									alt="Traderbro.in"></a>
-						</div>
-
-						<!-- Nav Toggle Button -->
-						<button class="navbar-toggler collapsed navicon justify-content-end" type="button"
-							data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
-							aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-							<span></span>
-							<span></span>
-							<span></span>
-						</button>
-
-						<!-- Extra Nav -->
-						<div class="extra-nav">
-							<div class="extra-cell d-flex align-items-center" id="navAuth"></div>
-						</div>
-
-						<!-- Header Nav -->
-						<div class="header-nav navbar-collapse collapse justify-content-end" id="navbarNavDropdown">
-						
-							<!-- MOBILE LOGO -->
-							<div class="mobile-logo d-lg-none">
-								<a href="/">
-									<img src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png" alt="Traderbro.in">
-								</a>
-							</div>
-						
-							<!-- NAVIGATION -->
-							<ul class="nav navbar-nav navbar navbar-left">
-						
-								<li>
-									<a href="/about-us">About Us</a>
-								</li>
-						
-								<li>
-									<a href="/trading-plan">
-										Subscriptions
-									</a>
-								</li>
-						
-								<li>
-									<a href="/contact-us">
-										Contact Us
-									</a>
-								</li>
-						
-							</ul>
-						
-							<!-- MOBILE AUTH -->
-							<div class="mobile-auth-wrapper d-lg-none">
-						
-								<div class="mobile-auth-buttons" id="mobileNavAuth">
-						
-									<!-- Dynamic buttons -->
-						
-								</div>
-						
-							</div>
-						
-						</div>
-					</div>
-				</div>
-			</div>
-			<!-- Main Header End -->
-		</header>
-		<!-- Header End -->
+    <header class="site-header mo-left header header-transparent">
+        <div class="sticky-header main-bar-wraper navbar-expand-lg">
+            <div class="main-bar clearfix">
+                <div class="container clearfix">
+                    <div class="logo-header">
+                        <a href="/" class="logo-light"><img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="Traderbro.in"></a>
+                        <a href="/" class="logo-dark"><img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="Traderbro.in"></a>
+                    </div>
+                    <button class="navbar-toggler collapsed navicon justify-content-end" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                        <span></span><span></span><span></span>
+                    </button>
+                    <div class="extra-nav"><div class="extra-cell d-flex align-items-center" id="navAuth"></div></div>
+                    <div class="header-nav navbar-collapse collapse justify-content-end" id="navbarNavDropdown">
+                        <div class="mobile-logo d-lg-none"><a href="/"><img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="Traderbro.in"></a></div>
+                        <ul class="nav navbar-nav navbar navbar-left">
+                            <li><a href="/about-us">About Us</a></li>
+                            <li><a href="/trading-plan">Subscriptions</a></li>
+                            <li><a href="/contact-us">Contact Us</a></li>
+                        </ul>
+                        <div class="mobile-auth-wrapper d-lg-none"><div class="mobile-auth-buttons" id="mobileNavAuth"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
 
     <div class="page-content">
-
-        <!-- Banner -->
-        <div class="dz-bnr-inr dz-bnr-inr-sm text-center position-relative"
-             style="background-image:url('/static/finlab/Frontend/xhtml/images/background/bg2.jpg');">
+        <div class="dz-bnr-inr dz-bnr-inr-sm text-center position-relative" style="background-image:url('/static/finlab/Frontend/xhtml/images/background/bg2.jpg');">
             <div class="container">
                 <div class="dz-bnr-inr-entry">
                     <h1>My TraderBro Account</h1>
@@ -358,712 +141,536 @@
         </div>
 
         <div class="container mt-5 mb-5">
-
             <div class="row g-4">
-
-                <!-- ── LEFT: PROFILE CARD ─────────────────────────────── -->
                 <div class="col-xl-4 col-lg-4">
                     <div class="card profile-card">
                         <div class="profile-glow"></div>
                         <div class="card-body text-center position-relative">
-
-                            <div class="profile-avatar" id="avatarCircle">
-                                <span id="avatar">?</span>
-                            </div>
-
+                            <div class="profile-avatar" id="avatarCircle"><span id="avatar">?</span></div>
                             <h2 class="profile-name" id="username">—</h2>
                             <p class="profile-email" id="email">—</p>
-
-                            <div class="profile-phone">
-                                📱 <span id="phone">—</span>
-                            </div>
-
-                            <!-- badge changes with plan -->
-                            <div class="member-badge" id="memberBadge">
-                                ⭐ Member
-                            </div>
-
+                            <div class="profile-phone">📱 <span id="phone">—</span></div>
+                            <div class="member-badge" id="memberBadge">⭐ Member</div>
                             <div class="profile-stats">
-                                <div class="profile-stat">
-                                    <h4 id="planMini">—</h4>
-                                    <p>Current Plan</p>
-                                </div>
-                                <div class="profile-stat">
-                                    <h4 id="statusMini">—</h4>
-                                    <p>Status</p>
-                                </div>
+                                <div class="profile-stat"><h4 id="planMini">—</h4><p>Current Plan</p></div>
+                                <div class="profile-stat"><h4 id="statusMini">—</h4><p>Status</p></div>
                             </div>
-
                         </div>
                     </div>
                 </div>
-
-                <!-- ── RIGHT: SUBSCRIPTION CARD ──────────────────────── -->
                 <div class="col-xl-8 col-lg-8">
                     <div class="card subscription-card">
-
-                        <!-- Header row -->
                         <div class="subscription-header">
                             <div>
                                 <h3 class="subscription-title">🚀 TraderBro Membership</h3>
-                                <p class="subscription-subtitle">Premium Trading Access & Session Validity</p>
+                                <p class="subscription-subtitle">Premium Trading Access &amp; Session Validity</p>
                             </div>
-                            <!-- live indicator syncs with status -->
                             <div class="live-indicator inactive" id="liveIndicator">● Loading…</div>
                         </div>
-
-                        <!-- 4-column info grid -->
                         <div class="subscription-grid">
-
                             <div class="subscription-item">
                                 <p class="subscription-label">Current Plan</p>
                                 <div id="planTag" class="plan-tag free">FREE</div>
                             </div>
-
                             <div class="subscription-item">
-                                <p class="subscription-label">Start Date & Time</p>
+                                <p class="subscription-label">Start Date &amp; Time</p>
                                 <div id="start" class="subscription-value">—</div>
                             </div>
-
                             <div class="subscription-item">
-                                <p class="subscription-label">Expiry Date & Time</p>
+                                <p class="subscription-label">Expiry Date &amp; Time</p>
                                 <div id="expiry" class="subscription-value">—</div>
                             </div>
-
                             <div class="subscription-item">
                                 <p class="subscription-label">Account Status</p>
                                 <div id="statusTag" class="status-tag inactive">—</div>
                             </div>
-
                         </div>
-
-                        <!-- Countdown timer row -->
                         <div id="countdown" class="text-center mt-3"></div>
-
-                        <!-- CTA -->
-                        <div class="mt-4">
-                            <a href="/trading-plan" class="upgrade-btn" id="upgradeBtn">
-                                Upgrade Membership 🚀
-                            </a>
-                        </div>
-
+                        <div class="mt-4"><a href="/trading-plan" class="upgrade-btn" id="upgradeBtn">Upgrade Membership 🚀</a></div>
                     </div>
                 </div>
-
-            </div><!-- /row -->
-
-            <!-- Info strip -->
-            <div class="mt-4 p-3" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;color:#9a3412;font-size:13px;line-height:1.7;">
-                ⏰ Trading sessions are active between <b>9:16 AM → 12:00 PM</b>.
-                Subscription validity is calculated using trading days only.
             </div>
 
-            <!-- ── SETTINGS ─────────────────────────────────────────── -->
-            <div class="row mt-4 g-4">
+            <div class="mt-4 p-3" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;color:#9a3412;font-size:13px;line-height:1.7;">
+                ⏰ Trading sessions are active between <b>9:16 AM → 12:00 PM</b>. Subscription validity is calculated using <b>trading days only</b> (weekends &amp; NSE holidays excluded).
+            </div>
 
+            <!-- SUBSCRIPTION HISTORY -->
+            <div class="mt-4">
+                <div class="sub-history-card">
+                    <div class="sub-history-header">
+                        <h4>📋 Subscription History &amp; Queue</h4>
+                        <span class="sub-count-badge" id="subCountBadge">Loading…</span>
+                    </div>
+                    <div id="subscriptionTableWrap">
+                        <div class="sub-empty">
+                            <div class="sub-empty-icon">⏳</div>
+                            <p>Loading subscription data…</p>
+                            <div class="loading-ring"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UPCOMING NSE HOLIDAYS — single instance, rendered by renderUpcomingHolidays() -->
+            <div id="upcoming-holidays-section" style="display:none;" class="mt-4">
+                <div class="holiday-section">
+                    <div class="holiday-section-header">
+                        <h4>📅 Upcoming NSE Market Holidays</h4>
+                        <span class="holiday-count" id="holiday-count-badge">—</span>
+                    </div>
+                    <!-- today's holiday alert injected here if needed -->
+                    <div id="today-holiday-alert"></div>
+                    <!-- list -->
+                    <div class="holiday-list" id="holiday-list-wrap"></div>
+                </div>
+            </div>
+
+            <div class="row mt-4 g-4">
                 <div class="col-xl-6">
                     <div class="card">
-                        <div class="card-header">
-                            <h4 class="card-title">Account Settings</h4>
-                        </div>
+                        <div class="card-header"><h4 class="card-title">Account Settings</h4></div>
                         <div class="card-body">
-                            <input class="form-control mb-3" id="editName"  placeholder="Update Name">
+                            <input class="form-control mb-3" id="editName" placeholder="Update Name">
                             <input class="form-control mb-3" id="editPhone" placeholder="Update Phone">
                             <div id="saveMsg" style="display:none;margin-bottom:10px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;"></div>
                             <button class="btn btn-primary w-100" onclick="updateProfile()">Save Changes</button>
                         </div>
                     </div>
                 </div>
-
                 <div class="col-xl-6">
                     <div class="card">
-                        <div class="card-header">
-                            <h4 class="card-title">Security</h4>
-                        </div>
+                        <div class="card-header"><h4 class="card-title">Security</h4></div>
                         <div class="card-body text-center">
                             <button class="btn btn-danger w-100" onclick="logout()">Logout</button>
                         </div>
                     </div>
                 </div>
-
             </div>
+        </div>
 
-        </div><!-- /container -->
+        <footer class="site-footer">
+            <div class="footer-top">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-4 col-md-12 col-sm-12">
+                            <div class="widget widget_about wow fadeInUp" data-wow-delay="0.4s">
+                                <h6 class="footer-title mb-3">Welcome to Traderbro.in</h6>
+                                <a href="/" class="logo-light"><img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="Traderbro.in"></a>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-3 col-6">
+                            <div class="widget widget_links wow fadeInUp" data-wow-delay="0.6s">
+                                <h6 class="footer-title">Quick Links</h6>
+                                <ul>
+                                    <li><a href="/about-us">About Us</a></li>
+                                    <li><a href="/privacy-policy">Privacy Policy</a></li>
+                                    <li><a href="/terms-and-conditions">Terms of Service</a></li>
+                                    <li><a href="/disclaimer">Disclaimer</a></li>
+                                    <li><a href="/refund-policy">Refund-Policy</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-3 col-6">
+                            <div class="widget widget_links wow fadeInUp" data-wow-delay="0.8s">
+                                <h6 class="footer-title">Subscriptions</h6>
+                                <ul>
+                                    <li><a href="trading-plan">Basic</a></li>
+                                    <li><a href="trading-plan">Essential</a></li>
+                                    <li><a href="trading-plan">Advance</a></li>
+                                    <li><a href="trading-plan">Pro</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-3 col-6">
+                            <div class="widget widget_links wow fadeInUp" data-wow-delay="1.2s">
+                                <h6 class="footer-title">Support</h6>
+                                <ul><li><a href="/contact-us">Contact Us</a></li></ul>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-3 col-6">
+                            <div class="widget widget-social wow fadeInUp" data-wow-delay="1.4s">
+                                <h6 class="footer-title">Follow Us</h6>
+                                <ul>
+                                    <li><a target="_blank" href="https://twitter.com/"><img src="/static/finlab/Frontend/xhtml/images/social/twitter.png" alt="">Twitter / X</a></li>
+                                    <li><a target="_blank" href="https://www.instagram.com/"><img src="/static/finlab/Frontend/xhtml/images/social/instagram.png" alt="">Instagram</a></li>
+                                    <li><a target="_blank" href="https://www.youtube.com/"><img src="/static/finlab/Frontend/xhtml/images/social/youtube.png" alt="">YouTube</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ticker-wrapper">
+                        <div class="ticker-track">
+                            <div class="ticker-content">
+                                <span class="ticker-item bg-warning text-dark">Educational Platform (Not SEBI Registered)</span>
+                                <span class="ticker-item text-danger">Traderbro.in is an educational platform. We are not SEBI registered as a Research Analyst (RA) or Investment Adviser (IA). No investment or trading advice is provided.</span>
+                            </div>
+                            <div class="ticker-content">
+                                <span class="ticker-item bg-warning text-dark">Educational Platform (Not SEBI Registered)</span>
+                                <span class="ticker-item text-danger">Traderbro.in is an educational platform. We are not SEBI registered as a Research Analyst (RA) or Investment Adviser (IA). No investment or trading advice is provided.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <style>.ticker-wrapper{width:100%;overflow:hidden;background:#000;padding:8px 0}.ticker-track{display:flex;width:max-content;animation:tickerScroll 20s linear infinite}.ticker-content{display:flex;white-space:nowrap}.ticker-item{margin-right:50px;font-size:13px;padding:5px 10px;border-radius:5px}.ticker-track:hover{animation-play-state:paused}@keyframes tickerScroll{0%{transform:translateX(0%)}100%{transform:translateX(-50%)}}</style>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="container">
+                    <div class="footer-inner text-center">
+                        <p class="copyright-text wow fadeInUp" data-wow-delay="1.6s">Copyright &copy; 2026 Traderbro.in — Stock Market Education Platform. All Rights Reserved.</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>
 
-        <!-- Footer -->
-		<footer class="site-footer">
-			<div class="footer-top">
-				<div class="container">
-					<div class="row">
-						<div class="col-lg-4 col-md-12 col-sm-12">
-							<div class="widget widget_about wow fadeInUp" data-wow-delay="0.4s">
-								<h6 class="footer-title mb-3">Welcome to Traderbro.in</h6>
-								<a href="/" class="logo-light"><img
-										src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
-										alt="Traderbro.in"></a>
-
-								<!-- <form class="dzSubscribe ft-subscribe mb-4" action="script/mailchamp.php" method="post">
-								<div class="dzSubscribeMsg"></div>
-								<div class="input-group mb-0"> 
-									<input name="dzEmail" required="required" type="email" class="form-control" placeholder="Your Email Address">
-									<button name="submit" value="Submit" type="submit" class="btn btn-primary style-1">
-										<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none"><g clip-path="url(#l)"><path d="M.246 17.179c-.148.68.374.967.858.75l16.365-8.391h.002c.195-.11.308-.308.308-.537s-.113-.428-.308-.538h-.002L1.104.071C.62-.146.098.142.246.822L1.75 7.521 10.293 9 1.75 10.479.246 17.179z" fill="#fff"/></g><defs><clipPath id="l"><path fill="#fff" d="M0 0h18v18H0z"/></clipPath></defs></svg>
-									</button>
-								</div>
-							</form> -->
-								<!-- <p class="text-primary font-13 mb-2">Download the Traderbro.in App</p>
-							<div>
-								<a href="https://appstore.com/" class="me-2"><img src="/static/finlab/Frontend/xhtml/images//app-store.png" alt="Download on App Store"></a>
-								<a href="https://playstore.com/"><img src="/static/finlab/Frontend/xhtml/images//play-store.png" alt="Get it on Google Play"></a>
-							</div> -->
-							</div>
-						</div>
-						<div class="col-lg-2 col-md-3 col-6">
-							<div class="widget widget_links wow fadeInUp" data-wow-delay="0.6s">
-								<h6 class="footer-title">Quick Links</h6>
-								<ul>
-									<li><a href="/about-us">About Us</a></li>
-									<li><a href="/privacy-policy">Privacy Policy</a></li>
-									<li><a href="/terms-and-conditions">Terms of Service</a></li>
-									<li><a href="/disclaimer">Disclaimer</a></li>
-									<li><a href="/refund-policy">Refund-Policy</a></li>
-								</ul>
-							</div>
-						</div>
-						<div class="col-lg-2 col-md-3 col-6">
-							<div class="widget widget_links wow fadeInUp" data-wow-delay="0.8s">
-								<h6 class="footer-title">Subscriptions</h6>
-								<ul>
-									<li><a href="trading-plan">Basic</a></li>
-									<li><a href="trading-plan">Essential</a></li>
-									<li><a href="trading-plan">Advance</a></li>
-									<li><a href="trading-plan">Pro</a></li>
-								</ul>
-							</div>
-						</div>
-						<div class="col-lg-2 col-md-3 col-6">
-							<div class="widget widget_links wow fadeInUp" data-wow-delay="1.2s">
-								<h6 class="footer-title">Support</h6>
-								<ul>
-									<!-- <li><a href="javascript:void(0);">FAQ</a></li> -->
-									<li><a href="static/finlab/Frontend/xhtml/contact-us.html">Contact Us</a></li>
-								</ul>
-							</div>
-						</div>
-						<div class="col-lg-2 col-md-3 col-6">
-							<div class="widget widget-social wow fadeInUp" data-wow-delay="1.4s">
-								<h6 class="footer-title">Follow Us</h6>
-								<ul>
-									<li><a target="_blank" href="https://twitter.com/"><img
-												src="/static/finlab/Frontend/xhtml/images//social/twitter.png"
-												alt="">Twitter / X</a></li>
-									<li><a target="_blank" href="https://www.facebook.com/"><img
-												src="/static/finlab/Frontend/xhtml/images//social/facebook.png"
-												alt="">Facebook</a></li>
-									<li><a target="_blank" href="https://www.linkedin.com/"><img
-												src="/static/finlab/Frontend/xhtml/images//social/linkedin.png"
-												alt="">LinkedIn</a></li>
-									<li><a target="_blank" href="https://www.instagram.com/"><img
-												src="/static/finlab/Frontend/xhtml/images//social/instagram.png"
-												alt="">Instagram</a></li>
-									<li><a target="_blank" href="https://www.youtube.com/"><img
-												src="/static/finlab/Frontend/xhtml/images//social/youtube.png"
-												alt="">YouTube</a></li>
-								</ul>
-							</div>
-						</div>
-					</div>
-					<div class="ticker-wrapper">
-						<div class="ticker-track">
-
-							<!-- ORIGINAL CONTENT -->
-							<div class="ticker-content">
-								<span class="ticker-item bg-warning text-dark">
-									Educational Platform (Not SEBI Registered)
-								</span>
-
-								<span class="ticker-item text-danger">
-									Traderbro.in is an educational platform. We are not SEBI registered as a Research
-									Analyst (RA) or Investment Adviser (IA). No investment or trading advice is
-									provided.
-								</span>
-							</div>
-
-							<!-- DUPLICATE CONTENT (IMPORTANT FOR LOOP) -->
-							<div class="ticker-content">
-								<span class="ticker-item bg-warning text-dark">
-									Educational Platform (Not SEBI Registered)
-								</span>
-
-								<span class="ticker-item text-danger">
-									Traderbro.in is an educational platform. We are not SEBI registered as a Research
-									Analyst (RA) or Investment Adviser (IA). No investment or trading advice is
-									provided.
-								</span>
-							</div>
-
-						</div>
-					</div>
-					<style>
-						.ticker-wrapper {
-  width: 100%;
-  overflow: hidden;
-  background: #000;
-  padding: 8px 0;
-}
-
-.ticker-track {
-  display: flex;
-  width: max-content;
-  animation: tickerScroll 20s linear infinite;
-}
-
-.ticker-content {
-  display: flex;
-  white-space: nowrap;
-}
-
-.ticker-item {
-  margin-right: 50px;
-  font-size: 13px;
-  padding: 5px 10px;
-  border-radius: 5px;
-}
-
-.ticker-track:hover {
-  animation-play-state: paused;
-}
-
-@keyframes tickerScroll {
-  0% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-					</style>
-				</div>
-			</div>
-			<div class="footer-bottom">
-				<div class="container">
-					<div class="footer-inner text-center">
-						<p class="copyright-text wow fadeInUp" data-wow-delay="1.6s">Copyright &copy; 2026 Traderbro.in —
-							Stock Market Education Platform. All Rights Reserved.</p>
-					</div>
-				</div>
-			</div>
-		</footer>
-		<!-- Footer End -->
-
-
-    </div><!-- /page-content -->
-</div><!-- /page-wraper -->
-
-<!-- ── SCRIPTS ────────────────────────────────────────────────────────── -->
 <script src="/static/finlab/Frontend/xhtml/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
 <script>
-// ═══════════════════════════════════════════════════════════════════════
-// PLAN CONFIG — single source of truth
-// ═══════════════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
+   GLOBALS
+══════════════════════════════════════════════════════════ */
 const PLAN_COLORS = {
-    free:      { badge: "⭐ Member",           avatarGrad: "linear-gradient(135deg,#64748b,#475569)" },
-    basic:     { badge: "⭐ Basic Trader",      avatarGrad: "linear-gradient(135deg,#0ea5e9,#0284c7)" },
-    essential: { badge: "🚀 Essential Trader", avatarGrad: "linear-gradient(135deg,#8b5cf6,#6d28d9)" },
-    pro:       { badge: "💎 Pro Trader",        avatarGrad: "linear-gradient(135deg,#f59e0b,#d97706)" },
-    premium:   { badge: "👑 Premium Trader",    avatarGrad: "linear-gradient(135deg,#ec4899,#db2777)" },
+    free:      { badge:"⭐ Member",           avatarGrad:"linear-gradient(135deg,#64748b,#475569)" },
+    basic:     { badge:"⭐ Basic Trader",      avatarGrad:"linear-gradient(135deg,#0ea5e9,#0284c7)" },
+    essential: { badge:"🚀 Essential Trader", avatarGrad:"linear-gradient(135deg,#8b5cf6,#6d28d9)" },
+    pro:       { badge:"💎 Pro Trader",        avatarGrad:"linear-gradient(135deg,#f59e0b,#d97706)" },
+    premium:   { badge:"👑 Premium Trader",    avatarGrad:"linear-gradient(135deg,#ec4899,#db2777)" },
 };
+const PLAN_BG = { free:"#64748b", basic:"#0ea5e9", essential:"#8b5cf6", pro:"#f59e0b", premium:"#ec4899" };
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-// ═══════════════════════════════════════════════════════════════════════
-// DATE FORMATTER  (IST, readable)
-// ═══════════════════════════════════════════════════════════════════════
-function fmtDate(isoStr) {
-    if (!isoStr) return "—";
+/* ── Holiday cache (loaded once) ── */
+let _HOLIDAYS = {};   // { "YYYY-MM-DD": "Reason" }
+let _holidaysLoaded = false;
+
+async function loadHolidaysOnce() {
+    if (_holidaysLoaded) return;
     try {
-        const d = new Date(isoStr);
-        return d.toLocaleString("en-IN", {
-            timeZone: "Asia/Kolkata",
-            day:      "2-digit",
-            month:    "2-digit",
-            year:     "numeric",
-            hour:     "2-digit",
-            minute:   "2-digit",
-            second:   "2-digit",
-            hour12:   true
+        const res  = await fetch('/api/market-holidays', { credentials:'include' });
+        const data = await res.json();
+        _HOLIDAYS = {};
+        (data.holidays || []).forEach(h => { _HOLIDAYS[h.date] = h.reason; });
+        _holidaysLoaded = true;
+    } catch(e) {}
+}
+
+function getHolidaysBetween(startIso, endIso) {
+    if (!startIso || !endIso) return [];
+    const start = new Date(startIso);
+    const end   = new Date(endIso);
+    return Object.entries(_HOLIDAYS)
+        .filter(([d]) => {
+            const dt = new Date(d + 'T00:00:00');
+            return dt >= start && dt <= end && dt.getDay() !== 0 && dt.getDay() !== 6;
+        })
+        .map(([d, r]) => ({ date:d, reason:r }))
+        .sort((a,b) => a.date.localeCompare(b.date));
+}
+
+/* ══════════════════════════════════════════════════════════
+   DATE FORMATTER
+══════════════════════════════════════════════════════════ */
+function fmtDate(iso) {
+    if (!iso) return "—";
+    try {
+        return new Date(iso).toLocaleString("en-IN", {
+            timeZone:"Asia/Kolkata", day:"2-digit", month:"2-digit", year:"numeric",
+            hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:true
         });
     } catch { return "—"; }
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// COUNTDOWN  (live, ticks every second)
-// ═══════════════════════════════════════════════════════════════════════
-let _countdownInterval = null;
-
+/* ══════════════════════════════════════════════════════════
+   COUNTDOWN
+══════════════════════════════════════════════════════════ */
+let _cdInt = null;
 function startCountdown(expiryIso) {
     const el = document.getElementById("countdown");
     if (!el || !expiryIso) return;
-
-    const expiryMs = new Date(expiryIso).getTime();
-
+    const ms = new Date(expiryIso).getTime();
     function tick() {
-        const diff = expiryMs - Date.now();
-        if (diff <= 0) {
-            el.innerHTML = "⏰ Plan has expired";
-            clearInterval(_countdownInterval);
-            return;
-        }
-        const d = Math.floor(diff / 86400000);
-        const h = Math.floor((diff % 86400000) / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        const s = Math.floor((diff % 60000) / 1000);
+        const diff = ms - Date.now();
+        if (diff <= 0) { el.innerHTML = "⏰ Plan has expired"; clearInterval(_cdInt); return; }
+        const d=Math.floor(diff/86400000), h=Math.floor((diff%86400000)/3600000),
+              m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000);
         el.innerHTML = `⏳ Expires in <span>${d}d ${h}h ${m}m ${s}s</span>`;
     }
-
-    tick();
-    clearInterval(_countdownInterval);
-    _countdownInterval = setInterval(tick, 1000);
+    tick(); clearInterval(_cdInt); _cdInt = setInterval(tick, 1000);
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// MAIN  loadUser()  —  single function, all elements updated together
-// ═══════════════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
+   LOAD USER
+══════════════════════════════════════════════════════════ */
 async function loadUser() {
-    const res  = await fetch("/api/me", { credentials: "include" });
+    const res  = await fetch("/api/me", { credentials:"include" });
     const data = await res.json();
+    if (!data.username) { window.location.href = "/user-login"; return; }
 
-    if (!data.username) {
-        window.location.href = "/user-login";
-        return;
-    }
-
-    /* ── 1. Basic profile ──────────────────────────────────── */
-    const plan   = (data.plan || "free").toLowerCase();
-    const cfg    = PLAN_COLORS[plan] || PLAN_COLORS["free"];
-    const isActive = isPlanActive(data.plan, data.plan_expiry);
-    const statusStr = !data.plan_expiry
-        ? "inactive"
-        : isActive ? "active" : "expired";
+    const plan     = (data.plan || "free").toLowerCase();
+    const cfg      = PLAN_COLORS[plan] || PLAN_COLORS.free;
+    const isActive = data.plan_expiry ? new Date() < new Date(data.plan_expiry) : false;
+    const st       = !data.plan_expiry ? "inactive" : isActive ? "active" : "expired";
 
     document.getElementById("username").innerText = data.username || "User";
     document.getElementById("email").innerText    = data.email    || "—";
     document.getElementById("phone").innerText    = data.phone    || "—";
-    document.getElementById("avatar").innerText   = (data.username || "?").charAt(0).toUpperCase();
-
-    // Pre-fill settings inputs
-    document.getElementById("editName").value  = data.username || "";
-    document.getElementById("editPhone").value = data.phone    || "";
-
-    /* ── 2. Avatar circle colour  (matches plan) ───────────── */
+    document.getElementById("avatar").innerText   = (data.username||"?").charAt(0).toUpperCase();
+    document.getElementById("editName").value     = data.username || "";
+    document.getElementById("editPhone").value    = data.phone    || "";
     document.getElementById("avatarCircle").style.background = cfg.avatarGrad;
-
-    /* ── 3. Member badge ───────────────────────────────────── */
     document.getElementById("memberBadge").innerText = cfg.badge;
-
-    /* ── 4. Left stat boxes ────────────────────────────────── */
     document.getElementById("planMini").innerText   = plan.toUpperCase();
-    document.getElementById("statusMini").innerText = statusStr === "active"
-        ? "ACTIVE" : statusStr === "expired" ? "EXPIRED" : "NO PLAN";
+    document.getElementById("statusMini").innerText = st === "active" ? "ACTIVE" : st === "expired" ? "EXPIRED" : "NO PLAN";
 
-    /* ── 5. Right card — Plan Tag ──────────────────────────── */
-    const planTagEl = document.getElementById("planTag");
-    planTagEl.innerText  = plan.toUpperCase();   // ← THE FIX: always overwrite text
-    planTagEl.className  = "plan-tag " + plan;   // ← THE FIX: apply colour class
+    const ptEl = document.getElementById("planTag");
+    ptEl.innerText = plan.toUpperCase(); ptEl.className = "plan-tag " + plan;
 
-    /* ── 6. Right card — Start & Expiry ───────────────────── */
-    document.getElementById("start").innerHTML  = data.plan_start
-        ? fmtDate(data.plan_start).replace(",", ",<br>")
-        : "—";
+    document.getElementById("start").innerHTML  = data.plan_start  ? fmtDate(data.plan_start).replace(",",",<br>")  : "—";
+    document.getElementById("expiry").innerHTML = data.plan_expiry ? fmtDate(data.plan_expiry).replace(",",",<br>") : "—";
 
-    document.getElementById("expiry").innerHTML = data.plan_expiry
-        ? fmtDate(data.plan_expiry).replace(",", ",<br>")
-        : "—";
-
-    /* ── 7. Right card — Status tag + Live indicator ───────── */
-    const statusTagEl  = document.getElementById("statusTag");
-    const liveEl       = document.getElementById("liveIndicator");
-
-    if (statusStr === "active") {
-        statusTagEl.innerText = "Active ✅";
-        statusTagEl.className = "status-tag active";
-        liveEl.innerText      = "● Active";
-        liveEl.className      = "live-indicator active";
+    const stEl = document.getElementById("statusTag"), lvEl = document.getElementById("liveIndicator");
+    if (st === "active") {
+        stEl.innerText = "Active ✅"; stEl.className = "status-tag active";
+        lvEl.innerText = "● Active";  lvEl.className = "live-indicator active";
         startCountdown(data.plan_expiry);
-    } else if (statusStr === "expired") {
-        statusTagEl.innerText = "Expired ❌";
-        statusTagEl.className = "status-tag expired";
-        liveEl.innerText      = "● Expired";
-        liveEl.className      = "live-indicator expired";
-        document.getElementById("countdown").innerHTML =
-            "⚠️ Your plan has expired. Please renew.";
+    } else if (st === "expired") {
+        stEl.innerText = "Expired ❌"; stEl.className = "status-tag expired";
+        lvEl.innerText = "● Expired";  lvEl.className = "live-indicator expired";
+        document.getElementById("countdown").innerHTML = "⚠️ Your plan has expired. Please renew.";
     } else {
-        statusTagEl.innerText = "No Active Plan";
-        statusTagEl.className = "status-tag inactive";
-        liveEl.innerText      = "● Inactive";
-        liveEl.className      = "live-indicator inactive";
-        document.getElementById("countdown").innerHTML = "";
+        stEl.innerText = "No Active Plan"; stEl.className = "status-tag inactive";
+        lvEl.innerText = "● Inactive";     lvEl.className = "live-indicator inactive";
     }
 
-    /* ── 8. Upgrade button label ───────────────────────────── */
-    const upgradeBtn = document.getElementById("upgradeBtn");
-    if (statusStr === "expired") {
-        upgradeBtn.textContent = "Renew Membership 🔄";
-    } else if (statusStr === "active") {
-        upgradeBtn.textContent = "Upgrade Membership 🚀";
-    } else {
-        upgradeBtn.textContent = "Get a Plan 🚀";
-    }
+    const ub = document.getElementById("upgradeBtn");
+    ub.textContent = st === "expired" ? "Renew Membership 🔄" : st === "active" ? "Upgrade Membership 🚀" : "Get a Plan 🚀";
 }
 
-/* ── Helper: is plan currently valid? ──────────────────────── */
-function isPlanActive(plan, expiryIso) {
-    if (!plan || plan === "free") return false;
-    if (!expiryIso) return true;   // plan set but no expiry = always active
-    return new Date() < new Date(expiryIso);
+/* ══════════════════════════════════════════════════════════
+   BUILD HOLIDAY CHIP for subscription table
+══════════════════════════════════════════════════════════ */
+function buildHolidayCell(s) {
+    const count = s.holidays_skipped || 0;
+    if (!count) return `<span class="meta-chip">📅 0 holidays</span>`;
+
+    const hols    = getHolidaysBetween(s.plan_start, s.plan_expiry);
+    const tooltip = hols.map(h => `${h.date}: ${h.reason}`).join('\n');
+    const preview = hols.slice(0,2).map(h => h.reason).join(', ');
+    const more    = hols.length > 2 ? ` +${hols.length-2} more` : '';
+
+    return `<span class="meta-chip" title="${tooltip}" style="cursor:help;max-width:180px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        📅 ${count} holiday${count>1?'s':''}${preview ? ': '+preview+more : ''}
+    </span>`;
 }
 
-// Boot
-loadUser();
-</script>
+/* ══════════════════════════════════════════════════════════
+   LOAD SUBSCRIPTIONS
+══════════════════════════════════════════════════════════ */
+async function loadSubscriptions() {
+    const wrap  = document.getElementById("subscriptionTableWrap");
+    const badge = document.getElementById("subCountBadge");
 
-<!-- ── NAVBAR ────────────────────────────────────────────────────────── -->
-<script>
-	async function renderNavbar() {
-
-		try {
-
-			const res = await fetch("/api/me", {
-				credentials: "include"
-			});
-
-			const data = await res.json();
-
-			const nav = document.getElementById("navAuth");
-			const mobileNav = document.getElementById("mobileNavAuth");
-
-			if (!nav || !mobileNav) return;
-
-			// =========================
-			// LOGGED IN USER
-			// =========================
-
-			if (data.username) {
-
-				const firstLetter = data.username.charAt(0).toUpperCase();
-
-				const desktopHTML = `
-
-				<div class="d-flex align-items-center gap-3">
-
-					<a href="/dashboard"
-					   class="btn btn-success"
-					   style="
-							border-radius:12px;
-							font-weight:600;
-							padding:10px 18px;
-							box-shadow:0 4px 15px rgba(0,255,120,0.25);
-					   ">
-						📊 User Dashboard
-					</a>
-
-					${data.role === "admin" ? `
-						<a href="/admin"
-						   class="btn btn-warning"
-						   style="
-								border-radius:12px;
-								font-weight:600;
-								padding:10px 18px;
-						   ">
-							⚙ Admin
-						</a>
-					` : ""}
-
-					<div class="dropdown">
-
-						<div class="d-flex align-items-center"
-							 style="cursor:pointer;"
-							 data-bs-toggle="dropdown">
-
-							<div style="
-								width:42px;
-								height:42px;
-								border-radius:50%;
-								background:linear-gradient(135deg,#00c6ff,#0072ff);
-								display:flex;
-								align-items:center;
-								justify-content:center;
-								color:#fff;
-								font-weight:700;
-								margin-right:10px;
-							">
-								${firstLetter}
-							</div>
-
-							<span class="text-white fw-bold">
-								${data.username}
-							</span>
-
-						</div>
-
-						<ul class="dropdown-menu dropdown-menu-end">
-
-							<li>
-								<a class="dropdown-item" href="/account">
-									👤 My Account
-								</a>
-							</li>
-
-							<li>
-								<a class="dropdown-item" href="/dashboard">
-									📊 Dashboard
-								</a>
-							</li>
-
-							<li><hr class="dropdown-divider"></li>
-
-							<li>
-								<a class="dropdown-item text-danger"
-								   href="#"
-								   onclick="logout()">
-									🚪 Logout
-								</a>
-							</li>
-
-						</ul>
-
-					</div>
-
-				</div>
-				`;
-
-				const mobileHTML = `
-
-				<div class="w-100 d-flex flex-column gap-2">
-
-					<a href="/dashboard"
-					   class="btn btn-primary w-100">
-						📊 User Dashboard
-					</a>
-
-					<a href="/account"
-					   class="btn btn-outline-primary w-100">
-						👤 My Account
-					</a>
-
-					${data.role === "admin" ? `
-						<a href="/admin"
-						   class="btn btn-warning w-100">
-							⚙ Admin Panel
-						</a>
-					` : ""}
-
-					<button onclick="logout()"
-							class="btn btn-danger w-100">
-						🚪 Logout
-					</button>
-
-				</div>
-				`;
-
-				nav.innerHTML = desktopHTML;
-				mobileNav.innerHTML = mobileHTML;
-
-			}
-
-			// =========================
-			// GUEST USER
-			// =========================
-
-			else {
-
-				const guestHTML = `
-					<a class="btn btn-outline-primary me-2"
-					   href="/user-login">
-						Login
-					</a>
-
-					<a class="btn btn-primary"
-					   href="/register">
-						Register
-					</a>
-				`;
-
-				const mobileGuestHTML = `
-					<div class="w-100 d-flex flex-column gap-2">
-
-						<a href="/user-login"
-						   class="btn btn-primary w-100">
-							Login
-						</a>
-
-						<a href="/register"
-						   class="btn btn-outline-primary w-100">
-							Register
-						</a>
-
-					</div>
-				`;
-
-				nav.innerHTML = guestHTML;
-				mobileNav.innerHTML = mobileGuestHTML;
-			}
-
-		}
-
-		catch (error) {
-
-			console.error("Navbar Error:", error);
-
-		}
-	}
-
-	function logout() {
-
-    window.location.href = "/logout";
-
-}
-
-	renderNavbar();
-</script>
-
-<!-- ── UPDATE PROFILE ────────────────────────────────────────────────── -->
-<script>
-async function updateProfile() {
-    const name  = document.getElementById("editName").value.trim();
-    const phone = document.getElementById("editPhone").value.trim();
-    const msg   = document.getElementById("saveMsg");
+    await loadHolidaysOnce();   // ensure holidays loaded before building cells
 
     try {
-        const res  = await fetch("/update-profile", {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: name, phone: phone })
+        const res  = await fetch("/api/my-subscriptions", { credentials:"include" });
+        const data = await res.json();
+        if (data.error) { wrap.innerHTML = `<div class="sub-empty"><div class="sub-empty-icon">⚠️</div><p>${data.error}</p></div>`; return; }
+
+        const subs = data.subscriptions || [];
+        badge.textContent = subs.length + (subs.length === 1 ? " plan" : " plans");
+
+        if (!subs.length) {
+            wrap.innerHTML = `<div class="sub-empty"><div class="sub-empty-icon">📭</div><p>No subscription history yet.</p><a href="/trading-plan" class="btn btn-primary btn-sm">Browse Plans →</a></div>`;
+            return;
+        }
+
+        const now = Date.now();
+        let html = `<div class="sub-table-wrap"><table class="sub-table">
+            <thead><tr>
+                <th>#</th><th>Plan</th><th>Status</th>
+                <th>Start Date &amp; Time</th><th>Expiry Date &amp; Time</th>
+                <th>Trading Days</th><th>Calendar Days</th><th>Weekends</th><th>Holidays</th><th>Price</th>
+            </tr></thead><tbody>`;
+
+        subs.forEach((s, idx) => {
+            const isNext = s.status === "queued" && idx > 0 && subs.slice(0,idx).some(x => x.status === "active");
+            const statusHTML = {
+                active:  `<span class="status-pill active">✅ Active</span>`,
+                queued:  `<span class="status-pill queued">⏳ Queued</span>`,
+                expired: `<span class="status-pill expired">❌ Expired</span>`
+            }[s.status] || `<span class="status-pill expired">${s.status}</span>`;
+
+            let extra = "";
+            if (s.status === "active" && s.plan_expiry) {
+                const diff = new Date(s.plan_expiry).getTime() - now;
+                if (diff > 0) {
+                    const d=Math.floor(diff/86400000), h=Math.floor((diff%86400000)/3600000);
+                    extra = `<div style="font-size:10px;color:#16a34a;margin-top:3px;">⏳ ${d}d ${h}h left</div>`;
+                }
+            }
+            if (s.status === "queued" && s.plan_start)
+                extra = `<div style="font-size:10px;color:#2563eb;margin-top:3px;">Starts: ${fmtDate(s.plan_start)}</div>`;
+
+            html += `<tr class="sub-row-${s.status}">
+                <td style="color:#94a3b8;font-weight:600;">${idx+1}</td>
+                <td><span class="plan-pill ${s.plan}">${s.plan.toUpperCase()}</span>${isNext?'<span class="next-badge">Next Up</span>':''}</td>
+                <td>${statusHTML}${extra}</td>
+                <td style="white-space:nowrap;">${fmtDate(s.plan_start)}</td>
+                <td style="white-space:nowrap;">${fmtDate(s.plan_expiry)}</td>
+                <td><b style="font-size:15px;">${s.trading_days||"—"}</b><div style="font-size:10px;color:#94a3b8;">trading days</div></td>
+                <td><b style="font-size:15px;">${s.total_calendar_days||"—"}</b><div style="font-size:10px;color:#94a3b8;">calendar days</div></td>
+                <td><span class="meta-chip">🗓 ${s.weekends_skipped||0}</span></td>
+                <td>${buildHolidayCell(s)}</td>
+                <td style="font-weight:700;color:#16a34a;">${s.price?"₹"+s.price:"—"}</td>
+            </tr>`;
         });
+        html += `</tbody></table></div>`;
+
+        const active=subs.filter(s=>s.status==="active").length,
+              queued=subs.filter(s=>s.status==="queued").length,
+              expired=subs.filter(s=>s.status==="expired").length,
+              paid=subs.reduce((a,s)=>a+(s.price||0),0);
+        html += `<div style="padding:14px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;flex-wrap:wrap;gap:16px;align-items:center;font-size:12px;">
+            <div><span style="color:#64748b;">Total:</span> <b>${subs.length}</b></div>
+            <div><span style="color:#16a34a;">Active:</span> <b>${active}</b></div>
+            <div><span style="color:#2563eb;">Queued:</span> <b>${queued}</b></div>
+            <div><span style="color:#64748b;">Expired:</span> <b>${expired}</b></div>
+            <div style="margin-left:auto;font-size:13px;font-weight:700;color:#0f172a;">Total Paid: ₹${paid}</div>
+        </div>`;
+
+        wrap.innerHTML = html;
+    } catch(err) {
+        wrap.innerHTML = `<div class="sub-empty"><div class="sub-empty-icon">⚠️</div><p>Failed to load subscription data.</p></div>`;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════
+   UPCOMING HOLIDAYS  — called ONCE only
+══════════════════════════════════════════════════════════ */
+async function renderUpcomingHolidays() {
+    try {
+        const res  = await fetch('/api/market-holidays', { credentials:'include' });
         const data = await res.json();
 
-        msg.style.display = "block";
-        if (data.success) {
-            msg.style.background = "#d1fae5";
-            msg.style.color      = "#065f46";
-            msg.style.border     = "1px solid #6ee7b7";
-            msg.innerText        = "✅ Profile updated successfully!";
-            loadUser();   // refresh all fields from server
-        } else {
-            msg.style.background = "#fee2e2";
-            msg.style.color      = "#991b1b";
-            msg.style.border     = "1px solid #fca5a5";
-            msg.innerText        = "❌ " + (data.message || "Update failed");
+        const section = document.getElementById('upcoming-holidays-section');
+        const wrap    = document.getElementById('holiday-list-wrap');
+        const badge   = document.getElementById('holiday-count-badge');
+        const todayEl = document.getElementById('today-holiday-alert');
+
+        // Today holiday alert
+        if (data.today_is_holiday && data.today_reason) {
+            todayEl.innerHTML = `<div class="today-holiday-banner">
+                <span style="font-size:22px;">🏖️</span>
+                <div>
+                    <div style="font-weight:800;color:#f5a623;font-size:13px;">MARKET HOLIDAY TODAY</div>
+                    <div style="color:#cca060;font-size:12px;">${data.today_reason} — NSE is closed</div>
+                </div>
+            </div>`;
         }
-        setTimeout(() => msg.style.display = "none", 3500);
-    } catch (err) {
-        msg.style.display    = "block";
-        msg.style.background = "#fee2e2";
-        msg.style.color      = "#991b1b";
-        msg.innerText        = "❌ Network error. Please try again.";
+
+        // Upcoming list (exclude today)
+        const upcoming = (data.upcoming || []).filter(h => !h.is_today);
+        if (!upcoming.length && !data.today_is_holiday) { section.style.display='none'; return; }
+
+        section.style.display = 'block';
+        badge.textContent = data.today_is_holiday
+            ? `Today: ${data.today_reason}`
+            : `Next ${Math.min(upcoming.length, 10)} holidays`;
+
+        wrap.innerHTML = upcoming.slice(0, 10).map(h => {
+            const dt  = new Date(h.date + 'T00:00:00');
+            const lbl = h.days_away === 1 ? '🟡 Tomorrow' : `${h.days_away} days`;
+            const col = h.days_away <= 3 ? '#f5a623' : '#64748b';
+            return `<div class="holiday-item">
+                <div class="holiday-date-box">
+                    <div class="holiday-date-day">${dt.getDate()}</div>
+                    <div class="holiday-date-mon">${MON[dt.getMonth()]} ${dt.getFullYear()}</div>
+                </div>
+                <div style="flex:1;">
+                    <div class="holiday-name">${h.reason}</div>
+                    <div class="holiday-dow">${DOW[dt.getDay()]}, ${MON[dt.getMonth()]} ${dt.getDate()}</div>
+                </div>
+                <div class="holiday-days-away" style="color:${col};">${lbl}</div>
+            </div>`;
+        }).join('');
+    } catch(e) { console.error('renderUpcomingHolidays:', e); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   BOOT — each function called exactly ONCE
+══════════════════════════════════════════════════════════ */
+loadUser();
+loadSubscriptions();
+renderUpcomingHolidays();
+</script>
+
+<!-- NAVBAR -->
+<script>
+async function renderNavbar() {
+    try {
+        const res  = await fetch("/api/me", { credentials:"include" });
+        const data = await res.json();
+        const nav  = document.getElementById("navAuth");
+        const mob  = document.getElementById("mobileNavAuth");
+        if (!nav) return;
+        if (data.username) {
+            const fl = data.username.charAt(0).toUpperCase();
+            nav.innerHTML = `<div class="d-flex align-items-center gap-3">
+                <a href="/dashboard" class="btn btn-success" style="border-radius:12px;font-weight:600;padding:10px 18px;box-shadow:0 4px 15px rgba(0,255,120,.25);">📊 Dashboard</a>
+                ${data.role==="admin"?`<a href="/admin" class="btn btn-warning" style="border-radius:12px;font-weight:600;padding:10px 18px;">⚙ Admin</a>`:""}
+                <div class="dropdown">
+                    <div class="d-flex align-items-center" style="cursor:pointer;" data-bs-toggle="dropdown">
+                        <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#00c6ff,#0072ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;margin-right:10px;">${fl}</div>
+                        <span class="text-white fw-bold">${data.username}</span>
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/account">👤 My Account</a></li>
+                        <li><a class="dropdown-item" href="/dashboard">📊 Dashboard</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="logout()">🚪 Logout</a></li>
+                    </ul>
+                </div>
+            </div>`;
+            if (mob) mob.innerHTML = `<div class="w-100 d-flex flex-column gap-2">
+                <a href="/dashboard" class="btn btn-primary w-100">📊 Dashboard</a>
+                <a href="/account" class="btn btn-outline-primary w-100">👤 My Account</a>
+                ${data.role==="admin"?`<a href="/admin" class="btn btn-warning w-100">⚙ Admin Panel</a>`:""}
+                <button onclick="logout()" class="btn btn-danger w-100">🚪 Logout</button>
+            </div>`;
+        } else {
+            nav.innerHTML = `<a class="btn btn-outline-primary me-2" href="/user-login">Login</a><a class="btn btn-primary" href="/register">Register</a>`;
+        }
+    } catch(e) {}
+}
+function logout() { window.location.href="/logout"; }
+renderNavbar();
+</script>
+
+<!-- UPDATE PROFILE -->
+<script>
+async function updateProfile() {
+    const name=document.getElementById("editName").value.trim(), phone=document.getElementById("editPhone").value.trim(), msg=document.getElementById("saveMsg");
+    try {
+        const res  = await fetch("/update-profile",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:name,phone:phone})});
+        const data = await res.json();
+        msg.style.display="block";
+        if (data.success) {
+            msg.style.cssText="display:block;background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;margin-bottom:10px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;";
+            msg.innerText="✅ Profile updated successfully!";
+            loadUser(); loadSubscriptions();
+        } else {
+            msg.style.cssText="display:block;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;margin-bottom:10px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;";
+            msg.innerText="❌ "+(data.message||"Update failed");
+        }
+        setTimeout(()=>msg.style.display="none",3500);
+    } catch {
+        msg.style.cssText="display:block;background:#fee2e2;color:#991b1b;margin-bottom:10px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;";
+        msg.innerText="❌ Network error.";
     }
 }
 </script>
-
 </body>
 </html>
