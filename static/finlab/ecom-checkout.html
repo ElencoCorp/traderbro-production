@@ -2,294 +2,350 @@
 <html lang="en">
 
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TraderBro - Checkout</title>
+    <link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png">
+    <link href="/static/finlab/Frontend/xhtml/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/finlab/Frontend/xhtml/css/style.css" rel="stylesheet">
 
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+/* ── QUEUE TIMELINE ─────────────────────────────────────────── */
+.queue-card {
+    background: linear-gradient(145deg,#0f172a,#1e293b);
+    border: none; border-radius: 20px; overflow: hidden;
+    box-shadow: 0 12px 40px rgba(15,23,42,0.18);
+}
+.queue-card-header {
+    padding: 18px 24px; background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: space-between;
+}
+.queue-card-header h5 { color: #fff; font-weight: 800; margin: 0; font-size: 16px; }
 
-	<title>TraderBro - Account</title>
+.timeline { padding: 20px 24px; list-style: none; margin: 0; position: relative; }
+.timeline::before {
+    content: ""; position: absolute; left: 40px; top: 0; bottom: 0;
+    width: 2px; background: rgba(255,255,255,0.1);
+}
+.tl-item { display: flex; gap: 16px; margin-bottom: 20px; position: relative; }
+.tl-item:last-child { margin-bottom: 0; }
 
-	<!-- Favicon icon -->
-	<link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png">
+.tl-dot {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; position: relative; z-index: 1;
+}
+.tl-dot.active  { background: #22c55e; box-shadow: 0 0 12px rgba(34,197,94,0.5); }
+.tl-dot.queued  { background: #3b82f6; box-shadow: 0 0 12px rgba(59,130,246,0.4); }
+.tl-dot.expired { background: #475569; }
+.tl-dot.new     { background: linear-gradient(135deg,#f59e0b,#f97316); box-shadow: 0 0 12px rgba(245,158,11,0.5); animation: pulse 2s infinite; }
 
-	<!-- FINLAB CSS -->
-	<link href="/static/finlab/Frontend/xhtml/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-	<link href="/static/finlab/Frontend/xhtml/css/style.css" rel="stylesheet">
+@keyframes pulse {
+    0%,100% { box-shadow: 0 0 12px rgba(245,158,11,0.5); }
+    50%      { box-shadow: 0 0 24px rgba(245,158,11,0.8); }
+}
 
+.tl-body { flex: 1; }
+.tl-plan-name {
+    font-weight: 800; font-size: 14px; color: #f8fafc; margin-bottom: 4px;
+}
+.tl-dates { font-size: 11px; color: #94a3b8; margin-bottom: 6px; }
+.tl-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tl-chip {
+    padding: 2px 10px; border-radius: 999px; font-size: 10px; font-weight: 600;
+    background: rgba(255,255,255,0.08); color: #cbd5e1;
+}
+.tl-chip.green  { background: rgba(34,197,94,0.15); color: #86efac; }
+.tl-chip.blue   { background: rgba(59,130,246,0.15); color: #93c5fd; }
+.tl-chip.orange { background: rgba(245,158,11,0.15); color: #fcd34d; }
+
+/* ── NEW PLAN INCOMING BANNER ───────────────────────────────── */
+.new-plan-arrow {
+    text-align: center; padding: 10px;
+    color: rgba(255,255,255,0.3); font-size: 20px;
+}
+
+/* ── CONSENT BOX ────────────────────────────────────────────── */
+.consent-box {
+    background: #fffbeb; border: 2px solid #fde68a;
+    border-radius: 14px; padding: 18px 20px; margin-bottom: 16px;
+}
+.consent-box.error { border-color: #fca5a5; background: #fef2f2; animation: shake 0.4s ease; }
+@keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%,60% { transform: translateX(-6px); }
+    40%,80% { transform: translateX(6px); }
+}
+.consent-label {
+    display: flex; align-items: flex-start; gap: 12px; cursor: pointer;
+    font-size: 13px; color: #78350f; font-weight: 600; line-height: 1.5;
+}
+.consent-label input[type="checkbox"] {
+    width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; cursor: pointer; accent-color: #d97706;
+}
+.consent-warning {
+    font-size: 11px; color: #ef4444; font-weight: 600;
+    margin-top: 8px; display: none;
+}
+.consent-warning.show { display: block; }
+
+/* ── PAY BUTTON ─────────────────────────────────────────────── */
+#payBtn {
+    background: linear-gradient(135deg,#22c55e,#16a34a);
+    border: none; border-radius: 14px; padding: 16px;
+    font-size: 16px; font-weight: 800; color: white; width: 100%;
+    transition: 0.3s; box-shadow: 0 10px 30px rgba(34,197,94,0.3);
+    cursor: pointer;
+}
+#payBtn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 35px rgba(34,197,94,0.4); }
+#payBtn:disabled { background: #94a3b8; box-shadow: none; cursor: not-allowed; opacity: 0.7; }
+
+/* ── PLAN PILL ──────────────────────────────────────────────── */
+.plan-pill-sm {
+    display: inline-block; padding: 2px 10px; border-radius: 999px;
+    color: white; font-size: 10px; font-weight: 700;
+}
+.plan-pill-sm.basic     { background: #0ea5e9; }
+.plan-pill-sm.essential { background: #8b5cf6; }
+.plan-pill-sm.pro       { background: #f59e0b; }
+.plan-pill-sm.premium   { background: #ec4899; }
+.plan-pill-sm.free      { background: #64748b; }
+
+/* ── PROGRESS BAR ───────────────────────────────────────────── */
+.plan-progress-wrap { margin-top: 12px; }
+.plan-progress-label {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: #94a3b8; margin-bottom: 4px;
+}
+    </style>
 </head>
 
 <body>
+<div class="page-wraper">
 
+    <!-- Header -->
+    <header class="site-header mo-left header header-transparent">
+        <div class="sticky-header main-bar-wraper navbar-expand-lg">
+            <div class="main-bar clearfix">
+                <div class="container clearfix">
+                    <div class="logo-header">
+                        <a href="/" class="logo-light"><img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="TraderBro"></a>
+                        <a href="/" class="logo-dark"><img  src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="TraderBro"></a>
+                    </div>
+                    <button class="navbar-toggler collapsed navicon justify-content-end" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
+                        aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                        <span></span><span></span><span></span>
+                    </button>
+                    <div class="extra-nav">
+                        <div class="extra-cell" id="navAuth"></div>
+                    </div>
+                    <div class="header-nav navbar-collapse collapse justify-content-end" id="navbarNavDropdown">
+                        <ul class="nav navbar-nav navbar navbar-left">
+                            <li><a href="/about-us">About Us</a></li>
+                            <li><a href="/trading-plan">Trading Plans</a></li>
+                            <li><a href="/contact-us">Contact Us</a></li>
+                            <li><a href="/account">My Account</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
 
-	<div class="page-wraper">
+    <div class="page-content">
 
-		<!-- Header -->
-		<header class="site-header mo-left header header-transparent ">
-			<!-- Main Header -->
-			<div class="sticky-header main-bar-wraper navbar-expand-lg">
-				<div class="main-bar clearfix ">
-					<div class="container clearfix">
+        <!-- Banner -->
+        <div class="dz-bnr-inr dz-bnr-inr-sm text-center position-relative"
+             style="background-image:url('/static/finlab/Frontend/xhtml/images/background/bg2.jpg');">
+            <div class="container">
+                <div class="dz-bnr-inr-entry">
+                    <h1>Checkout</h1>
+                    <nav aria-label="breadcrumb" class="breadcrumb-row m-t15">
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/">Home</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Checkout</li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            <img class="shape1" src="/static/finlab/Frontend/xhtml/images/home-banner/shape1.svg" alt="">
+        </div>
 
-						<!-- Website Logo -->
-						<div class="logo-header">
-							<a href="/" class="logo-light"><img
-									src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
-									alt="TraderBro"></a>
-							<a href="/" class="logo-dark"><img
-									src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
-									alt="TraderBro"></a>
-						</div>
+        <div class="container mt-5 mb-5">
+            <div class="row g-4">
 
-						<!-- Nav Toggle Button -->
-						<button class="navbar-toggler collapsed navicon justify-content-end" type="button"
-							data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
-							aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-							<span></span>
-							<span></span>
-							<span></span>
-						</button>
+                <!-- ═══ LEFT SIDE ══════════════════════════════════════════ -->
+                <div class="col-xl-8">
+                    <div class="row g-4">
 
-						<!-- Extra Nav -->
-						<div class="extra-nav">
-							<div class="extra-cell" id="navAuth">
-							</div>
-						</div>
+                        <!-- ── CURRENT PLAN CARD ──────────────────────────── -->
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h4 class="card-title mb-0">📊 Current Subscription Status</h4>
+                                    <span id="currentStatusBadge" class="badge bg-secondary">Loading…</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <p class="text-muted mb-1" style="font-size:12px;">Current Plan</p>
+                                            <h5 id="currentPlan" style="margin:0;">—</h5>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p class="text-muted mb-1" style="font-size:12px;">Started</p>
+                                            <h6 id="currentStart" style="margin:0;font-size:13px;">—</h6>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p class="text-muted mb-1" style="font-size:12px;">Expires</p>
+                                            <h6 id="currentExpiry" style="margin:0;font-size:13px;">—</h6>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p class="text-muted mb-1" style="font-size:12px;">Days Remaining</p>
+                                            <h6 id="daysRemaining" style="margin:0;font-size:13px;">—</h6>
+                                        </div>
+                                    </div>
+                                    <div class="plan-progress-wrap">
+                                        <div class="plan-progress-label">
+                                            <span>Plan Progress</span>
+                                            <span id="progressPct">0%</span>
+                                        </div>
+                                        <div class="progress" style="height:8px;border-radius:8px;">
+                                            <div id="planProgress" class="progress-bar bg-success" style="width:0%;border-radius:8px;transition:width 0.8s;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-						<!-- Header Nav -->
-						<div class="header-nav navbar-collapse collapse justify-content-end" id="navbarNavDropdown">
-							<div class="logo-header">
-								<a href="index.html" class="logo-dark"><img
-										src="/static/finlab/images/logotraderbro.png" alt="TraderBro"></a>
-							</div>
-							<ul class="nav navbar-nav navbar navbar-left">
-								<!-- <li><a href="/">Home</a></li> -->
-								<li><a href="/about-us">About Us</a></li>
-								<li><a href="/static/finlab/Frontend/xhtml//trading-plan.html">Trading Plans</a></li>
-								<!-- <li class="sub-menu-down"><a href="javascript:void(0);">Our Blogs</a>
-								<ul class="sub-menu">
-									<li><a href="/static/finlab/Frontend/xhtml//blog-list.html">Blog List</a></li>
-									<li><a href="/static/finlab/Frontend/xhtml//blog-grid.html">Blog Grid</a></li>
-									<li><a href="/static/finlab/Frontend/xhtml//blog-details.html">Blog Details</a></li>
-								</ul>
-							</li> -->
-								<li><a href="/static/finlab/Frontend/xhtml//contact-us.html">Contact Us</a></li>
-								<li><a href="/account">My Account</a></li>
+                        <!-- ── SUBSCRIPTION QUEUE TIMELINE ────────────────── -->
+                        <div class="col-12" id="queueSection" style="display:none;">
+                            <div class="queue-card">
+                                <div class="queue-card-header">
+                                    <h5>🗂 Your Subscription Queue</h5>
+                                    <span id="queueCountBadge" style="font-size:11px;color:#94a3b8;"></span>
+                                </div>
+                                <ul class="timeline" id="queueTimeline">
+                                    <!-- filled by JS -->
+                                </ul>
+                                <!-- Arrow + NEW plan coming in -->
+                                <div class="new-plan-arrow" id="newPlanArrow" style="display:none;">
+                                    ↓ Your new plan will be added below ↓
+                                </div>
+                            </div>
+                        </div>
 
-							</ul>
-						</div>
-					</div>
-				</div>
-			</div>
-			<!-- Main Header End -->
-		</header>
-		<!-- Header End -->
+                        <!-- ── UPGRADE PLAN CARD ───────────────────────────── -->
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="card-title mb-0">🚀 Plan You're Purchasing</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <p class="text-muted mb-1" style="font-size:12px;">Plan</p>
+                                            <h6 id="planName" style="margin:0;"></h6>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p class="text-muted mb-1" style="font-size:12px;">Duration</p>
+                                            <h6 id="planDays" style="margin:0;font-size:13px;"></h6>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p class="text-muted mb-1" style="font-size:12px;">Will Start</p>
+                                            <h6 id="newStart" style="margin:0;font-size:13px;"></h6>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p class="text-muted mb-1" style="font-size:12px;">Will Expire</p>
+                                            <h6 id="newExpiry" style="margin:0;font-size:13px;"></h6>
+                                        </div>
+                                    </div>
 
+                                    <div class="mt-3 p-3" style="background:#f8fafc;border-radius:12px;font-size:12px;color:#64748b;line-height:1.8;" id="planBreakdown">
+                                        <!-- filled by JS -->
+                                    </div>
 
-		<div class="page-content">
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <h5 style="margin:0;">Total Amount</h5>
+                                        <h4 class="text-success mb-0" id="totalPrice"></h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-			<!-- Banner  -->
-			<div class="dz-bnr-inr dz-bnr-inr-sm text-center position-relative"
-				style="background-image:url('/static/finlab/Frontend/xhtml/images/background/bg2.jpg');">
-				<div class="container">
-					<div class="dz-bnr-inr-entry">
-						<h1>Checkout</h1>
-						<!-- Breadcrumb Row -->
-						<nav aria-label="breadcrumb" class="breadcrumb-row m-t15">
-							<ul class="breadcrumb">
-								<li class="breadcrumb-item"><a href="/">Home</a></li>
-								<li class="breadcrumb-item active" aria-current="page">Checkout</li>
-							</ul>
-						</nav>
-						<!-- Breadcrumb Row End -->
-					</div>
-				</div>
-				<img class="shape1" src="/static/finlab/Frontend/xhtml/images/home-banner/shape1.svg" alt="">
-			</div>
-			<!-- Banner End -->
+                    </div>
+                </div>
 
-			<div class="container mt-5 mb-5">
+                <!-- ═══ RIGHT SIDE ════════════════════════════════════════ -->
+                <div class="col-xl-4">
+                    <div class="card" style="border-radius:20px;overflow:hidden;">
+                        <div class="card-header" style="background:#0f172a;border:none;padding:20px 24px;">
+                            <h4 class="card-title mb-0" style="color:white;">👤 Order Summary</h4>
+                        </div>
+                        <div class="card-body" style="padding:24px;">
 
-				<div class="row g-4">
+                            <!-- User info -->
+                            <div style="background:#f8fafc;border-radius:12px;padding:14px;margin-bottom:16px;">
+                                <p style="margin:0 0 6px;font-size:13px;"><strong>Name:</strong> <span id="userName"></span></p>
+                                <p style="margin:0;font-size:13px;"><strong>Email:</strong> <span id="userEmail"></span></p>
+                            </div>
 
-					<!-- LEFT SIDE -->
-					<div class="col-xl-8">
+                            <!-- Selected plan summary -->
+                            <div id="orderPlanSummary" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;">
+                                <!-- filled by JS -->
+                            </div>
 
-						<div class="row g-4">
+                            <hr style="margin:16px 0;">
 
-							<!-- CURRENT PLAN -->
-							<div class="col-12">
-								<div class="card">
-									<div class="card-header">
-										<h4 class="card-title">📊 Current Trading Plan</h4>
-									</div>
+                            <!-- SEBI disclaimer -->
+                            <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:12px;margin-bottom:16px;">
+                                <p style="font-size:12px;color:#92400e;margin:0;line-height:1.6;">
+                                    ⚠️ This platform is for <strong>educational purposes only</strong>. We are <strong>not SEBI registered</strong> as an RA or IA. No investment advice is provided.
+                                </p>
+                            </div>
 
-									<div class="card-body">
-										<div class="row">
+                            <!-- ── CONSENT CHECKBOX (MANDATORY) ─────────── -->
+                            <div class="consent-box" id="consentBox">
+                                <label class="consent-label">
+                                    <input type="checkbox" id="consentCheck" onchange="onConsentChange()">
+                                    <span>I understand and agree that TraderBro is an <strong>educational platform</strong>, not SEBI registered, and does not provide investment advice.</span>
+                                </label>
+                                <div class="consent-warning" id="consentWarning">
+                                    ⛔ You must tick this box to proceed with payment.
+                                </div>
+                            </div>
 
-											<div class="col-md-3">
-												<p class="text-muted">Plan</p>
-												<h5 id="currentPlan"></h5>
-											</div>
+                            <!-- PAY BUTTON -->
+                            <button id="payBtn" onclick="startPayment()" disabled>
+                                🔒 Tick the checkbox to pay
+                            </button>
 
-											<div class="col-md-3">
-												<p class="text-muted">Start</p>
-												<h6 id="currentStart"></h6>
-											</div>
+                            <p style="text-align:center;font-size:11px;color:#94a3b8;margin-top:10px;margin-bottom:0;">
+                                🔐 Secure &nbsp;|&nbsp; Instant Activation
+                            </p>
 
-											<div class="col-md-3">
-												<p class="text-muted">Expiry</p>
-												<h6 id="currentExpiry"></h6>
-											</div>
+                        </div>
+                    </div>
+                </div>
 
-											<div class="col-md-3">
-												<p class="text-muted">Status</p>
-												<h6 id="planStatus"></h6>
-											</div>
+            </div>
+        </div>
 
-											<div class="col-md-6 mt-3">
-												<p class="text-muted">Trading Days Remaining</p>
-												<h6 id="daysRemaining"></h6>
-											</div>
+    </div><!-- /page-content -->
 
-										</div>
-
-										<!-- PROGRESS BAR -->
-										<div class="mt-3">
-											<div class="progress">
-												<div id="planProgress" class="progress-bar bg-success"
-													style="width: 0%"></div>
-											</div>
-										</div>
-									</div>
-
-									<div class="card-body">
-										<div class="row">
-
-											<div class="col-md-4">
-												<p class="text-muted">Plan</p>
-												<h5 id="currentPlan"></h5>
-											</div>
-
-											<div class="col-md-4">
-												<p class="text-muted">Start</p>
-												<h6 id="currentStart"></h6>
-											</div>
-
-											<div class="col-md-4">
-												<p class="text-muted">Expiry</p>
-												<h6 id="currentExpiry"></h6>
-											</div>
-											<div class="col-md-4">
-												<p class="text-muted">Days Remaining</p>
-												<h6 id="daysRemaining"></h6>
-											</div>
-
-										</div>
-									</div>
-								</div>
-							</div>
-
-							<!-- NEW PLAN -->
-							<div class="col-12">
-								<div class="card">
-									<div class="card-header">
-										<h4 class="card-title">🚀 Upgrade Plan</h4>
-									</div>
-
-									<div class="card-body">
-
-										<div class="row">
-
-											<div class="col-md-3">
-												<p class="text-muted">Plan</p>
-												<h6 id="planName"></h6>
-											</div>
-
-											<div class="col-md-3">
-												<p class="text-muted">Duration</p>
-												<h6 id="planDays"></h6>
-											</div>
-
-											<div class="col-md-3">
-												<p class="text-muted">Start</p>
-												<h6 id="newStart"></h6>
-											</div>
-
-											<div class="col-md-3">
-												<p class="text-muted">Expiry</p>
-												<h6 id="newExpiry"></h6>
-											</div>
-											<div class="col-md-4">
-												<p class="text-muted">Next Activation</p>
-												<h6 id="nextStart"></h6>
-											</div>
-
-										</div>
-
-										<hr>
-										<div class="mt-2">
-											<p id="planBreakdown" style="font-size:13px; color:#666;"></p>
-										</div>
-
-										<div class="d-flex justify-content-between align-items-center">
-											<h5>Total</h5>
-											<h4 class="text-success" id="totalPrice"></h4>
-										</div>
-
-									</div>
-								</div>
-							</div>
-
-						</div>
-
-					</div>
-
-					<!-- RIGHT SIDE -->
-					<div class="col-xl-4">
-
-						<div class="card">
-							<div class="card-header">
-								<h4 class="card-title">👤 User Details</h4>
-							</div>
-
-							<div class="card-body">
-
-								<p><strong>Name:</strong> <span id="userName"></span></p>
-								<p><strong>Email:</strong> <span id="userEmail"></span></p>
-
-								<hr>
-								<p style="font-size:12px; color:#888;">
-									This platform is for <span class="text-danger">educational purposes only. We are not
-										SEBI registered.
-										No investment advice is provided.</span>
-								</p>
-								<input type="checkbox" required>
-								I understand this is an educational platform and not SEBI registered
-
-								<button class="btn btn-primary w-100" onclick="startPayment()">
-									Pay & Upgrade 💳
-								</button>
-
-							</div>
-						</div>
-
-					</div>
-
-				</div>
-
-			</div>
-		</div>
-
-		<!-- Footer -->
+    <!-- Footer -->
 		<footer class="site-footer">
 			<div class="footer-top">
 				<div class="container">
 					<div class="row">
 						<div class="col-lg-4 col-md-12 col-sm-12">
 							<div class="widget widget_about wow fadeInUp" data-wow-delay="0.4s">
-								<h6 class="footer-title mb-3">Welcome to TraderBro</h6>
-								<a href="index.html" class="logo-light"><img
+								<h6 class="footer-title mb-3">Welcome to Traderbro.in</h6>
+								<a href="/" class="logo-light"><img
 										src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
-										alt="TraderBro"></a>
+										alt="Traderbro.in"></a>
+
 								<!-- <form class="dzSubscribe ft-subscribe mb-4" action="script/mailchamp.php" method="post">
 								<div class="dzSubscribeMsg"></div>
 								<div class="input-group mb-0"> 
@@ -298,11 +354,11 @@
 										<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none"><g clip-path="url(#l)"><path d="M.246 17.179c-.148.68.374.967.858.75l16.365-8.391h.002c.195-.11.308-.308.308-.537s-.113-.428-.308-.538h-.002L1.104.071C.62-.146.098.142.246.822L1.75 7.521 10.293 9 1.75 10.479.246 17.179z" fill="#fff"/></g><defs><clipPath id="l"><path fill="#fff" d="M0 0h18v18H0z"/></clipPath></defs></svg>
 									</button>
 								</div>
-							</form>
-							<p class="text-primary font-13 mb-2">Follow Us</p>
+							</form> -->
+								<!-- <p class="text-primary font-13 mb-2">Download the Traderbro.in App</p>
 							<div>
-								<a href="https://twitter.com/" target="_blank" class="me-2 btn btn-sm btn-outline-primary">Twitter</a>
-								<a href="https://www.instagram.com/" target="_blank" class="btn btn-sm btn-outline-primary">Instagram</a>
+								<a href="https://appstore.com/" class="me-2"><img src="/static/finlab/Frontend/xhtml/images//app-store.png" alt="Download on App Store"></a>
+								<a href="https://playstore.com/"><img src="/static/finlab/Frontend/xhtml/images//play-store.png" alt="Get it on Google Play"></a>
 							</div> -->
 							</div>
 						</div>
@@ -310,10 +366,11 @@
 							<div class="widget widget_links wow fadeInUp" data-wow-delay="0.6s">
 								<h6 class="footer-title">Quick Links</h6>
 								<ul>
-									<li><a href="about-us.html">About Us</a></li>
+									<li><a href="/about-us">About Us</a></li>
 									<li><a href="/privacy-policy">Privacy Policy</a></li>
 									<li><a href="/terms-and-conditions">Terms of Service</a></li>
-									<li><a href="contact-us.html">Contact Us</a></li>
+									<li><a href="/disclaimer">Disclaimer</a></li>
+									<li><a href="/refund-policy">Refund-Policy</a></li>
 								</ul>
 							</div>
 						</div>
@@ -321,10 +378,10 @@
 							<div class="widget widget_links wow fadeInUp" data-wow-delay="0.8s">
 								<h6 class="footer-title">Subscriptions</h6>
 								<ul>
-									<li><a href="trading-plan.html">Basic</a></li>
-									<li><a href="trading-plan.html">Essential</a></li>
-									<li><a href="trading-plan.html">Advance</a></li>
-									<li><a href="trading-plan.html">Pro</a></li>
+									<li><a href="trading-plan">Basic</a></li>
+									<li><a href="trading-plan">Essential</a></li>
+									<li><a href="trading-plan">Advance</a></li>
+									<li><a href="trading-plan">Pro</a></li>
 								</ul>
 							</div>
 						</div>
@@ -332,27 +389,30 @@
 							<div class="widget widget_links wow fadeInUp" data-wow-delay="1.2s">
 								<h6 class="footer-title">Support</h6>
 								<ul>
-									<li><a href="javascript:void(0);">FAQ</a></li>
-									<li><a href="contact-us.html">Contact Us</a></li>
+									<!-- <li><a href="javascript:void(0);">FAQ</a></li> -->
+									<li><a href="static/finlab/Frontend/xhtml/contact-us.html">Contact Us</a></li>
 								</ul>
 							</div>
 						</div>
 						<div class="col-lg-2 col-md-3 col-6">
 							<div class="widget widget-social wow fadeInUp" data-wow-delay="1.4s">
-								<h6 class="footer-title">Social</h6>
+								<h6 class="footer-title">Follow Us</h6>
 								<ul>
 									<li><a target="_blank" href="https://twitter.com/"><img
-												src="/static/finlab/Frontend/xhtml/images/social/twitter.png"
-												alt="">Twitter</a></li>
+												src="/static/finlab/Frontend/xhtml/images//social/twitter.png"
+												alt="">Twitter / X</a></li>
 									<li><a target="_blank" href="https://www.facebook.com/"><img
-												src="/static/finlab/Frontend/xhtml/images/social/facebook.png"
+												src="/static/finlab/Frontend/xhtml/images//social/facebook.png"
 												alt="">Facebook</a></li>
 									<li><a target="_blank" href="https://www.linkedin.com/"><img
-												src="/static/finlab/Frontend/xhtml/images/social/linkedin.png"
+												src="/static/finlab/Frontend/xhtml/images//social/linkedin.png"
 												alt="">LinkedIn</a></li>
 									<li><a target="_blank" href="https://www.instagram.com/"><img
-												src="/static/finlab/Frontend/xhtml/images/social/instagram.png"
+												src="/static/finlab/Frontend/xhtml/images//social/instagram.png"
 												alt="">Instagram</a></li>
+									<li><a target="_blank" href="https://www.youtube.com/"><img
+												src="/static/finlab/Frontend/xhtml/images//social/youtube.png"
+												alt="">YouTube</a></li>
 								</ul>
 							</div>
 						</div>
@@ -367,7 +427,7 @@
 								</span>
 
 								<span class="ticker-item text-danger">
-									TraderBro is an educational platform. We are not SEBI registered as a Research
+									Traderbro.in is an educational platform. We are not SEBI registered as a Research
 									Analyst (RA) or Investment Adviser (IA). No investment or trading advice is
 									provided.
 								</span>
@@ -380,7 +440,7 @@
 								</span>
 
 								<span class="ticker-item text-danger">
-									TraderBro is an educational platform. We are not SEBI registered as a Research
+									Traderbro.in is an educational platform. We are not SEBI registered as a Research
 									Analyst (RA) or Investment Adviser (IA). No investment or trading advice is
 									provided.
 								</span>
@@ -432,7 +492,7 @@
 			<div class="footer-bottom">
 				<div class="container">
 					<div class="footer-inner text-center">
-						<p class="copyright-text wow fadeInUp" data-wow-delay="1.6s">Copyright &copy; 2026 TraderBro —
+						<p class="copyright-text wow fadeInUp" data-wow-delay="1.6s">Copyright &copy; 2026 Traderbro.in —
 							Stock Market Education Platform. All Rights Reserved.</p>
 					</div>
 				</div>
@@ -440,459 +500,521 @@
 		</footer>
 		<!-- Footer End -->
 
-		<!-- JS -->
+</div><!-- /page-wraper -->
 
+<script src="/static/finlab/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   MARKET HOLIDAYS & PLAN CONFIG
+═══════════════════════════════════════════════════════════════════ */
+// ── Market Holidays — loaded from server ──────────────────────────────
+    let _MARKET_HOLIDAYS = {};   // { "YYYY-MM-DD": "Holiday Name" }
+ 
+    async function loadMarketHolidays() {
+        try {
+            const res  = await fetch('/api/market-holidays', { credentials: 'include' });
+            const data = await res.json();
+            _MARKET_HOLIDAYS = {};
+            (data.holidays || []).forEach(h => { _MARKET_HOLIDAYS[h.date] = h.reason; });
+            console.log(`✅ Loaded ${Object.keys(_MARKET_HOLIDAYS).length} market holidays`);
+        } catch (e) {
+            console.warn('Could not load holidays from server, using empty list', e);
+        }
+    }
 
-		<script>
+const PLAN_DATA = {
+    basic:     { name: "BASIC",     tradingDays: 1,   price: 99 },
+    essential: { name: "ESSENTIAL", tradingDays: 5,   price: 399 },
+    pro:       { name: "PRO",       tradingDays: 22,  price: 1499 },
+    premium:   { name: "PREMIUM",   tradingDays: 250, price: 7499 },
+};
 
-			function loadCheckout(){
-				const marketHolidays = [
-				"2026-01-26", // Republic Day
-				"2026-03-07", // Holi
-				"2026-03-25", // Ram Navami
-				"2026-04-14", // Ambedkar Jayanti
-				"2026-04-18", // Good Friday
-				"2026-05-01", // Maharashtra Day
-				"2026-08-15", // Independence Day
-				"2026-08-27", // Ganesh Chaturthi
-				"2026-10-02", // Gandhi Jayanti
-				"2026-10-24", // Diwali
-				"2026-11-12", // Guru Nanak Jayanti
-				"2026-12-25"  // Christmas
-			];
+const PLAN_COLORS = {
+    basic:"#0ea5e9", essential:"#8b5cf6", pro:"#f59e0b", premium:"#ec4899", free:"#64748b"
+};
 
-			/* ===============================
-			   MARKET LOGIC FUNCTIONS
-			================================= */
-
-			// Skip weekends (Trading days only)
-			function addTradingDaysWithHolidays(startDate, days) {
-				let date = new Date(startDate);
-				let added = 0;
-				let skippedHolidays = 0;
-				let skippedWeekends = 0;
-
-				while (added < days) {
-					date.setDate(date.getDate() + 1);
-
-					let day = date.getDay();
-					let formatted = date.toISOString().split("T")[0];
-
-					// Weekend
-					if (day === 0 || day === 6) {
-						skippedWeekends++;
-						continue;
-					}
-
-					// Holiday
-					if (marketHolidays.includes(formatted)) {
-						skippedHolidays++;
-						continue;
-					}
-
-					added++;
-				}
-
-				return {
-					expiryDate: date,
-					holidays: skippedHolidays,
-					weekends: skippedWeekends
-				};
-			}
-			document.getElementById("userEmail").innerText = user.email || "N/A";
-
-			// Market timing logic (9:15 - 3:30)
-			function getMarketStartDate() {
-
-				let now = new Date();
-
-				let currentMinutes =
-					(now.getHours() * 60) + now.getMinutes();
-
-				// 12 PM MARKET CLOSE
-				let marketClose = (12 * 60);
-
-				// AFTER MARKET CLOSE
-				if (currentMinutes > marketClose) {
-
-					now.setDate(now.getDate() + 1);
-				}
-
-				// SKIP WEEKENDS
-				while (now.getDay() === 0 || now.getDay() === 6) {
-
-					now.setDate(now.getDate() + 1);
-				}
-
-				// MARKET START TIME
-				now.setHours(9);
-				now.setMinutes(16);
-				now.setSeconds(0);
-
-				return now;
-			}
-
-			// Normalize plan
-			if (user.plan) {
-				user.plan = user.plan.toLowerCase();
-			}
-
-			const params = new URLSearchParams(window.location.search);
-			const plan = params.get("plan");
-			const type = params.get("type");
-
-			/* ===============================
-			   2. PLAN CONFIG
-			================================= */
-			const planData = {
-				basic: { name: "basic", tradingDays: 1, price: 99 },
-				essential: { name: "essential", tradingDays: 5, price: 399 },
-				pro: { name: "pro", tradingDays: 22, price: 1499 },
-				premium: { name: "premium", tradingDays: 250, price: 14499 }
-			};
-
-			let selected = planData[plan];
-
-			if (!selected) {
-				alert("Invalid plan selected");
-				window.location.href = "/";
-			}
-			const planHierarchy = {
-				basic: 1,
-				essential: 2,
-				pro: 3,
-				premium: 4
-			};
-
-			/* ===============================
-			   3. USER DETAILS
-			================================= */
-			document.getElementById("userName").innerText = user.username || "User";
-			document.getElementById("userEmail").innerText = user.email || "-";
-
-			/* ===============================
-			   4. CURRENT PLAN
-			================================= */
-			document.getElementById("currentPlan").innerText =
-				user.plan ? user.plan.toUpperCase() : "FREE";
-
-			if (user.planExpiry) {
-				let expiry = new Date(user.planExpiry);
-				document.getElementById("currentExpiry").innerText =
-    				expiry.toLocaleString("en-IN");
-
-				// FIXED: calculate start correctly
-				if (user.planStart) {
-					let start = new Date(user.planStart);
-					document.getElementById("currentStart").innerText =
-    					start.toLocaleString("en-IN");
-				}
-				if (user.planStart) {
-					let start = new Date(user.planStart);
-					document.getElementById("currentStart").innerText =
-    					start.toLocaleString("en-IN");
-				}
-			}
-			/* ===============================
-			   5. NEW PLAN DETAILS
-			================================= */
-			/* ===============================
-			   5. NEW PLAN DETAILS
-			================================= */
-
-			document.getElementById("planName").innerText = selected.name.toUpperCase();
-			let dayText = selected.tradingDays === 1 ? "Trading Day" : "Trading Days";
-
-			document.getElementById("planDays").innerText =
-				selected.tradingDays === 1
-					? "1 Trading Day"
-					: selected.tradingDays + " Trading Days";
-
-			let newStart;
-
-			// If user already has active plan → start after expiry
-			if (user.planExpiry && new Date(user.planExpiry) > new Date()) {
-
-				newStart = new Date(user.planExpiry);
-
-				// FORCE NEXT SESSION START TIME
-				newStart.setHours(9);
-				newStart.setMinutes(16);
-				newStart.setSeconds(0);
-
-			} else {
-
-				newStart = getMarketStartDate();
-			}
-
-			// Calculate expiry
-			let daysToAdd = selected.tradingDays - 1;
-
-			let result = addTradingDaysWithHolidays(newStart, daysToAdd);
-
-			let newExpiry = result.expiryDate;
-			// ===============================
-			// CALCULATE FULL BREAKDOWN
-			// ===============================
-
-			// Total calendar days
-			let totalDays = Math.ceil((newExpiry - newStart) / (1000 * 60 * 60 * 24)) + 1;
-
-			// Show breakdown
-			document.getElementById("planBreakdown").innerHTML =
-				`<b>${selected.tradingDays}</b> Trading Days • 
-					<b>${totalDays}</b> Total Days • 
-					Weekends: ${result.weekends} • 
-					Holidays: ${result.holidays}`;
-			if (user.plan && planHierarchy[selected.name] < planHierarchy[user.plan]) {
-    document.getElementById("planBreakdown").innerHTML +=
-        "<br><span style='color:red;'>⚠️ Downgrade will apply after expiry</span>";
+/* ═══════════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════════ */
+function fmt(dt) {
+    if (!dt) return "—";
+    return new Date(dt).toLocaleString("en-IN", {
+        timeZone:"Asia/Kolkata", day:"2-digit", month:"2-digit", year:"numeric",
+        hour:"2-digit", minute:"2-digit", hour12:true
+    });
 }
 
-			// Set market close
-			newExpiry.setHours(12, 0, 0);
+function isHoliday(dt) {
+    const key = dt.toISOString().split("T")[0];
+    return key in _MARKET_HOLIDAYS;
+}
 
-			// SET VALUES
-			document.getElementById("newStart").innerText = newStart.toLocaleString();
-			document.getElementById("newExpiry").innerText = newExpiry.toLocaleString();
-			document.getElementById("nextStart").innerText = newStart.toLocaleString();
+function getHolidayName(dt) {
+    const key = dt.toISOString().split("T")[0];
+    return _MARKET_HOLIDAYS[key] || null;
+}
 
-			// Total Price
-			document.getElementById("totalPrice").innerHTML =
-				"₹" + selected.price + " <small style='color:gray'>incl. GST</small>";
+function isWeekend(dt) { return dt.getDay() === 0 || dt.getDay() === 6; }
 
-			/* ===============================
-			   6. CHECKOUT TITLE
-			================================= */
-			let title = "Buy Plan 💳";
+function addTradingDays(startDate, days) {
+    let date = new Date(startDate);
+    let added = 0, holidays = 0, weekends = 0;
+    const holidayNames = [];
 
-			if (type === "upgrade") title = "Upgrade Plan 🚀";
-			if (type === "renew") title = "Renew Plan 🔄";
+    while (added < days - 1) {
+        date.setDate(date.getDate() + 1);
 
-			let titleEl = document.getElementById("checkoutTitle");
-			if (titleEl) titleEl.innerText = title;
+        if (isWeekend(date)) {
+            weekends++;
+            continue;
+        }
 
-			/* ===============================
-			   7. PAYMENT FLOW
-			================================= */
-			/* ===============================
-			   MARKET TIME VALIDATION
-			================================= */
+        if (isHoliday(date)) {
+            const name = getHolidayName(date);
 
-			function isAfterMarketClose() {
-				let now = new Date();
-				let hour = now.getHours();
-				let minutes = now.getMinutes();
+            holidays++;
 
-				return (hour > 15 || (hour === 15 && minutes >= 31));
-			}
-			}
-		</script>
+            if (name && !holidayNames.includes(name)) {
+                holidayNames.push(name);
+            }
 
-		<script>
-			function startPayment() {
+            continue;
+        }
 
-				const checkbox = document.querySelector("input[type='checkbox']");
-				if (!confirm("Proceed with payment?")) return;
+        added++;
+    }
 
-				completePayment();
-			}
-		</script>
+    date.setHours(12,0,0,0);
 
-		<script>
+    const total =
+        Math.ceil((date - new Date(startDate)) / 86400000) + 1;
+
+    return {
+        expiry: date,
+        holidays,
+        weekends,
+        total,
+        holidayNames
+    };
+}
+
+function getMarketStartDate() {
+    let now = new Date();
+    const mins = now.getHours() * 60 + now.getMinutes();
+    if (mins > 12 * 60) now.setDate(now.getDate() + 1);
+    while (isWeekend(now) || isHoliday(now)) now.setDate(now.getDate() + 1);
+    now.setHours(9, 16, 0, 0);
+    return now;
+}
+
+function getNextTradingDayAfter(dt) {
+    let next = new Date(dt);
+    next.setDate(next.getDate() + 1);
+    next.setHours(9, 16, 0, 0);
+    while (isWeekend(next) || isHoliday(next)) next.setDate(next.getDate() + 1);
+    return next;
+}
+
+function calcTradingDaysRemaining(from, to) {
+    let d = new Date(from), count = 0;
+    while (d <= to) {
+        if (!isWeekend(d) && !isHoliday(d)) count++;
+        d.setDate(d.getDate() + 1);
+    }
+    return count;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CONSENT CHECKBOX LOGIC
+═══════════════════════════════════════════════════════════════════ */
+function onConsentChange() {
+    const cb  = document.getElementById("consentCheck");
+    const btn = document.getElementById("payBtn");
+    const box = document.getElementById("consentBox");
+    const warn = document.getElementById("consentWarning");
+
+    if (cb.checked) {
+        btn.disabled = false;
+        btn.textContent = "💳 Pay & Activate Plan";
+        box.classList.remove("error");
+        warn.classList.remove("show");
+    } else {
+        btn.disabled = true;
+        btn.textContent = "🔒 Tick the checkbox to pay";
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBAL STATE
+═══════════════════════════════════════════════════════════════════ */
+let user         = null;
+let allSubs      = [];     // from /api/my-subscriptions
+let selectedPlan = null;
+let newStart     = null;
+let newExpiry    = null;
+
+/* ═══════════════════════════════════════════════════════════════════
+   RENDER QUEUE TIMELINE
+═══════════════════════════════════════════════════════════════════ */
+function renderQueueTimeline(subs, incomingPlan, incomingStart, incomingExpiry) {
+    const section = document.getElementById("queueSection");
+    const timeline = document.getElementById("queueTimeline");
+    const countBadge = document.getElementById("queueCountBadge");
+    const arrowEl = document.getElementById("newPlanArrow");
+
+    // Show section only if there are existing subs or an incoming plan
+    const existing = subs.filter(s => s.status !== "expired");
+
+    if (existing.length === 0 && !incomingPlan) {
+        section.style.display = "none";
+        return;
+    }
+    section.style.display = "block";
+
+    const allItems = [...existing];
+    countBadge.textContent = allItems.length + " existing + 1 incoming";
+
+    let html = "";
+
+    allItems.forEach(s => {
+        const dotClass = s.status === "active" ? "active" : s.status === "queued" ? "queued" : "expired";
+        const planColor = PLAN_COLORS[s.plan] || "#64748b";
+        const icon = s.status === "active" ? "✅" : s.status === "queued" ? "⏳" : "❌";
+        const statusLabel = s.status === "active" ? "Currently Active" : s.status === "queued" ? "Queued" : "Expired";
+
+        const expDt = new Date(s.plan_expiry);
+        const now   = new Date();
+        let extraChip = "";
+        if (s.status === "active") {
+            const diff = expDt - now;
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            extraChip = `<span class="tl-chip green">⏳ ${d}d ${h}h left</span>`;
+        }
+        if (s.status === "queued") {
+            extraChip = `<span class="tl-chip blue">Starts: ${fmt(s.plan_start)}</span>`;
+        }
+
+        html += `
+        <li class="tl-item">
+            <div class="tl-dot ${dotClass}">${icon}</div>
+            <div class="tl-body">
+                <div class="tl-plan-name">
+                    <span style="background:${planColor};padding:2px 10px;border-radius:999px;font-size:11px;margin-right:6px;">${s.plan.toUpperCase()}</span>
+                    ${statusLabel}
+                </div>
+                <div class="tl-dates">
+                    📅 ${fmt(s.plan_start)}  →  ${fmt(s.plan_expiry)}
+                </div>
+                <div class="tl-chips">
+                    <span class="tl-chip">${s.trading_days} trading days</span>
+                    <span class="tl-chip">${s.total_calendar_days} calendar days</span>
+                    <span class="tl-chip">🗓 ${s.weekends_skipped} weekends</span>
+                    <span class="tl-chip">📅 ${s.holidays_skipped} holidays</span>
+                    ${s.price ? `<span class="tl-chip">₹${s.price}</span>` : ""}
+                    ${extraChip}
+                </div>
+            </div>
+        </li>`;
+    });
+
+    // New / incoming plan
+    if (incomingPlan) {
+        const pc = PLAN_DATA[incomingPlan];
+        if (pc) {
+            const result = addTradingDays(incomingStart, pc.tradingDays);
+            const planColor = PLAN_COLORS[incomingPlan] || "#64748b";
+            const isImmediate = incomingStart <= new Date();
+            arrowEl.style.display = "block";
+
+            html += `
+            <li class="tl-item">
+                <div class="tl-dot new">🆕</div>
+                <div class="tl-body">
+                    <div class="tl-plan-name">
+                        <span style="background:${planColor};padding:2px 10px;border-radius:999px;font-size:11px;margin-right:6px;">${incomingPlan.toUpperCase()}</span>
+                        ${isImmediate ? "Activates Immediately" : "Will be Queued"}
+                    </div>
+                    <div class="tl-dates">
+                        📅 ${fmt(incomingStart)}  →  ${fmt(incomingExpiry)}
+                    </div>
+                    <div class="tl-chips">
+                        <span class="tl-chip orange">${pc.tradingDays} trading days</span>
+                        <span class="tl-chip orange">${result.total} calendar days</span>
+                        <span class="tl-chip orange">🗓 ${result.weekends} weekends</span>
+                        <span class="tl-chip orange" title="${result.holidayNames.join(', ')}">
+                            📅 ${result.holidays} holidays
+                            ${result.holidayNames.length ? ' ⓘ' : ''}
+                        </span>
+                        <span class="tl-chip orange">₹${pc.price}</span>
+                    </div>
+                </div>
+            </li>`;
+        }
+    }
+
+    timeline.innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOAD CHECKOUT
+═══════════════════════════════════════════════════════════════════ */
+function loadCheckout() {
+    const params = new URLSearchParams(window.location.search);
+    const plan   = (params.get("plan") || "").toLowerCase();
+
+    selectedPlan = PLAN_DATA[plan];
+    if (!selectedPlan) {
+        alert("Invalid plan selected. Redirecting…");
+        window.location.href = "/trading-plan";
+        return;
+    }
+
+    /* ── User details ─────────────────────────────────────── */
+    document.getElementById("userName").innerText  = user.username || "User";
+    document.getElementById("userEmail").innerText = user.email    || "—";
+
+    /* ── Current plan section ─────────────────────────────── */
+    const curPlanEl  = document.getElementById("currentPlan");
+    const curBadge   = document.getElementById("currentStatusBadge");
+
+    if (user.plan && user.plan !== "free") {
+        curPlanEl.innerHTML = `<span class="plan-pill-sm ${user.plan}">${user.plan.toUpperCase()}</span>`;
+    } else {
+        curPlanEl.innerText = "FREE";
+    }
+
+    if (user.planExpiry) {
+        const expiry = new Date(user.planExpiry);
+        const now    = new Date();
+
+        document.getElementById("currentStart").innerText  = fmt(user.planStart);
+        document.getElementById("currentExpiry").innerText = fmt(user.planExpiry);
+
+        if (now < expiry) {
+            const tLeft = calcTradingDaysRemaining(now, expiry);
+            document.getElementById("daysRemaining").innerText = tLeft + " trading day(s) left";
+            curBadge.textContent  = "Active ✅";
+            curBadge.className    = "badge bg-success";
+
+            if (user.planStart) {
+                const start   = new Date(user.planStart);
+                const total   = expiry - start;
+                const used    = now - start;
+                const pct     = Math.min(Math.round((used / total) * 100), 100);
+                document.getElementById("planProgress").style.width = pct + "%";
+                document.getElementById("progressPct").innerText    = pct + "%";
+            }
+        } else {
+            document.getElementById("daysRemaining").innerText = "Expired";
+            curBadge.textContent = "Expired ❌";
+            curBadge.className   = "badge bg-danger";
+        }
+    } else {
+        document.getElementById("currentStart").innerText  = "—";
+        document.getElementById("currentExpiry").innerText = "—";
+        document.getElementById("daysRemaining").innerText = "No active plan";
+        curBadge.textContent = "No Plan";
+        curBadge.className   = "badge bg-secondary";
+    }
+
+    /* ── Determine new plan start ─────────────────────────── */
+    // Find latest future expiry across all queued/active subscriptions
+    let latestExpiry = null;
+    allSubs.forEach(s => {
+        if (s.status === "expired") return;
+        const edt = new Date(s.plan_expiry);
+        if (edt > new Date()) {
+            if (!latestExpiry || edt > latestExpiry) latestExpiry = edt;
+        }
+    });
+    // Also check user.planExpiry
+    if (user.planExpiry) {
+        const ue = new Date(user.planExpiry);
+        if (ue > new Date()) {
+            if (!latestExpiry || ue > latestExpiry) latestExpiry = ue;
+        }
+    }
+
+    if (latestExpiry) {
+        newStart = getNextTradingDayAfter(latestExpiry);
+    } else {
+        newStart = getMarketStartDate();
+    }
+
+    /* ── Compute expiry ───────────────────────────────────── */
+    const result = addTradingDays(newStart, selectedPlan.tradingDays);
+    newExpiry = result.expiry;
+
+    /* ── Fill new plan section ────────────────────────────── */
+    document.getElementById("planName").innerHTML =
+        `<span class="plan-pill-sm ${plan}">${selectedPlan.name}</span>`;
+    document.getElementById("planDays").innerText =
+        selectedPlan.tradingDays + (selectedPlan.tradingDays === 1 ? " Trading Day" : " Trading Days");
+    document.getElementById("newStart").innerText  = fmt(newStart);
+    document.getElementById("newExpiry").innerText = fmt(newExpiry);
+
+    const isQueued = newStart > new Date();
+    document.getElementById("planBreakdown").innerHTML = `
+        <b>${selectedPlan.tradingDays}</b> Trading Days &nbsp;•&nbsp;
+        <b>${result.total}</b> Calendar Days &nbsp;•&nbsp;
+        Weekends skipped: <b>${result.weekends}</b> &nbsp;•&nbsp;
+        Holidays skipped: <b>${result.holidays}</b>
+
+        ${result.holidayNames.length > 0
+        ? `<br>
+        <span style="color:#f5a623;font-size:11px;">
+        📅 ${result.holidayNames.slice(0,5).join(', ')}
+        </span>`
+        : ''}
+        ${isQueued ? `<br><span style="color:#2563eb;font-weight:700;">📌 This plan will be queued — activates after your current subscription ends.</span>` : `<br><span style="color:#16a34a;font-weight:700;">✅ This plan activates immediately.</span>`}
+    `;
+
+    document.getElementById("totalPrice").innerHTML =
+        `₹${selectedPlan.price} <small style="color:#94a3b8;">incl. GST</small>`;
+
+    /* ── Order summary (right sidebar) ───────────────────── */
+    document.getElementById("orderPlanSummary").innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-weight:700;">${selectedPlan.name} Plan</span>
+            <span class="plan-pill-sm ${plan}">${selectedPlan.name}</span>
+        </div>
+        <div style="font-size:12px;color:#64748b;line-height:1.8;">
+            <div>📅 ${selectedPlan.tradingDays} trading days</div>
+            <div>🗓 Starts: ${fmt(newStart)}</div>
+            <div>⏰ Expires: ${fmt(newExpiry)}</div>
+            ${isQueued ? `<div style="color:#2563eb;">📌 Queued after current plan</div>` : ""}
+        </div>
+        <div style="border-top:1px solid #d1fae5;margin-top:10px;padding-top:10px;font-weight:800;font-size:16px;color:#16a34a;">
+            ₹${selectedPlan.price} <small style="font-size:11px;font-weight:500;color:#94a3b8;">incl. GST</small>
+        </div>
+    `;
+
+    /* ── Queue timeline ───────────────────────────────────── */
+    renderQueueTimeline(allSubs, plan, newStart, newExpiry);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PAYMENT
+═══════════════════════════════════════════════════════════════════ */
+function startPayment() {
+    const cb   = document.getElementById("consentCheck");
+    const box  = document.getElementById("consentBox");
+    const warn = document.getElementById("consentWarning");
+
+    // Guard: checkbox must be ticked
+    if (!cb.checked) {
+        box.classList.add("error");
+        warn.classList.add("show");
+        box.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => box.classList.remove("error"), 600);
+        return;
+    }
+
+    if (!confirm(`Confirm payment of ₹${selectedPlan ? selectedPlan.price : "—"} for ${selectedPlan ? selectedPlan.name : ""} plan?`)) return;
+
+    completePayment();
+}
+
 async function completePayment() {
+    const btn = document.getElementById("payBtn");
+    btn.disabled     = true;
+    btn.textContent  = "⏳ Processing…";
 
     try {
-
-        const params = new URLSearchParams(window.location.search);
-
-        const selectedPlan = params.get("plan");
+        const params  = new URLSearchParams(window.location.search);
+        const planKey = params.get("plan");
 
         const response = await fetch("/activate-plan", {
             method: "POST",
             credentials: "include",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                plan: selectedPlan
-            })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ plan: planKey })
         });
 
         const data = await response.json();
 
         if (data.success) {
-
-            alert("Payment Successful 🚀");
-
-            window.location.href = "/dashboard";
-
+            btn.textContent = "✅ Payment Successful!";
+            setTimeout(() => { window.location.href = "/account"; }, 1200);
         } else {
-
-            alert("Plan activation failed");
-
+            alert("Plan activation failed: " + (data.error || "Unknown error"));
+            btn.disabled    = false;
+            btn.textContent = "💳 Pay & Activate Plan";
         }
-
     } catch (err) {
-
-        console.log(err);
-
-        alert("Something went wrong");
-
+        console.error(err);
+        alert("Something went wrong. Please try again.");
+        btn.disabled    = false;
+        btn.textContent = "💳 Pay & Activate Plan";
     }
 }
-</script>
 
-		<script src="/static/finlab/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
-<script>
-let user = null;
-
+/* ═══════════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════════ */
 async function initCheckout() {
-    const res = await fetch("/api/me", {
-        credentials: "include"
-    });
-
+    await loadMarketHolidays();
+    // Fetch user
+    const res  = await fetch("/api/me", { credentials: "include" });
     const data = await res.json();
 
-    if (!data.username) {
-        window.location.href = "/user-login";
-        return;
-    }
+    if (!data.username) { window.location.href = "/user-login"; return; }
 
-    // ✅ Set user from backend
     user = {
-        username: data.username,
-        email: data.email,
-		plan: data.plan,
-		planExpiry: data.plan_expiry,
-		planStart: data.plan_start
+        username:   data.username,
+        email:      data.email,
+        plan:       (data.plan || "free").toLowerCase(),
+        planExpiry: data.plan_expiry,
+        planStart:  data.plan_start
     };
 
-    loadCheckout(); // continue your existing logic
+    // Fetch subscription history
+    try {
+        const sr   = await fetch("/api/my-subscriptions", { credentials: "include" });
+        const sd   = await sr.json();
+        allSubs = sd.subscriptions || [];
+    } catch { allSubs = []; }
+
+    loadCheckout();
 }
 
 initCheckout();
 </script>
 
-
-		<script>
-			if (user.planExpiry) {
-				let now = new Date();
-				let expiry = new Date(user.planExpiry);
-
-				function calculateTradingDaysRemaining(start, end) {
-					let date = new Date(start);
-					let count = 0;
-
-					while (date <= end) {
-						let day = date.getDay();
-						let formatted = date.toISOString().split("T")[0];
-
-						if (day !== 0 && day !== 6 && !marketHolidays.includes(formatted)) {
-							count++;
-						}
-
-						date.setDate(date.getDate() + 1);
-					}
-
-					return count;
-				}
-
-				if (user.planExpiry) {
-					let now = new Date();
-					let expiry = new Date(user.planExpiry);
-
-					let tradingDaysLeft = calculateTradingDaysRemaining(now, expiry);
-
-					document.getElementById("daysRemaining").innerText =
-						tradingDaysLeft > 0
-							? tradingDaysLeft + " trading days left"
-							: "Expired";
-				}
-			}
-
-			function getPlanStatus(expiry) {
-				let now = new Date();
-
-				if (now > expiry) return "Expired ❌";
-
-				let diffHours = (expiry - now) / (1000 * 60 * 60);
-
-				if (diffHours < 24) return "Expiring Today ⚠️";
-
-				return "Active ✅";
-			}
-
-			if (user.planExpiry) {
-				let expiry = new Date(user.planExpiry);
-				document.getElementById("planStatus").innerText = getPlanStatus(expiry);
-			}
-		</script>
-
-		<script>
-			function updateProgressBar() {
-				if (!user.planStart || !user.planExpiry) return;
-
-				let start = new Date(user.planStart);
-				let expiry = new Date(user.planExpiry);
-				let now = new Date();
-
-				let total = expiry - start;
-				let used = now - start;
-
-				let percent = Math.min((used / total) * 100, 100);
-
-				document.getElementById("planProgress").style.width = percent + "%";
-			}
-
-			updateProgressBar();
-		</script>
-
+<!-- NAVBAR -->
 <script>
 async function renderNavbar() {
-    const res = await fetch("/api/me");
-    const data = await res.json();
+    try {
+        const res  = await fetch("/api/me", { credentials: "include" });
+        const data = await res.json();
+        const nav  = document.getElementById("navAuth");
+        if (!nav) return;
 
-    const nav = document.getElementById("navAuth");
-
-    if (!nav) return;
-
-    if (data.username) {
-        const firstLetter = data.username.charAt(0).toUpperCase();
-
-        nav.innerHTML = `
-        <div class="dropdown">
-            <div class="d-flex align-items-center" style="cursor:pointer;" data-bs-toggle="dropdown">
-                <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#00c6ff,#0072ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;margin-right:10px;">
-                    ${firstLetter}
+        if (data.username) {
+            const fl = data.username.charAt(0).toUpperCase();
+            nav.innerHTML = `
+            <div class="dropdown">
+                <div class="d-flex align-items-center" style="cursor:pointer;" data-bs-toggle="dropdown">
+                    <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#00c6ff,#0072ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;margin-right:10px;">${fl}</div>
+                    <span class="text-white">Hi, ${data.username}</span>
                 </div>
-                <span class="text-white">Hi, ${data.username}</span>
-            </div>
-
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="/account">👤 My Account</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item text-danger" href="#" onclick="logout()">🚪 Logout</a></li>
-            </ul>
-        </div>
-        `;
-    } else {
-        nav.innerHTML = `
-            <a class="btn btn-outline-primary me-2" href="/user-login">Login</a>
-            <a class="btn btn-primary" href="/register">Register</a>
-        `;
-    }
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="/account">👤 My Account</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="logout()">🚪 Logout</a></li>
+                </ul>
+            </div>`;
+        } else {
+            nav.innerHTML = `<a class="btn btn-outline-primary me-2" href="/user-login">Login</a><a class="btn btn-primary" href="/register">Register</a>`;
+        }
+    } catch (e) { console.error(e); }
 }
 
-function logout() {
-    fetch("/logout").then(() => window.location.href = "/");
-}
-
+function logout() { window.location.href = "/logout"; }
 renderNavbar();
 </script>
 
 </body>
-
 </html>
