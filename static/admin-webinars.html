@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Webinar Manager — TraderBro Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#080810;--bg2:#0e0e1a;--bg3:#13132a;--bg4:#1a1a32;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
+  --orange:#eb4201;--orange2:#ff6935;--orange-bg:rgba(235,66,1,0.1);
+  --text:#e8eaf0;--muted:#7c7e8e;--muted2:#454657;
+  --green:#00d4aa;--green-bg:rgba(0,212,170,0.1);
+  --red:#ff4d6d;--red-bg:rgba(255,77,109,0.1);
+  --blue:#02a3fe;--blue-bg:rgba(2,163,254,0.1);
+  --gold:#f5a623;--gold-bg:rgba(245,166,35,0.1);
+  --radius:12px;--font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;}
+a{text-decoration:none;color:inherit;}
+
+/* TOPBAR */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);height:56px;display:flex;align-items:center;padding:0 2rem;gap:1.5rem;position:sticky;top:0;z-index:50;}
+.topbar-logo{font-size:1rem;font-weight:700;}
+.topbar-logo span{color:var(--orange);}
+.topbar-nav{display:flex;gap:4px;margin-left:1.5rem;}
+.tnav{padding:6px 14px;border-radius:8px;font-size:.83rem;color:var(--muted);transition:all .2s;}
+.tnav:hover{background:var(--bg3);color:var(--text);}
+.tnav.active{background:var(--orange-bg);color:var(--orange);}
+.topbar-right{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.topbar-user{font-size:.82rem;color:var(--muted);}
+
+/* LAYOUT */
+.page{max-width:1100px;margin:0 auto;padding:2rem;}
+
+/* PAGE HEADER */
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;}
+.ph h1{font-size:1.4rem;font-weight:700;}
+.ph p{font-size:.85rem;color:var(--muted);margin-top:3px;}
+
+/* STATS ROW */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:2rem;}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;}
+.stat .lbl{font-size:.7rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.stat .val{font-size:1.5rem;font-weight:700;font-family:var(--mono);}
+.stat.orange .val{color:var(--orange);}
+.stat.blue .val{color:var(--blue);}
+.stat.green .val{color:var(--green);}
+.stat.live-stat .val{color:var(--orange);animation:livePulse 1.5s ease-in-out infinite;}
+@keyframes livePulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+/* STATUS SYNC INFO BANNER */
+.sync-banner{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem;font-size:.8rem;color:var(--muted);}
+.sync-dot{width:8px;height:8px;background:var(--green);border-radius:50%;flex-shrink:0;}
+#sync-time{font-family:var(--mono);color:var(--green);}
+
+/* WEBINAR LIST */
+.wlist{display:flex;flex-direction:column;gap:12px;}
+.wrow{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;display:flex;align-items:center;gap:1.25rem;transition:border-color .2s;}
+.wrow:hover{border-color:var(--border2);}
+.wrow.is-live{border-color:rgba(235,66,1,.4);background:rgba(235,66,1,.03);}
+.wrow-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
+.wrow-info{flex:1;min-width:0;}
+.wrow-title{font-size:.95rem;font-weight:600;margin-bottom:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.wrow-meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;}
+.wrow-meta span{font-size:.75rem;color:var(--muted);}
+.wrow-meta .sep{color:var(--muted2);}
+.wrow-time{font-size:.72rem;color:var(--muted2);margin-top:3px;font-family:var(--mono);}
+.status-pill{font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:2px 9px;border-radius:100px;white-space:nowrap;}
+.status-pill.upcoming{background:var(--blue-bg);color:var(--blue);}
+.status-pill.live{background:var(--orange-bg);color:var(--orange);animation:livePulse 1.5s ease-in-out infinite;}
+.status-pill.completed{background:var(--green-bg);color:var(--green);}
+.status-pill.cancelled{background:var(--red-bg);color:var(--red);}
+/* DB vs computed status indicator */
+.db-status-note{font-size:.65rem;color:var(--muted2);font-family:var(--mono);padding:1px 6px;border-radius:4px;background:var(--bg3);border:1px solid var(--border);}
+.wrow-actions{display:flex;gap:6px;flex-shrink:0;}
+
+/* BUTTONS */
+.btn{padding:7px 15px;border-radius:8px;font-family:var(--font);font-size:.8rem;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:5px;transition:all .2s;}
+.btn-primary{background:var(--orange);color:#fff;}
+.btn-primary:hover{background:var(--orange2);}
+.btn-sm{padding:5px 11px;font-size:.75rem;}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text);}
+.btn-outline:hover{background:var(--bg3);}
+.btn-ghost{background:transparent;border:1px solid transparent;color:var(--muted);}
+.btn-ghost:hover{background:var(--bg3);color:var(--text);}
+.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid rgba(255,77,109,.3);}
+.btn-danger:hover{background:rgba(255,77,109,.2);}
+.btn-green{background:var(--green-bg);color:var(--green);border:1px solid rgba(0,212,170,.3);}
+
+/* MODAL / DRAWER */
+.mdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;align-items:center;justify-content:center;}
+.mdrop.open{display:flex;}
+.mbox{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:2rem;width:92%;max-width:560px;max-height:88vh;overflow-y:auto;position:relative;animation:slideUp .25s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+.mbox h2{font-size:1.2rem;font-weight:700;margin-bottom:1.5rem;}
+.mclose{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;}
+
+/* FORM */
+.form-grid{display:grid;gap:1rem;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.fgroup{display:flex;flex-direction:column;gap:6px;}
+.fgroup label{font-size:.78rem;font-weight:600;color:var(--muted);}
+.fgroup input,.fgroup textarea,.fgroup select{
+  background:var(--bg3);border:1px solid var(--border2);color:var(--text);
+  font-family:var(--font);font-size:.85rem;padding:9px 12px;
+  border-radius:8px;outline:none;transition:border-color .2s;
+}
+.fgroup input:focus,.fgroup textarea:focus,.fgroup select:focus{border-color:var(--orange);}
+.fgroup textarea{resize:vertical;min-height:72px;}
+.fgroup select option{background:var(--bg3);}
+.fgroup .hint{font-size:.7rem;color:var(--muted2);margin-top:2px;}
+.topics-input-wrap{display:flex;gap:7px;}
+.topics-input-wrap input{flex:1;}
+#topics-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.topic-chip{background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-size:.75rem;padding:3px 10px;border-radius:100px;display:flex;align-items:center;gap:5px;}
+.topic-chip button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;line-height:1;padding:0;}
+.form-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border);}
+.switch-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:8px;padding:10px 14px;}
+.switch-row label{font-size:.83rem;font-weight:500;}
+.toggle{position:relative;width:38px;height:22px;cursor:pointer;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-track{position:absolute;inset:0;background:var(--bg4);border:1px solid var(--border2);border-radius:100px;transition:.2s;}
+.toggle input:checked+.toggle-track{background:var(--orange);border-color:var(--orange);}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;background:#fff;border-radius:50%;transition:.2s;}
+.toggle input:checked~.toggle-thumb{left:19px;}
+
+/* STATUS NOTE in form */
+.status-note{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:.78rem;color:var(--muted);line-height:1.5;margin-top:-4px;}
+.status-note strong{color:var(--text);}
+
+/* REGISTRATIONS MODAL */
+.reg-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+.reg-table th{text-align:left;padding:8px 10px;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted2);border-bottom:1px solid var(--border);}
+.reg-table td{padding:9px 10px;border-bottom:1px solid var(--border);}
+.reg-table tr:last-child td{border-bottom:none;}
+
+/* EMPTY */
+.empty{text-align:center;padding:4rem 2rem;color:var(--muted);}
+.empty-icon{font-size:3rem;opacity:.2;margin-bottom:.75rem;}
+.empty h3{font-size:1rem;}
+
+/* SPINNER */
+.spinner{width:24px;height:24px;border:2px solid var(--border2);border-top-color:var(--orange);border-radius:50%;animation:spin .7s linear infinite;margin:3rem auto;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* TOAST */
+#toast{position:fixed;bottom:2rem;right:2rem;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:11px 18px;border-radius:var(--radius);font-size:.875rem;font-weight:500;z-index:9999;transform:translateY(70px);opacity:0;transition:all .3s;max-width:300px;}
+#toast.show{transform:translateY(0);opacity:1;}
+#toast.ok{border-color:rgba(0,212,170,.4);color:var(--green);}
+#toast.err{border-color:rgba(255,77,109,.4);color:var(--red);}
+
+@media(max-width:680px){
+  .stats{grid-template-columns:1fr 1fr;}
+  .form-row{grid-template-columns:1fr;}
+  .wrow{flex-wrap:wrap;}
+  .wrow-actions{width:100%;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-logo">Trader<span>Bro</span> Admin</span>
+  <nav class="topbar-nav">
+    <a href="/admin" class="tnav">Dashboard</a>
+    <a href="/admin/users" class="tnav">Users</a>
+    <a href="/admin/webinars" class="tnav active">Webinars</a>
+    <a href="/admin/token-manager" class="tnav">Token</a>
+  </nav>
+  <div class="topbar-right">
+    <span class="topbar-user" id="admin-name">Admin</span>
+    <a href="/logout" class="btn btn-sm btn-outline">Logout</a>
+  </div>
+</div>
+
+<div class="page">
+  <div class="ph">
+    <div>
+      <h1>📅 Webinar Manager</h1>
+      <p>Create and manage live sessions, webinars &amp; recordings</p>
+    </div>
+    <button class="btn btn-primary" onclick="openCreate()">＋ New Webinar</button>
+  </div>
+
+  <!-- SYNC STATUS BANNER -->
+  <div class="sync-banner">
+    <div class="sync-dot"></div>
+    <span>Status is computed in real-time from scheduled time &amp; duration. DB status is overridden automatically.
+      Last synced: <span id="sync-time">—</span></span>
+  </div>
+
+  <div class="stats" id="stats-row">
+    <div class="stat orange"><div class="lbl">Total</div><div class="val" id="stat-total">—</div></div>
+    <div class="stat blue"><div class="lbl">Upcoming</div><div class="val" id="stat-upcoming">—</div></div>
+    <div class="stat live-stat"><div class="lbl">Live Now</div><div class="val" id="stat-live">—</div></div>
+    <div class="stat green"><div class="lbl">Completed</div><div class="val" id="stat-completed">—</div></div>
+  </div>
+
+  <div id="list-container"><div class="spinner"></div></div>
+</div>
+
+<div id="toast"></div>
+
+<!-- CREATE / EDIT MODAL -->
+<div class="mdrop" id="form-modal" onclick="if(event.target===this)closeFormModal()">
+<div class="mbox">
+  <button class="mclose" onclick="closeFormModal()">✕</button>
+  <h2 id="form-title">New Webinar</h2>
+  <div class="form-grid">
+    <input type="hidden" id="f-id"/>
+    <div class="fgroup">
+      <label>Webinar Title *</label>
+      <input id="f-title" placeholder="e.g. Sensex Options — Live Analysis Session"/>
+    </div>
+    <div class="fgroup">
+      <label>Description</label>
+      <textarea id="f-desc" rows="3" placeholder="What will be covered in this session…"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="fgroup">
+        <label>Host Name</label>
+        <input id="f-host" value="TraderBro Team"/>
+      </div>
+      <div class="fgroup">
+        <label>DB Status Override</label>
+        <select id="f-status">
+          <option value="upcoming">Upcoming</option>
+          <option value="live">Force Live (overrides time)</option>
+          <option value="completed">Force Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <div class="hint">ℹ️ Status is auto-computed from time. Use "Force Live" only if you want to override.</div>
+      </div>
+    </div>
+    <div class="status-note">
+      <strong>Auto status rules:</strong> Session goes <strong>Live</strong> at scheduled time, becomes <strong>Completed</strong> after duration ends. "Cancelled" always stays cancelled. "Force Live" overrides until end time.
+    </div>
+    <div class="form-row">
+      <div class="fgroup">
+        <label>Date &amp; Time (IST) *</label>
+        <input type="datetime-local" id="f-dt"/>
+      </div>
+      <div class="fgroup">
+        <label>Duration (minutes)</label>
+        <input type="number" id="f-dur" value="60" min="15" max="480"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="fgroup">
+        <label>Max Seats (0 = unlimited)</label>
+        <input type="number" id="f-seats" value="0" min="0"/>
+      </div>
+      <div class="fgroup">
+        <label>Card Color</label>
+        <select id="f-color">
+          <option value="orange">🟠 Orange</option>
+          <option value="blue">🔵 Blue</option>
+          <option value="green">🟢 Green</option>
+          <option value="gold">🟡 Gold</option>
+        </select>
+      </div>
+    </div>
+    <div class="fgroup">
+      <label>Google Meet / Zoom Link</label>
+      <input type="url" id="f-meet" placeholder="https://meet.google.com/xxx-yyy-zzz"/>
+    </div>
+    <div class="fgroup">
+      <label>Recording Link (after session)</label>
+      <input type="url" id="f-rec" placeholder="https://youtube.com/..."/>
+    </div>
+    <div class="fgroup">
+      <label>Topics (press Enter or Add to add)</label>
+      <div class="topics-input-wrap">
+        <input id="f-topic-input" placeholder="e.g. Delta Analysis"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();addTopic();}"/>
+        <button type="button" class="btn btn-outline btn-sm" onclick="addTopic()">Add</button>
+      </div>
+      <div id="topics-list"></div>
+    </div>
+    <div class="switch-row">
+      <label>Free Webinar</label>
+      <label class="toggle">
+        <input type="checkbox" id="f-free" checked/>
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+    <div class="form-footer">
+      <button class="btn btn-outline" onclick="closeFormModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitForm()" id="form-submit-btn">Save Webinar</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- REGISTRATIONS MODAL -->
+<div class="mdrop" id="reg-modal" onclick="if(event.target===this)closeRegModal()">
+<div class="mbox" style="max-width:520px">
+  <button class="mclose" onclick="closeRegModal()">✕</button>
+  <h2 id="reg-title">Registrations</h2>
+  <div id="reg-body"><div class="spinner"></div></div>
+</div>
+</div>
+
+<script>
+/* =========================================================
+   SHARED STATUS ENGINE — same logic as webinars.html
+========================================================= */
+function effectiveStatus(w) {
+  if (w.status === 'cancelled') return 'cancelled';
+  const start = new Date(w.scheduled_at).getTime();
+  const dur   = (w.duration_minutes || 60) * 60 * 1000;
+  const end   = start + dur;
+  const now   = Date.now();
+  // Admin force-live: respect while still within window
+  if (w.status === 'live' && now < end) return 'live';
+  if (now >= start && now < end) return 'live';
+  if (now >= end)                return 'completed';
+  return 'upcoming';
+}
+
+let rawWebinars = [];
+let webinars    = []; // with computed status
+let editingTopics = [];
+
+const ICONS = {orange:'📊',blue:'📈',green:'💹',gold:'🎯'};
+const IBGS  = {orange:'var(--orange-bg)',blue:'var(--blue-bg)',green:'var(--green-bg)',gold:'var(--gold-bg)'};
+
+async function init() {
+  try {
+    const r=await fetch('/api/me'); const d=await r.json();
+    if(d.username) document.getElementById('admin-name').textContent=d.username;
+  } catch(e){}
+  await loadWebinars();
+  // Recompute statuses every second (no API call — just recalculate)
+  setInterval(recompute, 1000);
+  // Re-fetch from server every 60s
+  setInterval(loadWebinars, 60000);
+}
+
+async function loadWebinars() {
+  document.getElementById('list-container').innerHTML = '<div class="spinner"></div>';
+  try {
+    const r = await fetch('/api/webinars');
+    const d = await r.json();
+    rawWebinars = d.webinars || [];
+    recompute();
+  } catch(e) {
+    document.getElementById('list-container').innerHTML =
+      '<div class="empty"><div class="empty-icon">⚠️</div><h3>Failed to load</h3></div>';
+  }
+}
+
+function recompute() {
+  const prevStatuses = webinars.map(w=>w.id+':'+w.status).join(',');
+  webinars = rawWebinars.map(w => ({ ...w, status: effectiveStatus(w) }));
+  const nextStatuses = webinars.map(w=>w.id+':'+w.status).join(',');
+
+  // Update sync time
+  const el = document.getElementById('sync-time');
+  if (el) {
+    const now = new Date();
+    el.textContent = now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+  }
+
+  // Only re-render if statuses changed (avoid DOM thrash every second)
+  if (prevStatuses !== nextStatuses || rawWebinars.length === 0) {
+    renderStats();
+    renderList();
+  } else {
+    // Just update stats numbers quietly
+    renderStats();
+  }
+}
+
+function renderStats() {
+  document.getElementById('stat-total').textContent    = webinars.length;
+  document.getElementById('stat-upcoming').textContent = webinars.filter(w=>w.status==='upcoming').length;
+  document.getElementById('stat-live').textContent     = webinars.filter(w=>w.status==='live').length;
+  document.getElementById('stat-completed').textContent= webinars.filter(w=>w.status==='completed').length;
+}
+
+function renderList() {
+  const c = document.getElementById('list-container');
+  if (!webinars.length) {
+    c.innerHTML = '<div class="empty"><div class="empty-icon">📅</div><h3>No webinars yet. Click "+ New Webinar" to create one.</h3></div>';
+    return;
+  }
+  const sorted = [...webinars].sort((a,b) => {
+    const order = {live:0,upcoming:1,completed:2,cancelled:3};
+    return (order[a.status]??4)-(order[b.status]??4) || new Date(b.scheduled_at)-new Date(a.scheduled_at);
+  });
+  c.innerHTML = `<div class="wlist">${sorted.map(rowHTML).join('')}</div>`;
+}
+
+function rowHTML(w) {
+  const dt    = new Date(w.scheduled_at);
+  const dateS = dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  const timeS = dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+  const endDt = new Date(dt.getTime() + (w.duration_minutes||60)*60000);
+  const endS  = endDt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+  const dur   = w.duration_minutes>=60?(w.duration_minutes/60).toFixed(1)+'h':w.duration_minutes+'m';
+
+  // Show if computed status differs from DB status
+  const dbDiffers = w.status !== w._dbStatus && w._dbStatus;
+  const dbNote    = (w.status !== (w._rawStatus||w.status))
+    ? `<span class="db-status-note">DB: ${esc(w._rawStatus||'?')}</span>` : '';
+
+  // Countdown for upcoming
+  let timeNote = '';
+  if (w.status === 'upcoming') {
+    const diff = dt.getTime() - Date.now();
+    timeNote = diff > 0
+      ? `<div class="wrow-time">Starts in: ${fmtDiff(diff)} · ${timeS}–${endS} IST</div>`
+      : `<div class="wrow-time" style="color:var(--orange)">Starting soon… · ends ${endS} IST</div>`;
+  } else if (w.status === 'live') {
+    const remaining = endDt.getTime() - Date.now();
+    timeNote = `<div class="wrow-time" style="color:var(--orange)">🔴 LIVE · ${remaining>0?fmtDiff(remaining)+' remaining':'Ending soon…'} · ends ${endS} IST</div>`;
+  } else if (w.status === 'completed') {
+    timeNote = `<div class="wrow-time">Ended: ${endS} IST · ${dateS}</div>`;
+  }
+
+  return `
+  <div class="wrow${w.status==='live'?' is-live':''}" id="row-${w.id}">
+    <div class="wrow-icon" style="background:${IBGS[w.cover_color]||'var(--orange-bg)'}">${ICONS[w.cover_color]||'📊'}</div>
+    <div class="wrow-info">
+      <div class="wrow-title">
+        ${esc(w.title)}
+        <span class="status-pill ${w.status}">${w.status}</span>
+        ${dbNote}
+      </div>
+      <div class="wrow-meta">
+        <span>📅 ${dateS}</span><span class="sep">·</span>
+        <span>🕐 ${timeS} IST</span><span class="sep">·</span>
+        <span>⏱ ${dur}</span><span class="sep">·</span>
+        <span>👥 ${w.registrations} registered</span>
+        ${w.max_seats>0?`<span class="sep">·</span><span>${w.max_seats} max</span>`:''}
+        ${w.is_free
+          ?'<span class="sep">·</span><span style="color:var(--green)">FREE</span>'
+          :'<span class="sep">·</span><span style="color:var(--gold)">PAID</span>'}
+      </div>
+      ${timeNote}
+    </div>
+    <div class="wrow-actions">
+      <button class="btn btn-sm btn-outline" onclick="viewRegs(${w.id},'${esc(w.title)}')">👥 Regs</button>
+      <button class="btn btn-sm btn-outline" onclick="openEdit(${w.id})">✏️ Edit</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteWebinar(${w.id},'${esc(w.title)}')">🗑</button>
+    </div>
+  </div>`;
+}
+
+/* ---- FORM ---- */
+function openCreate() {
+  editingTopics = [];
+  document.getElementById('form-title').textContent = 'New Webinar';
+  document.getElementById('f-id').value = '';
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-desc').value = '';
+  document.getElementById('f-host').value = 'TraderBro Team';
+  document.getElementById('f-status').value = 'upcoming';
+  document.getElementById('f-dur').value = '60';
+  document.getElementById('f-seats').value = '0';
+  document.getElementById('f-color').value = 'orange';
+  document.getElementById('f-meet').value = '';
+  document.getElementById('f-rec').value = '';
+  document.getElementById('f-free').checked = true;
+  document.getElementById('f-dt').value = '';
+  renderTopicChips();
+  document.getElementById('form-modal').classList.add('open');
+}
+
+function openEdit(id) {
+  const w = webinars.find(x=>x.id===id);
+  if (!w) return;
+  editingTopics = [...(w.topics||[])];
+  document.getElementById('form-title').textContent = 'Edit Webinar';
+  document.getElementById('f-id').value = w.id;
+  document.getElementById('f-title').value = w.title;
+  document.getElementById('f-desc').value = w.description;
+  document.getElementById('f-host').value = w.host;
+  // Show the DB/raw status in the select, not computed status
+  document.getElementById('f-status').value = w._rawStatus || w.status;
+  document.getElementById('f-dur').value = w.duration_minutes;
+  document.getElementById('f-seats').value = w.max_seats;
+  document.getElementById('f-color').value = w.cover_color;
+  document.getElementById('f-meet').value = w.meeting_link;
+  document.getElementById('f-rec').value = w.recording_link;
+  document.getElementById('f-free').checked = w.is_free;
+  // Convert ISO to datetime-local
+  const d = new Date(w.scheduled_at);
+  const pad = n=>String(n).padStart(2,'0');
+  document.getElementById('f-dt').value =
+    `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  renderTopicChips();
+  document.getElementById('form-modal').classList.add('open');
+}
+
+function closeFormModal() { document.getElementById('form-modal').classList.remove('open'); }
+
+function addTopic() {
+  const input = document.getElementById('f-topic-input');
+  const val = input.value.trim();
+  if (!val || editingTopics.includes(val)) { input.value=''; return; }
+  editingTopics.push(val);
+  renderTopicChips();
+  input.value = '';
+}
+
+function removeTopic(t) {
+  editingTopics = editingTopics.filter(x=>x!==t);
+  renderTopicChips();
+}
+
+function renderTopicChips() {
+  document.getElementById('topics-list').innerHTML = editingTopics.map(t =>
+    `<span class="topic-chip">${esc(t)}<button onclick="removeTopic('${esc(t)}')" type="button">✕</button></span>`
+  ).join('');
+}
+
+async function submitForm() {
+  const id    = document.getElementById('f-id').value;
+  const title = document.getElementById('f-title').value.trim();
+  const dtVal = document.getElementById('f-dt').value;
+  if (!title) { toast('Title is required','err'); return; }
+  if (!dtVal) { toast('Date & time is required','err'); return; }
+
+  const btn = document.getElementById('form-submit-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const payload = {
+    title,
+    description:      document.getElementById('f-desc').value.trim(),
+    host:             document.getElementById('f-host').value.trim() || 'TraderBro Team',
+    status:           document.getElementById('f-status').value,
+    scheduled_at:     new Date(dtVal).toISOString(),
+    duration_minutes: parseInt(document.getElementById('f-dur').value)||60,
+    max_seats:        parseInt(document.getElementById('f-seats').value)||0,
+    cover_color:      document.getElementById('f-color').value,
+    meeting_link:     document.getElementById('f-meet').value.trim(),
+    recording_link:   document.getElementById('f-rec').value.trim(),
+    is_free:          document.getElementById('f-free').checked,
+    topics:           editingTopics,
+  };
+
+  const url = id ? '/api/admin/webinar/update' : '/api/admin/webinar/create';
+  if (id) payload.id = parseInt(id);
+
+  try {
+    const r = await fetch(url,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if (d.success) {
+      toast(id?'Webinar updated!':'Webinar created!','ok');
+      closeFormModal();
+      await loadWebinars();
+    } else {
+      toast(d.error||'Save failed','err');
+    }
+  } catch(e) { toast('Network error','err'); }
+  btn.disabled = false; btn.textContent = 'Save Webinar';
+}
+
+async function deleteWebinar(id, title) {
+  if (!confirm(`Delete "${title}"?\nThis will also remove all registrations.`)) return;
+  try {
+    const r = await fetch('/api/admin/webinar/delete',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id})
+    });
+    const d = await r.json();
+    if (d.success) { toast('Deleted','ok'); await loadWebinars(); }
+    else toast(d.error||'Delete failed','err');
+  } catch(e) { toast('Network error','err'); }
+}
+
+async function viewRegs(wid, title) {
+  document.getElementById('reg-title').textContent = `Registrations — ${title}`;
+  document.getElementById('reg-body').innerHTML = '<div class="spinner"></div>';
+  document.getElementById('reg-modal').classList.add('open');
+  try {
+    const r = await fetch(`/api/admin/webinar/${wid}/registrations`);
+    const d = await r.json();
+    const regs = d.registrations || [];
+    if (!regs.length) {
+      document.getElementById('reg-body').innerHTML =
+        '<div class="empty"><div class="empty-icon">👥</div><h3>No registrations yet</h3></div>';
+      return;
+    }
+    document.getElementById('reg-body').innerHTML = `
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem">
+        ${regs.length} registration${regs.length!==1?'s':''}
+      </p>
+      <table class="reg-table">
+        <thead><tr><th>#</th><th>Username</th><th>Email</th><th>Phone</th><th>Registered</th></tr></thead>
+        <tbody>${regs.map((r,i)=>`
+          <tr>
+            <td style="color:var(--muted2)">${i+1}</td>
+            <td style="font-weight:600">${esc(r.username)}</td>
+            <td style="color:var(--muted)">${esc(r.email)||'—'}</td>
+            <td style="color:var(--muted)">${esc(r.phone)||'—'}</td>
+            <td style="color:var(--muted);font-size:.75rem;font-family:var(--mono)">
+              ${(r.registered_at||'').split('T')[0]||r.registered_at}
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) {
+    document.getElementById('reg-body').innerHTML =
+      '<div class="empty"><div class="empty-icon">⚠️</div><h3>Failed to load</h3></div>';
+  }
+}
+
+function closeRegModal() { document.getElementById('reg-modal').classList.remove('open'); }
+
+/* ---- HELPERS ---- */
+function fmtDiff(ms) {
+  const d=Math.floor(ms/86400000),h=Math.floor((ms%86400000)/3600000),
+        m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);
+  return d>0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m ${s}s`;
+}
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+let toastT;
+function toast(msg,type=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className=`show ${type}`;
+  clearTimeout(toastT);toastT=setTimeout(()=>el.className='',3200);
+}
+
+init();
+</script>
+</body>
+</html>
