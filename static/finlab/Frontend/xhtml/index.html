@@ -150,12 +150,12 @@
 					<div class="row align-items-center">
 						<div class="col-xl-7 col-md-6">
 							<h1 class="wow fadeInUp" data-wow-delay="0.2s">Master <span class="text-line">Stock
-									Market</span> with <br><span style="color: #EB4201;">Traderbro.in dot-in</span></h1>
+									Market</span> with <br><span style="color: #EB4201;">Traderbro.in</span></h1>
 							<p class="text text-primary wow fadeInUp" data-wow-delay="0.4s">Trusted platform to learn
-								Sensex, Bank Nifty, Nifty 50 & FinNifty options trading — from basics to advanced
+								Sensex, Nifty 50 options trading — from basics to advanced
 								strategies.</p>
 							<div class="contant-box style-1 wow fadeInUp" data-wow-delay="0.6s">
-								<a href="/user-login" class="btn btn-lg btn-shadow btn-primary m-r30">START LEARNING</a>
+								<a href="trading-plan" class="btn btn-lg btn-shadow btn-primary m-r30">START LEARNING</a>
 								<a class="video-btn style-1 popup-youtube"
 									href="https://www.youtube.com/watch?v=cfmQFW1DpA0">
 									<i class="fa fa-play"></i>
@@ -717,6 +717,149 @@
 			</div>
 		</section> -->
 		</div>
+
+
+
+<!-- ===== WEBINAR NOTIFICATION STRIP ===== -->
+<div id="webinar-strip" style="display:none;background:linear-gradient(135deg,#0e0e1a,#13132a);border-top:1px solid rgba(235,66,1,0.2);border-bottom:1px solid rgba(235,66,1,0.2);padding:0;">
+  <div class="container">
+    <div style="display:flex;align-items:center;gap:1.25rem;padding:1rem 0;flex-wrap:wrap;">
+      <span id="ws-pill" style="background:#eb4201;color:#fff;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 12px;border-radius:100px;white-space:nowrap;">UPCOMING</span>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:.95rem;font-weight:600;color:#e8eaf0;margin-bottom:2px;" id="ws-title">—</div>
+        <div style="font-size:.78rem;color:#7c7e8e;" id="ws-sub">—</div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#ff6935;" id="ws-cd"></div>
+      <a href="/webinars" id="ws-cta" style="background:#eb4201;color:#fff;font-size:.8rem;font-weight:600;padding:8px 20px;border-radius:8px;text-decoration:none;white-space:nowrap;transition:background .2s;">View Webinar →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ---- Shared status engine ----
+  function effectiveStatus(w) {
+    if (w.status === 'cancelled') return 'cancelled';
+    const start = new Date(w.scheduled_at).getTime();
+    const dur   = (w.duration_minutes || 60) * 60 * 1000;
+    const end   = start + dur;
+    const now   = Date.now();
+    if (w.status === 'live' && now < end) return 'live';
+    if (now >= start && now < end) return 'live';
+    if (now >= end)                return 'completed';
+    return 'upcoming';
+  }
+
+  let wsWebinar  = null; // the raw webinar object
+  let wsCdTimer  = null;
+
+  async function loadWebinarStrip() {
+    try {
+      const r = await fetch('/api/webinar/next');
+      const d = await r.json();
+      const strip = document.getElementById('webinar-strip');
+
+      if (!d.webinar) { strip.style.display = 'none'; return; }
+
+      wsWebinar = d.webinar;
+      renderStrip();
+    } catch(e) {
+      // Silently fail — strip stays hidden
+    }
+  }
+
+  function renderStrip() {
+    if (!wsWebinar) return;
+    const strip = document.getElementById('webinar-strip');
+
+    // Always compute status from time, never trust raw DB value alone
+    const status  = effectiveStatus(wsWebinar);
+
+    // Hide if completed or cancelled — nothing useful to show on homepage
+    if (status === 'completed' || status === 'cancelled') {
+      strip.style.display = 'none';
+      return;
+    }
+
+    const isLive  = status === 'live';
+    const dt      = new Date(wsWebinar.scheduled_at);
+    const dateS   = dt.toLocaleDateString('en-IN',{weekday:'short',day:'2-digit',month:'short'});
+    const timeS   = dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+
+    // Pill
+    const pill = document.getElementById('ws-pill');
+    if (isLive) {
+      pill.textContent = '🔴 LIVE NOW';
+      pill.style.background = '#eb4201';
+      pill.style.color = '#fff';
+      pill.style.border = 'none';
+    } else {
+      pill.textContent = 'UPCOMING WEBINAR';
+      pill.style.background = 'rgba(2,163,254,0.15)';
+      pill.style.color = '#02a3fe';
+      pill.style.border = '1px solid rgba(2,163,254,0.3)';
+    }
+
+    document.getElementById('ws-title').textContent = wsWebinar.title;
+    document.getElementById('ws-sub').textContent   = isLive
+      ? 'Live session in progress — join now!'
+      : `${dateS} at ${timeS} IST`;
+
+    // CTA button
+    const cta = document.getElementById('ws-cta');
+    if (isLive && wsWebinar.meeting_link) {
+      cta.href        = wsWebinar.meeting_link;
+      cta.textContent = 'Join Live →';
+      cta.target      = '_blank';
+    } else {
+      cta.href        = '/webinars';
+      cta.textContent = 'Register Free →';
+      cta.removeAttribute('target');
+    }
+
+    strip.style.display = 'block';
+
+    // Start/restart countdown ticker
+    clearInterval(wsCdTimer);
+    if (!isLive) {
+      wsCdTimer = setInterval(function() {
+        if (!wsWebinar) return;
+        // Re-check status every tick — might have gone live
+        const nowStatus = effectiveStatus(wsWebinar);
+        if (nowStatus !== 'upcoming') { renderStrip(); return; }
+        const diff = new Date(wsWebinar.scheduled_at).getTime() - Date.now();
+        const cdEl = document.getElementById('ws-cd');
+        if (!cdEl) return;
+        if (diff <= 0) { cdEl.textContent = 'Starting soon…'; return; }
+        const dv=Math.floor(diff/86400000),
+              hv=Math.floor((diff%86400000)/3600000),
+              mv=Math.floor((diff%3600000)/60000),
+              sv=Math.floor((diff%60000)/1000);
+        cdEl.textContent = dv>0 ? `${dv}d ${hv}h ${mv}m` : `${hv}h ${mv}m ${sv}s`;
+      }, 1000);
+    } else {
+      // Live: show remaining time
+      wsCdTimer = setInterval(function() {
+        if (!wsWebinar) return;
+        const nowStatus = effectiveStatus(wsWebinar);
+        if (nowStatus !== 'live') { renderStrip(); return; }
+        const end  = new Date(wsWebinar.scheduled_at).getTime() + (wsWebinar.duration_minutes||60)*60000;
+        const diff = end - Date.now();
+        const cdEl = document.getElementById('ws-cd');
+        if (!cdEl) return;
+        if (diff <= 0) { cdEl.textContent = 'Ending soon…'; return; }
+        const hv=Math.floor(diff/3600000),mv=Math.floor((diff%3600000)/60000),sv=Math.floor((diff%60000)/1000);
+        cdEl.textContent = `${hv}h ${mv}m ${sv}s remaining`;
+      }, 1000);
+    }
+  }
+
+  // Initial load
+  loadWebinarStrip();
+  // Re-fetch from server every 2 minutes (pick up new webinars / admin changes)
+  setInterval(loadWebinarStrip, 120000);
+})();
+</script>
 
 
 		<!-- Footer -->
