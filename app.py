@@ -57,6 +57,58 @@ def verify_password(plain, hashed):
 
 DB_FILE = "traderbro.db"
 
+
+from market_holidays import (
+    MARKET_HOLIDAYS, is_market_holiday, get_holiday_reason,
+    get_upcoming_holidays, get_today_holiday, get_all_holidays_list,
+    refresh_holidays, get_holidays_for_year
+    )
+ 
+PLAN_CONFIG_DATA = {
+    "basic":     {"trading_days": 1,   "price": 99},
+    "essential": {"trading_days": 5,   "price": 399},
+    "pro":       {"trading_days": 22,  "price": 1499},
+    "premium":   {"trading_days": 250, "price": 14499},
+}
+
+def calculate_expiry_from_start(start_dt, trading_days):
+    """
+    Returns (expiry_dt, total_calendar_days, weekends_skipped, holidays_skipped).
+    start_dt counts as trading day #1.
+    Expiry is set to 12:00 PM (market close) of the last trading day.
+    """
+    days_to_add = trading_days - 1  # start day is day 1
+    expiry = start_dt.replace(hour=9, minute=16, second=0, microsecond=0)
+    added = 0
+    weekends = 0
+    holidays = 0
+ 
+    while added < days_to_add:
+        expiry = expiry + timedelta(days=1)
+        dow = expiry.weekday()
+        ds  = expiry.strftime("%Y-%m-%d")
+        if dow >= 5:
+            weekends += 1
+            continue
+        if is_market_holiday(expiry):
+            holidays += 1
+            continue
+        added += 1
+ 
+    expiry = expiry.replace(hour=12, minute=0, second=0, microsecond=0)
+    total_cal = (expiry.date() - start_dt.date()).days + 1
+    return expiry, total_cal, weekends, holidays
+ 
+ 
+def get_next_trading_day_after(dt):
+    """Returns the next valid trading day at 09:16 after dt."""
+    nxt = dt + timedelta(days=1)
+    nxt = nxt.replace(hour=9, minute=16, second=0, microsecond=0)
+    while nxt.weekday() >= 5 or is_market_holiday(nxt):
+        nxt += timedelta(days=1)
+    return nxt
+
+
 def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
@@ -100,6 +152,72 @@ def init_db():
     conn.commit()
     conn.close()
 init_db()
+
+
+def init_subscriptions_table():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS subscriptions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL,
+        plan TEXT NOT NULL,
+        plan_start TEXT NOT NULL,
+        plan_expiry TEXT NOT NULL,
+        trading_days INTEGER DEFAULT 0,
+        total_calendar_days INTEGER DEFAULT 0,
+        weekends_skipped INTEGER DEFAULT 0,
+        holidays_skipped INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'queued',
+        price INTEGER DEFAULT 0,
+        created_at TEXT
+    )
+    """)
+    conn.commit()
+    conn.close()
+ 
+init_subscriptions_table()
+
+# Webinar tables
+def init_webinars_table():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS webinars (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT,
+        host TEXT DEFAULT 'TraderBro Team',
+        scheduled_at TEXT NOT NULL,
+        duration_minutes INTEGER DEFAULT 60,
+        topics TEXT,
+        meeting_link TEXT,
+        registration_link TEXT,
+        cover_color TEXT DEFAULT 'orange',
+        status TEXT DEFAULT 'upcoming',
+        max_seats INTEGER DEFAULT 0,
+        is_free INTEGER DEFAULT 1,
+        recording_link TEXT,
+        created_at TEXT,
+        updated_at TEXT
+    )
+    """)
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS webinar_registrations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        webinar_id INTEGER NOT NULL,
+        username TEXT NOT NULL,
+        registered_at TEXT NOT NULL,
+        UNIQUE(webinar_id, username)
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+init_webinars_table()
 
 def create_admin():
     conn = sqlite3.connect(DB_FILE)
@@ -436,6 +554,75 @@ def get_current_user(request: Request):
         "role": None,
         "is_admin": False
     }
+
+@app.get("/api/my-subscriptions")
+def api_my_subscriptions(request: Request):
+    username = request.session.get("user") or request.session.get("admin")
+    if not username:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+ 
+    conn = sqlite3.connect(DB_FILE)
+    c    = conn.cursor()
+ 
+    # Ensure table exists (safe guard)
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS subscriptions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL,
+        plan TEXT NOT NULL,
+        plan_start TEXT NOT NULL,
+        plan_expiry TEXT NOT NULL,
+        trading_days INTEGER DEFAULT 0,
+        total_calendar_days INTEGER DEFAULT 0,
+        weekends_skipped INTEGER DEFAULT 0,
+        holidays_skipped INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'queued',
+        price INTEGER DEFAULT 0,
+        created_at TEXT
+    )
+    """)
+ 
+    c.execute("""
+        SELECT id, plan, plan_start, plan_expiry,
+               trading_days, total_calendar_days, weekends_skipped, holidays_skipped,
+               status, price, created_at
+        FROM subscriptions
+        WHERE username=?
+        ORDER BY plan_start ASC
+    """, (username,))
+    rows = c.fetchall()
+    conn.close()
+ 
+    now  = datetime.now(timezone.utc)
+    subs = []
+ 
+    for r in rows:
+        try:
+            sdt = datetime.fromisoformat(r[2])
+            edt = datetime.fromisoformat(r[3])
+            if sdt.tzinfo is None: sdt = sdt.replace(tzinfo=timezone.utc)
+            if edt.tzinfo is None: edt = edt.replace(tzinfo=timezone.utc)
+            if   now > edt:  status = "expired"
+            elif now >= sdt: status = "active"
+            else:            status = "queued"
+        except Exception:
+            status = r[8] or "unknown"
+ 
+        subs.append({
+            "id":                 r[0],
+            "plan":               r[1],
+            "plan_start":         r[2],
+            "plan_expiry":        r[3],
+            "trading_days":       r[4],
+            "total_calendar_days": r[5],
+            "weekends_skipped":   r[6],
+            "holidays_skipped":   r[7],
+            "status":             status,
+            "price":              r[9],
+            "created_at":         r[10],
+        })
+ 
+    return JSONResponse({"subscriptions": subs})
 
 @app.post("/api/trigger-eod-save")
 def trigger_eod_save(request: Request):
@@ -878,68 +1065,89 @@ def checkout_page(request: Request):
 
 @app.post("/activate-plan")
 async def activate_plan(request: Request):
-
     if "user" not in request.session:
-        return JSONResponse({"success": False})
-
+        return JSONResponse({"success": False, "error": "Not logged in"})
+ 
     data = await request.json()
-
-    plan = data.get("plan")
-
+    plan = (data.get("plan") or "").lower().strip()
+ 
+    if plan not in PLAN_CONFIG_DATA:
+        return JSONResponse({"success": False, "error": "Invalid plan"})
+ 
+    username  = request.session["user"]
+    cfg       = PLAN_CONFIG_DATA[plan]
+    t_days    = cfg["trading_days"]
+    price     = cfg["price"]
+    now       = datetime.now(IST)
+ 
     conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    plan_days = {
-        "basic": 1,
-        "essential": 5,
-        "pro": 22,
-        "premium": 250
-    }
-
-    days = plan_days.get(plan, 30)
-
-    start_date = get_subscription_start_date()
-
-    expiry = start_date
-
-    added = 1
-
-    while added < days:
-
-        expiry += timedelta(days=1)
-
-        # Skip weekends
-        if expiry.weekday() >= 5:
-            continue
-
-        added += 1
-
-    # MARKET END TIME → 12 PM
-    expiry = expiry.replace(
-        hour=15,
-        minute=30,
-        second=0,
-        microsecond=0
-    )
+    c    = conn.cursor()
+ 
+    # Find the latest future expiry across subscriptions + users table
     c.execute("""
-        UPDATE users
-        SET plan=?,
-            plan_start=?,
-            plan_expiry=?
-        WHERE username=?
-    """, (
-        plan,
-        start_date.isoformat(),
-        expiry.isoformat(),
-        request.session["user"]
-    ))
-
+        SELECT MAX(plan_expiry) FROM subscriptions
+        WHERE username=? AND status IN ('active','queued')
+    """, (username,))
+    row = c.fetchone()
+    sub_expiry_str = row[0] if row else None
+ 
+    c.execute("SELECT plan_expiry FROM users WHERE username=?", (username,))
+    urow = c.fetchone()
+    user_expiry_str = urow[0] if urow else None
+ 
+    effective_last_expiry = None
+    for es in [sub_expiry_str, user_expiry_str]:
+        if es:
+            try:
+                edt = datetime.fromisoformat(es)
+                if edt.tzinfo is None:
+                    edt = IST.localize(edt)
+                if edt > now:
+                    if effective_last_expiry is None or edt > effective_last_expiry:
+                        effective_last_expiry = edt
+            except Exception:
+                pass
+ 
+    # Determine start date
+    if effective_last_expiry:
+        start_dt = get_next_trading_day_after(effective_last_expiry)
+    else:
+        start_dt = get_subscription_start_date()
+ 
+    # Calculate expiry
+    expiry_dt, total_cal, weekends, holidays = calculate_expiry_from_start(start_dt, t_days)
+ 
+    new_status = "active" if start_dt <= now else "queued"
+ 
+    # Save to subscriptions table
+    c.execute("""
+        INSERT INTO subscriptions
+            (username, plan, plan_start, plan_expiry,
+             trading_days, total_calendar_days, weekends_skipped, holidays_skipped,
+             status, price, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)
+    """, (username, plan,
+          start_dt.isoformat(), expiry_dt.isoformat(),
+          t_days, total_cal, weekends, holidays,
+          new_status, price, now.isoformat()))
+ 
+    # Update users table only for the immediately active plan
+    if new_status == "active":
+        c.execute("""
+            UPDATE users SET plan=?, plan_start=?, plan_expiry=?
+            WHERE username=?
+        """, (plan, start_dt.isoformat(), expiry_dt.isoformat(), username))
+ 
     conn.commit()
     conn.close()
-
+ 
     return JSONResponse({
-        "success": True
+        "success":     True,
+        "plan":        plan,
+        "plan_start":  start_dt.isoformat(),
+        "plan_expiry": expiry_dt.isoformat(),
+        "status":      new_status,
     })
-
 
 # ═══════════════════════════════════════════════════════════════════════
 # CORE DATA FUNCTIONS
@@ -1400,6 +1608,92 @@ def restart_market_job():
 
 
 restart_market_job() 
+
+def promote_queued_subscriptions():
+    """
+    Runs every 5 minutes. Promotes queued subscriptions to active once
+    their start time has arrived, and updates the users table accordingly.
+    Also marks expired active subscriptions.
+    """
+    now = datetime.now(IST)
+    conn = sqlite3.connect(DB_FILE)
+    c    = conn.cursor()
+ 
+    # Promote queued → active
+    c.execute("""
+        SELECT id, username, plan, plan_start, plan_expiry
+        FROM subscriptions WHERE status='queued'
+    """)
+    for r in c.fetchall():
+        try:
+            sdt = datetime.fromisoformat(r[3])
+            if sdt.tzinfo is None: sdt = IST.localize(sdt)
+            if now >= sdt:
+                c.execute("UPDATE subscriptions SET status='active' WHERE id=?", (r[0],))
+                c.execute("""
+                    UPDATE users SET plan=?, plan_start=?, plan_expiry=?
+                    WHERE username=?
+                """, (r[2], r[3], r[4], r[1]))
+        except Exception as e:
+            print(f"promote_queued error: {e}")
+ 
+    # Mark active → expired
+    c.execute("""
+        SELECT id, plan_expiry FROM subscriptions WHERE status='active'
+    """)
+    for r in c.fetchall():
+        try:
+            edt = datetime.fromisoformat(r[1])
+            if edt.tzinfo is None: edt = IST.localize(edt)
+            if now > edt:
+                c.execute("UPDATE subscriptions SET status='expired' WHERE id=?", (r[0],))
+        except Exception:
+            pass
+ 
+    conn.commit()
+    conn.close()
+
+scheduler.add_job(
+    promote_queued_subscriptions,
+    "interval",
+    minutes=5,
+    id="promote_subscriptions",
+    replace_existing=True,
+    max_instances=1,
+    coalesce=True
+)
+"""
+scheduler.add_job(
+    promote_queued_subscriptions,
+    "interval",
+    minutes=5,
+    id="promote_subscriptions",
+    replace_existing=True,
+    max_instances=1,
+    coalesce=True
+)
+print("✅ SUBSCRIPTION PROMOTER SCHEDULED every 5 min")
+ 
+# ── Daily holiday refresh from NSE (6 AM IST) ────────────────────────────────
+def daily_holiday_refresh():
+    from market_holidays import refresh_holidays
+    refresh_holidays()
+    print("✅ Market holidays refreshed")
+ 
+scheduler.add_job(
+    daily_holiday_refresh,
+    "cron",
+    hour=6,
+    minute=0,
+    timezone=IST,
+    id="holiday_refresh_job",
+    replace_existing=True,
+    max_instances=1,
+    coalesce=True,
+)
+print("✅ HOLIDAY REFRESH SCHEDULED at 6:00 AM IST daily")
+"""
+print("✅ SUBSCRIPTION PROMOTER SCHEDULED every 5 min")
 
 app.include_router(token_router)
 init_token_manager(app, scheduler, HEADERS)
@@ -1990,7 +2284,7 @@ def get_subscription_start_date():
         start_date = now + timedelta(days=1)
 
         # SKIP WEEKENDS
-        while start_date.weekday() >= 5:
+        while start_date.weekday() >= 5 or is_market_holiday(start_date):
             start_date += timedelta(days=1)
 
     # FORCE MARKET START TIME
@@ -2054,6 +2348,68 @@ def clear_running():
 # ═══════════════════════════════════════════════════════════════════════
 # PAGES
 # ═══════════════════════════════════════════════════════════════════════
+
+@app.get("/api/market-holidays")
+def api_market_holidays(year: int = 0):
+    """
+    Returns all NSE market holidays (with reason/name).
+    Optional ?year=2026 filter.
+    Also returns today's holiday status and upcoming holidays.
+    """
+    from market_holidays import (
+        get_all_holidays_list, get_upcoming_holidays,
+        get_today_holiday, get_holidays_for_year
+    )
+ 
+    if year:
+        holidays = [{"date": k, "reason": v}
+                    for k, v in sorted(get_holidays_for_year(year).items())]
+    else:
+        holidays = get_all_holidays_list()
+ 
+    today_holiday = get_today_holiday()
+    upcoming = get_upcoming_holidays(days_ahead=30)
+ 
+    return JSONResponse({
+        "holidays": holidays,
+        "today_is_holiday": today_holiday is not None,
+        "today_reason": today_holiday,
+        "upcoming": upcoming,          # next 30 days
+        "total": len(holidays),
+    })
+
+@app.post("/api/admin/refresh-holidays")
+def api_refresh_holidays(request: Request):
+    """Admin: force-refresh holidays from NSE API."""
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    from market_holidays import refresh_holidays, get_all_holidays_list
+    refresh_holidays()
+    holidays = get_all_holidays_list()
+    return JSONResponse({
+        "success": True,
+        "total": len(holidays),
+        "message": "Holidays refreshed from NSE API",
+        "time": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
+    })
+ 
+ 
+@app.get("/api/is-market-holiday")
+def api_is_market_holiday(date: str = ""):
+    """
+    Check if a specific date (YYYY-MM-DD) is a market holiday.
+    Defaults to today.
+    """
+    from market_holidays import get_holiday_reason
+    from datetime import date as _date
+    if not date:
+        date = _date.today().isoformat()
+    reason = get_holiday_reason(date)
+    return JSONResponse({
+        "date": date,
+        "is_holiday": reason is not None,
+        "reason": reason
+    })
 
 @app.get("/user", response_class=HTMLResponse)
 def user_dashboard():
@@ -2613,6 +2969,401 @@ def api_admin_list_users(request: Request):
     return JSONResponse({"users": users, "total": len(users)})
 
 
+"""
+================================================================================
+TRADERBRO — WEBINAR MANAGEMENT SYSTEM
+================================================================================
+INSTRUCTIONS: Copy all code below and paste into your app.py
+
+1. The DB init function creates a `webinars` table automatically on startup.
+2. Include all routes below in your existing app.py.
+3. Place webinar.html in static/ folder.
+4. Place admin-webinars.html in static/ folder.
+================================================================================
+"""
+
+# ── ADD THIS TO YOUR EXISTING init_db() or call separately on startup ────────
+
+def init_webinars_table():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS webinars (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT,
+        host TEXT DEFAULT 'TraderBro Team',
+        scheduled_at TEXT NOT NULL,
+        duration_minutes INTEGER DEFAULT 60,
+        topics TEXT,
+        meeting_link TEXT,
+        registration_link TEXT,
+        cover_color TEXT DEFAULT 'orange',
+        status TEXT DEFAULT 'upcoming',
+        max_seats INTEGER DEFAULT 0,
+        is_free INTEGER DEFAULT 1,
+        recording_link TEXT,
+        created_at TEXT,
+        updated_at TEXT
+    )
+    """)
+
+    # Webinar registrations (notify users)
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS webinar_registrations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        webinar_id INTEGER NOT NULL,
+        username TEXT NOT NULL,
+        registered_at TEXT NOT NULL,
+        UNIQUE(webinar_id, username)
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+init_webinars_table()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PUBLIC PAGE — /webinars
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/webinars", response_class=HTMLResponse)
+def webinars_page(request: Request):
+    path = os.path.join(STATIC_DIR, "webinar.html")
+    with open(path, "r", encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ADMIN WEBINAR PAGE — /admin/webinars
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/admin/webinars", response_class=HTMLResponse)
+def admin_webinars_page(request: Request):
+    if request.session.get("role") != "admin":
+        return RedirectResponse("/admin-login", status_code=302)
+    path = os.path.join(STATIC_DIR, "admin-webinars.html")
+    with open(path, "r", encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# API — LIST ALL WEBINARS (public, no auth required)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/api/webinars")
+def api_list_webinars(request: Request, status: str = ""):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    if status:
+        c.execute("""
+            SELECT id, title, description, host, scheduled_at, duration_minutes,
+                   topics, meeting_link, registration_link, cover_color,
+                   status, max_seats, is_free, recording_link, created_at
+            FROM webinars WHERE status=? ORDER BY scheduled_at ASC
+        """, (status,))
+    else:
+        c.execute("""
+            SELECT id, title, description, host, scheduled_at, duration_minutes,
+                   topics, meeting_link, registration_link, cover_color,
+                   status, max_seats, is_free, recording_link, created_at
+            FROM webinars ORDER BY scheduled_at DESC
+        """)
+
+    rows = c.fetchall()
+
+    # Get registration counts
+    webinar_list = []
+    for r in rows:
+        c.execute("SELECT COUNT(*) FROM webinar_registrations WHERE webinar_id=?", (r[0],))
+        reg_count = c.fetchone()[0]
+
+        # Check if current user is registered
+        username = request.session.get("user") or request.session.get("admin")
+        is_registered = False
+        if username:
+            c.execute(
+                "SELECT id FROM webinar_registrations WHERE webinar_id=? AND username=?",
+                (r[0], username)
+            )
+            is_registered = c.fetchone() is not None
+
+        webinar_list.append({
+            "id":                r[0],
+            "title":             r[1],
+            "description":       r[2] or "",
+            "host":              r[3] or "TraderBro Team",
+            "scheduled_at":      r[4],
+            "duration_minutes":  r[5] or 60,
+            "topics":            json.loads(r[6]) if r[6] else [],
+            "meeting_link":      r[7] or "",
+            "registration_link": r[8] or "",
+            "cover_color":       r[9] or "orange",
+            "status":            r[10],
+            "max_seats":         r[11] or 0,
+            "is_free":           bool(r[12]),
+            "recording_link":    r[13] or "",
+            "created_at":        r[14] or "",
+            "registrations":     reg_count,
+            "is_registered":     is_registered,
+        })
+
+    conn.close()
+    return JSONResponse({"webinars": webinar_list, "total": len(webinar_list)})
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# API — CREATE WEBINAR (admin only)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.post("/api/admin/webinar/create")
+async def api_create_webinar(request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    data = await request.json()
+    now  = datetime.now(IST).isoformat()
+
+    title        = (data.get("title") or "").strip()
+    description  = (data.get("description") or "").strip()
+    host         = (data.get("host") or "TraderBro Team").strip()
+    scheduled_at = (data.get("scheduled_at") or "").strip()
+    duration     = int(data.get("duration_minutes") or 60)
+    topics       = data.get("topics") or []          # list of strings
+    meeting_link = (data.get("meeting_link") or "").strip()
+    reg_link     = (data.get("registration_link") or "").strip()
+    cover_color  = (data.get("cover_color") or "orange").strip()
+    status       = (data.get("status") or "upcoming").strip()
+    max_seats    = int(data.get("max_seats") or 0)
+    is_free      = 1 if data.get("is_free", True) else 0
+
+    if not title or not scheduled_at:
+        return JSONResponse({"success": False, "error": "Title and scheduled_at are required"})
+
+    topics_json = json.dumps(topics)
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("""
+        INSERT INTO webinars
+            (title, description, host, scheduled_at, duration_minutes,
+             topics, meeting_link, registration_link, cover_color,
+             status, max_seats, is_free, created_at, updated_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    """, (title, description, host, scheduled_at, duration,
+          topics_json, meeting_link, reg_link, cover_color,
+          status, max_seats, is_free, now, now))
+    conn.commit()
+    new_id = c.lastrowid
+    conn.close()
+
+    return JSONResponse({"success": True, "id": new_id})
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# API — UPDATE WEBINAR (admin only)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.post("/api/admin/webinar/update")
+async def api_update_webinar(request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    data = await request.json()
+    wid  = data.get("id")
+    if not wid:
+        return JSONResponse({"success": False, "error": "id required"})
+
+    now = datetime.now(IST).isoformat()
+    topics_json = json.dumps(data.get("topics") or [])
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("""
+        UPDATE webinars SET
+            title=?, description=?, host=?, scheduled_at=?,
+            duration_minutes=?, topics=?, meeting_link=?,
+            registration_link=?, cover_color=?, status=?,
+            max_seats=?, is_free=?, recording_link=?, updated_at=?
+        WHERE id=?
+    """, (
+        data.get("title", ""),
+        data.get("description", ""),
+        data.get("host", "TraderBro Team"),
+        data.get("scheduled_at", ""),
+        int(data.get("duration_minutes") or 60),
+        topics_json,
+        data.get("meeting_link", ""),
+        data.get("registration_link", ""),
+        data.get("cover_color", "orange"),
+        data.get("status", "upcoming"),
+        int(data.get("max_seats") or 0),
+        1 if data.get("is_free", True) else 0,
+        data.get("recording_link", ""),
+        now,
+        wid
+    ))
+    conn.commit()
+    conn.close()
+
+    return JSONResponse({"success": True})
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# API — DELETE WEBINAR (admin only)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.post("/api/admin/webinar/delete")
+async def api_delete_webinar(request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    data = await request.json()
+    wid  = data.get("id")
+    if not wid:
+        return JSONResponse({"success": False, "error": "id required"})
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("DELETE FROM webinars WHERE id=?", (wid,))
+    c.execute("DELETE FROM webinar_registrations WHERE webinar_id=?", (wid,))
+    conn.commit()
+    conn.close()
+
+    return JSONResponse({"success": True})
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# API — REGISTER FOR WEBINAR (logged-in users)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.post("/api/webinar/register")
+async def api_webinar_register(request: Request):
+    username = request.session.get("user") or request.session.get("admin")
+    if not username:
+        return JSONResponse({"error": "Login required"}, status_code=401)
+
+    data = await request.json()
+    wid  = data.get("webinar_id")
+    if not wid:
+        return JSONResponse({"success": False, "error": "webinar_id required"})
+
+    now = datetime.now(IST).isoformat()
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    # Check webinar exists and is upcoming
+    c.execute("SELECT status, max_seats FROM webinars WHERE id=?", (wid,))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        return JSONResponse({"success": False, "error": "Webinar not found"})
+    if row[0] not in ("upcoming", "live"):
+        conn.close()
+        return JSONResponse({"success": False, "error": "Registrations are closed"})
+
+    # Seat limit check
+    if row[1] and row[1] > 0:
+        c.execute("SELECT COUNT(*) FROM webinar_registrations WHERE webinar_id=?", (wid,))
+        count = c.fetchone()[0]
+        if count >= row[1]:
+            conn.close()
+            return JSONResponse({"success": False, "error": "Seats are full"})
+
+    try:
+        c.execute("""
+            INSERT OR IGNORE INTO webinar_registrations (webinar_id, username, registered_at)
+            VALUES (?,?,?)
+        """, (wid, username, now))
+        conn.commit()
+        inserted = c.rowcount > 0
+        conn.close()
+        if inserted:
+            return JSONResponse({"success": True, "message": "Registered successfully!"})
+        else:
+            return JSONResponse({"success": False, "error": "Already registered"})
+    except Exception as e:
+        conn.close()
+        return JSONResponse({"success": False, "error": str(e)})
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# API — UPCOMING WEBINAR NOTIFICATION BANNER (for dashboard/home)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/api/webinar/next")
+def api_next_webinar():
+
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+
+    # LIVE webinar first
+    c.execute("""
+        SELECT *
+        FROM webinars
+        WHERE status='live'
+        ORDER BY id DESC
+        LIMIT 1
+    """)
+
+    webinar = c.fetchone()
+
+    # If no live webinar, show next upcoming webinar
+    if not webinar:
+
+        c.execute("""
+            SELECT *
+            FROM webinars
+            WHERE status='upcoming'
+            ORDER BY scheduled_at ASC
+            LIMIT 1
+        """)
+
+        webinar = c.fetchone()
+
+    conn.close()
+
+    if not webinar:
+        return {"webinar": None}
+
+    return {
+        "webinar": dict(webinar)
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# API — ADMIN: GET REGISTRATIONS FOR A WEBINAR
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/api/admin/webinar/{wid}/registrations")
+def api_webinar_registrations(wid: int, request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("""
+        SELECT wr.username, u.email, u.phone, wr.registered_at
+        FROM webinar_registrations wr
+        LEFT JOIN users u ON u.username = wr.username
+        WHERE wr.webinar_id=?
+        ORDER BY wr.registered_at ASC
+    """, (wid,))
+    rows = c.fetchall()
+    conn.close()
+
+    return JSONResponse({
+        "registrations": [
+            {"username": r[0], "email": r[1] or "", "phone": r[2] or "", "registered_at": r[3]}
+            for r in rows
+        ],
+        "total": len(rows)
+    })
+
 # ── CREATE USER (admin only) ─────────────────────────────────────────────
 @app.post("/api/admin/user/create")
 async def api_admin_create_user(request: Request):
@@ -2809,3 +3560,243 @@ async def api_admin_delete_user(request: Request):
     conn.commit()
     conn.close()
     return JSONResponse({"success": True})
+
+
+@app.get("/webinars", response_class=HTMLResponse)
+def webinars_page(request: Request):
+    path = os.path.join(STATIC_DIR, "webinar.html")
+    with open(path, "r", encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+ 
+ 
+@app.get("/admin/webinars", response_class=HTMLResponse)
+def admin_webinars_page(request: Request):
+    if request.session.get("role") != "admin":
+        return RedirectResponse("/admin-login", status_code=302)
+    path = os.path.join(STATIC_DIR, "admin-webinars.html")
+    with open(path, "r", encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+ 
+ 
+# ── PUBLIC: LIST ALL WEBINARS ──────────────────────────────────────────────────
+ 
+@app.get("/api/webinars")
+def api_list_webinars(request: Request, status: str = ""):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    if status:
+        c.execute("""SELECT id,title,description,host,scheduled_at,duration_minutes,
+                            topics,meeting_link,registration_link,cover_color,
+                            status,max_seats,is_free,recording_link,created_at
+                     FROM webinars WHERE status=? ORDER BY scheduled_at ASC""", (status,))
+    else:
+        c.execute("""SELECT id,title,description,host,scheduled_at,duration_minutes,
+                            topics,meeting_link,registration_link,cover_color,
+                            status,max_seats,is_free,recording_link,created_at
+                     FROM webinars ORDER BY scheduled_at DESC""")
+    rows = c.fetchall()
+    username = request.session.get("user") or request.session.get("admin")
+    result = []
+    for r in rows:
+        c.execute("SELECT COUNT(*) FROM webinar_registrations WHERE webinar_id=?", (r[0],))
+        reg_count = c.fetchone()[0]
+        is_registered = False
+        if username:
+            c.execute("SELECT id FROM webinar_registrations WHERE webinar_id=? AND username=?", (r[0], username))
+            is_registered = c.fetchone() is not None
+        result.append({
+            "id": r[0], "title": r[1], "description": r[2] or "",
+            "host": r[3] or "TraderBro Team", "scheduled_at": r[4],
+            "duration_minutes": r[5] or 60,
+            "topics": json.loads(r[6]) if r[6] else [],
+            "meeting_link": r[7] or "", "registration_link": r[8] or "",
+            "cover_color": r[9] or "orange", "status": r[10],
+            "max_seats": r[11] or 0, "is_free": bool(r[12]),
+            "recording_link": r[13] or "", "created_at": r[14] or "",
+            "registrations": reg_count, "is_registered": is_registered,
+        })
+    conn.close()
+    return JSONResponse({"webinars": result, "total": len(result)})
+ 
+ 
+# ── PUBLIC: NEXT UPCOMING/LIVE WEBINAR (for notification banner) ───────────────
+ 
+@app.get("/api/webinar/next")
+def api_next_webinar(request: Request):
+    """Returns the nearest upcoming or live webinar — used by notification banners."""
+    now_str = datetime.now(IST).isoformat()
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    # First check for any live webinar
+    c.execute("""SELECT id,title,scheduled_at,cover_color,status,duration_minutes,meeting_link
+                 FROM webinars WHERE status='live' LIMIT 1""")
+    row = c.fetchone()
+    if not row:
+        # Fall back to next upcoming
+        c.execute("""SELECT id,title,scheduled_at,cover_color,status,duration_minutes,meeting_link
+                     FROM webinars WHERE status='upcoming' AND scheduled_at >= ?
+                     ORDER BY scheduled_at ASC LIMIT 1""", (now_str,))
+        row = c.fetchone()
+    conn.close()
+    if not row:
+        return JSONResponse({"webinar": None})
+    return JSONResponse({"webinar": {
+        "id": row[0], "title": row[1], "scheduled_at": row[2],
+        "cover_color": row[3], "status": row[4],
+        "duration_minutes": row[5], "meeting_link": row[6] or "",
+    }})
+ 
+ 
+# ── ADMIN: CREATE WEBINAR ──────────────────────────────────────────────────────
+ 
+@app.post("/api/admin/webinar/create")
+async def api_create_webinar(request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    data = await request.json()
+    now  = datetime.now(IST).isoformat()
+    title        = (data.get("title") or "").strip()
+    scheduled_at = (data.get("scheduled_at") or "").strip()
+    if not title or not scheduled_at:
+        return JSONResponse({"success": False, "error": "Title and scheduled_at are required"})
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("""INSERT INTO webinars
+                     (title,description,host,scheduled_at,duration_minutes,topics,
+                      meeting_link,registration_link,cover_color,status,max_seats,
+                      is_free,created_at,updated_at)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+              (title,
+               (data.get("description") or "").strip(),
+               (data.get("host") or "TraderBro Team").strip(),
+               scheduled_at,
+               int(data.get("duration_minutes") or 60),
+               json.dumps(data.get("topics") or []),
+               (data.get("meeting_link") or "").strip(),
+               (data.get("registration_link") or "").strip(),
+               (data.get("cover_color") or "orange").strip(),
+               (data.get("status") or "upcoming").strip(),
+               int(data.get("max_seats") or 0),
+               1 if data.get("is_free", True) else 0,
+               now, now))
+    conn.commit()
+    new_id = c.lastrowid
+    conn.close()
+    return JSONResponse({"success": True, "id": new_id})
+ 
+ 
+# ── ADMIN: UPDATE WEBINAR ──────────────────────────────────────────────────────
+ 
+@app.post("/api/admin/webinar/update")
+async def api_update_webinar(request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    data = await request.json()
+    wid  = data.get("id")
+    if not wid:
+        return JSONResponse({"success": False, "error": "id required"})
+    now = datetime.now(IST).isoformat()
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("""UPDATE webinars SET
+                     title=?,description=?,host=?,scheduled_at=?,duration_minutes=?,
+                     topics=?,meeting_link=?,registration_link=?,cover_color=?,
+                     status=?,max_seats=?,is_free=?,recording_link=?,updated_at=?
+                 WHERE id=?""",
+              (data.get("title",""),
+               data.get("description",""),
+               data.get("host","TraderBro Team"),
+               data.get("scheduled_at",""),
+               int(data.get("duration_minutes") or 60),
+               json.dumps(data.get("topics") or []),
+               data.get("meeting_link",""),
+               data.get("registration_link",""),
+               data.get("cover_color","orange"),
+               data.get("status","upcoming"),
+               int(data.get("max_seats") or 0),
+               1 if data.get("is_free", True) else 0,
+               data.get("recording_link",""),
+               now, wid))
+    conn.commit()
+    conn.close()
+    return JSONResponse({"success": True})
+ 
+ 
+# ── ADMIN: DELETE WEBINAR ──────────────────────────────────────────────────────
+ 
+@app.post("/api/admin/webinar/delete")
+async def api_delete_webinar(request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    data = await request.json()
+    wid  = data.get("id")
+    if not wid:
+        return JSONResponse({"success": False, "error": "id required"})
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("DELETE FROM webinars WHERE id=?", (wid,))
+    c.execute("DELETE FROM webinar_registrations WHERE webinar_id=?", (wid,))
+    conn.commit()
+    conn.close()
+    return JSONResponse({"success": True})
+ 
+ 
+# ── PUBLIC: REGISTER FOR WEBINAR ───────────────────────────────────────────────
+ 
+@app.post("/api/webinar/register")
+async def api_webinar_register(request: Request):
+    username = request.session.get("user") or request.session.get("admin")
+    if not username:
+        return JSONResponse({"error": "Login required"}, status_code=401)
+    data = await request.json()
+    wid  = data.get("webinar_id")
+    if not wid:
+        return JSONResponse({"success": False, "error": "webinar_id required"})
+    now = datetime.now(IST).isoformat()
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT status, max_seats FROM webinars WHERE id=?", (wid,))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        return JSONResponse({"success": False, "error": "Webinar not found"})
+    if row[0] not in ("upcoming", "live"):
+        conn.close()
+        return JSONResponse({"success": False, "error": "Registrations are closed"})
+    if row[1] and row[1] > 0:
+        c.execute("SELECT COUNT(*) FROM webinar_registrations WHERE webinar_id=?", (wid,))
+        if c.fetchone()[0] >= row[1]:
+            conn.close()
+            return JSONResponse({"success": False, "error": "Seats are full"})
+    try:
+        c.execute("INSERT OR IGNORE INTO webinar_registrations (webinar_id,username,registered_at) VALUES (?,?,?)",
+                  (wid, username, now))
+        conn.commit()
+        inserted = c.rowcount > 0
+        conn.close()
+        if inserted:
+            return JSONResponse({"success": True, "message": "Registered successfully!"})
+        return JSONResponse({"success": False, "error": "Already registered"})
+    except Exception as e:
+        conn.close()
+        return JSONResponse({"success": False, "error": str(e)})
+ 
+ 
+# ── ADMIN: GET REGISTRATIONS FOR A WEBINAR ─────────────────────────────────────
+ 
+@app.get("/api/admin/webinar/{wid}/registrations")
+def api_webinar_registrations(wid: int, request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("""SELECT wr.username, u.email, u.phone, wr.registered_at
+                 FROM webinar_registrations wr
+                 LEFT JOIN users u ON u.username=wr.username
+                 WHERE wr.webinar_id=? ORDER BY wr.registered_at ASC""", (wid,))
+    rows = c.fetchall()
+    conn.close()
+    return JSONResponse({
+        "registrations": [{"username":r[0],"email":r[1]or"","phone":r[2]or"","registered_at":r[3]} for r in rows],
+        "total": len(rows)
+    })
