@@ -1319,7 +1319,7 @@
       border-radius: 3px 14px 14px 14px;
       padding: 9px 14px 8px;
       font-size: 12px;
-      color: #ccd0e0;
+      color: var(--gold);
       line-height: 1.65;
       flex: 1;
       position: relative;
@@ -1710,6 +1710,11 @@
       }
     }
 
+    @keyframes fadeInDown {
+      from { opacity:0; transform:translateY(-12px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
     .quick-menu-header {
       padding: 8px 14px 6px;
       border-bottom: 1px solid rgba(2, 163, 254, .1);
@@ -1803,7 +1808,7 @@
 
     .qi-text {
       font-size: 11px;
-      color: #8090b8;
+      color: var(--gold);
       line-height: 1.4;
       transition: color .15s;
       flex: 1;
@@ -1874,6 +1879,51 @@
 
   <div class="welcome-bar">Welcome to the Black-Box-Engine Developed by TraderBro.in</div>
 
+  <div id="holiday-banner" style="
+  display:none;
+  background: linear-gradient(135deg, #1a0a00, #2d1500);
+  border-bottom: 2px solid #f5a623;
+  padding: 12px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  animation: fadeInDown 0.4s ease;
+">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <span style="font-size:22px;">🏖️</span>
+    <div>
+      <div style="font-size:13px; font-weight:800; color:#f5a623; letter-spacing:0.5px;">
+        MARKET HOLIDAY TODAY
+      </div>
+      <div style="font-size:12px; color:#e0a060;" id="holiday-reason-text">
+        NSE is closed today
+      </div>
+    </div>
+  </div>
+  <div style="display:flex; align-items:center; gap:10px;">
+    <div id="upcoming-holiday-chips" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+    <button onclick="document.getElementById('holiday-banner').style.display='none'"
+      style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
+             color:#aaa; font-size:12px; padding:4px 10px; border-radius:8px; cursor:pointer;">
+      ✕
+    </button>
+  </div>
+</div>
+
+<div id="upcoming-holiday-strip" style="
+  display:none;
+  background: rgba(245,166,35,0.08);
+  border-bottom: 1px solid rgba(245,166,35,0.2);
+  padding: 6px 28px;
+  font-size:11px;
+  color:#c08030;
+  text-align:center;
+  font-weight:600;
+">
+  📅 <span id="upcoming-strip-text"></span>
+</div>
   <header class="header">
     <div class="logo-block">
       <a href="/">
@@ -2866,6 +2916,7 @@ let _shownSystemMsgs = new Set();  // track which ones we've injected this sessi
       "Anticipating Bearish Movement",
       "TraderBro.in anticipating liquidity sweep at break-down of 3min candle",
       "TraderBro.in anticipating liquidity sweep at break-out of 3min candle",
+      "TraderBro.in is done with the day",
       "Site is facing technical failure, Sorry for inconvenience.",
     ];
 
@@ -2942,6 +2993,60 @@ let _shownSystemMsgs = new Set();  // track which ones we've injected this sessi
       setInterval(fetchActiveUsers, 20000);
     })();
   </script>
+
+<script>
+/* ── HOLIDAY STATUS CHECK ── */
+async function checkHolidayStatus() {
+  try {
+    const res  = await fetch('/api/market-holidays', { credentials: 'include' });
+    const data = await res.json();
+ 
+    // TODAY IS A HOLIDAY
+    if (data.today_is_holiday) {
+      const banner = document.getElementById('holiday-banner');
+      const reasonEl = document.getElementById('holiday-reason-text');
+      if (banner) {
+        banner.style.display = 'flex';
+        if (reasonEl) reasonEl.textContent = `NSE is closed — ${data.today_reason}`;
+      }
+    }
+ 
+    // UPCOMING HOLIDAYS (next 30 days, skip today)
+    const upcoming = (data.upcoming || []).filter(h => !h.is_today);
+ 
+    // Chips inside today's banner (show next 2)
+    const chipsEl = document.getElementById('upcoming-holiday-chips');
+    if (chipsEl) {
+      chipsEl.innerHTML = upcoming.slice(0, 2).map(h =>
+        `<span style="background:rgba(245,166,35,0.15); border:1px solid rgba(245,166,35,0.3);
+                      color:#f5a623; padding:3px 10px; border-radius:20px; font-size:10px; font-weight:700;">
+           📅 ${h.reason} — ${h.days_away}d away
+         </span>`
+      ).join('');
+    }
+ 
+    // Upcoming strip — show if next holiday ≤ 2 days away
+    if (upcoming.length > 0 && upcoming[0].days_away <= 2) {
+      const strip = document.getElementById('upcoming-holiday-strip');
+      const stripText = document.getElementById('upcoming-strip-text');
+      if (strip && stripText) {
+        const h = upcoming[0];
+        const dayLabel = h.days_away === 0 ? 'Today' : h.days_away === 1 ? 'Tomorrow' : `In ${h.days_away} days`;
+        stripText.textContent = `Upcoming Market Holiday: ${h.reason} on ${h.date} (${dayLabel})`;
+        strip.style.display = 'block';
+      }
+    }
+ 
+  } catch (e) {
+    console.error('Holiday check failed:', e);
+  }
+}
+ 
+// Run on load
+checkHolidayStatus();
+</script>
+
+
 </body>
 
 </html>
