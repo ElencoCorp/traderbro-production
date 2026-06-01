@@ -2900,10 +2900,26 @@ def download_excel(filename: str, request: Request):
     if not os.path.exists(filepath):
         raise HTTPException(status_code=404, detail="File not found.")
 
+
+    # Working download date format correct
+    # return FileResponse(
+    #     filepath,
+    #     media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    #     filename=safe_name,
+    # )
+
+    date_part = safe_name.replace(".xlsx", "")
+
+    try:
+        dt = datetime.strptime(date_part, "%Y-%m-%d")
+        download_name = dt.strftime("%Y-%m-%d %A.xlsx")
+    except:
+        download_name = safe_name
+
     return FileResponse(
         filepath,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        filename=safe_name,
+        filename=download_name,
     )
 
 
@@ -3453,6 +3469,122 @@ async def api_admin_update_user(request: Request):
     conn.close()
     return JSONResponse({"success": True})
 
+
+# ── NEW: /api/subscription-preview endpoint ─────────────────────────────────
+# Add this route to app.py — used by checkout page to show accurate expiry
+
+@app.get("/api/subscription-preview")
+def api_subscription_preview(request: Request, plan: str = ""):
+    """
+    Returns a preview of what start/expiry/holidays would be for a given plan.
+    Used by checkout page so user sees holiday-aware dates before paying.
+    """
+
+    username = request.session.get("user") or request.session.get("admin")
+
+    if not username:
+        return JSONResponse(
+            {"error": "Unauthorized"},
+            status_code=401
+        )
+
+    plan = plan.lower().strip()
+
+    if plan not in PLAN_CONFIG_DATA:
+        return JSONResponse(
+            {"error": "Invalid plan"},
+            status_code=400
+        )
+
+    from market_holidays import (
+        calculate_expiry_from_start,
+        get_next_trading_day_after,
+        get_holidays_in_subscription
+    )
+
+    cfg = PLAN_CONFIG_DATA[plan]
+    t_days = cfg["trading_days"]
+    now = datetime.now(IST)
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    # Find latest future expiry
+    c.execute("""
+        SELECT MAX(plan_expiry)
+        FROM subscriptions
+        WHERE username=?
+        AND status IN ('active','queued')
+    """, (username,))
+
+    row = c.fetchone()
+    sub_expiry_str = row[0] if row else None
+
+    c.execute(
+        "SELECT plan_expiry FROM users WHERE username=?",
+        (username,)
+    )
+
+    urow = c.fetchone()
+    user_expiry_str = urow[0] if urow else None
+
+    conn.close()
+
+    effective_last_expiry = None
+
+    for es in [sub_expiry_str, user_expiry_str]:
+        if es:
+            try:
+                edt = datetime.fromisoformat(es)
+
+                if edt.tzinfo is None:
+                    edt = IST.localize(edt)
+
+                if (
+                    edt > now and
+                    (
+                        effective_last_expiry is None or
+                        edt > effective_last_expiry
+                    )
+                ):
+                    effective_last_expiry = edt
+
+            except Exception:
+                pass
+
+    if effective_last_expiry:
+        start_dt = get_next_trading_day_after(
+            effective_last_expiry
+        )
+    else:
+        start_dt = get_subscription_start_date()
+
+    expiry_dt, total_cal, weekends, holidays = (
+        calculate_expiry_from_start(
+            start_dt,
+            t_days
+        )
+    )
+
+    holiday_list = get_holidays_in_subscription(
+        start_dt,
+        expiry_dt
+    )
+
+    is_queued = start_dt > now
+
+    return JSONResponse({
+        "plan": plan,
+        "trading_days": t_days,
+        "plan_start": start_dt.isoformat(),
+        "plan_expiry": expiry_dt.isoformat(),
+        "calendar_days": total_cal,
+        "weekends": weekends,
+        "holidays": holidays,
+        "holiday_list": holiday_list,
+        "is_queued": is_queued,
+        "price": cfg["price"]
+    })
 
 # ── ASSIGN / CHANGE PLAN (admin only) ───────────────────────────────────
 @app.post("/api/admin/user/assign-plan")
