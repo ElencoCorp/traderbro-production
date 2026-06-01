@@ -1663,8 +1663,8 @@
       flex-shrink: 0;
       transition: all .2s;
       position: absolute;
-      right: 50px;
-      bottom: 3px;
+      right: 60px;
+      bottom: 32px;
     }
 
     .quick-btn:hover {
@@ -2082,7 +2082,8 @@
         <div class="bc-compose" id="bc-compose" style="display:none;">
           <div class="bc-compose-row">
             <textarea id="bc-input" class="bc-textarea" placeholder="Type a broadcast message…" maxlength="500"
-              onkeydown="bcKeydown(event)" oninput="bcAutoResize(this)"></textarea>
+              onkeydown="bcKeydown(event)" oninput="bcAutoResize(this)">
+            </textarea>
             <button class="quick-btn" id="quickBtn" onclick="bcToggleQuick()" title="Quick messages">＋</button>
             <button class="bc-send-btn" id="bc-send-btn" onclick="bcSend()" title="Send (Ctrl+Enter)">
               <i class="fas fa-paper-plane"></i>
