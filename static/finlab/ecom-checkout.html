@@ -39,32 +39,26 @@
 .tl-dot.active  { background: #22c55e; box-shadow: 0 0 12px rgba(34,197,94,0.5); }
 .tl-dot.queued  { background: #3b82f6; box-shadow: 0 0 12px rgba(59,130,246,0.4); }
 .tl-dot.expired { background: #475569; }
-.tl-dot.new     { background: linear-gradient(135deg,#f59e0b,#f97316); box-shadow: 0 0 12px rgba(245,158,11,0.5); animation: pulse 2s infinite; }
+.tl-dot.new     { background: linear-gradient(135deg,#f59e0b,#f97316); box-shadow: 0 0 12px rgba(245,158,11,0.5); animation: dotPulse 2s infinite; }
 
-@keyframes pulse {
+@keyframes dotPulse {
     0%,100% { box-shadow: 0 0 12px rgba(245,158,11,0.5); }
     50%      { box-shadow: 0 0 24px rgba(245,158,11,0.8); }
 }
 
 .tl-body { flex: 1; }
-.tl-plan-name {
-    font-weight: 800; font-size: 14px; color: #f8fafc; margin-bottom: 4px;
-}
+.tl-plan-name { font-weight: 800; font-size: 14px; color: #f8fafc; margin-bottom: 4px; }
 .tl-dates { font-size: 11px; color: #94a3b8; margin-bottom: 6px; }
 .tl-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .tl-chip {
     padding: 2px 10px; border-radius: 999px; font-size: 10px; font-weight: 600;
     background: rgba(255,255,255,0.08); color: #cbd5e1;
 }
-.tl-chip.green  { background: rgba(34,197,94,0.15); color: #86efac; }
+.tl-chip.green  { background: rgba(34,197,94,0.15);  color: #86efac; }
 .tl-chip.blue   { background: rgba(59,130,246,0.15); color: #93c5fd; }
 .tl-chip.orange { background: rgba(245,158,11,0.15); color: #fcd34d; }
 
-/* ── NEW PLAN INCOMING BANNER ───────────────────────────────── */
-.new-plan-arrow {
-    text-align: center; padding: 10px;
-    color: rgba(255,255,255,0.3); font-size: 20px;
-}
+.new-plan-arrow { text-align: center; padding: 10px; color: rgba(255,255,255,0.3); font-size: 20px; }
 
 /* ── CONSENT BOX ────────────────────────────────────────────── */
 .consent-box {
@@ -84,10 +78,7 @@
 .consent-label input[type="checkbox"] {
     width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; cursor: pointer; accent-color: #d97706;
 }
-.consent-warning {
-    font-size: 11px; color: #ef4444; font-weight: 600;
-    margin-top: 8px; display: none;
-}
+.consent-warning { font-size: 11px; color: #ef4444; font-weight: 600; margin-top: 8px; display: none; }
 .consent-warning.show { display: block; }
 
 /* ── PAY BUTTON ─────────────────────────────────────────────── */
@@ -95,13 +86,12 @@
     background: linear-gradient(135deg,#22c55e,#16a34a);
     border: none; border-radius: 14px; padding: 16px;
     font-size: 16px; font-weight: 800; color: white; width: 100%;
-    transition: 0.3s; box-shadow: 0 10px 30px rgba(34,197,94,0.3);
-    cursor: pointer;
+    transition: 0.3s; box-shadow: 0 10px 30px rgba(34,197,94,0.3); cursor: pointer;
 }
 #payBtn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 35px rgba(34,197,94,0.4); }
 #payBtn:disabled { background: #94a3b8; box-shadow: none; cursor: not-allowed; opacity: 0.7; }
 
-/* ── PLAN PILL ──────────────────────────────────────────────── */
+/* ── PLAN PILLS ─────────────────────────────────────────────── */
 .plan-pill-sm {
     display: inline-block; padding: 2px 10px; border-radius: 999px;
     color: white; font-size: 10px; font-weight: 700;
@@ -118,29 +108,35 @@
     display: flex; justify-content: space-between;
     font-size: 11px; color: #94a3b8; margin-bottom: 4px;
 }
+
+/* ── LOADING SKELETON ───────────────────────────────────────── */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 6px; height: 16px; display: inline-block;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
 
 <body>
 <div class="page-wraper">
 
-    <!-- Header -->
     <header class="site-header mo-left header header-transparent">
         <div class="sticky-header main-bar-wraper navbar-expand-lg">
             <div class="main-bar clearfix">
                 <div class="container clearfix">
                     <div class="logo-header">
                         <a href="/" class="logo-light"><img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="TraderBro"></a>
-                        <a href="/" class="logo-dark"><img  src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="TraderBro"></a>
+                        <a href="/" class="logo-dark"><img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="TraderBro"></a>
                     </div>
                     <button class="navbar-toggler collapsed navicon justify-content-end" type="button"
                         data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
                         aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
                         <span></span><span></span><span></span>
                     </button>
-                    <div class="extra-nav">
-                        <div class="extra-cell" id="navAuth"></div>
-                    </div>
+                    <div class="extra-nav"><div class="extra-cell" id="navAuth"></div></div>
                     <div class="header-nav navbar-collapse collapse justify-content-end" id="navbarNavDropdown">
                         <ul class="nav navbar-nav navbar navbar-left">
                             <li><a href="/about-us">About Us</a></li>
@@ -156,7 +152,6 @@
 
     <div class="page-content">
 
-        <!-- Banner -->
         <div class="dz-bnr-inr dz-bnr-inr-sm text-center position-relative"
              style="background-image:url('/static/finlab/Frontend/xhtml/images/background/bg2.jpg');">
             <div class="container">
@@ -176,11 +171,11 @@
         <div class="container mt-5 mb-5">
             <div class="row g-4">
 
-                <!-- ═══ LEFT SIDE ══════════════════════════════════════════ -->
+                <!-- LEFT SIDE -->
                 <div class="col-xl-8">
                     <div class="row g-4">
 
-                        <!-- ── CURRENT PLAN CARD ──────────────────────────── -->
+                        <!-- Current Plan Card -->
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header d-flex align-items-center justify-content-between">
@@ -219,24 +214,21 @@
                             </div>
                         </div>
 
-                        <!-- ── SUBSCRIPTION QUEUE TIMELINE ────────────────── -->
+                        <!-- Queue Timeline -->
                         <div class="col-12" id="queueSection" style="display:none;">
                             <div class="queue-card">
                                 <div class="queue-card-header">
                                     <h5>🗂 Your Subscription Queue</h5>
                                     <span id="queueCountBadge" style="font-size:11px;color:#94a3b8;"></span>
                                 </div>
-                                <ul class="timeline" id="queueTimeline">
-                                    <!-- filled by JS -->
-                                </ul>
-                                <!-- Arrow + NEW plan coming in -->
+                                <ul class="timeline" id="queueTimeline"></ul>
                                 <div class="new-plan-arrow" id="newPlanArrow" style="display:none;">
                                     ↓ Your new plan will be added below ↓
                                 </div>
                             </div>
                         </div>
 
-                        <!-- ── UPGRADE PLAN CARD ───────────────────────────── -->
+                        <!-- Plan You're Purchasing -->
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
@@ -250,25 +242,23 @@
                                         </div>
                                         <div class="col-md-3">
                                             <p class="text-muted mb-1" style="font-size:12px;">Duration</p>
-                                            <h6 id="planDays" style="margin:0;font-size:13px;"></h6>
+                                            <h6 id="planDays" style="margin:0;font-size:13px;">—</h6>
                                         </div>
                                         <div class="col-md-3">
                                             <p class="text-muted mb-1" style="font-size:12px;">Will Start</p>
-                                            <h6 id="newStart" style="margin:0;font-size:13px;"></h6>
+                                            <h6 id="newStart" style="margin:0;font-size:13px;">—</h6>
                                         </div>
                                         <div class="col-md-3">
                                             <p class="text-muted mb-1" style="font-size:12px;">Will Expire</p>
-                                            <h6 id="newExpiry" style="margin:0;font-size:13px;"></h6>
+                                            <h6 id="newExpiry" style="margin:0;font-size:13px;">—</h6>
                                         </div>
                                     </div>
-
                                     <div class="mt-3 p-3" style="background:#f8fafc;border-radius:12px;font-size:12px;color:#64748b;line-height:1.8;" id="planBreakdown">
-                                        <!-- filled by JS -->
+                                        <span style="color:#94a3b8;">Loading plan details…</span>
                                     </div>
-
                                     <div class="d-flex justify-content-between align-items-center mt-3">
                                         <h5 style="margin:0;">Total Amount</h5>
-                                        <h4 class="text-success mb-0" id="totalPrice"></h4>
+                                        <h4 class="text-success mb-0" id="totalPrice">—</h4>
                                     </div>
                                 </div>
                             </div>
@@ -277,35 +267,26 @@
                     </div>
                 </div>
 
-                <!-- ═══ RIGHT SIDE ════════════════════════════════════════ -->
+                <!-- RIGHT SIDE -->
                 <div class="col-xl-4">
                     <div class="card" style="border-radius:20px;overflow:hidden;">
                         <div class="card-header" style="background:#0f172a;border:none;padding:20px 24px;">
                             <h4 class="card-title mb-0" style="color:white;">👤 Order Summary</h4>
                         </div>
                         <div class="card-body" style="padding:24px;">
-
-                            <!-- User info -->
                             <div style="background:#f8fafc;border-radius:12px;padding:14px;margin-bottom:16px;">
-                                <p style="margin:0 0 6px;font-size:13px;"><strong>Name:</strong> <span id="userName"></span></p>
-                                <p style="margin:0;font-size:13px;"><strong>Email:</strong> <span id="userEmail"></span></p>
+                                <p style="margin:0 0 6px;font-size:13px;"><strong>Name:</strong> <span id="userName">—</span></p>
+                                <p style="margin:0;font-size:13px;"><strong>Email:</strong> <span id="userEmail">—</span></p>
                             </div>
-
-                            <!-- Selected plan summary -->
                             <div id="orderPlanSummary" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;">
-                                <!-- filled by JS -->
+                                <span style="color:#94a3b8;">Loading…</span>
                             </div>
-
                             <hr style="margin:16px 0;">
-
-                            <!-- SEBI disclaimer -->
                             <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:12px;margin-bottom:16px;">
                                 <p style="font-size:12px;color:#92400e;margin:0;line-height:1.6;">
                                     ⚠️ This platform is for <strong>educational purposes only</strong>. We are <strong>not SEBI registered</strong> as an RA or IA. No investment advice is provided.
                                 </p>
                             </div>
-
-                            <!-- ── CONSENT CHECKBOX (MANDATORY) ─────────── -->
                             <div class="consent-box" id="consentBox">
                                 <label class="consent-label">
                                     <input type="checkbox" id="consentCheck" onchange="onConsentChange()">
@@ -315,16 +296,12 @@
                                     ⛔ You must tick this box to proceed with payment.
                                 </div>
                             </div>
-
-                            <!-- PAY BUTTON -->
                             <button id="payBtn" onclick="startPayment()" disabled>
                                 🔒 Tick the checkbox to pay
                             </button>
-
                             <p style="text-align:center;font-size:11px;color:#94a3b8;margin-top:10px;margin-bottom:0;">
                                 🔐 Secure &nbsp;|&nbsp; Instant Activation
                             </p>
-
                         </div>
                     </div>
                 </div>
@@ -332,308 +309,273 @@
             </div>
         </div>
 
-    </div><!-- /page-content -->
+    </div>
 
     <!-- Footer -->
-		<footer class="site-footer">
-			<div class="footer-top">
-				<div class="container">
-					<div class="row">
-						<div class="col-lg-4 col-md-12 col-sm-12">
-							<div class="widget widget_about wow fadeInUp" data-wow-delay="0.4s">
-								<h6 class="footer-title mb-3">Welcome to Traderbro.in</h6>
-								<a href="/" class="logo-light"><img
-										src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
-										alt="Traderbro.in"></a>
+    <footer class="site-footer">
+        <div class="footer-top">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-4 col-md-12 col-sm-12">
+                        <div class="widget widget_about wow fadeInUp" data-wow-delay="0.4s">
+                            <h6 class="footer-title mb-3">Welcome to Traderbro.in</h6>
+                            <a href="/" class="logo-light"><img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="Traderbro.in"></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <div class="widget widget_links wow fadeInUp" data-wow-delay="0.6s">
+                            <h6 class="footer-title">Quick Links</h6>
+                            <ul>
+                                <li><a href="/about-us">About Us</a></li>
+                                <li><a href="/privacy-policy">Privacy Policy</a></li>
+                                <li><a href="/terms-and-conditions">Terms of Service</a></li>
+                                <li><a href="/disclaimer">Disclaimer</a></li>
+                                <li><a href="/refund-policy">Refund-Policy</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <div class="widget widget_links wow fadeInUp" data-wow-delay="0.8s">
+                            <h6 class="footer-title">Subscriptions</h6>
+                            <ul>
+                                <li><a href="/trading-plan">Basic</a></li>
+                                <li><a href="/trading-plan">Essential</a></li>
+                                <li><a href="/trading-plan">Pro</a></li>
+                                <li><a href="/trading-plan">Premium</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <div class="widget widget_links wow fadeInUp" data-wow-delay="1.2s">
+                            <h6 class="footer-title">Support</h6>
+                            <ul><li><a href="/contact-us">Contact Us</a></li></ul>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <div class="widget widget-social wow fadeInUp" data-wow-delay="1.4s">
+                            <h6 class="footer-title">Follow Us</h6>
+                            <ul>
+                                <li><a target="_blank" href="https://twitter.com/"><img src="/static/finlab/Frontend/xhtml/images/social/twitter.png" alt="">Twitter / X</a></li>
+                                <li><a target="_blank" href="https://www.instagram.com/"><img src="/static/finlab/Frontend/xhtml/images/social/instagram.png" alt="">Instagram</a></li>
+                                <li><a target="_blank" href="https://www.youtube.com/"><img src="/static/finlab/Frontend/xhtml/images/social/youtube.png" alt="">YouTube</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="ticker-wrapper">
+                    <div class="ticker-track">
+                        <div class="ticker-content">
+                            <span class="ticker-item bg-warning text-dark">Educational Platform (Not SEBI Registered)</span>
+                            <span class="ticker-item text-danger">Traderbro.in is an educational platform. We are not SEBI registered as a Research Analyst (RA) or Investment Adviser (IA). No investment or trading advice is provided.</span>
+                        </div>
+                        <div class="ticker-content">
+                            <span class="ticker-item bg-warning text-dark">Educational Platform (Not SEBI Registered)</span>
+                            <span class="ticker-item text-danger">Traderbro.in is an educational platform. We are not SEBI registered as a Research Analyst (RA) or Investment Adviser (IA). No investment or trading advice is provided.</span>
+                        </div>
+                    </div>
+                </div>
+                <style>
+                    .ticker-wrapper{width:100%;overflow:hidden;background:#000;padding:8px 0}
+                    .ticker-track{display:flex;width:max-content;animation:tickerScroll 20s linear infinite}
+                    .ticker-content{display:flex;white-space:nowrap}
+                    .ticker-item{margin-right:50px;font-size:13px;padding:5px 10px;border-radius:5px}
+                    .ticker-track:hover{animation-play-state:paused}
+                    @keyframes tickerScroll{0%{transform:translateX(0%)}100%{transform:translateX(-50%)}}
+                </style>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="footer-inner text-center">
+                    <p class="copyright-text wow fadeInUp" data-wow-delay="1.6s">Copyright &copy; 2026 Traderbro.in — Stock Market Education Platform. All Rights Reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
 
-								<!-- <form class="dzSubscribe ft-subscribe mb-4" action="script/mailchamp.php" method="post">
-								<div class="dzSubscribeMsg"></div>
-								<div class="input-group mb-0"> 
-									<input name="dzEmail" required="required" type="email" class="form-control" placeholder="Your Email Address">
-									<button name="submit" value="Submit" type="submit" class="btn btn-primary style-1">
-										<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none"><g clip-path="url(#l)"><path d="M.246 17.179c-.148.68.374.967.858.75l16.365-8.391h.002c.195-.11.308-.308.308-.537s-.113-.428-.308-.538h-.002L1.104.071C.62-.146.098.142.246.822L1.75 7.521 10.293 9 1.75 10.479.246 17.179z" fill="#fff"/></g><defs><clipPath id="l"><path fill="#fff" d="M0 0h18v18H0z"/></clipPath></defs></svg>
-									</button>
-								</div>
-							</form> -->
-								<!-- <p class="text-primary font-13 mb-2">Download the Traderbro.in App</p>
-							<div>
-								<a href="https://appstore.com/" class="me-2"><img src="/static/finlab/Frontend/xhtml/images//app-store.png" alt="Download on App Store"></a>
-								<a href="https://playstore.com/"><img src="/static/finlab/Frontend/xhtml/images//play-store.png" alt="Get it on Google Play"></a>
-							</div> -->
-							</div>
-						</div>
-						<div class="col-lg-2 col-md-3 col-6">
-							<div class="widget widget_links wow fadeInUp" data-wow-delay="0.6s">
-								<h6 class="footer-title">Quick Links</h6>
-								<ul>
-									<li><a href="/about-us">About Us</a></li>
-									<li><a href="/privacy-policy">Privacy Policy</a></li>
-									<li><a href="/terms-and-conditions">Terms of Service</a></li>
-									<li><a href="/disclaimer">Disclaimer</a></li>
-									<li><a href="/refund-policy">Refund-Policy</a></li>
-								</ul>
-							</div>
-						</div>
-						<div class="col-lg-2 col-md-3 col-6">
-							<div class="widget widget_links wow fadeInUp" data-wow-delay="0.8s">
-								<h6 class="footer-title">Subscriptions</h6>
-								<ul>
-									<li><a href="trading-plan">Basic</a></li>
-									<li><a href="trading-plan">Essential</a></li>
-									<li><a href="trading-plan">Advance</a></li>
-									<li><a href="trading-plan">Pro</a></li>
-								</ul>
-							</div>
-						</div>
-						<div class="col-lg-2 col-md-3 col-6">
-							<div class="widget widget_links wow fadeInUp" data-wow-delay="1.2s">
-								<h6 class="footer-title">Support</h6>
-								<ul>
-									<!-- <li><a href="javascript:void(0);">FAQ</a></li> -->
-									<li><a href="static/finlab/Frontend/xhtml/contact-us.html">Contact Us</a></li>
-								</ul>
-							</div>
-						</div>
-						<div class="col-lg-2 col-md-3 col-6">
-							<div class="widget widget-social wow fadeInUp" data-wow-delay="1.4s">
-								<h6 class="footer-title">Follow Us</h6>
-								<ul>
-									<li><a target="_blank" href="https://twitter.com/"><img
-												src="/static/finlab/Frontend/xhtml/images//social/twitter.png"
-												alt="">Twitter / X</a></li>
-									<li><a target="_blank" href="https://www.facebook.com/"><img
-												src="/static/finlab/Frontend/xhtml/images//social/facebook.png"
-												alt="">Facebook</a></li>
-									<li><a target="_blank" href="https://www.linkedin.com/"><img
-												src="/static/finlab/Frontend/xhtml/images//social/linkedin.png"
-												alt="">LinkedIn</a></li>
-									<li><a target="_blank" href="https://www.instagram.com/"><img
-												src="/static/finlab/Frontend/xhtml/images//social/instagram.png"
-												alt="">Instagram</a></li>
-									<li><a target="_blank" href="https://www.youtube.com/"><img
-												src="/static/finlab/Frontend/xhtml/images//social/youtube.png"
-												alt="">YouTube</a></li>
-								</ul>
-							</div>
-						</div>
-					</div>
-					<div class="ticker-wrapper">
-						<div class="ticker-track">
-
-							<!-- ORIGINAL CONTENT -->
-							<div class="ticker-content">
-								<span class="ticker-item bg-warning text-dark">
-									Educational Platform (Not SEBI Registered)
-								</span>
-
-								<span class="ticker-item text-danger">
-									Traderbro.in is an educational platform. We are not SEBI registered as a Research
-									Analyst (RA) or Investment Adviser (IA). No investment or trading advice is
-									provided.
-								</span>
-							</div>
-
-							<!-- DUPLICATE CONTENT (IMPORTANT FOR LOOP) -->
-							<div class="ticker-content">
-								<span class="ticker-item bg-warning text-dark">
-									Educational Platform (Not SEBI Registered)
-								</span>
-
-								<span class="ticker-item text-danger">
-									Traderbro.in is an educational platform. We are not SEBI registered as a Research
-									Analyst (RA) or Investment Adviser (IA). No investment or trading advice is
-									provided.
-								</span>
-							</div>
-
-						</div>
-					</div>
-					<style>
-						.ticker-wrapper {
-  width: 100%;
-  overflow: hidden;
-  background: #000;
-  padding: 8px 0;
-}
-
-.ticker-track {
-  display: flex;
-  width: max-content;
-  animation: tickerScroll 20s linear infinite;
-}
-
-.ticker-content {
-  display: flex;
-  white-space: nowrap;
-}
-
-.ticker-item {
-  margin-right: 50px;
-  font-size: 13px;
-  padding: 5px 10px;
-  border-radius: 5px;
-}
-
-.ticker-track:hover {
-  animation-play-state: paused;
-}
-
-@keyframes tickerScroll {
-  0% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-					</style>
-				</div>
-			</div>
-			<div class="footer-bottom">
-				<div class="container">
-					<div class="footer-inner text-center">
-						<p class="copyright-text wow fadeInUp" data-wow-delay="1.6s">Copyright &copy; 2026 Traderbro.in —
-							Stock Market Education Platform. All Rights Reserved.</p>
-					</div>
-				</div>
-			</div>
-		</footer>
-		<!-- Footer End -->
-
-</div><!-- /page-wraper -->
+</div>
 
 <script src="/static/finlab/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
 <script>
-/* ═══════════════════════════════════════════════════════════════════
-   MARKET HOLIDAYS & PLAN CONFIG
-═══════════════════════════════════════════════════════════════════ */
-// ── Market Holidays — loaded from server ──────────────────────────────
-    let _MARKET_HOLIDAYS = {};   // { "YYYY-MM-DD": "Holiday Name" }
- 
-    async function loadMarketHolidays() {
-        try {
-            const res  = await fetch('/api/market-holidays', { credentials: 'include' });
-            const data = await res.json();
-            _MARKET_HOLIDAYS = {};
-            (data.holidays || []).forEach(h => { _MARKET_HOLIDAYS[h.date] = h.reason; });
-            console.log(`✅ Loaded ${Object.keys(_MARKET_HOLIDAYS).length} market holidays`);
-        } catch (e) {
-            console.warn('Could not load holidays from server, using empty list', e);
-        }
-    }
-
+/* ════════════════════════════════════════════════════════════════
+   PLAN CONFIG
+════════════════════════════════════════════════════════════════ */
 const PLAN_DATA = {
-    basic:     { name: "BASIC",     tradingDays: 1,   price: 99 },
-    essential: { name: "ESSENTIAL", tradingDays: 5,   price: 399 },
-    pro:       { name: "PRO",       tradingDays: 22,  price: 1499 },
-    premium:   { name: "PREMIUM",   tradingDays: 250, price: 7499 },
+    basic:     { name:"BASIC",     tradingDays:1,   price:99    },
+    essential: { name:"ESSENTIAL", tradingDays:5,   price:399   },
+    pro:       { name:"PRO",       tradingDays:22,  price:1499  },
+    premium:   { name:"PREMIUM",   tradingDays:250, price:7499  },
 };
-
 const PLAN_COLORS = {
     basic:"#0ea5e9", essential:"#8b5cf6", pro:"#f59e0b", premium:"#ec4899", free:"#64748b"
 };
 
-/* ═══════════════════════════════════════════════════════════════════
-   HELPERS
-═══════════════════════════════════════════════════════════════════ */
-function fmt(dt) {
-    if (!dt) return "—";
-    return new Date(dt).toLocaleString("en-IN", {
-        timeZone:"Asia/Kolkata", day:"2-digit", month:"2-digit", year:"numeric",
-        hour:"2-digit", minute:"2-digit", hour12:true
-    });
+/* ════════════════════════════════════════════════════════════════
+   GLOBALS
+════════════════════════════════════════════════════════════════ */
+let _user        = null;
+let _allSubs     = [];
+let _holidays    = {};    // { "YYYY-MM-DD": "Reason" }
+let _planKey     = "";
+let _computed    = null;  // computed preview object
+
+/* ════════════════════════════════════════════════════════════════
+   DATE HELPERS
+════════════════════════════════════════════════════════════════ */
+function fmt(iso) {
+    if (!iso) return "—";
+    try {
+        return new Date(iso).toLocaleString("en-IN", {
+            timeZone:"Asia/Kolkata", day:"2-digit", month:"2-digit", year:"numeric",
+            hour:"2-digit", minute:"2-digit", hour12:true
+        });
+    } catch(e) { return "—"; }
 }
 
-function isHoliday(dt) {
-    const key = dt.toISOString().split("T")[0];
-    return key in _MARKET_HOLIDAYS;
+function isWeekend(d) { return d.getDay() === 0 || d.getDay() === 6; }
+
+function isHoliday(d) {
+    const key = d.toISOString().split("T")[0];
+    return key in _holidays;
 }
 
-function getHolidayName(dt) {
-    const key = dt.toISOString().split("T")[0];
-    return _MARKET_HOLIDAYS[key] || null;
+function getHolidayName(d) {
+    const key = d.toISOString().split("T")[0];
+    return _holidays[key] || null;
 }
 
-function isWeekend(dt) { return dt.getDay() === 0 || dt.getDay() === 6; }
+function isTradingDay(d) { return !isWeekend(d) && !isHoliday(d); }
 
-function addTradingDays(startDate, days) {
-    let date = new Date(startDate);
-    let added = 0, holidays = 0, weekends = 0;
-    const holidayNames = [];
-
-    while (added < days - 1) {
-        date.setDate(date.getDate() + 1);
-
-        if (isWeekend(date)) {
-            weekends++;
-            continue;
+/* ════════════════════════════════════════════════════════════════
+   CORE: compute start date (today/next trading day)
+════════════════════════════════════════════════════════════════ */
+function computeStartDate(latestExpiryIso) {
+    // If user has an active/queued plan, start next trading day after it expires
+    if (latestExpiryIso) {
+        const expiry = new Date(latestExpiryIso);
+        const now    = new Date();
+        if (expiry > now) {
+            // queue after existing plan
+            let next = new Date(expiry);
+            next.setDate(next.getDate() + 1);
+            next.setHours(9, 16, 0, 0);
+            while (!isTradingDay(next)) next.setDate(next.getDate() + 1);
+            return next;
         }
+    }
+    // No active plan — start now (or next trading day if after market)
+    const now  = new Date();
+    // Convert to IST
+    const ist  = new Date(now.toLocaleString("en-US", { timeZone:"Asia/Kolkata" }));
+    const mins = ist.getHours() * 60 + ist.getMinutes();
+    const marketClose = 15 * 60 + 30;
 
-        if (isHoliday(date)) {
-            const name = getHolidayName(date);
+    let start = new Date(ist);
+    start.setHours(9, 16, 0, 0);
 
+    if (mins > marketClose) {
+        // After market — start next trading day
+        start.setDate(start.getDate() + 1);
+    }
+    while (!isTradingDay(start)) start.setDate(start.getDate() + 1);
+    return start;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   CORE: add N trading days to a start date
+   Returns { expiry, totalCalendar, weekendsSkipped, holidaysSkipped, holidayList }
+════════════════════════════════════════════════════════════════ */
+function addTradingDays(startDate, nDays) {
+    let d          = new Date(startDate);
+    let added      = 0;
+    let weekends   = 0;
+    let holidays   = 0;
+    const holList  = [];
+
+    // Start day counts as day #1
+    const daysToAdd = nDays - 1;
+
+    while (added < daysToAdd) {
+        d = new Date(d);
+        d.setDate(d.getDate() + 1);
+
+        if (isWeekend(d)) { weekends++; continue; }
+        if (isHoliday(d)) {
+            const name = getHolidayName(d);
             holidays++;
-
-            if (name && !holidayNames.includes(name)) {
-                holidayNames.push(name);
-            }
-
+            if (name) holList.push({ date: d.toISOString().split("T")[0], reason: name });
             continue;
         }
-
         added++;
     }
 
-    date.setHours(12,0,0,0);
+    // Expiry at 12:00 PM of last trading day
+    const expiry = new Date(d);
+    expiry.setHours(12, 0, 0, 0);
 
-    const total =
-        Math.ceil((date - new Date(startDate)) / 86400000) + 1;
+    const totalCalendar = Math.ceil((expiry - startDate) / 86400000) + 1;
+
+    return { expiry, totalCalendar, weekendsSkipped: weekends, holidaysSkipped: holidays, holidayList: holList };
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FIND LATEST FUTURE EXPIRY from existing subscriptions
+════════════════════════════════════════════════════════════════ */
+function getLatestFutureExpiry() {
+    const now = new Date();
+    let latest = null;
+
+    // Check user plan expiry
+    if (_user && _user.planExpiry) {
+        const e = new Date(_user.planExpiry);
+        if (e > now) latest = e;
+    }
+
+    // Check all subs
+    _allSubs.forEach(s => {
+        if (s.status === "expired") return;
+        const e = new Date(s.plan_expiry);
+        if (e > now && (!latest || e > latest)) latest = e;
+    });
+
+    return latest ? latest.toISOString() : null;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   COMPUTE FULL PREVIEW (pure client-side, no API needed)
+════════════════════════════════════════════════════════════════ */
+function computePreview(planKey) {
+    const cfg = PLAN_DATA[planKey];
+    if (!cfg) return null;
+
+    const latestExpiry = getLatestFutureExpiry();
+    const startDate    = computeStartDate(latestExpiry);
+    const result       = addTradingDays(startDate, cfg.tradingDays);
+    const now          = new Date();
 
     return {
-        expiry: date,
-        holidays,
-        weekends,
-        total,
-        holidayNames
+        plan:           planKey,
+        tradingDays:    cfg.tradingDays,
+        price:          cfg.price,
+        planStart:      startDate.toISOString(),
+        planExpiry:     result.expiry.toISOString(),
+        calendarDays:   result.totalCalendar,
+        weekends:       result.weekendsSkipped,
+        holidays:       result.holidaysSkipped,
+        holidayList:    result.holidayList,
+        isQueued:       startDate > now,
     };
 }
 
-function getMarketStartDate() {
-    let now = new Date();
-    const mins = now.getHours() * 60 + now.getMinutes();
-    if (mins > 12 * 60) now.setDate(now.getDate() + 1);
-    while (isWeekend(now) || isHoliday(now)) now.setDate(now.getDate() + 1);
-    now.setHours(9, 16, 0, 0);
-    return now;
-}
-
-function getNextTradingDayAfter(dt) {
-    let next = new Date(dt);
-    next.setDate(next.getDate() + 1);
-    next.setHours(9, 16, 0, 0);
-    while (isWeekend(next) || isHoliday(next)) next.setDate(next.getDate() + 1);
-    return next;
-}
-
-function calcTradingDaysRemaining(from, to) {
-    let d = new Date(from), count = 0;
-    while (d <= to) {
-        if (!isWeekend(d) && !isHoliday(d)) count++;
-        d.setDate(d.getDate() + 1);
-    }
-    return count;
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   CONSENT CHECKBOX LOGIC
-═══════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════
+   CONSENT
+════════════════════════════════════════════════════════════════ */
 function onConsentChange() {
-    const cb  = document.getElementById("consentCheck");
-    const btn = document.getElementById("payBtn");
-    const box = document.getElementById("consentBox");
+    const cb   = document.getElementById("consentCheck");
+    const btn  = document.getElementById("payBtn");
+    const box  = document.getElementById("consentBox");
     const warn = document.getElementById("consentWarning");
-
     if (cb.checked) {
         btn.disabled = false;
         btn.textContent = "💳 Pay & Activate Plan";
@@ -645,296 +587,226 @@ function onConsentChange() {
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   GLOBAL STATE
-═══════════════════════════════════════════════════════════════════ */
-let user         = null;
-let allSubs      = [];     // from /api/my-subscriptions
-let selectedPlan = null;
-let newStart     = null;
-let newExpiry    = null;
+/* ════════════════════════════════════════════════════════════════
+   RENDER CURRENT PLAN STATUS
+════════════════════════════════════════════════════════════════ */
+function renderCurrentPlan() {
+    const plan   = (_user.plan || "free").toLowerCase();
+    const expiry = _user.planExpiry;
+    const start  = _user.planStart;
+    const now    = new Date();
 
-/* ═══════════════════════════════════════════════════════════════════
-   RENDER QUEUE TIMELINE
-═══════════════════════════════════════════════════════════════════ */
-function renderQueueTimeline(subs, incomingPlan, incomingStart, incomingExpiry) {
-    const section = document.getElementById("queueSection");
-    const timeline = document.getElementById("queueTimeline");
-    const countBadge = document.getElementById("queueCountBadge");
-    const arrowEl = document.getElementById("newPlanArrow");
+    const curPlanEl = document.getElementById("currentPlan");
+    const curBadge  = document.getElementById("currentStatusBadge");
 
-    // Show section only if there are existing subs or an incoming plan
-    const existing = subs.filter(s => s.status !== "expired");
+    curPlanEl.innerHTML = plan !== "free"
+        ? `<span class="plan-pill-sm ${plan}">${plan.toUpperCase()}</span>`
+        : "<span style='color:#64748b;font-weight:700;'>FREE</span>";
 
-    if (existing.length === 0 && !incomingPlan) {
-        section.style.display = "none";
-        return;
-    }
-    section.style.display = "block";
+    if (expiry) {
+        const expiryDt = new Date(expiry);
+        document.getElementById("currentStart").innerText  = fmt(start);
+        document.getElementById("currentExpiry").innerText = fmt(expiry);
 
-    const allItems = [...existing];
-    countBadge.textContent = allItems.length + " existing + 1 incoming";
+        if (now < expiryDt) {
+            const diff = expiryDt - now;
+            const d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000);
+            document.getElementById("daysRemaining").innerText = `${d}d ${h}h left`;
+            curBadge.textContent = "Active ✅"; curBadge.className = "badge bg-success";
 
-    let html = "";
-
-    allItems.forEach(s => {
-        const dotClass = s.status === "active" ? "active" : s.status === "queued" ? "queued" : "expired";
-        const planColor = PLAN_COLORS[s.plan] || "#64748b";
-        const icon = s.status === "active" ? "✅" : s.status === "queued" ? "⏳" : "❌";
-        const statusLabel = s.status === "active" ? "Currently Active" : s.status === "queued" ? "Queued" : "Expired";
-
-        const expDt = new Date(s.plan_expiry);
-        const now   = new Date();
-        let extraChip = "";
-        if (s.status === "active") {
-            const diff = expDt - now;
-            const d = Math.floor(diff / 86400000);
-            const h = Math.floor((diff % 86400000) / 3600000);
-            extraChip = `<span class="tl-chip green">⏳ ${d}d ${h}h left</span>`;
-        }
-        if (s.status === "queued") {
-            extraChip = `<span class="tl-chip blue">Starts: ${fmt(s.plan_start)}</span>`;
-        }
-
-        html += `
-        <li class="tl-item">
-            <div class="tl-dot ${dotClass}">${icon}</div>
-            <div class="tl-body">
-                <div class="tl-plan-name">
-                    <span style="background:${planColor};padding:2px 10px;border-radius:999px;font-size:11px;margin-right:6px;">${s.plan.toUpperCase()}</span>
-                    ${statusLabel}
-                </div>
-                <div class="tl-dates">
-                    📅 ${fmt(s.plan_start)}  →  ${fmt(s.plan_expiry)}
-                </div>
-                <div class="tl-chips">
-                    <span class="tl-chip">${s.trading_days} trading days</span>
-                    <span class="tl-chip">${s.total_calendar_days} calendar days</span>
-                    <span class="tl-chip">🗓 ${s.weekends_skipped} weekends</span>
-                    <span class="tl-chip">📅 ${s.holidays_skipped} holidays</span>
-                    ${s.price ? `<span class="tl-chip">₹${s.price}</span>` : ""}
-                    ${extraChip}
-                </div>
-            </div>
-        </li>`;
-    });
-
-    // New / incoming plan
-    if (incomingPlan) {
-        const pc = PLAN_DATA[incomingPlan];
-        if (pc) {
-            const result = addTradingDays(incomingStart, pc.tradingDays);
-            const planColor = PLAN_COLORS[incomingPlan] || "#64748b";
-            const isImmediate = incomingStart <= new Date();
-            arrowEl.style.display = "block";
-
-            html += `
-            <li class="tl-item">
-                <div class="tl-dot new">🆕</div>
-                <div class="tl-body">
-                    <div class="tl-plan-name">
-                        <span style="background:${planColor};padding:2px 10px;border-radius:999px;font-size:11px;margin-right:6px;">${incomingPlan.toUpperCase()}</span>
-                        ${isImmediate ? "Activates Immediately" : "Will be Queued"}
-                    </div>
-                    <div class="tl-dates">
-                        📅 ${fmt(incomingStart)}  →  ${fmt(incomingExpiry)}
-                    </div>
-                    <div class="tl-chips">
-                        <span class="tl-chip orange">${pc.tradingDays} trading days</span>
-                        <span class="tl-chip orange">${result.total} calendar days</span>
-                        <span class="tl-chip orange">🗓 ${result.weekends} weekends</span>
-                        <span class="tl-chip orange" title="${result.holidayNames.join(', ')}">
-                            📅 ${result.holidays} holidays
-                            ${result.holidayNames.length ? ' ⓘ' : ''}
-                        </span>
-                        <span class="tl-chip orange">₹${pc.price}</span>
-                    </div>
-                </div>
-            </li>`;
-        }
-    }
-
-    timeline.innerHTML = html;
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   LOAD CHECKOUT
-═══════════════════════════════════════════════════════════════════ */
-function loadCheckout() {
-    const params = new URLSearchParams(window.location.search);
-    const plan   = (params.get("plan") || "").toLowerCase();
-
-    selectedPlan = PLAN_DATA[plan];
-    if (!selectedPlan) {
-        alert("Invalid plan selected. Redirecting…");
-        window.location.href = "/trading-plan";
-        return;
-    }
-
-    /* ── User details ─────────────────────────────────────── */
-    document.getElementById("userName").innerText  = user.username || "User";
-    document.getElementById("userEmail").innerText = user.email    || "—";
-
-    /* ── Current plan section ─────────────────────────────── */
-    const curPlanEl  = document.getElementById("currentPlan");
-    const curBadge   = document.getElementById("currentStatusBadge");
-
-    if (user.plan && user.plan !== "free") {
-        curPlanEl.innerHTML = `<span class="plan-pill-sm ${user.plan}">${user.plan.toUpperCase()}</span>`;
-    } else {
-        curPlanEl.innerText = "FREE";
-    }
-
-    if (user.planExpiry) {
-        const expiry = new Date(user.planExpiry);
-        const now    = new Date();
-
-        document.getElementById("currentStart").innerText  = fmt(user.planStart);
-        document.getElementById("currentExpiry").innerText = fmt(user.planExpiry);
-
-        if (now < expiry) {
-            const tLeft = calcTradingDaysRemaining(now, expiry);
-            document.getElementById("daysRemaining").innerText = tLeft + " trading day(s) left";
-            curBadge.textContent  = "Active ✅";
-            curBadge.className    = "badge bg-success";
-
-            if (user.planStart) {
-                const start   = new Date(user.planStart);
-                const total   = expiry - start;
-                const used    = now - start;
+            if (start) {
+                const startDt = new Date(start);
+                const total   = expiryDt - startDt;
+                const used    = now - startDt;
                 const pct     = Math.min(Math.round((used / total) * 100), 100);
                 document.getElementById("planProgress").style.width = pct + "%";
                 document.getElementById("progressPct").innerText    = pct + "%";
             }
         } else {
             document.getElementById("daysRemaining").innerText = "Expired";
-            curBadge.textContent = "Expired ❌";
-            curBadge.className   = "badge bg-danger";
+            curBadge.textContent = "Expired ❌"; curBadge.className = "badge bg-danger";
         }
     } else {
         document.getElementById("currentStart").innerText  = "—";
         document.getElementById("currentExpiry").innerText = "—";
         document.getElementById("daysRemaining").innerText = "No active plan";
-        curBadge.textContent = "No Plan";
-        curBadge.className   = "badge bg-secondary";
+        curBadge.textContent = "No Plan"; curBadge.className = "badge bg-secondary";
     }
-
-    /* ── Determine new plan start ─────────────────────────── */
-    // Find latest future expiry across all queued/active subscriptions
-    let latestExpiry = null;
-    allSubs.forEach(s => {
-        if (s.status === "expired") return;
-        const edt = new Date(s.plan_expiry);
-        if (edt > new Date()) {
-            if (!latestExpiry || edt > latestExpiry) latestExpiry = edt;
-        }
-    });
-    // Also check user.planExpiry
-    if (user.planExpiry) {
-        const ue = new Date(user.planExpiry);
-        if (ue > new Date()) {
-            if (!latestExpiry || ue > latestExpiry) latestExpiry = ue;
-        }
-    }
-
-    if (latestExpiry) {
-        newStart = getNextTradingDayAfter(latestExpiry);
-    } else {
-        newStart = getMarketStartDate();
-    }
-
-    /* ── Compute expiry ───────────────────────────────────── */
-    const result = addTradingDays(newStart, selectedPlan.tradingDays);
-    newExpiry = result.expiry;
-
-    /* ── Fill new plan section ────────────────────────────── */
-    document.getElementById("planName").innerHTML =
-        `<span class="plan-pill-sm ${plan}">${selectedPlan.name}</span>`;
-    document.getElementById("planDays").innerText =
-        selectedPlan.tradingDays + (selectedPlan.tradingDays === 1 ? " Trading Day" : " Trading Days");
-    document.getElementById("newStart").innerText  = fmt(newStart);
-    document.getElementById("newExpiry").innerText = fmt(newExpiry);
-
-    const isQueued = newStart > new Date();
-    document.getElementById("planBreakdown").innerHTML = `
-        <b>${selectedPlan.tradingDays}</b> Trading Days &nbsp;•&nbsp;
-        <b>${result.total}</b> Calendar Days &nbsp;•&nbsp;
-        Weekends skipped: <b>${result.weekends}</b> &nbsp;•&nbsp;
-        Holidays skipped: <b>${result.holidays}</b>
-
-        ${result.holidayNames.length > 0
-        ? `<br>
-        <span style="color:#f5a623;font-size:11px;">
-        📅 ${result.holidayNames.slice(0,5).join(', ')}
-        </span>`
-        : ''}
-        ${isQueued ? `<br><span style="color:#2563eb;font-weight:700;">📌 This plan will be queued — activates after your current subscription ends.</span>` : `<br><span style="color:#16a34a;font-weight:700;">✅ This plan activates immediately.</span>`}
-    `;
-
-    document.getElementById("totalPrice").innerHTML =
-        `₹${selectedPlan.price} <small style="color:#94a3b8;">incl. GST</small>`;
-
-    /* ── Order summary (right sidebar) ───────────────────── */
-    document.getElementById("orderPlanSummary").innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <span style="font-weight:700;">${selectedPlan.name} Plan</span>
-            <span class="plan-pill-sm ${plan}">${selectedPlan.name}</span>
-        </div>
-        <div style="font-size:12px;color:#64748b;line-height:1.8;">
-            <div>📅 ${selectedPlan.tradingDays} trading days</div>
-            <div>🗓 Starts: ${fmt(newStart)}</div>
-            <div>⏰ Expires: ${fmt(newExpiry)}</div>
-            ${isQueued ? `<div style="color:#2563eb;">📌 Queued after current plan</div>` : ""}
-        </div>
-        <div style="border-top:1px solid #d1fae5;margin-top:10px;padding-top:10px;font-weight:800;font-size:16px;color:#16a34a;">
-            ₹${selectedPlan.price} <small style="font-size:11px;font-weight:500;color:#94a3b8;">incl. GST</small>
-        </div>
-    `;
-
-    /* ── Queue timeline ───────────────────────────────────── */
-    renderQueueTimeline(allSubs, plan, newStart, newExpiry);
 }
 
-/* ═══════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════
+   RENDER NEW PLAN DETAILS
+════════════════════════════════════════════════════════════════ */
+function renderNewPlan(p) {
+    const cfg = PLAN_DATA[p.plan];
+
+    document.getElementById("planName").innerHTML =
+        `<span class="plan-pill-sm ${p.plan}">${cfg.name}</span>`;
+    document.getElementById("planDays").innerText =
+        `${p.tradingDays} Trading Day${p.tradingDays > 1 ? "s" : ""}`;
+    document.getElementById("newStart").innerText  = fmt(p.planStart);
+    document.getElementById("newExpiry").innerText = fmt(p.planExpiry);
+    document.getElementById("totalPrice").innerHTML =
+        `₹${p.price.toLocaleString("en-IN")} <small style="color:#94a3b8;font-size:12px;">incl. GST</small>`;
+
+    // Holiday note
+    const holNote = p.holidayList.length
+        ? `<br><span style="color:#f59e0b;font-size:11px;">
+              📅 <b>${p.holidays} NSE holiday${p.holidays>1?"s":""} skipped</b> — your days are protected:
+              ${p.holidayList.map(h=>`<b>${h.reason}</b>`).join(", ")}
+           </span>`
+        : `<br><span style="color:#16a34a;font-size:11px;">✅ No NSE holidays in this window — all trading days intact</span>`;
+
+    const statusNote = p.isQueued
+        ? `<br><span style="color:#2563eb;font-weight:700;">📌 This plan will be queued — activates after your current plan ends</span>`
+        : `<br><span style="color:#16a34a;font-weight:700;">✅ This plan activates immediately</span>`;
+
+    document.getElementById("planBreakdown").innerHTML =
+        `<b>${p.tradingDays}</b> Trading Days &nbsp;•&nbsp;
+         <b>${p.calendarDays}</b> Calendar Days &nbsp;•&nbsp;
+         Weekends skipped: <b>${p.weekends}</b> &nbsp;•&nbsp;
+         Holidays skipped: <b>${p.holidays}</b>
+         ${holNote}${statusNote}`;
+
+    // Order summary sidebar
+    document.getElementById("orderPlanSummary").innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-weight:700;">${cfg.name} Plan</span>
+            <span class="plan-pill-sm ${p.plan}">${cfg.name}</span>
+        </div>
+        <div style="font-size:12px;color:#64748b;line-height:1.9;">
+            <div>📅 <b>${p.tradingDays}</b> trading days</div>
+            <div>🗓 Starts: <b>${fmt(p.planStart)}</b></div>
+            <div>⏰ Expires: <b>${fmt(p.planExpiry)}</b></div>
+            <div>🏖️ <b>${p.holidays}</b> NSE holiday${p.holidays!==1?"s":""} skipped (days protected)</div>
+            ${p.isQueued ? `<div style="color:#2563eb;font-weight:600;">📌 Queued after current plan</div>` : ""}
+        </div>
+        <div style="border-top:1px solid #d1fae5;margin-top:10px;padding-top:10px;font-weight:800;font-size:16px;color:#16a34a;">
+            ₹${p.price.toLocaleString("en-IN")}
+            <small style="font-size:11px;font-weight:500;color:#94a3b8;">incl. GST</small>
+        </div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   RENDER QUEUE TIMELINE
+════════════════════════════════════════════════════════════════ */
+function renderQueueTimeline(p) {
+    const section    = document.getElementById("queueSection");
+    const timeline   = document.getElementById("queueTimeline");
+    const countBadge = document.getElementById("queueCountBadge");
+    const arrowEl    = document.getElementById("newPlanArrow");
+
+    const existing = _allSubs.filter(s => s.status !== "expired");
+    if (existing.length === 0 && !p) { section.style.display = "none"; return; }
+    section.style.display = "block";
+
+    const now = new Date();
+    countBadge.textContent = `${existing.length} existing + 1 incoming`;
+    let html = "";
+
+    existing.forEach(s => {
+        const dotCls   = s.status === "active" ? "active" : s.status === "queued" ? "queued" : "expired";
+        const planCol  = PLAN_COLORS[s.plan] || "#64748b";
+        const icon     = s.status === "active" ? "✅" : s.status === "queued" ? "⏳" : "❌";
+        const lbl      = s.status === "active" ? "Currently Active" : s.status === "queued" ? "Queued" : "Expired";
+
+        let extraChip = "";
+        if (s.status === "active") {
+            const diff = new Date(s.plan_expiry) - now;
+            const d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000);
+            extraChip = `<span class="tl-chip green">⏳ ${d}d ${h}h left</span>`;
+        } else if (s.status === "queued") {
+            extraChip = `<span class="tl-chip blue">Starts: ${fmt(s.plan_start)}</span>`;
+        }
+
+        html += `
+        <li class="tl-item">
+            <div class="tl-dot ${dotCls}">${icon}</div>
+            <div class="tl-body">
+                <div class="tl-plan-name">
+                    <span style="background:${planCol};padding:2px 10px;border-radius:999px;font-size:11px;margin-right:6px;">${s.plan.toUpperCase()}</span>${lbl}
+                </div>
+                <div class="tl-dates">📅 ${fmt(s.plan_start)} → ${fmt(s.plan_expiry)}</div>
+                <div class="tl-chips">
+                    <span class="tl-chip">${s.trading_days} trading days</span>
+                    <span class="tl-chip">${s.total_calendar_days} calendar days</span>
+                    <span class="tl-chip">🗓 ${s.weekends_skipped} weekends</span>
+                    <span class="tl-chip">📅 ${s.holidays_skipped} holidays</span>
+                    ${s.price ? `<span class="tl-chip">₹${Number(s.price).toLocaleString("en-IN")}</span>` : ""}
+                    ${extraChip}
+                </div>
+            </div>
+        </li>`;
+    });
+
+    if (p) {
+        const planCol = PLAN_COLORS[p.plan] || "#64748b";
+        arrowEl.style.display = "block";
+        const holChips = p.holidayList.map(h =>
+            `<span class="tl-chip orange" title="${h.date}">${h.reason}</span>`
+        ).join("");
+
+        html += `
+        <li class="tl-item">
+            <div class="tl-dot new">🆕</div>
+            <div class="tl-body">
+                <div class="tl-plan-name">
+                    <span style="background:${planCol};padding:2px 10px;border-radius:999px;font-size:11px;margin-right:6px;">${p.plan.toUpperCase()}</span>
+                    ${p.isQueued ? "Will be Queued" : "Activates Immediately"}
+                </div>
+                <div class="tl-dates">📅 ${fmt(p.planStart)} → ${fmt(p.planExpiry)}</div>
+                <div class="tl-chips">
+                    <span class="tl-chip orange">${p.tradingDays} trading days</span>
+                    <span class="tl-chip orange">${p.calendarDays} calendar days</span>
+                    <span class="tl-chip orange">🗓 ${p.weekends} weekends skipped</span>
+                    <span class="tl-chip orange">📅 ${p.holidays} holidays skipped</span>
+                    <span class="tl-chip orange">₹${p.price.toLocaleString("en-IN")}</span>
+                    ${p.isQueued
+                        ? '<span class="tl-chip blue">📌 Queued</span>'
+                        : '<span class="tl-chip green">✅ Immediate</span>'}
+                </div>
+                ${p.holidayList.length ? `
+                <div style="margin-top:6px;font-size:10px;color:#94a3b8;">
+                    <b>NSE holidays in your window (days are NOT lost):</b>
+                    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">${holChips}</div>
+                </div>` : ""}
+            </div>
+        </li>`;
+    }
+
+    timeline.innerHTML = html;
+}
+
+/* ════════════════════════════════════════════════════════════════
    PAYMENT
-═══════════════════════════════════════════════════════════════════ */
+════════════════════════════════════════════════════════════════ */
 function startPayment() {
     const cb   = document.getElementById("consentCheck");
     const box  = document.getElementById("consentBox");
     const warn = document.getElementById("consentWarning");
-
-    // Guard: checkbox must be ticked
     if (!cb.checked) {
         box.classList.add("error");
         warn.classList.add("show");
-        box.scrollIntoView({ behavior: "smooth", block: "center" });
+        box.scrollIntoView({ behavior:"smooth", block:"center" });
         setTimeout(() => box.classList.remove("error"), 600);
         return;
     }
-
-    if (!confirm(`Confirm payment of ₹${selectedPlan ? selectedPlan.price : "—"} for ${selectedPlan ? selectedPlan.name : ""} plan?`)) return;
-
+    const cfg = PLAN_DATA[_planKey];
+    if (!confirm(`Confirm payment of ₹${cfg ? cfg.price.toLocaleString("en-IN") : "—"} for ${cfg ? cfg.name : ""} plan?`)) return;
     completePayment();
 }
 
 async function completePayment() {
     const btn = document.getElementById("payBtn");
-    btn.disabled     = true;
-    btn.textContent  = "⏳ Processing…";
-
+    btn.disabled    = true;
+    btn.textContent = "⏳ Processing…";
     try {
-        const params  = new URLSearchParams(window.location.search);
-        const planKey = params.get("plan");
-
         const response = await fetch("/activate-plan", {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ plan: planKey })
+            method:"POST", credentials:"include",
+            headers:{ "Content-Type":"application/json" },
+            body: JSON.stringify({ plan: _planKey })
         });
-
         const data = await response.json();
-
         if (data.success) {
             btn.textContent = "✅ Payment Successful!";
             setTimeout(() => { window.location.href = "/account"; }, 1200);
@@ -943,41 +815,73 @@ async function completePayment() {
             btn.disabled    = false;
             btn.textContent = "💳 Pay & Activate Plan";
         }
-    } catch (err) {
-        console.error(err);
+    } catch(err) {
         alert("Something went wrong. Please try again.");
         btn.disabled    = false;
         btn.textContent = "💳 Pay & Activate Plan";
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   INIT
-═══════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════
+   INIT — load everything in parallel, then render
+════════════════════════════════════════════════════════════════ */
 async function initCheckout() {
-    await loadMarketHolidays();
-    // Fetch user
-    const res  = await fetch("/api/me", { credentials: "include" });
-    const data = await res.json();
+    // 1. Read plan from URL
+    const params = new URLSearchParams(window.location.search);
+    _planKey = (params.get("plan") || "").toLowerCase();
 
-    if (!data.username) { window.location.href = "/user-login"; return; }
+    if (!PLAN_DATA[_planKey]) {
+        alert("Invalid plan selected. Redirecting…");
+        window.location.href = "/trading-plan";
+        return;
+    }
 
-    user = {
-        username:   data.username,
-        email:      data.email,
-        plan:       (data.plan || "free").toLowerCase(),
-        planExpiry: data.plan_expiry,
-        planStart:  data.plan_start
-    };
-
-    // Fetch subscription history
+    // 2. Fetch user, subscriptions, and holidays in parallel
     try {
-        const sr   = await fetch("/api/my-subscriptions", { credentials: "include" });
-        const sd   = await sr.json();
-        allSubs = sd.subscriptions || [];
-    } catch { allSubs = []; }
+        const [meRes, subsRes, holRes] = await Promise.all([
+            fetch("/api/me",               { credentials:"include" }),
+            fetch("/api/my-subscriptions", { credentials:"include" }),
+            fetch("/api/market-holidays",  { credentials:"include" }),
+        ]);
 
-    loadCheckout();
+        const meData   = await meRes.json();
+        const subsData = await subsRes.json();
+        const holData  = await holRes.json();
+
+        // Auth check
+        if (!meData.username) { window.location.href = "/user-login"; return; }
+
+        // Store globals
+        _user    = { username: meData.username, email: meData.email,
+                     plan: (meData.plan || "free").toLowerCase(),
+                     planExpiry: meData.plan_expiry, planStart: meData.plan_start };
+        _allSubs = subsData.subscriptions || [];
+
+        // Build holiday lookup from server data
+        _holidays = {};
+        (holData.holidays || []).forEach(h => { _holidays[h.date] = h.reason; });
+
+    } catch(e) {
+        console.error("Init failed:", e);
+        // Fallback — still try to render with empty holidays
+        _holidays = {};
+    }
+
+    // 3. Fill user info
+    document.getElementById("userName").innerText  = _user ? _user.username : "—";
+    document.getElementById("userEmail").innerText = _user ? _user.email    : "—";
+
+    // 4. Render current plan status
+    renderCurrentPlan();
+
+    // 5. Compute preview (pure client-side using real holiday data)
+    _computed = computePreview(_planKey);
+
+    // 6. Render new plan details
+    renderNewPlan(_computed);
+
+    // 7. Render queue timeline
+    renderQueueTimeline(_computed);
 }
 
 initCheckout();
@@ -987,11 +891,10 @@ initCheckout();
 <script>
 async function renderNavbar() {
     try {
-        const res  = await fetch("/api/me", { credentials: "include" });
+        const res  = await fetch("/api/me", { credentials:"include" });
         const data = await res.json();
         const nav  = document.getElementById("navAuth");
         if (!nav) return;
-
         if (data.username) {
             const fl = data.username.charAt(0).toUpperCase();
             nav.innerHTML = `
@@ -1009,9 +912,8 @@ async function renderNavbar() {
         } else {
             nav.innerHTML = `<a class="btn btn-outline-primary me-2" href="/user-login">Login</a><a class="btn btn-primary" href="/register">Register</a>`;
         }
-    } catch (e) { console.error(e); }
+    } catch(e) { console.error(e); }
 }
-
 function logout() { window.location.href = "/logout"; }
 renderNavbar();
 </script>
