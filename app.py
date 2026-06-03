@@ -1129,8 +1129,11 @@ def session_check(request: Request):
         }
 
     # USER SESSION
-    if "user" not in request.session:
-        return {"valid": False}
+    if "user" not in request.session and "admin" not in request.session:
+        return {
+            "valid": False,
+            "logged_in": False
+        }
 
     valid = validate_user_session(request)
 
@@ -1139,6 +1142,7 @@ def session_check(request: Request):
 
     return {
         "valid": valid,
+        "logged_in": True,
         "role": "user"
     }
 
