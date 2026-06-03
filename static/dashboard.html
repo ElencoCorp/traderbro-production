@@ -3104,6 +3104,7 @@ function _buildStripItem(h) {
           background:${col.badge}; color:white;
           padding:2px 10px; border-radius:20px;
           font-size:10px; font-weight:700; letter-spacing:0.5px;
+          @media (max-width: 500px) { display:none; }
         ">MARKET WILL BE CLOSED · ${h.formatted_date}</span>
       </div>
     </div>`;
@@ -3212,7 +3213,7 @@ setInterval(async () => {
 
         console.log("SESSION RESPONSE:", data);
 
-        if (!data.valid) {
+        if (data.logged_in && !data.valid) {
             forceLogoutOverlay();
         }
 
