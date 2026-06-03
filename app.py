@@ -955,6 +955,17 @@ async def admin_login(
 
     if admin and verify_password(password, admin[3]):
 
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+
+        c.execute("""
+            DELETE FROM active_sessions
+            WHERE username=?
+        """, (username,))
+
+        conn.commit()
+        conn.close()
+
         request.session.clear()
         request.session["admin"] = username
         request.session["role"] = "admin"
@@ -1110,6 +1121,14 @@ async def register_user(
 @app.get("/api/session-check")
 def session_check(request: Request):
 
+    # ADMIN SESSION
+    if "admin" in request.session:
+        return {
+            "valid": True,
+            "role": "admin"
+        }
+
+    # USER SESSION
     if "user" not in request.session:
         return {"valid": False}
 
@@ -1118,7 +1137,10 @@ def session_check(request: Request):
     if not valid:
         request.session.clear()
 
-    return {"valid": valid}
+    return {
+        "valid": valid,
+        "role": "user"
+    }
 
 # @app.middleware("http")
 # async def enforce_single_login(request, call_next):
