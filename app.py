@@ -14,6 +14,7 @@ import csv, os, shutil, glob, json
 from starlette.middleware.sessions import SessionMiddleware
 import math
 import sqlite3
+import secrets
 import pytz
 IST = pytz.timezone("Asia/Kolkata")
 from passlib.context import CryptContext
@@ -54,6 +55,65 @@ def hash_password(password):
 
 def verify_password(plain, hashed):
     return pwd_context.verify(plain, hashed)
+
+def create_user_session(request, username):
+
+    session_token = secrets.token_hex(32)
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    c.execute("""
+        INSERT OR REPLACE INTO active_sessions
+        (
+            username,
+            session_token,
+            login_time,
+            ip_address,
+            user_agent
+        )
+        VALUES (?, ?, datetime('now'), ?, ?)
+    """, (
+        username,
+        session_token,
+        request.client.host if request.client else "",
+        request.headers.get("user-agent", "")
+    ))
+
+    conn.commit()
+    conn.close()
+
+    request.session.clear()
+    request.session["user"] = username
+    request.session["role"] = "user"
+    request.session["session_token"] = session_token
+
+
+def validate_user_session(request):
+
+    username = request.session.get("user")
+    token = request.session.get("session_token")
+
+    if not username or not token:
+        return False
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    c.execute("""
+        SELECT session_token
+        FROM active_sessions
+        WHERE username=?
+    """, (username,))
+
+    row = c.fetchone()
+
+    conn.close()
+
+    if not row:
+        return False
+
+    return row[0] == token
 
 DB_FILE = "traderbro.db"
 
@@ -125,6 +185,16 @@ def init_db():
         plan TEXT DEFAULT 'free',
         plan_start TEXT,
         plan_expiry TEXT
+    )
+    """)
+
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS active_sessions (
+        username TEXT PRIMARY KEY,
+        session_token TEXT,
+        login_time TEXT,
+        ip_address TEXT,
+        user_agent TEXT
     )
     """)
 
@@ -261,7 +331,7 @@ app = FastAPI()
 app.add_middleware(
     SessionMiddleware,
     secret_key="TraderBro@2026#Secure$FastAPI",
-    https_only=True,  
+    https_only=False,  
     same_site="lax"
 )
 
@@ -502,6 +572,17 @@ def load_login_template(role="admin", error=False):
 
 @app.get("/api/me")
 def get_current_user(request: Request):
+    if "user" in request.session:
+
+        if not validate_user_session(request):
+
+            request.session.clear()
+
+            return {
+                "username": None,
+                "role": None,
+                "is_admin": False
+            }
 
     username = None
     role = "user"
@@ -554,6 +635,20 @@ def get_current_user(request: Request):
         "role": None,
         "is_admin": False
     }
+
+@app.get("/debug-sessions")
+def debug_sessions():
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    c.execute("SELECT * FROM active_sessions")
+
+    rows = c.fetchall()
+
+    conn.close()
+
+    return rows
 
 @app.get("/api/my-subscriptions")
 def api_my_subscriptions(request: Request):
@@ -820,7 +915,24 @@ async def update_profile(request: Request):
 
 @app.get("/logout")
 def logout(request: Request):
+
+    username = request.session.get("user")
+
+    if username:
+
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+
+        c.execute("""
+            DELETE FROM active_sessions
+            WHERE username=?
+        """, (username,))
+
+        conn.commit()
+        conn.close()
+
     request.session.clear()
+
     return RedirectResponse("/")
 
 @app.get("/admin-login", response_class=HTMLResponse)
@@ -883,7 +995,10 @@ async def login(request: Request):
 
     form = await request.form()
 
-    identifier = form.get("identifier")
+    identifier = (
+        form.get("identifier")
+        or form.get("username")
+    )
     password = form.get("password")
 
     conn = sqlite3.connect(DB_FILE)
@@ -918,8 +1033,10 @@ async def login(request: Request):
         )
 
     # SUCCESS LOGIN
-    request.session["user"] = user[0]
-    request.session["role"] = "user"
+    create_user_session(
+        request,
+        user[0]
+    )
 
     return RedirectResponse(
         url="/",
@@ -967,77 +1084,86 @@ async def register_user(
         conn.close()
 
         # ✅ AUTO LOGIN (SESSION CREATE)
-        request.session.clear()
-        request.session["user"] = username
-        request.session["role"] = "user"
+        create_user_session(
+            request,
+            username
+        )
 
         return RedirectResponse("/", status_code=303)
 
     except Exception as e:
         print("REGISTER ERROR:", e)
         return HTMLResponse("Internal Server Error", status_code=500)
+    
+
+# Working one loggedin device
+# @app.get("/api/session-check")
+# def session_check(request: Request):
+
+#     if "user" not in request.session:
+#         return {"valid": False}
+
+#     return {
+#         "valid": validate_user_session(request)
+#     }
+
+@app.get("/api/session-check")
+def session_check(request: Request):
+
+    if "user" not in request.session:
+        return {"valid": False}
+
+    valid = validate_user_session(request)
+
+    if not valid:
+        request.session.clear()
+
+    return {"valid": valid}
+
+# @app.middleware("http")
+# async def enforce_single_login(request, call_next):
+
+#     protected_paths = [
+#         "/dashboard",
+#         "/account",
+#         "/checkout",
+#         "/simple"
+#     ]
+
+#     if request.url.path in protected_paths:
+
+#         if request.session.get("user"):
+
+#             if not validate_user_session(request):
+
+#                 request.session.clear()
+
+#                 return RedirectResponse("/user-login")
+
+#     return await call_next(request)
+
 
 # Dashboard
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard_page(request: Request):
 
+    if "user" in request.session:
+
+        if not validate_user_session(request):
+
+            request.session.clear()
+
+            return RedirectResponse("/user-login")
+
     if "user" not in request.session and "admin" not in request.session:
-        return RedirectResponse("/user-login", status_code=302)
-
-    # ADMIN ACCESS
-    if "admin" in request.session:
-
-        path = os.path.join(STATIC_DIR, "dashboard.html")
-
-        with open(path, "r", encoding="utf-8") as f:
-            return HTMLResponse(f.read())
-
-    username = request.session["user"]
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    c.execute("""
-        SELECT plan, plan_expiry
-        FROM users
-        WHERE username=?
-    """, (username,))
-
-    user = c.fetchone()
-
-    conn.close()
-
-    if not user:
         return RedirectResponse("/user-login")
-
-    plan = user[0]
-    expiry = user[1]
-
-    # NO PLAN
-    if not plan or plan == "free":
-        return RedirectResponse("/trading-plan")
-
-    # EXPIRY CHECK
-    # EXPIRY CHECK
-    if expiry:
-
-        expiry_date = datetime.fromisoformat(expiry)
-
-        # Make both timezone-aware
-        if expiry_date.tzinfo is None:
-            expiry_date = expiry_date.replace(tzinfo=timezone.utc)
-
-        current_time = datetime.now(timezone.utc)
-
-        if current_time > expiry_date:
-            return RedirectResponse("/trading-plan")
 
     path = os.path.join(STATIC_DIR, "dashboard.html")
 
     with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
+        html = f.read()
 
-
+    return HTMLResponse(html)
 # My Account
 @app.get("/account", response_class=HTMLResponse)
 def account_page(request: Request):
@@ -1109,10 +1235,32 @@ async def activate_plan(request: Request):
                 pass
  
     # Determine start date
+    c.execute("""
+        SELECT COUNT(*)
+        FROM subscriptions
+        WHERE username=?
+        """, (username,))
+
+    purchase_count = c.fetchone()[0]
+
     if effective_last_expiry:
+
+        # Renewal
         start_dt = get_next_trading_day_after(effective_last_expiry)
+
     else:
+
         start_dt = get_subscription_start_date()
+
+        # ONLY first-ever purchase
+        if purchase_count == 0:
+
+            start_dt = start_dt.replace(
+                hour=8,
+                minute=0,
+                second=0,
+                microsecond=0
+            )
  
     # Calculate expiry
     expiry_dt, total_cal, weekends, holidays = calculate_expiry_from_start(start_dt, t_days)
@@ -1696,6 +1844,14 @@ print("✅ HOLIDAY REFRESH SCHEDULED at 6:00 AM IST daily")
 print("✅ SUBSCRIPTION PROMOTER SCHEDULED every 5 min")
 
 app.include_router(token_router)
+from razorpay_integration import (
+    router as rzp_router,
+    init_razorpay_table
+)
+init_razorpay_table()
+app.include_router(rzp_router)
+# from razorpay_integration import router as rzp_router
+# app.include_router(rzp_router)
 init_token_manager(app, scheduler, HEADERS)
 
 def daily_cleanup():
@@ -3585,6 +3741,53 @@ def api_subscription_preview(request: Request, plan: str = ""):
         "is_queued": is_queued,
         "price": cfg["price"]
     })
+
+def process_subscription_queue():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    now = datetime.now(IST)
+
+    c.execute("""
+        SELECT id, username, plan,
+               plan_start, plan_expiry
+        FROM subscriptions
+        WHERE status='queued'
+        ORDER BY plan_start ASC
+    """)
+
+    rows = c.fetchall()
+
+    for row in rows:
+        sub_id = row[0]
+        username = row[1]
+        plan = row[2]
+
+        start_dt = datetime.fromisoformat(row[3])
+
+        if start_dt <= now:
+
+            c.execute("""
+                UPDATE subscriptions
+                SET status='active'
+                WHERE id=?
+            """, (sub_id,))
+
+            c.execute("""
+                UPDATE users
+                SET plan=?,
+                    plan_start=?,
+                    plan_expiry=?
+                WHERE username=?
+            """, (
+                plan,
+                row[3],
+                row[4],
+                username
+            ))
+
+    conn.commit()
+    conn.close()
 
 # ── ASSIGN / CHANGE PLAN (admin only) ───────────────────────────────────
 @app.post("/api/admin/user/assign-plan")
