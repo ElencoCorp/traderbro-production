@@ -1330,6 +1330,67 @@
 	});
 </script>
 
+<!-- One device login -->
+<script>
+let sessionKilled = false;
+
+function forceLogoutOverlay() {
+
+    if (sessionKilled) return;
+
+    sessionKilled = true;
+
+    console.log("SESSION INVALID - LOGGING OUT");
+
+    document.body.innerHTML = `
+        <div style="
+            position:fixed;
+            inset:0;
+            background:#050814;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            z-index:999999;
+            color:white;
+            font-family:Poppins;
+            flex-direction:column;
+        ">
+            <h1>🔒 Session Ended</h1>
+            <p>Logged in from another device</p>
+        </div>
+    `;
+
+    setTimeout(() => {
+        window.location.replace("/user-login");
+    }, 3000);
+}
+
+setInterval(async () => {
+
+    try {
+
+        console.log("CHECKING SESSION...");
+
+        const r = await fetch("/api/session-check", {
+            cache: "no-store",
+            credentials: "same-origin"
+        });
+
+        const data = await r.json();
+
+        console.log("SESSION RESPONSE:", data);
+
+        if (!data.valid) {
+            forceLogoutOverlay();
+        }
+
+    } catch (e) {
+        console.error("SESSION CHECK ERROR:", e);
+    }
+
+}, 3000);
+</script>
+
 
 
 
