@@ -2535,23 +2535,108 @@ let _shownSystemMsgs = new Set();  // track which ones we've injected this sessi
        LIVE DATA
     ══════════════════════════════════════════════════════════ */
     function loadData() {
-      fetch('/api/get-running')
+    fetch("/api/get-running")
         .then(r => r.json())
         .then(d => {
-          const rows = (d.rows || []).sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
-    
-          if (!rows.length) {
-            _dashboardRows = [];
-            document.getElementById("rows-grid").innerHTML = `
-              <div class="market-closed-box">
-                <div class="market-icon">⏰</div>
-                <div class="market-title">Market Insight Window Closed</div>
-                <div class="market-desc">Live Black-Box-Engine values are generated during active market analysis hours.</div>
-                <div class="market-time">9:16 AM → 12 PM</div>
-                <div class="market-sub">Previous values remain visible till next trading day 8:30 AM</div>
-              </div>`;
-            return;
-          }
+            const rows = (d.rows || []).sort(
+                (a, b) => new Date(a.datetime) - new Date(b.datetime)
+            );
+ 
+            const grid = document.getElementById("rows-grid");
+ 
+            if (!rows.length) {
+                _dashboardRows = [];
+                // Don't overwrite if already showing a meaningful closed message
+                if (!grid.querySelector(".data-row")) {
+                    grid.innerHTML = `
+                        <div class="market-closed-box">
+                            <div class="market-icon">⏰</div>
+                            <div class="market-title">Market Insight Window Closed</div>
+                            <div class="market-desc">
+                                Live Black-Box-Engine values are generated during active market hours.
+                            </div>
+                            <div class="market-time">9:16 AM → 12:00 PM IST</div>
+                            <div class="market-sub">
+                                Previous values remain visible till next trading day 8:30 AM
+                            </div>
+                        </div>`;
+                }
+                return;
+            }
+ 
+            const displayableRows = rows;
+            const heroRow = displayableRows[displayableRows.length - 1];
+            const heroRunning = parseFloat(heroRow.running || 0);
+ 
+            _dashboardRows = rows.map(r => ({
+                datetime:  r.datetime  || "",
+                strike:    r.strike    || "",
+                index_ltp: r.index_ltp || "",
+                running:   r.running   || 0,
+            }));
+ 
+            document.getElementById("h-ltp").textContent    = heroRow.index_ltp || "—";
+            document.getElementById("h-expiry").textContent = heroRow.expiry    || "—";
+            document.getElementById("h-ts").textContent     = heroRow.datetime  || "—";
+ 
+            const parts = (heroRow.datetime || "").split(" ");
+            document.getElementById("atm-dt").innerHTML = `
+                <span style="color:#fff">${parts[0] || ""}</span>
+                <span style="color:#fff;margin:0 6px">|</span>
+                <span style="color:#fff">${parts[1] || heroRow.datetime}</span><br>
+                <span style="color:#ff6b35">Strike: </span>
+                <span class="strike-highlight">${heroRow.strike}</span>
+                <span style="color:var(--text-muted);margin:0 8px">·</span>
+                <span style="color:#ff6b35">Sensex: </span>
+                <span style="color:var(--primary)">
+                    ${parseFloat(heroRow.index_ltp || 0).toFixed(2)}
+                </span>`;
+ 
+            const box = document.getElementById("atm-run-box");
+            document.getElementById("atm-run-val").textContent = heroRunning.toFixed(2);
+            if (heroRunning > 0) {
+                box.className = "atm-run-box atm-run-pos";
+                box.querySelector(".run-label").textContent = "▲ Bullish";
+            } else if (heroRunning < 0) {
+                box.className = "atm-run-box atm-run-neg";
+                box.querySelector(".run-label").textContent = "▼ Bearish";
+            } else {
+                box.className = "atm-run-box atm-run-zero";
+                box.querySelector(".run-label").textContent = "◆ Neutral";
+            }
+ 
+            // Show newest first in the list
+            const displayRows = [...displayableRows].reverse();
+            let html = "";
+            displayRows.forEach(r => {
+                const val  = parseFloat(r.running || 0);
+                const cls  = val > 0 ? "val-pos"  : val < 0 ? "val-neg"  : "val-zero";
+                const rcls = val > 0 ? "row-pos"  : val < 0 ? "row-neg"  : "row-zero";
+                const dt   = (r.datetime || "").split(" ");
+                html += `
+                    <div class="data-row ${rcls}">
+                        <div class="row-dt">
+                            <span class="row-time">${dt[1] || r.datetime}</span>
+                            <span class="row-sensex">Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)}</span>
+                        </div>
+                        <div class="val-pill ${cls}">
+                            ${val > 0 ? "+" : ""}${val.toFixed(2)}
+                        </div>
+                    </div>`;
+            });
+            grid.innerHTML = html;
+ 
+            const last6 = displayableRows.slice(-6);
+            if (last6.length) {
+                updateGauge(
+                    last6.reduce((s, r) => s + parseFloat(r.running || 0), 0) / last6.length
+                );
+            }
+ 
+            checkMarketCloseAutoSave();
+        })
+        .catch(e => console.error("loadData:", e));
+}
     
           // ── FIX: use ALL rows — don't drop the last "pending" row ──
           const displayableRows = rows;                          // ← was: rows.slice(0, -1)
@@ -2908,22 +2993,169 @@ let _shownSystemMsgs = new Set();  // track which ones we've injected this sessi
     /* ══════════════════════════════════════════════════════════
        AUTH CHECK
     ══════════════════════════════════════════════════════════ */
-    async function checkDashboardAccess() {
-      try {
-        const res = await fetch("/api/me");
+   async function checkDashboardAccess() {
+    try {
+        const res  = await fetch("/api/dashboard-access", { credentials: "include" });
         const data = await res.json();
-        if (!data.username) { window.location.href = "/user-login"; return false; }
-        if (data.is_admin === true) {
-          const pill = document.getElementById('active-users-pill');
-          if (pill) pill.style.display = 'flex';
-          return true;
+ 
+        if (!data.allowed) {
+            switch (data.reason) {
+                case "not_logged_in":
+                    window.location.href = "/user-login";
+                    return false;
+ 
+                case "no_plan":
+                    window.location.href = "/trading-plan";
+                    return false;
+ 
+                case "plan_expired":
+                    window.location.href = "/trading-plan?expired=1";
+                    return false;
+ 
+                case "plan_queued": {
+                    // Show waiting overlay — plan purchased but not started yet
+                    const start = data.plan_start
+                        ? new Date(data.plan_start).toLocaleString("en-IN", {
+                            timeZone:"Asia/Kolkata",
+                            day:"2-digit", month:"short", year:"numeric",
+                            hour:"2-digit", minute:"2-digit", hour12:true
+                          })
+                        : "soon";
+                    showFullscreenClosed(
+                        "⏳",
+                        "Plan Not Started Yet",
+                        `Your subscription starts on <b>${start}</b>.<br>
+                         Please come back then to access the dashboard.`,
+                        `<a href="/account" style="
+                            display:inline-block; margin-top:16px;
+                            padding:10px 28px; border-radius:30px; font-weight:700;
+                            background:linear-gradient(135deg,#02a3fe,#0072ff); color:white;
+                            text-decoration:none;">View My Account</a>`
+                    );
+                    return false;
+                }
+                default:
+                    window.location.href = "/user-login";
+                    return false;
+            }
         }
-        if (!data.plan || data.plan === "free") { window.location.href = "/trading-plan"; return false; }
+ 
+        /* ── Plan is active — show market status in left panel ── */
+ 
+        // Show active-users pill for admin
+        if (data.reason === "admin") {
+            const pill = document.getElementById("active-users-pill");
+            if (pill) pill.style.display = "flex";
+        }
+ 
+        // If market is closed RIGHT NOW, update the left panel message
+        // (but don't kick the user out — the data may still be visible)
+        updateMarketClosedBanner(data);
+ 
         return true;
-      } catch (err) { window.location.href = "/user-login"; return false; }
+ 
+    } catch (err) {
+        console.error("checkDashboardAccess:", err);
+        window.location.href = "/user-login";
+        return false;
     }
+}
+    
 
-    /* ══════════════════════════════════════════════════════════
+function updateMarketClosedBanner(accessData) {
+    const grid = document.getElementById("rows-grid");
+    if (!grid) return;
+ 
+    // Only overwrite if the grid is currently showing the default "closed" box
+    // (i.e., no real data rows yet). Once loadData() fills rows, don't replace.
+    if (grid.querySelector(".data-row")) return;   // real data already there
+ 
+    const now = new Date();
+    const ist = new Date(now.toLocaleString("en-US", { timeZone:"Asia/Kolkata" }));
+    const h = ist.getHours(), m = ist.getMinutes();
+    const mins = h * 60 + m;
+    const marketOpen  = 9 * 60 + 16;
+    const marketClose = 12 * 60 + 0;
+    const duringMarket = mins >= marketOpen && mins <= marketClose;
+ 
+    // If market is open, don't show a "closed" banner
+    if (duringMarket && !accessData.is_holiday && !accessData.is_weekend) return;
+ 
+    let icon, title, desc, time;
+ 
+    if (accessData.is_weekend) {
+        const dayName = accessData.weekday_name || (ist.getDay() === 6 ? "Saturday" : "Sunday");
+        icon  = "📅";
+        title = `Market Closed — ${dayName}`;
+        desc  = "NSE is closed on weekends. No live values are generated today.";
+        time  = `Next session: <b>${accessData.next_trading_day || "Monday"}</b>`;
+ 
+    } else if (accessData.is_holiday) {
+        icon  = "🏖️";
+        title = `Market Holiday — ${accessData.holiday_reason}`;
+        desc  = `NSE is closed today for <b>${accessData.holiday_reason}</b>. No live values are generated.`;
+        time  = `Next session: <b>${accessData.next_trading_day}</b>`;
+ 
+    } else if (mins < marketOpen) {
+        icon  = "⏰";
+        title = "Pre-Market — Session Not Started";
+        desc  = "Live Black-Box-Engine values are generated during active market analysis hours.";
+        time  = "Session opens at <b>9:16 AM IST</b>";
+ 
+    } else {
+        // After 12:00 PM
+        icon  = "🔔";
+        title = "Market Session Ended";
+        desc  = "Today's session has closed. Yesterday's values are shown below.";
+        time  = `Next session: <b>${accessData.next_trading_day}</b> at <b>9:16 AM IST</b>`;
+    }
+ 
+    grid.innerHTML = `
+        <div class="market-closed-box">
+            <div class="market-icon">${icon}</div>
+            <div class="market-title">${title}</div>
+            <div class="market-desc">${desc}</div>
+            <div class="market-time">${time}</div>
+            <div class="market-sub" style="margin-top:10px;">
+                Previous session values remain visible till next trading day 8:30 AM
+            </div>
+        </div>`;
+}
+ 
+/* ── Full-screen overlay for queued plan ── */
+function showFullscreenClosed(icon, title, body, extra) {
+    // Remove any existing overlay
+    const existing = document.getElementById("_accessOverlay");
+    if (existing) existing.remove();
+ 
+    const div = document.createElement("div");
+    div.id = "_accessOverlay";
+    div.style.cssText = `
+        position:fixed; inset:0; z-index:99999;
+        background:rgba(5,8,20,0.97);
+        display:flex; align-items:center; justify-content:center;
+        font-family:'Poppins',sans-serif;
+    `;
+    div.innerHTML = `
+        <div style="
+            max-width:420px; width:90%;
+            background:#111827;
+            border:1px solid rgba(2,163,254,0.3);
+            border-radius:20px;
+            padding:40px 28px;
+            text-align:center;
+            box-shadow:0 0 60px rgba(2,163,254,0.15);
+        ">
+            <div style="font-size:56px;margin-bottom:16px;">${icon}</div>
+            <h2 style="color:#02A3FE;font-size:22px;font-weight:800;margin-bottom:12px;">${title}</h2>
+            <p style="color:#cbd5e1;font-size:14px;line-height:1.7;margin-bottom:0;">${body}</p>
+            ${extra || ""}
+        </div>`;
+    document.body.appendChild(div);
+}
+
+
+/* ══════════════════════════════════════════════════════════
        INIT
     ══════════════════════════════════════════════════════════ */
     drawGauge();
