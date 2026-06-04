@@ -134,19 +134,18 @@ PLAN_CONFIG_DATA = {
 def calculate_expiry_from_start(start_dt, trading_days):
     """
     Returns (expiry_dt, total_calendar_days, weekends_skipped, holidays_skipped).
-    start_dt counts as trading day #1.
+    start_dt counts as trading day #1 (must be a valid trading day).
     Expiry is set to 12:00 PM (market close) of the last trading day.
     """
-    days_to_add = trading_days - 1  # start day is day 1
-    expiry = start_dt.replace(hour=9, minute=16, second=0, microsecond=0)
-    added = 0
+    days_to_add = trading_days - 1   # start day is already day 1
+    expiry = start_dt.replace(second=0, microsecond=0)  # preserve 08:30 start
+    added    = 0
     weekends = 0
     holidays = 0
  
     while added < days_to_add:
         expiry = expiry + timedelta(days=1)
         dow = expiry.weekday()
-        ds  = expiry.strftime("%Y-%m-%d")
         if dow >= 5:
             weekends += 1
             continue
@@ -155,15 +154,26 @@ def calculate_expiry_from_start(start_dt, trading_days):
             continue
         added += 1
  
-    expiry = expiry.replace(hour=12, minute=0, second=0, microsecond=0)
+    # Expiry = 12:00 PM of last trading day
+    expiry = expiry.replace(
+        hour=MARKET_CLOSE_HOUR,
+        minute=MARKET_CLOSE_MIN,
+        second=0,
+        microsecond=0
+    )
     total_cal = (expiry.date() - start_dt.date()).days + 1
     return expiry, total_cal, weekends, holidays
  
  
 def get_next_trading_day_after(dt):
-    """Returns the next valid trading day at 09:16 after dt."""
+    """Returns the next valid trading day at 08:30 AM after dt."""
     nxt = dt + timedelta(days=1)
-    nxt = nxt.replace(hour=9, minute=16, second=0, microsecond=0)
+    nxt = nxt.replace(
+        hour=DASHBOARD_OPEN_HOUR,
+        minute=DASHBOARD_OPEN_MIN,
+        second=0,
+        microsecond=0
+    )
     while nxt.weekday() >= 5 or is_market_holiday(nxt):
         nxt += timedelta(days=1)
     return nxt
@@ -619,6 +629,20 @@ def get_current_user(request: Request):
     conn.close()
 
     if user:
+        subscription_active = False
+
+        try:
+            if user[5]:
+                expiry = datetime.fromisoformat(user[5])
+
+                if expiry.tzinfo is None:
+                    expiry = IST.localize(expiry)
+
+                subscription_active = expiry > datetime.now(IST)
+
+        except Exception:
+            pass
+
         return {
             "username": user[0],
             "email": user[1],
@@ -626,15 +650,110 @@ def get_current_user(request: Request):
             "plan": user[3],
             "plan_start": user[4],
             "plan_expiry": user[5],
+
+            "subscription_active": subscription_active,
+
             "role": role,
             "is_admin": role == "admin"
         }
 
-    return {
-        "username": None,
-        "role": None,
-        "is_admin": False
-    }
+# @app.get("/api/dashboard-access")
+def api_dashboard_access(request):
+    from fastapi.responses import JSONResponse
+ 
+    username = request.session.get("user") or request.session.get("admin")
+    is_admin = request.session.get("role") == "admin"
+ 
+    if not username:
+        return JSONResponse({"allowed": False, "reason": "not_logged_in"})
+ 
+    now = datetime.now(IST)
+ 
+    # ── Market status ──
+    dow         = now.weekday()  # 0=Mon … 6=Sun
+    is_weekend  = dow >= 5
+    weekday_name = now.strftime("%A")
+    holiday_reason = None
+ 
+    if not is_weekend:
+        holiday_reason = get_holiday_reason(now.strftime("%Y-%m-%d"))
+ 
+    is_holiday   = holiday_reason is not None
+    is_market_day = (not is_weekend) and (not is_holiday)
+ 
+    current_mins = now.hour * 60 + now.minute
+    market_open   = (
+        is_market_day and
+        current_mins >= MARKET_OPEN_HOUR * 60 + MARKET_OPEN_MIN and
+        current_mins <= MARKET_CLOSE_HOUR * 60 + MARKET_CLOSE_MIN
+    )
+ 
+    # Find next trading day
+    nxt = now + timedelta(days=1)
+    nxt = nxt.replace(hour=DASHBOARD_OPEN_HOUR, minute=DASHBOARD_OPEN_MIN, second=0, microsecond=0)
+    while nxt.weekday() >= 5 or is_market_holiday(nxt):
+        nxt += timedelta(days=1)
+ 
+    # ── Subscription check ──
+    if is_admin:
+        return JSONResponse({
+            "allowed":         True,
+            "reason":          "admin",
+            "market_open":     market_open,
+            "is_holiday":      is_holiday,
+            "holiday_reason":  holiday_reason,
+            "is_weekend":      is_weekend,
+            "weekday_name":    weekday_name,
+            "next_trading_day": nxt.strftime("%d %b %Y, %A"),
+        })
+ 
+    conn = sqlite3.connect(DB_FILE)
+    c    = conn.cursor()
+    c.execute("SELECT plan, plan_start, plan_expiry FROM users WHERE username=?", (username,))
+    row  = c.fetchone()
+    conn.close()
+ 
+    if not row or not row[0] or row[0] == "free":
+        return JSONResponse({"allowed": False, "reason": "no_plan"})
+ 
+    plan, plan_start, plan_expiry = row
+ 
+    if not plan_expiry:
+        return JSONResponse({"allowed": False, "reason": "no_plan"})
+ 
+    try:
+        edt = datetime.fromisoformat(plan_expiry)
+        if edt.tzinfo is None:
+            edt = IST.localize(edt)
+        if now > edt:
+            return JSONResponse({"allowed": False, "reason": "plan_expired"})
+ 
+        sdt = datetime.fromisoformat(plan_start)
+        if sdt.tzinfo is None:
+            sdt = IST.localize(sdt)
+        if now < sdt:
+            return JSONResponse({
+                "allowed": False,
+                "reason":  "plan_queued",
+                "plan_start": sdt.isoformat(),
+            })
+    except Exception as e:
+        return JSONResponse({"allowed": False, "reason": "error"})
+ 
+    # Plan is active — return full status
+    return JSONResponse({
+        "allowed":          True,
+        "reason":           "active",
+        "plan":             plan,
+        "plan_expiry":      plan_expiry,
+        "market_open":      market_open,
+        "is_holiday":       is_holiday,
+        "holiday_reason":   holiday_reason,
+        "is_weekend":       is_weekend,
+        "weekday_name":     weekday_name,
+        "next_trading_day": nxt.strftime("%d %b %Y, %A"),
+    })
+
 
 @app.get("/debug-sessions")
 def debug_sessions():
@@ -1216,7 +1335,10 @@ def checkout_page(request: Request):
 
 
 @app.post("/activate-plan")
-async def activate_plan(request: Request):
+async def activate_plan(request):
+    """Called by razorpay_integration after successful payment verification."""
+    from fastapi.responses import JSONResponse
+ 
     if "user" not in request.session:
         return JSONResponse({"success": False, "error": "Not logged in"})
  
@@ -1226,16 +1348,16 @@ async def activate_plan(request: Request):
     if plan not in PLAN_CONFIG_DATA:
         return JSONResponse({"success": False, "error": "Invalid plan"})
  
-    username  = request.session["user"]
-    cfg       = PLAN_CONFIG_DATA[plan]
-    t_days    = cfg["trading_days"]
-    price     = cfg["price"]
-    now       = datetime.now(IST)
+    username = request.session["user"]
+    cfg      = PLAN_CONFIG_DATA[plan]
+    t_days   = cfg["trading_days"]
+    price    = cfg["price"]
+    now      = datetime.now(IST)
  
     conn = sqlite3.connect(DB_FILE)
     c    = conn.cursor()
  
-    # Find the latest future expiry across subscriptions + users table
+    # ── Find latest future expiry (subscriptions + users table) ──
     c.execute("""
         SELECT MAX(plan_expiry) FROM subscriptions
         WHERE username=? AND status IN ('active','queued')
@@ -1260,52 +1382,36 @@ async def activate_plan(request: Request):
             except Exception:
                 pass
  
-    # Determine start date
-    c.execute("""
-        SELECT COUNT(*)
-        FROM subscriptions
-        WHERE username=?
-        """, (username,))
-
-    purchase_count = c.fetchone()[0]
-
+    # ── Determine start date ──
     if effective_last_expiry:
-
-        # Renewal
+        # Queue after existing plan ends
         start_dt = get_next_trading_day_after(effective_last_expiry)
-
     else:
-
+        # Fresh purchase — use time-of-purchase logic
         start_dt = get_subscription_start_date()
-
-        # ONLY first-ever purchase
-        if purchase_count == 0:
-
-            start_dt = start_dt.replace(
-                hour=8,
-                minute=0,
-                second=0,
-                microsecond=0
-            )
  
-    # Calculate expiry
+    # ── Calculate expiry ──
     expiry_dt, total_cal, weekends, holidays = calculate_expiry_from_start(start_dt, t_days)
  
+    # ── Status: active if start is now or past, else queued ──
     new_status = "active" if start_dt <= now else "queued"
  
-    # Save to subscriptions table
+    # ── Write to subscriptions table ──
     c.execute("""
         INSERT INTO subscriptions
             (username, plan, plan_start, plan_expiry,
-             trading_days, total_calendar_days, weekends_skipped, holidays_skipped,
+             trading_days, total_calendar_days,
+             weekends_skipped, holidays_skipped,
              status, price, created_at)
         VALUES (?,?,?,?,?,?,?,?,?,?,?)
-    """, (username, plan,
-          start_dt.isoformat(), expiry_dt.isoformat(),
-          t_days, total_cal, weekends, holidays,
-          new_status, price, now.isoformat()))
+    """, (
+        username, plan,
+        start_dt.isoformat(), expiry_dt.isoformat(),
+        t_days, total_cal, weekends, holidays,
+        new_status, price, now.isoformat()
+    ))
  
-    # Update users table only for the immediately active plan
+    # ── Update users table only if immediately active ──
     if new_status == "active":
         c.execute("""
             UPDATE users SET plan=?, plan_start=?, plan_expiry=?
@@ -1316,13 +1422,13 @@ async def activate_plan(request: Request):
     conn.close()
  
     return JSONResponse({
-        "success":     True,
-        "plan":        plan,
-        "plan_start":  start_dt.isoformat(),
+        "success":    True,
+        "plan":       plan,
+        "plan_start": start_dt.isoformat(),
         "plan_expiry": expiry_dt.isoformat(),
-        "status":      new_status,
+        "status":     new_status,
     })
-
+ 
 # ═══════════════════════════════════════════════════════════════════════
 # CORE DATA FUNCTIONS
 # ═══════════════════════════════════════════════════════════════════════
@@ -1785,15 +1891,16 @@ restart_market_job()
 
 def promote_queued_subscriptions():
     """
-    Runs every 5 minutes. Promotes queued subscriptions to active once
-    their start time has arrived, and updates the users table accordingly.
-    Also marks expired active subscriptions.
+    Runs every 5 minutes.
+    • Promotes queued → active when start_dt has arrived.
+    • Marks active → expired when expiry_dt has passed.
+    • Resets users.plan to 'free' when no active/queued sub exists.
     """
-    now = datetime.now(IST)
+    now  = datetime.now(IST)
     conn = sqlite3.connect(DB_FILE)
     c    = conn.cursor()
  
-    # Promote queued → active
+    # ── 1. Promote queued → active ──
     c.execute("""
         SELECT id, username, plan, plan_start, plan_expiry
         FROM subscriptions WHERE status='queued'
@@ -1801,28 +1908,45 @@ def promote_queued_subscriptions():
     for r in c.fetchall():
         try:
             sdt = datetime.fromisoformat(r[3])
-            if sdt.tzinfo is None: sdt = IST.localize(sdt)
+            if sdt.tzinfo is None:
+                sdt = IST.localize(sdt)
             if now >= sdt:
                 c.execute("UPDATE subscriptions SET status='active' WHERE id=?", (r[0],))
                 c.execute("""
                     UPDATE users SET plan=?, plan_start=?, plan_expiry=?
                     WHERE username=?
                 """, (r[2], r[3], r[4], r[1]))
+                print(f"✅ Promoted {r[1]} → {r[2]} active")
         except Exception as e:
             print(f"promote_queued error: {e}")
  
-    # Mark active → expired
+    # ── 2. Mark active → expired ──
     c.execute("""
-        SELECT id, plan_expiry FROM subscriptions WHERE status='active'
+        SELECT id, username, plan_expiry
+        FROM subscriptions WHERE status='active'
     """)
     for r in c.fetchall():
         try:
-            edt = datetime.fromisoformat(r[1])
-            if edt.tzinfo is None: edt = IST.localize(edt)
+            edt = datetime.fromisoformat(r[2])
+            if edt.tzinfo is None:
+                edt = IST.localize(edt)
             if now > edt:
                 c.execute("UPDATE subscriptions SET status='expired' WHERE id=?", (r[0],))
-        except Exception:
-            pass
+                # Check if this user still has any active/queued subs
+                c.execute("""
+                    SELECT COUNT(*) FROM subscriptions
+                    WHERE username=? AND status IN ('active','queued')
+                """, (r[1],))
+                remaining = c.fetchone()[0]
+                if remaining == 0:
+                    c.execute("""
+                        UPDATE users
+                        SET plan='free', plan_start=NULL, plan_expiry=NULL
+                        WHERE username=?
+                    """, (r[1],))
+                    print(f"⛔ {r[1]} plan expired → reset to free")
+        except Exception as e:
+            print(f"expire_active error: {e}")
  
     conn.commit()
     conn.close()
@@ -2446,38 +2570,63 @@ async def save_running(request: Request):
 
 IST = pytz.timezone("Asia/Kolkata")
 
+MARKET_OPEN_HOUR = 9
+MARKET_OPEN_MIN = 16
+MARKET_CLOSE_HOUR = 12
+MARKET_CLOSE_MIN = 0
+
+DASHBOARD_OPEN_HOUR = 8
+DASHBOARD_OPEN_MIN = 30
+
+# AFTER
 def get_subscription_start_date():
-
+    """
+    Returns the correct start datetime for a new subscription.
+ 
+    Rules:
+      • Purchased during active session (9:16 AM – 12:00 PM IST)
+          → Starts TODAY at 08:30 AM (user gets current day's session)
+      • Purchased after 12:00 PM, or before 9:16 AM, or on weekend/holiday
+          → Starts NEXT valid trading day at 08:30 AM
+      • Weekends and NSE holidays are always skipped.
+    """
     now = datetime.now(IST)
-
-    current_minutes = (now.hour * 60) + now.minute
-
-    # MARKET CLOSE = 12 PM
-    market_close = (15 * 60) + 30
-
-    # BEFORE OR DURING MARKET
-    if current_minutes <= market_close:
-
-        start_date = now
-
+    current_minutes = now.hour * 60 + now.minute
+ 
+    market_open_minutes  = MARKET_OPEN_HOUR  * 60 + MARKET_OPEN_MIN   # 556
+    market_close_minutes = MARKET_CLOSE_HOUR * 60 + MARKET_CLOSE_MIN  # 720
+ 
+    # Is it a valid trading day right now?
+    today_is_trading = (now.weekday() < 5) and (not is_market_holiday(now))
+ 
+    during_market = (
+        today_is_trading and
+        market_open_minutes <= current_minutes <= market_close_minutes
+    )
+ 
+    if during_market:
+        # Start today — user gets this session
+        start_date = now.replace(
+            hour=DASHBOARD_OPEN_HOUR,
+            minute=DASHBOARD_OPEN_MIN,
+            second=0,
+            microsecond=0
+        )
     else:
-
-        # AFTER MARKET CLOSE → NEXT TRADING DAY
+        # Push to next valid trading day
         start_date = now + timedelta(days=1)
-
-        # SKIP WEEKENDS
+        start_date = start_date.replace(
+            hour=DASHBOARD_OPEN_HOUR,
+            minute=DASHBOARD_OPEN_MIN,
+            second=0,
+            microsecond=0
+        )
+        # Skip weekends and holidays
         while start_date.weekday() >= 5 or is_market_holiday(start_date):
             start_date += timedelta(days=1)
-
-    # FORCE MARKET START TIME
-    start_date = start_date.replace(
-        hour=9,
-        minute=16,
-        second=0,
-        microsecond=0
-    )
-
+ 
     return start_date
+ 
 
 @app.get("/api/get-running")
 def get_running():
