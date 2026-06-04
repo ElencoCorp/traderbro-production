@@ -657,7 +657,7 @@ def get_current_user(request: Request):
             "is_admin": role == "admin"
         }
 
-# @app.get("/api/dashboard-access")
+@app.get("/api/dashboard-access")
 def api_dashboard_access(request):
     from fastapi.responses import JSONResponse
  
