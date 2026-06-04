@@ -3,121 +3,99 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>TraderBro - Account</title>
+    <title>TraderBro - Checkout</title>
     <link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png">
     <link href="/static/finlab/Frontend/xhtml/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="/static/finlab/Frontend/xhtml/css/style.css" rel="stylesheet">
-    <style>
-.subscription-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;align-items:start;margin-top:10px}
-@media(max-width:992px){.subscription-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:576px){.subscription-grid{grid-template-columns:1fr}}
-.subscription-item{text-align:center}
-.subscription-label{color:#94a3b8;font-size:12px;font-weight:600;margin-bottom:12px;letter-spacing:.4px;text-transform:uppercase}
-.subscription-value{font-size:18px;font-weight:700;color:#0f172a;line-height:1.5}
-.plan-tag{display:inline-flex;align-items:center;justify-content:center;padding:10px 20px;border-radius:999px;color:white;font-size:13px;font-weight:700;min-width:120px;min-height:42px;letter-spacing:.5px;box-shadow:0 8px 20px rgba(37,99,235,.25)}
-.plan-tag.free{background:linear-gradient(135deg,#64748b,#475569);box-shadow:none}
-.plan-tag.basic{background:linear-gradient(135deg,#0ea5e9,#0284c7);box-shadow:0 8px 20px rgba(14,165,233,.3)}
-.plan-tag.essential{background:linear-gradient(135deg,#8b5cf6,#6d28d9);box-shadow:0 8px 20px rgba(109,40,217,.3)}
-.plan-tag.pro{background:linear-gradient(135deg,#f59e0b,#d97706);box-shadow:0 8px 20px rgba(245,158,11,.3)}
-.plan-tag.premium{background:linear-gradient(135deg,#ec4899,#db2777);box-shadow:0 8px 20px rgba(236,72,153,.3)}
-.status-tag{display:inline-flex;align-items:center;justify-content:center;padding:10px 20px;border-radius:999px;font-size:13px;font-weight:700;min-width:120px;min-height:42px}
-.status-tag.active{background:linear-gradient(135deg,#22c55e,#16a34a);color:white;box-shadow:0 8px 20px rgba(34,197,94,.25)}
-.status-tag.expired{background:linear-gradient(135deg,#ef4444,#dc2626);color:white}
-.status-tag.inactive{background:#64748b;color:white}
-.live-indicator{padding:10px 18px;border-radius:999px;font-size:13px;font-weight:700;color:white}
-.live-indicator.active{background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 8px 20px rgba(34,197,94,.25)}
-.live-indicator.expired{background:linear-gradient(135deg,#ef4444,#dc2626)}
-.live-indicator.inactive{background:#64748b}
-.subscription-card{background:linear-gradient(145deg,#ffffff,#f8fbff);border:none;border-radius:28px;padding:36px;box-shadow:0 20px 50px rgba(15,23,42,.08);position:relative;overflow:hidden}
-.subscription-card::before{content:"";position:absolute;top:-120px;right:-120px;width:240px;height:240px;background:radial-gradient(rgba(37,99,235,.1),transparent 70%)}
-.subscription-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;flex-wrap:wrap;gap:14px}
-.subscription-title{font-size:28px;font-weight:800;color:#0f172a;margin-bottom:4px}
-.subscription-subtitle{color:#64748b;font-size:13px;margin:0}
-.upgrade-btn{width:100%;display:flex;justify-content:center;align-items:center;padding:16px;border-radius:18px;text-decoration:none;font-weight:700;font-size:16px;color:white;background:linear-gradient(135deg,#0ea5e9,#2563eb);transition:.3s ease;box-shadow:0 15px 35px rgba(37,99,235,.25)}
-.upgrade-btn:hover{transform:translateY(-2px);color:white}
-.profile-card{position:relative;overflow:hidden;border:none;border-radius:30px;background:linear-gradient(145deg,#0f172a,#111827);min-height:100%;box-shadow:0 25px 60px rgba(15,23,42,.18)}
-.profile-glow{position:absolute;top:-100px;right:-100px;width:260px;height:260px;border-radius:50%;background:radial-gradient(rgba(59,130,246,.35),transparent 70%)}
-.profile-avatar{width:110px;height:110px;margin:0 auto 24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:800;color:white;box-shadow:0 15px 35px rgba(0,114,255,.35);background:linear-gradient(135deg,#00c6ff,#0072ff)}
-.profile-name{color:white;font-size:30px;font-weight:800;margin-bottom:8px}
-.profile-email{color:#94a3b8;font-size:14px;margin-bottom:16px}
-.profile-phone{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);padding:10px 16px;border-radius:14px;color:#e2e8f0;font-size:14px;margin-bottom:20px}
-.member-badge{display:inline-flex;align-items:center;justify-content:center;padding:10px 18px;border-radius:999px;color:white;font-size:13px;font-weight:700;margin-bottom:28px;box-shadow:0 10px 25px rgba(249,115,22,.3);background:linear-gradient(135deg,#f59e0b,#f97316)}
-.profile-stats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
-.profile-stat{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:18px}
-.profile-stat h4{color:white;font-size:20px;font-weight:800;margin-bottom:6px}
-.profile-stat p{color:#94a3b8;font-size:12px;margin:0}
-#countdown{font-size:13px;color:#64748b;margin-top:10px;font-weight:500}
-#countdown span{color:#0ea5e9;font-weight:700}
-.sub-history-card{background:#fff;border:none;border-radius:24px;box-shadow:0 10px 40px rgba(15,23,42,.07);overflow:hidden}
-.sub-history-header{background:linear-gradient(135deg,#0f172a,#1e293b);padding:22px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
-.sub-history-header h4{color:white;font-size:18px;font-weight:800;margin:0}
-.sub-count-badge{background:rgba(255,255,255,.12);color:white;padding:4px 14px;border-radius:999px;font-size:12px;font-weight:600}
-.sub-table-wrap{overflow-x:auto}
-.sub-table{width:100%;border-collapse:collapse;font-size:13px;min-width:700px}
-.sub-table thead th{padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#64748b;background:#f8fafc;border-bottom:2px solid #e2e8f0;white-space:nowrap}
-.sub-table tbody td{padding:14px 16px;vertical-align:middle;border-bottom:1px solid #f1f5f9}
-.sub-table tbody tr:last-child td{border-bottom:none}
-.sub-table tbody tr:hover{background:#fafbff}
-.sub-row-active{background:#f0fdf4}
-.sub-row-queued{background:#eff6ff}
-.sub-row-expired{background:#f9fafb}
-.plan-pill{display:inline-block;padding:3px 12px;border-radius:999px;color:white;font-size:11px;font-weight:700;letter-spacing:.3px}
-.plan-pill.free{background:#64748b}
-.plan-pill.basic{background:#0ea5e9}
-.plan-pill.essential{background:#8b5cf6}
-.plan-pill.pro{background:#f59e0b}
-.plan-pill.premium{background:#ec4899}
-.status-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700}
-.status-pill.active{background:#dcfce7;color:#166534}
-.status-pill.queued{background:#dbeafe;color:#1d4ed8}
-.status-pill.expired{background:#f1f5f9;color:#64748b}
-.meta-chip{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#f1f5f9;color:#475569;margin:2px}
-.sub-empty{padding:50px 20px;text-align:center;color:#94a3b8}
-.sub-empty .sub-empty-icon{font-size:48px;margin-bottom:12px}
-.sub-empty p{font-size:14px;margin:0 0 16px}
-.next-badge{display:inline-block;background:#eff6ff;color:#2563eb;border:1px dashed #93c5fd;padding:2px 10px;border-radius:6px;font-size:11px;font-weight:600;margin-left:6px}
-.loading-ring{display:inline-block;width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#2563eb;border-radius:50%;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+    <!-- Razorpay SDK — loaded from Razorpay CDN, no secret reaches the browser -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-/* ── UPCOMING HOLIDAYS SECTION ── */
-.holiday-section{background:linear-gradient(145deg,#0f172a,#1e293b);border-radius:24px;overflow:hidden;margin-top:20px}
-.holiday-section-header{padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06)}
-.holiday-section-header h4{color:white;font-size:16px;font-weight:800;margin:0}
-.holiday-count{background:rgba(255,255,255,.1);color:#94a3b8;padding:3px 12px;border-radius:999px;font-size:11px;font-weight:600}
-.holiday-list{padding:6px 24px 16px}
-.holiday-item{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)}
-.holiday-item:last-child{border-bottom:none}
-.holiday-date-box{min-width:48px;text-align:center;background:rgba(255,255,255,.07);border-radius:10px;padding:6px 4px;flex-shrink:0}
-.holiday-date-day{font-size:18px;font-weight:800;color:#e8eaf0;line-height:1}
-.holiday-date-mon{font-size:9px;color:#94a3b8;font-weight:600;margin-top:1px}
-.holiday-name{font-size:13px;font-weight:700;color:#f8fafc}
-.holiday-dow{font-size:10px;color:#64748b;margin-top:2px}
-.holiday-days-away{font-size:11px;font-weight:700;text-align:right;min-width:80px}
-.today-holiday-banner{background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.3);border-radius:12px;padding:12px 16px;margin:12px 24px 4px;display:flex;align-items:center;gap:10px}
+    <style>
+/* ── QUEUE TIMELINE ─────────────────────────────────────────── */
+.queue-card{background:linear-gradient(145deg,#0f172a,#1e293b);border:none;border-radius:20px;overflow:hidden;box-shadow:0 12px 40px rgba(15,23,42,.18)}
+.queue-card-header{padding:18px 24px;background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+.queue-card-header h5{color:#fff;font-weight:800;margin:0;font-size:16px}
+.timeline{padding:20px 24px;list-style:none;margin:0;position:relative}
+.timeline::before{content:"";position:absolute;left:40px;top:0;bottom:0;width:2px;background:rgba(255,255,255,.1)}
+.tl-item{display:flex;gap:16px;margin-bottom:20px;position:relative}
+.tl-item:last-child{margin-bottom:0}
+.tl-dot{width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;position:relative;z-index:1}
+.tl-dot.active{background:#22c55e;box-shadow:0 0 12px rgba(34,197,94,.5)}
+.tl-dot.queued{background:#3b82f6;box-shadow:0 0 12px rgba(59,130,246,.4)}
+.tl-dot.expired{background:#475569}
+.tl-dot.new{background:linear-gradient(135deg,#f59e0b,#f97316);box-shadow:0 0 12px rgba(245,158,11,.5);animation:dotPulse 2s infinite}
+@keyframes dotPulse{0%,100%{box-shadow:0 0 12px rgba(245,158,11,.5)}50%{box-shadow:0 0 24px rgba(245,158,11,.8)}}
+.tl-body{flex:1}
+.tl-plan-name{font-weight:800;font-size:14px;color:#f8fafc;margin-bottom:4px}
+.tl-dates{font-size:11px;color:#94a3b8;margin-bottom:6px}
+.tl-chips{display:flex;flex-wrap:wrap;gap:6px}
+.tl-chip{padding:2px 10px;border-radius:999px;font-size:10px;font-weight:600;background:rgba(255,255,255,.08);color:#cbd5e1}
+.tl-chip.green{background:rgba(34,197,94,.15);color:#86efac}
+.tl-chip.blue{background:rgba(59,130,246,.15);color:#93c5fd}
+.tl-chip.orange{background:rgba(245,158,11,.15);color:#fcd34d}
+
+/* ── CONSENT BOX ────────────────────────────────────────────── */
+.consent-box{background:#fffbeb;border:2px solid #fde68a;border-radius:14px;padding:18px 20px;margin-bottom:16px}
+.consent-box.error{border-color:#fca5a5;background:#fef2f2;animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.consent-label{display:flex;align-items:flex-start;gap:12px;cursor:pointer;font-size:13px;color:#78350f;font-weight:600;line-height:1.5}
+.consent-label input[type="checkbox"]{width:18px;height:18px;flex-shrink:0;margin-top:1px;cursor:pointer;accent-color:#d97706}
+.consent-warning{font-size:11px;color:#ef4444;font-weight:600;margin-top:8px;display:none}
+.consent-warning.show{display:block}
+
+/* ── PAY BUTTON ─────────────────────────────────────────────── */
+#payBtn{background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:14px;padding:16px;font-size:16px;font-weight:800;color:white;width:100%;transition:.3s;box-shadow:0 10px 30px rgba(34,197,94,.3);cursor:pointer}
+#payBtn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 15px 35px rgba(34,197,94,.4)}
+#payBtn:disabled{background:#94a3b8;box-shadow:none;cursor:not-allowed;opacity:.7}
+
+/* ── PLAN PILLS ─────────────────────────────────────────────── */
+.plan-pill-sm{display:inline-block;padding:2px 10px;border-radius:999px;color:white;font-size:10px;font-weight:700}
+.plan-pill-sm.basic{background:#0ea5e9}
+.plan-pill-sm.essential{background:#8b5cf6}
+.plan-pill-sm.pro{background:#f59e0b}
+.plan-pill-sm.premium{background:#ec4899}
+.plan-pill-sm.free{background:#64748b}
+
+/* ── PROGRESS BAR ───────────────────────────────────────────── */
+.plan-progress-wrap{margin-top:12px}
+.plan-progress-label{display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;margin-bottom:4px}
+
+/* ── PAYMENT STATUS OVERLAY ─────────────────────────────────── */
+#paymentOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center}
+#paymentOverlay.show{display:flex}
+.pay-modal{background:#fff;border-radius:24px;padding:40px 36px;text-align:center;max-width:380px;width:90%;box-shadow:0 30px 80px rgba(0,0,0,.3)}
+.pay-icon{font-size:64px;margin-bottom:16px;line-height:1}
+.pay-title{font-size:22px;font-weight:800;margin-bottom:8px}
+.pay-msg{font-size:14px;color:#64748b;margin-bottom:24px;line-height:1.6}
+.pay-btn-ok{display:inline-block;padding:12px 32px;border-radius:12px;font-weight:700;font-size:15px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;cursor:pointer;text-decoration:none}
+.pay-btn-ok:hover{color:white;transform:translateY(-1px)}
+.pay-btn-err{background:linear-gradient(135deg,#ef4444,#dc2626)}
     </style>
 </head>
+
 <body>
 <div class="page-wraper">
+
     <header class="site-header mo-left header header-transparent">
         <div class="sticky-header main-bar-wraper navbar-expand-lg">
             <div class="main-bar clearfix">
                 <div class="container clearfix">
                     <div class="logo-header">
-                        <a href="/" class="logo-light"><img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="Traderbro.in"></a>
-                        <a href="/" class="logo-dark"><img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="Traderbro.in"></a>
+                        <a href="/" class="logo-light"><img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="TraderBro"></a>
+                        <a href="/" class="logo-dark"><img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="TraderBro"></a>
                     </div>
-                    <button class="navbar-toggler collapsed navicon justify-content-end" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+                    <button class="navbar-toggler collapsed navicon justify-content-end" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown">
                         <span></span><span></span><span></span>
                     </button>
-                    <div class="extra-nav"><div class="extra-cell d-flex align-items-center" id="navAuth"></div></div>
+                    <div class="extra-nav"><div class="extra-cell" id="navAuth"></div></div>
                     <div class="header-nav navbar-collapse collapse justify-content-end" id="navbarNavDropdown">
-                        <div class="mobile-logo d-lg-none"><a href="/"><img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="Traderbro.in"></a></div>
                         <ul class="nav navbar-nav navbar navbar-left">
                             <li><a href="/about-us">About Us</a></li>
-                            <li><a href="/trading-plan">Subscriptions</a></li>
+                            <li><a href="/trading-plan">Trading Plans</a></li>
                             <li><a href="/contact-us">Contact Us</a></li>
+                            <li><a href="/account">My Account</a></li>
                         </ul>
-                        <div class="mobile-auth-wrapper d-lg-none"><div class="mobile-auth-buttons" id="mobileNavAuth"></div></div>
                     </div>
                 </div>
             </div>
@@ -125,14 +103,15 @@
     </header>
 
     <div class="page-content">
-        <div class="dz-bnr-inr dz-bnr-inr-sm text-center position-relative" style="background-image:url('/static/finlab/Frontend/xhtml/images/background/bg2.jpg');">
+        <div class="dz-bnr-inr dz-bnr-inr-sm text-center position-relative"
+             style="background-image:url('/static/finlab/Frontend/xhtml/images/background/bg2.jpg');">
             <div class="container">
                 <div class="dz-bnr-inr-entry">
-                    <h1>My TraderBro Account</h1>
+                    <h1>Checkout</h1>
                     <nav aria-label="breadcrumb" class="breadcrumb-row m-t15">
                         <ul class="breadcrumb">
                             <li class="breadcrumb-item"><a href="/">Home</a></li>
-                            <li class="breadcrumb-item active" aria-current="page">My Account</li>
+                            <li class="breadcrumb-item active">Checkout</li>
                         </ul>
                     </nav>
                 </div>
@@ -142,701 +121,890 @@
 
         <div class="container mt-5 mb-5">
             <div class="row g-4">
-                <div class="col-xl-4 col-lg-4">
-                    <div class="card profile-card">
-                        <div class="profile-glow"></div>
-                        <div class="card-body text-center position-relative">
-                            <div class="profile-avatar" id="avatarCircle"><span id="avatar">?</span></div>
-                            <h2 class="profile-name" id="username">—</h2>
-                            <p class="profile-email" id="email">—</p>
-                            <div class="profile-phone">📱 <span id="phone">—</span></div>
-                            <div class="member-badge" id="memberBadge">⭐ Member</div>
-                            <div class="profile-stats">
-                                <div class="profile-stat"><h4 id="planMini">—</h4><p>Current Plan</p></div>
-                                <div class="profile-stat"><h4 id="statusMini">—</h4><p>Status</p></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-8 col-lg-8">
-                    <div class="card subscription-card">
-                        <div class="subscription-header">
-                            <div>
-                                <h3 class="subscription-title">🚀 TraderBro Membership</h3>
-                                <p class="subscription-subtitle">Premium Trading Access &amp; Session Validity</p>
-                            </div>
-                            <div class="live-indicator inactive" id="liveIndicator">● Loading…</div>
-                        </div>
-                        <div class="subscription-grid">
-                            <div class="subscription-item">
-                                <p class="subscription-label">Current Plan</p>
-                                <div id="planTag" class="plan-tag free">FREE</div>
-                            </div>
-                            <div class="subscription-item">
-                                <p class="subscription-label">Start Date &amp; Time</p>
-                                <div id="start" class="subscription-value">—</div>
-                            </div>
-                            <div class="subscription-item">
-                                <p class="subscription-label">Expiry Date &amp; Time</p>
-                                <div id="expiry" class="subscription-value">—</div>
-                            </div>
-                            <div class="subscription-item">
-                                <p class="subscription-label">Account Status</p>
-                                <div id="statusTag" class="status-tag inactive">—</div>
-                            </div>
-                        </div>
-                        <div id="countdown" class="text-center mt-3"></div>
-                        <div class="mt-4"><a href="/trading-plan" class="upgrade-btn" id="upgradeBtn">Upgrade Membership 🚀</a></div>
-                    </div>
-                </div>
-            </div>
 
-            <div class="mt-4 p-3" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;color:#9a3412;font-size:13px;line-height:1.7;">
-                ⏰ Trading sessions are active between <b>9:16 AM → 12:00 PM</b>. Subscription validity is calculated using <b>trading days only</b> (weekends &amp; NSE holidays excluded).
-            </div>
+                <!-- ── LEFT ─────────────────────────────────────────── -->
+                <div class="col-xl-8">
+                    <div class="row g-4">
 
-            <!-- SUBSCRIPTION HISTORY -->
-            <div class="mt-4">
-                <div class="sub-history-card">
-                    <div class="sub-history-header">
-                        <h4>📋 Subscription History &amp; Queue</h4>
-                        <span class="sub-count-badge" id="subCountBadge">Loading…</span>
+                        <!-- Current Plan Card -->
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h4 class="card-title mb-0">📊 Current Subscription Status</h4>
+                                    <span id="currentStatusBadge" class="badge bg-secondary">Loading…</span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <p class="text-muted mb-1" style="font-size:12px;">Current Plan</p>
+                                            <h5 id="currentPlan" style="margin:0;">—</h5>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p class="text-muted mb-1" style="font-size:12px;">Started</p>
+                                            <h6 id="currentStart" style="margin:0;font-size:13px;">—</h6>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p class="text-muted mb-1" style="font-size:12px;">Expires</p>
+                                            <h6 id="currentExpiry" style="margin:0;font-size:13px;">—</h6>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p class="text-muted mb-1" style="font-size:12px;">Days Remaining</p>
+                                            <h6 id="daysRemaining" style="margin:0;font-size:13px;">—</h6>
+                                        </div>
+                                    </div>
+                                    <div class="plan-progress-wrap">
+                                        <div class="plan-progress-label">
+                                            <span>Plan Progress</span>
+                                            <span id="progressPct">0%</span>
+                                        </div>
+                                        <div class="progress" style="height:8px;border-radius:8px;">
+                                            <div id="planProgress" class="progress-bar bg-success" style="width:0%;border-radius:8px;transition:width .8s;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Queue Timeline -->
+                        <div class="col-12" id="queueSection" style="display:none;">
+                            <div class="queue-card">
+                                <div class="queue-card-header">
+                                    <h5>🗂 Your Subscription Queue</h5>
+                                    <span id="queueCountBadge" style="font-size:11px;color:#94a3b8;"></span>
+                                </div>
+                                <ul class="timeline" id="queueTimeline"></ul>
+                                <div id="newPlanArrow" style="display:none;text-align:center;padding:10px;color:rgba(255,255,255,.3);font-size:20px;">↓ Your new plan will be added below ↓</div>
+                            </div>
+                        </div>
+
+                        <!-- Plan Being Purchased -->
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4 class="card-title mb-0">🚀 Plan You're Purchasing</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <p class="text-muted mb-1" style="font-size:12px;">Plan</p>
+                                            <h6 id="planName" style="margin:0;"></h6>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p class="text-muted mb-1" style="font-size:12px;">Duration</p>
+                                            <h6 id="planDays" style="margin:0;font-size:13px;">—</h6>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p class="text-muted mb-1" style="font-size:12px;">Will Start</p>
+                                            <h6 id="newStart" style="margin:0;font-size:13px;">—</h6>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p class="text-muted mb-1" style="font-size:12px;">Will Expire</p>
+                                            <h6 id="newExpiry" style="margin:0;font-size:13px;">—</h6>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 p-3" style="background:#f8fafc;border-radius:12px;font-size:12px;color:#64748b;line-height:1.8;" id="planBreakdown">
+                                        <span style="color:#94a3b8;">Loading plan details…</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <h5 style="margin:0;">Total Amount</h5>
+                                        <h4 class="text-success mb-0" id="totalPrice">—</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
-                    <div id="subscriptionTableWrap">
-                        <div class="sub-empty">
-                            <div class="sub-empty-icon">⏳</div>
-                            <p>Loading subscription data…</p>
-                            <div class="loading-ring"></div>
+                </div>
+
+                <!-- ── RIGHT SIDEBAR ─────────────────────────────────── -->
+                <div class="col-xl-4">
+                    <div class="card" style="border-radius:20px;overflow:hidden;">
+                        <div class="card-header" style="background:#0f172a;border:none;padding:20px 24px;">
+                            <h4 class="card-title mb-0" style="color:white;">👤 Order Summary</h4>
+                        </div>
+                        <div class="card-body" style="padding:24px;">
+
+                            <!-- User info -->
+                            <div style="background:#f8fafc;border-radius:12px;padding:14px;margin-bottom:16px;">
+                                <p style="margin:0 0 6px;font-size:13px;"><strong>Name:</strong> <span id="userName">—</span></p>
+                                <p style="margin:0;font-size:13px;"><strong>Email:</strong> <span id="userEmail">—</span></p>
+                            </div>
+
+                            <!-- Plan summary -->
+                            <div id="orderPlanSummary" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;">
+                                <span style="color:#94a3b8;">Loading…</span>
+                            </div>
+
+                            <hr style="margin:16px 0;">
+
+                            <!-- Disclaimer -->
+                            <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:12px;margin-bottom:16px;">
+                                <p style="font-size:12px;color:#92400e;margin:0;line-height:1.6;">
+                                    ⚠️ This platform is for <strong>educational purposes only</strong>. We are <strong>not SEBI registered</strong> as an RA or IA. No investment advice is provided.
+                                </p>
+                            </div>
+
+                            <!-- Consent checkbox -->
+                            <div class="consent-box" id="consentBox">
+                                <label class="consent-label">
+                                    <input type="checkbox" id="consentCheck" onchange="onConsentChange()">
+                                    <span>I understand and agree that TraderBro is an <strong>educational platform</strong>, not SEBI registered, and does not provide investment advice.</span>
+                                </label>
+                                <div class="consent-warning" id="consentWarning">
+                                    ⛔ You must tick this box to proceed with payment.
+                                </div>
+                            </div>
+
+                            <!-- Pay button -->
+                            <button id="payBtn" onclick="startPayment()" disabled>
+                                🔒 Tick the checkbox to pay
+                            </button>
+
+                            <!-- Payment logos -->
+                            <div style="text-align:center;margin-top:14px;">
+                                <p style="font-size:11px;color:#94a3b8;margin-bottom:8px;">🔐 Secured by Razorpay</p>
+                                <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
+                                    <span style="background:#f1f5f9;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;color:#475569;">UPI</span>
+                                    <span style="background:#f1f5f9;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;color:#475569;">Cards</span>
+                                    <span style="background:#f1f5f9;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;color:#475569;">Net Banking</span>
+                                    <span style="background:#f1f5f9;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;color:#475569;">Wallets</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Payment History (quick) -->
+                    <div id="payHistSection" style="display:none;margin-top:16px;">
+                        <div class="card">
+                            <div class="card-header"><h5 class="card-title mb-0" style="font-size:14px;">🧾 Recent Payments</h5></div>
+                            <div class="card-body p-0">
+                                <div id="payHistBody" style="font-size:12px;max-height:220px;overflow-y:auto;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- PAYMENT HISTORY -->
-            <div class="mt-4">
-                <div class="sub-history-card">
-                    <div class="sub-history-header">
-                        <h4>💳 Payment History</h4>
-                        <span class="sub-count-badge" id="payCountBadge">Loading…</span>
-                    </div>
-                    <div id="paymentHistoryWrap">
-                        <div class="sub-empty">
-                            <div class="sub-empty-icon">⏳</div>
-                            <p>Loading payment records…</p>
-                            <div class="loading-ring"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- UPCOMING NSE HOLIDAYS — single instance, rendered by renderUpcomingHolidays() -->
-            <div id="upcoming-holidays-section" style="display:none;" class="mt-4">
-                <div class="holiday-section">
-                    <div class="holiday-section-header">
-                        <h4>📅 Upcoming NSE Market Holidays</h4>
-                        <span class="holiday-count" id="holiday-count-badge">—</span>
-                    </div>
-                    <!-- today's holiday alert injected here if needed -->
-                    <div id="today-holiday-alert"></div>
-                    <!-- list -->
-                    <div class="holiday-list" id="holiday-list-wrap"></div>
-                </div>
-            </div>
-
-            <div class="row mt-4 g-4">
-                <div class="col-xl-6">
-                    <div class="card">
-                        <div class="card-header"><h4 class="card-title">Account Settings</h4></div>
-                        <div class="card-body">
-                            <input class="form-control mb-3" id="editName" placeholder="Update Name">
-                            <input class="form-control mb-3" id="editPhone" placeholder="Update Phone">
-                            <div id="saveMsg" style="display:none;margin-bottom:10px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;"></div>
-                            <button class="btn btn-primary w-100" onclick="updateProfile()">Save Changes</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-6">
-                    <div class="card">
-                        <div class="card-header"><h4 class="card-title">Security</h4></div>
-                        <div class="card-body text-center">
-                            <button class="btn btn-danger w-100" onclick="logout()">Logout</button>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
-
-        <footer class="site-footer">
-            <div class="footer-top">
-                <div class="container">
-                    <div class="row">
-                        <div class="col-lg-4 col-md-12 col-sm-12">
-                            <div class="widget widget_about wow fadeInUp" data-wow-delay="0.4s">
-                                <h6 class="footer-title mb-3">Welcome to Traderbro.in</h6>
-                                <a href="/" class="logo-light"><img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="Traderbro.in"></a>
-                            </div>
-                        </div>
-                        <div class="col-lg-2 col-md-3 col-6">
-                            <div class="widget widget_links wow fadeInUp" data-wow-delay="0.6s">
-                                <h6 class="footer-title">Quick Links</h6>
-                                <ul>
-                                    <li><a href="/about-us">About Us</a></li>
-                                    <li><a href="/privacy-policy">Privacy Policy</a></li>
-                                    <li><a href="/terms-and-conditions">Terms of Service</a></li>
-                                    <li><a href="/disclaimer">Disclaimer</a></li>
-                                    <li><a href="/refund-policy">Refund-Policy</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-lg-2 col-md-3 col-6">
-                            <div class="widget widget_links wow fadeInUp" data-wow-delay="0.8s">
-                                <h6 class="footer-title">Subscriptions</h6>
-                                <ul>
-                                    <li><a href="trading-plan">Basic</a></li>
-                                    <li><a href="trading-plan">Essential</a></li>
-                                    <li><a href="trading-plan">Advance</a></li>
-                                    <li><a href="trading-plan">Pro</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="col-lg-2 col-md-3 col-6">
-                            <div class="widget widget_links wow fadeInUp" data-wow-delay="1.2s">
-                                <h6 class="footer-title">Support</h6>
-                                <ul><li><a href="/contact-us">Contact Us</a></li></ul>
-                            </div>
-                        </div>
-                        <div class="col-lg-2 col-md-3 col-6">
-                            <div class="widget widget-social wow fadeInUp" data-wow-delay="1.4s">
-                                <h6 class="footer-title">Follow Us</h6>
-                                <ul>
-                                    <li><a target="_blank" href="https://twitter.com/"><img src="/static/finlab/Frontend/xhtml/images/social/twitter.png" alt="">Twitter / X</a></li>
-                                    <li><a target="_blank" href="https://www.instagram.com/"><img src="/static/finlab/Frontend/xhtml/images/social/instagram.png" alt="">Instagram</a></li>
-                                    <li><a target="_blank" href="https://www.youtube.com/"><img src="/static/finlab/Frontend/xhtml/images/social/youtube.png" alt="">YouTube</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="ticker-wrapper">
-                        <div class="ticker-track">
-                            <div class="ticker-content">
-                                <span class="ticker-item bg-warning text-dark">Educational Platform (Not SEBI Registered)</span>
-                                <span class="ticker-item text-danger">Traderbro.in is an educational platform. We are not SEBI registered as a Research Analyst (RA) or Investment Adviser (IA). No investment or trading advice is provided.</span>
-                            </div>
-                            <div class="ticker-content">
-                                <span class="ticker-item bg-warning text-dark">Educational Platform (Not SEBI Registered)</span>
-                                <span class="ticker-item text-danger">Traderbro.in is an educational platform. We are not SEBI registered as a Research Analyst (RA) or Investment Adviser (IA). No investment or trading advice is provided.</span>
-                            </div>
-                        </div>
-                    </div>
-                    <style>.ticker-wrapper{width:100%;overflow:hidden;background:#000;padding:8px 0}.ticker-track{display:flex;width:max-content;animation:tickerScroll 20s linear infinite}.ticker-content{display:flex;white-space:nowrap}.ticker-item{margin-right:50px;font-size:13px;padding:5px 10px;border-radius:5px}.ticker-track:hover{animation-play-state:paused}@keyframes tickerScroll{0%{transform:translateX(0%)}100%{transform:translateX(-50%)}}</style>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <div class="container">
-                    <div class="footer-inner text-center">
-                        <p class="copyright-text wow fadeInUp" data-wow-delay="1.6s">Copyright &copy; 2026 Traderbro.in — Stock Market Education Platform. All Rights Reserved.</p>
-                    </div>
-                </div>
-            </div>
-        </footer>
     </div>
-</div>
+
+    <!-- ── PAYMENT STATUS OVERLAY ────────────────────────────────────────── -->
+    <div id="paymentOverlay">
+        <div class="pay-modal">
+            <div class="pay-icon" id="overlayIcon">⏳</div>
+            <div class="pay-title" id="overlayTitle">Processing…</div>
+            <div class="pay-msg"   id="overlayMsg">Please wait while we verify your payment.</div>
+            <button class="pay-btn-ok" id="overlayBtn" style="display:none;" onclick="overlayDone()">Continue →</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-top">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-4 col-md-12">
+                        <div class="widget widget_about"><h6 class="footer-title mb-3">Welcome to Traderbro.in</h6>
+                            <a href="/"><img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="Traderbro.in"></a></div>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6"><div class="widget widget_links"><h6 class="footer-title">Quick Links</h6>
+                        <ul><li><a href="/about-us">About Us</a></li><li><a href="/privacy-policy">Privacy Policy</a></li>
+                        <li><a href="/terms-and-conditions">Terms of Service</a></li><li><a href="/disclaimer">Disclaimer</a></li>
+                        <li><a href="/refund-policy">Refund Policy</a></li></ul></div></div>
+                    <div class="col-lg-2 col-md-3 col-6"><div class="widget widget_links"><h6 class="footer-title">Subscriptions</h6>
+                        <ul><li><a href="/trading-plan">Basic</a></li><li><a href="/trading-plan">Essential</a></li>
+                        <li><a href="/trading-plan">Pro</a></li><li><a href="/trading-plan">Premium</a></li></ul></div></div>
+                    <div class="col-lg-2 col-md-3 col-6"><div class="widget widget_links"><h6 class="footer-title">Support</h6>
+                        <ul><li><a href="/contact-us">Contact Us</a></li></ul></div></div>
+                </div>
+                <div class="ticker-wrapper"><div class="ticker-track">
+                    <div class="ticker-content">
+                        <span class="ticker-item bg-warning text-dark">Educational Platform (Not SEBI Registered)</span>
+                        <span class="ticker-item text-danger">Traderbro.in is an educational platform. We are not SEBI registered. No investment advice is provided.</span>
+                    </div>
+                    <div class="ticker-content">
+                        <span class="ticker-item bg-warning text-dark">Educational Platform (Not SEBI Registered)</span>
+                        <span class="ticker-item text-danger">Traderbro.in is an educational platform. We are not SEBI registered. No investment advice is provided.</span>
+                    </div>
+                </div></div>
+                <style>.ticker-wrapper{width:100%;overflow:hidden;background:#000;padding:8px 0}.ticker-track{display:flex;width:max-content;animation:tickerScroll 20s linear infinite}.ticker-content{display:flex;white-space:nowrap}.ticker-item{margin-right:50px;font-size:13px;padding:5px 10px;border-radius:5px}.ticker-track:hover{animation-play-state:paused}@keyframes tickerScroll{0%{transform:translateX(0%)}100%{transform:translateX(-50%)}}</style>
+            </div>
+        </div>
+        <div class="footer-bottom"><div class="container"><div class="footer-inner text-center">
+            <p class="copyright-text">Copyright &copy; 2026 Traderbro.in — Stock Market Education Platform. All Rights Reserved.</p>
+        </div></div></div>
+    </footer>
+
+</div><!-- /page-wraper -->
 
 <script src="/static/finlab/Frontend/xhtml/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script>
-/* ══════════════════════════════════════════════════════════
-   GLOBALS
-══════════════════════════════════════════════════════════ */
-const PLAN_COLORS = {
-    free:      { badge:"⭐ Member",           avatarGrad:"linear-gradient(135deg,#64748b,#475569)" },
-    basic:     { badge:"⭐ Basic Trader",      avatarGrad:"linear-gradient(135deg,#0ea5e9,#0284c7)" },
-    essential: { badge:"🚀 Essential Trader", avatarGrad:"linear-gradient(135deg,#8b5cf6,#6d28d9)" },
-    pro:       { badge:"💎 Pro Trader",        avatarGrad:"linear-gradient(135deg,#f59e0b,#d97706)" },
-    premium:   { badge:"👑 Premium Trader",    avatarGrad:"linear-gradient(135deg,#ec4899,#db2777)" },
-};
-const PLAN_BG = { free:"#64748b", basic:"#0ea5e9", essential:"#8b5cf6", pro:"#f59e0b", premium:"#ec4899" };
-const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-/* ── Holiday cache ── */
-let _HOLIDAYS = {};     // { "YYYY-MM-DD": "Holiday Name" }
-let _holidaysLoaded = false;
+<!-- ════════════════════════════════════════════════════════════════════════
+     CHECKOUT LOGIC
+════════════════════════════════════════════════════════════════════════ -->
+<script>
+    const PLAN_DATA = {
+    basic:     { name:"BASIC",     tradingDays:1,   price:99    },
+    essential: { name:"ESSENTIAL", tradingDays:5,   price:399   },
+    pro:       { name:"PRO",       tradingDays:22,  price:1499  },
+    premium:   { name:"PREMIUM",   tradingDays:250, price:14499 },
+};
+const PLAN_COLORS = {
+    basic:"#0ea5e9", essential:"#8b5cf6",
+    pro:"#f59e0b",   premium:"#ec4899",   free:"#64748b"
+};
  
-async function loadHolidaysOnce() {
-    if (_holidaysLoaded) return;
+/* ── Globals ── */
+let _user     = null;
+let _allSubs  = [];
+let _holidays = {};   // { "YYYY-MM-DD": "Holiday Name" }
+let _planKey  = "";
+let _computed = null;
+ 
+/* ══════════════════════════════════════════════════════════
+   DATE UTILS
+══════════════════════════════════════════════════════════ */
+function fmt(iso) {
+    if (!iso) return "—";
     try {
-        const res  = await fetch("/api/market-holidays", { credentials: "include" });
-        const data = await res.json();
-        _HOLIDAYS  = {};
-        (data.holidays || []).forEach(h => { _HOLIDAYS[h.date] = h.reason; });
-        _holidaysLoaded = true;
-    } catch(e) {
-        console.error("loadHolidaysOnce:", e);
+        return new Date(iso).toLocaleString("en-IN", {
+            timeZone:"Asia/Kolkata",
+            day:"2-digit", month:"2-digit", year:"numeric",
+            hour:"2-digit", minute:"2-digit", hour12:true
+        });
+    } catch { return "—"; }
+}
+ 
+/** Convert any Date to IST wall-clock (avoids timezone bugs in India) */
+function toIST(d) {
+    return new Date(d.toLocaleString("en-US", { timeZone:"Asia/Kolkata" }));
+}
+ 
+function dateKey(d) {
+    // Returns "YYYY-MM-DD" in IST
+    const ist = toIST(d);
+    const y = ist.getFullYear();
+    const m = String(ist.getMonth()+1).padStart(2,"0");
+    const dy = String(ist.getDate()).padStart(2,"0");
+    return `${y}-${m}-${dy}`;
+}
+ 
+function isWeekend(d)    { return toIST(d).getDay() === 0 || toIST(d).getDay() === 6; }
+function isHoliday(d)    { return dateKey(d) in _holidays; }
+function isTradingDay(d) { return !isWeekend(d) && !isHoliday(d); }
+function getHolidayName(d){ return _holidays[dateKey(d)] || null; }
+ 
+/**
+ * Mirror of backend get_subscription_start_date():
+ * • During market hours (9:16–12:00 IST on a trading day) → TODAY 08:30
+ * • Any other time → NEXT trading day 08:30
+ */
+function computeStartDate(latestExpiryIso) {
+    // If there's an existing future expiry, queue AFTER it
+    if (latestExpiryIso) {
+        const exp = new Date(latestExpiryIso);
+        if (exp > new Date()) {
+            // Next trading day after expiry at 08:30
+            let n = new Date(exp);
+            n.setDate(n.getDate() + 1);
+            // Set to 08:30 IST — use explicit IST midnight + hours
+            const istN = toIST(n);
+            istN.setHours(8, 30, 0, 0);
+            // Convert back to UTC-based Date using offset trick
+            const nFixed = new Date(n);
+            nFixed.setHours(n.getHours() - (n.getTimezoneOffset() / 60) - 5, 30 - 30, 0, 0);
+            // Simpler: just store as IST ISO string and compare
+            while (!isTradingDay(n)) {
+                n.setDate(n.getDate() + 1);
+            }
+            // Return with time set to 08:30 IST expressed in local
+            return setTime830IST(n);
+        }
+    }
+ 
+    // Fresh purchase
+    const now = new Date();
+    const ist = toIST(now);
+    const currentMins = ist.getHours() * 60 + ist.getMinutes();
+    const marketOpenMins  = 9 * 60 + 16;   // 9:16 AM
+    const marketCloseMins = 12 * 60 + 0;   // 12:00 PM
+ 
+    const todayIsTradingDay = isTradingDay(now);
+    const duringMarket = todayIsTradingDay &&
+                         currentMins >= marketOpenMins &&
+                         currentMins <= marketCloseMins;
+ 
+    if (duringMarket) {
+        // Start today at 08:30 IST
+        return setTime830IST(now);
+    } else {
+        // Next trading day at 08:30 IST
+        let n = new Date(now);
+        n.setDate(n.getDate() + 1);
+        while (!isTradingDay(n)) {
+            n.setDate(n.getDate() + 1);
+        }
+        return setTime830IST(n);
     }
 }
  
 /**
- * Returns all NSE holidays (from _HOLIDAYS cache) that fall on
- * weekdays between startIso and endIso (inclusive).
+ * Returns a new Date object representing 08:30 IST on the same
+ * calendar day as `d` (in IST). Works correctly regardless of
+ * the browser's local timezone.
  */
-function getHolidaysBetween(startIso, endIso) {
-    if (!startIso || !endIso) return [];
- 
-    const start = new Date(startIso);
-    const end   = new Date(endIso);
- 
-    return Object.entries(_HOLIDAYS)
-        .filter(([dateStr]) => {
-            try {
-                const dt = new Date(dateStr + "T00:00:00");
-                const dow = dt.getDay();
-                // Must be a weekday and within the subscription window
-                return dt >= start && dt <= end && dow !== 0 && dow !== 6;
-            } catch(e) {
-                return false;
-            }
-        })
-        .map(([dateStr, reason]) => ({ date: dateStr, reason }))
-        .sort((a, b) => a.date.localeCompare(b.date));
+function setTime830IST(d) {
+    const ist = toIST(d);
+    // Build ISO string "YYYY-MM-DDT08:30:00+05:30"
+    const y  = ist.getFullYear();
+    const mo = String(ist.getMonth()+1).padStart(2,"0");
+    const dy = String(ist.getDate()).padStart(2,"0");
+    return new Date(`${y}-${mo}-${dy}T08:30:00+05:30`);
 }
-/* ══════════════════════════════════════════════════════════
-   DATE FORMATTER
-══════════════════════════════════════════════════════════ */
-function fmtDate(iso) {
-    if (!iso) return "—";
-    try {
-        return new Date(iso).toLocaleString("en-IN", {
-            timeZone:"Asia/Kolkata", day:"2-digit", month:"2-digit", year:"numeric",
-            hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:true
-        });
-    } catch { return "—"; }
-}
-
-/* ══════════════════════════════════════════════════════════
-   COUNTDOWN
-══════════════════════════════════════════════════════════ */
-let _cdInt = null;
-function startCountdown(expiryIso) {
-    const el = document.getElementById("countdown");
-    if (!el || !expiryIso) return;
-    const ms = new Date(expiryIso).getTime();
-    function tick() {
-        const diff = ms - Date.now();
-        if (diff <= 0) { el.innerHTML = "⏰ Plan has expired"; clearInterval(_cdInt); return; }
-        const d=Math.floor(diff/86400000), h=Math.floor((diff%86400000)/3600000),
-              m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000);
-        el.innerHTML = `⏳ Expires in <span>${d}d ${h}h ${m}m ${s}s</span>`;
+ 
+/** Add n trading days to startDate, returns { expiry, stats } */
+function addTradingDays(startDate, nDays) {
+    let d        = new Date(startDate);
+    let added    = 0;
+    let weekends = 0;
+    let holidays = 0;
+    let holList  = [];
+    const toAdd  = nDays - 1;   // startDate counts as day 1
+ 
+    while (added < toAdd) {
+        d = new Date(d);
+        d.setDate(d.getDate() + 1);
+        if (isWeekend(d))  { weekends++; continue; }
+        if (isHoliday(d))  {
+            const nm = getHolidayName(d);
+            holidays++;
+            if (nm) holList.push({ date: dateKey(d), reason: nm });
+            continue;
+        }
+        added++;
     }
-    tick(); clearInterval(_cdInt); _cdInt = setInterval(tick, 1000);
+ 
+    // Expiry = 12:00 PM IST of last trading day
+    const ist = toIST(d);
+    const y   = ist.getFullYear();
+    const mo  = String(ist.getMonth()+1).padStart(2,"0");
+    const dy  = String(ist.getDate()).padStart(2,"0");
+    const expiry = new Date(`${y}-${mo}-${dy}T12:00:00+05:30`);
+ 
+    const totalCalendar = Math.ceil(
+        (expiry.getTime() - startDate.getTime()) / 86400000
+    ) + 1;
+ 
+    return {
+        expiry,
+        totalCalendar,
+        weekendsSkipped: weekends,
+        holidaysSkipped: holidays,
+        holidayList: holList,
+    };
 }
-
+ 
+/** Find the latest future expiry across users table + subscriptions */
+function getLatestFutureExpiry() {
+    const now = new Date();
+    let latest = null;
+ 
+    if (_user?.planExpiry) {
+        const e = new Date(_user.planExpiry);
+        if (e > now) latest = e;
+    }
+    _allSubs.forEach(s => {
+        if (s.status === "expired") return;
+        const e = new Date(s.plan_expiry);
+        if (e > now && (!latest || e > latest)) latest = e;
+    });
+    return latest ? latest.toISOString() : null;
+}
+ 
+/** Compute the full preview for the plan being purchased */
+function computePreview(planKey) {
+    const cfg = PLAN_DATA[planKey];
+    if (!cfg) return null;
+ 
+    const latestExpiry = getLatestFutureExpiry();
+    const startDate    = computeStartDate(latestExpiry);
+    const result       = addTradingDays(startDate, cfg.tradingDays);
+ 
+    return {
+        plan:         planKey,
+        tradingDays:  cfg.tradingDays,
+        price:        cfg.price,
+        planStart:    startDate.toISOString(),
+        planExpiry:   result.expiry.toISOString(),
+        calendarDays: result.totalCalendar,
+        weekends:     result.weekendsSkipped,
+        holidays:     result.holidaysSkipped,
+        holidayList:  result.holidayList,
+        isQueued:     startDate > new Date(),
+    };
+}
+ 
 /* ══════════════════════════════════════════════════════════
-   LOAD USER
+   CONSENT
 ══════════════════════════════════════════════════════════ */
-async function loadUser() {
-    const res  = await fetch("/api/me", { credentials:"include" });
-    const data = await res.json();
-    if (!data.username) { window.location.href = "/user-login"; return; }
-
-    const plan     = (data.plan || "free").toLowerCase();
-    const cfg      = PLAN_COLORS[plan] || PLAN_COLORS.free;
-    const isActive = data.plan_expiry ? new Date() < new Date(data.plan_expiry) : false;
-    const st       = !data.plan_expiry ? "inactive" : isActive ? "active" : "expired";
-
-    document.getElementById("username").innerText = data.username || "User";
-    document.getElementById("email").innerText    = data.email    || "—";
-    document.getElementById("phone").innerText    = data.phone    || "—";
-    document.getElementById("avatar").innerText   = (data.username||"?").charAt(0).toUpperCase();
-    document.getElementById("editName").value     = data.username || "";
-    document.getElementById("editPhone").value    = data.phone    || "";
-    document.getElementById("avatarCircle").style.background = cfg.avatarGrad;
-    document.getElementById("memberBadge").innerText = cfg.badge;
-    document.getElementById("planMini").innerText   = plan.toUpperCase();
-    document.getElementById("statusMini").innerText = st === "active" ? "ACTIVE" : st === "expired" ? "EXPIRED" : "NO PLAN";
-
-    const ptEl = document.getElementById("planTag");
-    ptEl.innerText = plan.toUpperCase(); ptEl.className = "plan-tag " + plan;
-
-    document.getElementById("start").innerHTML  = data.plan_start  ? fmtDate(data.plan_start).replace(",",",<br>")  : "—";
-    document.getElementById("expiry").innerHTML = data.plan_expiry ? fmtDate(data.plan_expiry).replace(",",",<br>") : "—";
-
-    const stEl = document.getElementById("statusTag"), lvEl = document.getElementById("liveIndicator");
-    if (st === "active") {
-        stEl.innerText = "Active ✅"; stEl.className = "status-tag active";
-        lvEl.innerText = "● Active";  lvEl.className = "live-indicator active";
-        startCountdown(data.plan_expiry);
-    } else if (st === "expired") {
-        stEl.innerText = "Expired ❌"; stEl.className = "status-tag expired";
-        lvEl.innerText = "● Expired";  lvEl.className = "live-indicator expired";
-        document.getElementById("countdown").innerHTML = "⚠️ Your plan has expired. Please renew.";
+function onConsentChange() {
+    const cb   = document.getElementById("consentCheck");
+    const btn  = document.getElementById("payBtn");
+    const box  = document.getElementById("consentBox");
+    const warn = document.getElementById("consentWarning");
+    if (cb.checked) {
+        btn.disabled = false;
+        btn.textContent = "💳 Pay with Razorpay";
+        box.classList.remove("error");
+        warn.classList.remove("show");
     } else {
-        stEl.innerText = "No Active Plan"; stEl.className = "status-tag inactive";
-        lvEl.innerText = "● Inactive";     lvEl.className = "live-indicator inactive";
-    }
-
-    const ub = document.getElementById("upgradeBtn");
-    ub.textContent = st === "expired" ? "Renew Membership 🔄" : st === "active" ? "Upgrade Membership 🚀" : "Get a Plan 🚀";
-}
-
-/* ══════════════════════════════════════════════════════════
-   BUILD HOLIDAY CHIP for subscription table
-══════════════════════════════════════════════════════════ */
-function buildHolidayCell(s) {
-    const count = s.holidays_skipped || 0;
-    if (!count) return `<span class="meta-chip">📅 0 holidays</span>`;
-
-    const hols    = getHolidaysBetween(s.plan_start, s.plan_expiry);
-    const tooltip = hols.map(h => `${h.date}: ${h.reason}`).join('\n');
-    const preview = hols.slice(0,2).map(h => h.reason).join(', ');
-    const more    = hols.length > 2 ? ` +${hols.length-2} more` : '';
-
-    return `<span class="meta-chip" title="${tooltip}" style="cursor:help;max-width:180px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-        📅 ${count} holiday${count>1?'s':''}${preview ? ': '+preview+more : ''}
-    </span>`;
-}
-
-/* ══════════════════════════════════════════════════════════
-   LOAD SUBSCRIPTIONS
-══════════════════════════════════════════════════════════ */
-async function loadSubscriptions() {
-    const wrap  = document.getElementById("subscriptionTableWrap");
-    const badge = document.getElementById("subCountBadge");
-
-    await loadHolidaysOnce();   // ensure holidays loaded before building cells
-
-    try {
-        const res  = await fetch("/api/my-subscriptions", { credentials:"include" });
-        const data = await res.json();
-        if (data.error) { wrap.innerHTML = `<div class="sub-empty"><div class="sub-empty-icon">⚠️</div><p>${data.error}</p></div>`; return; }
-
-        const subs = data.subscriptions || [];
-        badge.textContent = subs.length + (subs.length === 1 ? " plan" : " plans");
-
-        if (!subs.length) {
-            wrap.innerHTML = `<div class="sub-empty"><div class="sub-empty-icon">📭</div><p>No subscription history yet.</p><a href="/trading-plan" class="btn btn-primary btn-sm">Browse Plans →</a></div>`;
-            return;
-        }
-
-        const now = Date.now();
-        let html = `<div class="sub-table-wrap"><table class="sub-table">
-            <thead><tr>
-                <th>#</th><th>Plan</th><th>Status</th>
-                <th>Start Date &amp; Time</th><th>Expiry Date &amp; Time</th>
-                <th>Trading Days</th><th>Calendar Days</th><th>Weekends</th><th>Holidays</th><th>Price</th>
-            </tr></thead><tbody>`;
-
-        subs.forEach((s, idx) => {
-            const isNext = s.status === "queued" && idx > 0 && subs.slice(0,idx).some(x => x.status === "active");
-            const statusHTML = {
-                active:  `<span class="status-pill active">✅ Active</span>`,
-                queued:  `<span class="status-pill queued">⏳ Queued</span>`,
-                expired: `<span class="status-pill expired">❌ Expired</span>`
-            }[s.status] || `<span class="status-pill expired">${s.status}</span>`;
-
-            let extra = "";
-            if (s.status === "active" && s.plan_expiry) {
-                const diff = new Date(s.plan_expiry).getTime() - now;
-                if (diff > 0) {
-                    const d=Math.floor(diff/86400000), h=Math.floor((diff%86400000)/3600000);
-                    extra = `<div style="font-size:10px;color:#16a34a;margin-top:3px;">⏳ ${d}d ${h}h left</div>`;
-                }
-            }
-            if (s.status === "queued" && s.plan_start)
-                extra = `<div style="font-size:10px;color:#2563eb;margin-top:3px;">Starts: ${fmtDate(s.plan_start)}</div>`;
-
-            html += `<tr class="sub-row-${s.status}">
-                <td style="color:#94a3b8;font-weight:600;">${idx+1}</td>
-                <td><span class="plan-pill ${s.plan}">${s.plan.toUpperCase()}</span>${isNext?'<span class="next-badge">Next Up</span>':''}</td>
-                <td>${statusHTML}${extra}</td>
-                <td style="white-space:nowrap;">${fmtDate(s.plan_start)}</td>
-                <td style="white-space:nowrap;">${fmtDate(s.plan_expiry)}</td>
-                <td><b style="font-size:15px;">${s.trading_days||"—"}</b><div style="font-size:10px;color:#94a3b8;">trading days</div></td>
-                <td><b style="font-size:15px;">${s.total_calendar_days||"—"}</b><div style="font-size:10px;color:#94a3b8;">calendar days</div></td>
-                <td><span class="meta-chip">🗓 ${s.weekends_skipped||0}</span></td>
-                <td>${buildHolidayCell(s)}</td>
-                <td style="font-weight:700;color:#16a34a;">${s.price?"₹"+s.price:"—"}</td>
-            </tr>`;
-        });
-        html += `</tbody></table></div>`;
-
-        const active=subs.filter(s=>s.status==="active").length,
-              queued=subs.filter(s=>s.status==="queued").length,
-              expired=subs.filter(s=>s.status==="expired").length,
-              paid=subs.reduce((a,s)=>a+(s.price||0),0);
-        html += `<div style="padding:14px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;flex-wrap:wrap;gap:16px;align-items:center;font-size:12px;">
-            <div><span style="color:#64748b;">Total:</span> <b>${subs.length}</b></div>
-            <div><span style="color:#16a34a;">Active:</span> <b>${active}</b></div>
-            <div><span style="color:#2563eb;">Queued:</span> <b>${queued}</b></div>
-            <div><span style="color:#64748b;">Expired:</span> <b>${expired}</b></div>
-            <div style="margin-left:auto;font-size:13px;font-weight:700;color:#0f172a;">Total Paid: ₹${paid}</div>
-        </div>`;
-
-        wrap.innerHTML = html;
-    } catch(err) {
-        wrap.innerHTML = `<div class="sub-empty"><div class="sub-empty-icon">⚠️</div><p>Failed to load subscription data.</p></div>`;
+        btn.disabled = true;
+        btn.textContent = "🔒 Tick the checkbox to pay";
     }
 }
-
-/* ══════════════════════════════════════════════════════════
-   UPCOMING HOLIDAYS  — called ONCE only
-══════════════════════════════════════════════════════════ */
-async function renderUpcomingHolidays() {
-    try {
-        const res  = await fetch('/api/market-holidays', { credentials:'include' });
-        const data = await res.json();
-
-        const section = document.getElementById('upcoming-holidays-section');
-        const wrap    = document.getElementById('holiday-list-wrap');
-        const badge   = document.getElementById('holiday-count-badge');
-        const todayEl = document.getElementById('today-holiday-alert');
-
-        // Today holiday alert
-        if (data.today_is_holiday && data.today_reason) {
-            todayEl.innerHTML = `<div class="today-holiday-banner">
-                <span style="font-size:22px;">🏖️</span>
-                <div>
-                    <div style="font-weight:800;color:#f5a623;font-size:13px;">MARKET HOLIDAY TODAY</div>
-                    <div style="color:#cca060;font-size:12px;">${data.today_reason} — NSE is closed</div>
-                </div>
-            </div>`;
-        }
-
-        // Upcoming list (exclude today)
-        const upcoming = (data.upcoming || []).filter(h => !h.is_today);
-        if (!upcoming.length && !data.today_is_holiday) { section.style.display='none'; return; }
-
-        section.style.display = 'block';
-        badge.textContent = data.today_is_holiday
-            ? `Today: ${data.today_reason}`
-            : `Next ${Math.min(upcoming.length, 10)} holidays`;
-
-        wrap.innerHTML = upcoming.slice(0, 10).map(h => {
-            const dt  = new Date(h.date + 'T00:00:00');
-            const lbl = h.days_away === 1 ? '🟡 Tomorrow' : `${h.days_away} days`;
-            const col = h.days_away <= 3 ? '#f5a623' : '#64748b';
-            return `<div class="holiday-item">
-                <div class="holiday-date-box">
-                    <div class="holiday-date-day">${dt.getDate()}</div>
-                    <div class="holiday-date-mon">${MON[dt.getMonth()]} ${dt.getFullYear()}</div>
-                </div>
-                <div style="flex:1;">
-                    <div class="holiday-name">${h.reason}</div>
-                    <div class="holiday-dow">${DOW[dt.getDay()]}, ${MON[dt.getMonth()]} ${dt.getDate()}</div>
-                </div>
-                <div class="holiday-days-away" style="color:${col};">${lbl}</div>
-            </div>`;
-        }).join('');
-    } catch(e) { console.error('renderUpcomingHolidays:', e); }
-}
-
-async function loadPaymentHistory() {
-    const wrap  = document.getElementById("paymentHistoryWrap");
-    const badge = document.getElementById("payCountBadge");
-    if (!wrap) return;
  
+/* ══════════════════════════════════════════════════════════
+   RENDER HELPERS
+══════════════════════════════════════════════════════════ */
+function renderCurrentPlan() {
+    const plan   = (_user.plan || "free").toLowerCase();
+    const expiry = _user.planExpiry;
+    const start  = _user.planStart;
+    const now    = new Date();
+ 
+    document.getElementById("currentPlan").innerHTML =
+        plan !== "free"
+        ? `<span class="plan-pill-sm ${plan}">${plan.toUpperCase()}</span>`
+        : `<span style="color:#64748b;font-weight:700;">FREE</span>`;
+ 
+    const badge = document.getElementById("currentStatusBadge");
+ 
+    if (expiry) {
+        const edt = new Date(expiry);
+        document.getElementById("currentStart").innerText  = fmt(start);
+        document.getElementById("currentExpiry").innerText = fmt(expiry);
+ 
+        if (now < edt) {
+            const diff = edt - now;
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            document.getElementById("daysRemaining").innerText = `${d}d ${h}h left`;
+            badge.textContent = "Active ✅";
+            badge.className   = "badge bg-success";
+ 
+            if (start) {
+                const total = edt - new Date(start);
+                const used  = now - new Date(start);
+                const pct   = Math.min(Math.round((used / total) * 100), 100);
+                document.getElementById("planProgress").style.width = pct + "%";
+                document.getElementById("progressPct").innerText = pct + "%";
+            }
+        } else {
+            document.getElementById("daysRemaining").innerText = "Expired";
+            badge.textContent = "Expired ❌";
+            badge.className   = "badge bg-danger";
+        }
+    } else {
+        document.getElementById("currentStart").innerText    = "—";
+        document.getElementById("currentExpiry").innerText   = "—";
+        document.getElementById("daysRemaining").innerText   = "No active plan";
+        badge.textContent = "No Plan";
+        badge.className   = "badge bg-secondary";
+    }
+}
+ 
+function renderNewPlan(p) {
+    const cfg = PLAN_DATA[p.plan];
+    document.getElementById("planName").innerHTML =
+        `<span class="plan-pill-sm ${p.plan}">${cfg.name}</span>`;
+    document.getElementById("planDays").innerText =
+        `${p.tradingDays} Trading Day${p.tradingDays > 1 ? "s" : ""}`;
+    document.getElementById("newStart").innerText  = fmt(p.planStart);
+    document.getElementById("newExpiry").innerText = fmt(p.planExpiry);
+    document.getElementById("totalPrice").innerHTML =
+        `₹${p.price.toLocaleString("en-IN")} <small style="color:#94a3b8;font-size:12px;">incl. GST</small>`;
+ 
+    const holNote = p.holidayList.length
+        ? `<br><span style="color:#f59e0b;font-size:11px;">📅 <b>${p.holidays} NSE holiday${p.holidays > 1 ? "s" : ""} skipped</b> (your days are protected): ${p.holidayList.map(h => `<b>${h.reason}</b>`).join(", ")}</span>`
+        : `<br><span style="color:#16a34a;font-size:11px;">✅ No NSE holidays in this window</span>`;
+ 
+    const statusNote = p.isQueued
+        ? `<br><span style="color:#2563eb;font-weight:700;">📌 Queued — activates after your current plan ends on ${fmt(getLatestFutureExpiry())}</span>`
+        : `<br><span style="color:#16a34a;font-weight:700;">✅ Activates immediately on payment</span>`;
+ 
+    document.getElementById("planBreakdown").innerHTML =
+        `<b>${p.tradingDays}</b> Trading Days &nbsp;•&nbsp;` +
+        `<b>${p.calendarDays}</b> Calendar Days &nbsp;•&nbsp;` +
+        `Weekends skipped: <b>${p.weekends}</b> &nbsp;•&nbsp;` +
+        `Holidays skipped: <b>${p.holidays}</b>` +
+        holNote + statusNote;
+ 
+    document.getElementById("orderPlanSummary").innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span style="font-weight:700;">${cfg.name} Plan</span>
+            <span class="plan-pill-sm ${p.plan}">${cfg.name}</span>
+        </div>
+        <div style="font-size:12px;color:#64748b;line-height:1.9;">
+            <div>📅 <b>${p.tradingDays}</b> trading days</div>
+            <div>🗓 Starts: <b>${fmt(p.planStart)}</b></div>
+            <div>⏰ Expires: <b>${fmt(p.planExpiry)}</b></div>
+            <div>🏖️ <b>${p.holidays}</b> NSE holiday${p.holidays !== 1 ? "s" : ""} skipped (days protected)</div>
+            ${p.weekends ? `<div>📆 <b>${p.weekends}</b> weekend day${p.weekends !== 1 ? "s" : ""} skipped</div>` : ""}
+            ${p.isQueued ? `<div style="color:#2563eb;font-weight:600;">📌 Queued after current plan</div>` : ""}
+        </div>
+        <div style="border-top:1px solid #d1fae5;margin-top:10px;padding-top:10px;font-weight:800;font-size:16px;color:#16a34a;">
+            ₹${p.price.toLocaleString("en-IN")}<small style="font-size:11px;font-weight:500;color:#94a3b8;margin-left:4px;">incl. GST</small>
+        </div>`;
+}
+ 
+function renderQueueTimeline(p) {
+    const section   = document.getElementById("queueSection");
+    const timeline  = document.getElementById("queueTimeline");
+    const countBadge = document.getElementById("queueCountBadge");
+    const arrowEl   = document.getElementById("newPlanArrow");
+ 
+    const existing = _allSubs.filter(s => s.status !== "expired");
+    if (!existing.length && !p) { section.style.display = "none"; return; }
+ 
+    section.style.display = "block";
+    countBadge.textContent = `${existing.length} existing + 1 incoming`;
+ 
+    const now = new Date();
+    let html = "";
+ 
+    existing.forEach(s => {
+        const dotCls  = s.status === "active" ? "active" : s.status === "queued" ? "queued" : "expired";
+        const planCol = PLAN_COLORS[s.plan] || "#64748b";
+        const icon    = s.status === "active" ? "✅" : s.status === "queued" ? "⏳" : "❌";
+        const lbl     = s.status === "active" ? "Currently Active" : s.status === "queued" ? "Queued" : "Expired";
+ 
+        let ec = "";
+        if (s.status === "active") {
+            const diff = new Date(s.plan_expiry) - now;
+            if (diff > 0) {
+                const d = Math.floor(diff / 86400000), h = Math.floor((diff % 86400000) / 3600000);
+                ec = `<span class="tl-chip green">⏳ ${d}d ${h}h left</span>`;
+            }
+        } else if (s.status === "queued") {
+            ec = `<span class="tl-chip blue">Starts: ${fmt(s.plan_start)}</span>`;
+        }
+ 
+        html += `<li class="tl-item">
+            <div class="tl-dot ${dotCls}">${icon}</div>
+            <div class="tl-body">
+                <div class="tl-plan-name">
+                    <span style="background:${planCol};padding:2px 10px;border-radius:999px;font-size:11px;margin-right:6px;">
+                        ${s.plan.toUpperCase()}
+                    </span>${lbl}
+                </div>
+                <div class="tl-dates">📅 ${fmt(s.plan_start)} → ${fmt(s.plan_expiry)}</div>
+                <div class="tl-chips">
+                    <span class="tl-chip">${s.trading_days} trading days</span>
+                    <span class="tl-chip">${s.total_calendar_days} cal days</span>
+                    <span class="tl-chip">🗓 ${s.weekends_skipped} wknds</span>
+                    <span class="tl-chip">📅 ${s.holidays_skipped} holidays</span>
+                    ${s.price ? `<span class="tl-chip">₹${Number(s.price).toLocaleString("en-IN")}</span>` : ""}
+                    ${ec}
+                </div>
+            </div>
+        </li>`;
+    });
+ 
+    if (p) {
+        const planCol  = PLAN_COLORS[p.plan] || "#64748b";
+        arrowEl.style.display = "block";
+        const holChips = p.holidayList.map(h =>
+            `<span class="tl-chip orange" title="${h.date}">${h.reason}</span>`
+        ).join("");
+ 
+        html += `<li class="tl-item">
+            <div class="tl-dot new">🆕</div>
+            <div class="tl-body">
+                <div class="tl-plan-name">
+                    <span style="background:${planCol};padding:2px 10px;border-radius:999px;font-size:11px;margin-right:6px;">
+                        ${p.plan.toUpperCase()}
+                    </span>${p.isQueued ? "Will be Queued" : "Activates Immediately"}
+                </div>
+                <div class="tl-dates">📅 ${fmt(p.planStart)} → ${fmt(p.planExpiry)}</div>
+                <div class="tl-chips">
+                    <span class="tl-chip orange">${p.tradingDays} trading days</span>
+                    <span class="tl-chip orange">${p.calendarDays} cal days</span>
+                    <span class="tl-chip orange">🗓 ${p.weekends} wknds</span>
+                    <span class="tl-chip orange">📅 ${p.holidays} holidays</span>
+                    <span class="tl-chip orange">₹${p.price.toLocaleString("en-IN")}</span>
+                    ${p.isQueued
+                        ? `<span class="tl-chip blue">📌 Queued</span>`
+                        : `<span class="tl-chip green">✅ Immediate</span>`}
+                </div>
+                ${p.holidayList.length ? `
+                    <div style="margin-top:6px;font-size:10px;color:#94a3b8;">
+                        <b>NSE holidays in window (days NOT lost):</b>
+                        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">${holChips}</div>
+                    </div>` : ""}
+            </div>
+        </li>`;
+    }
+    timeline.innerHTML = html;
+}
+ 
+/* ══════════════════════════════════════════════════════════
+   PAYMENT HISTORY (quick panel)
+══════════════════════════════════════════════════════════ */
+async function loadPaymentHistory() {
     try {
         const res  = await fetch("/api/payment-history", { credentials: "include" });
         const data = await res.json();
+        const payments = (data.payments || []).filter(p => p.status === "paid");
+        if (!payments.length) return;
  
-        if (data.error) {
-            wrap.innerHTML = `
-                <div class="sub-empty">
-                    <div class="sub-empty-icon">⚠️</div>
-                    <p>${data.error}</p>
-                </div>`;
-            return;
-        }
- 
-        const payments = data.payments || [];
-        badge.textContent = payments.length + (payments.length === 1 ? " payment" : " payments");
- 
-        if (!payments.length) {
-            wrap.innerHTML = `
-                <div class="sub-empty">
-                    <div class="sub-empty-icon">📭</div>
-                    <p>No payment records yet.</p>
-                    <a href="/trading-plan" class="btn btn-primary btn-sm">Browse Plans →</a>
-                </div>`;
-            return;
-        }
- 
-        const statusIcon  = { paid:"✅", created:"⏳", sig_mismatch:"⚠️", failed:"❌" };
-        const statusColor = { paid:"#16a34a", created:"#2563eb", sig_mismatch:"#d97706", failed:"#dc2626" };
- 
-        let html = `
-            <div class="sub-table-wrap">
-                <table class="sub-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Payment ID</th>
-                            <th>Payment Method</th>
-                            <th>Plan</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                            <th>Date &amp; Time</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
- 
-        payments.forEach((p, idx) => {
-            const icon  = statusIcon[p.status]  || "❓";
-            const color = statusColor[p.status] || "#64748b";
- 
-            // ── Safe date formatting ──
-            let dt = "—";
-            try {
-                const rawDate = p.verified_at || p.created_at || p.payment_date || p.timestamp;
-                if (rawDate) {
-                    const d = new Date(rawDate);
-                    if (!isNaN(d.getTime())) {
-                        dt = d.toLocaleString("en-IN", {
-                            timeZone: "Asia/Kolkata",
-                            day:      "2-digit",
-                            month:    "short",
-                            year:     "numeric",
-                            hour:     "2-digit",
-                            minute:   "2-digit",
-                            second:   "2-digit",
-                            hour12:   true,
-                        });
-                    }
-                }
-            } catch(e) { dt = "—"; }
- 
-            const paymentMethod = `${p.method_icon || "💰"} ${p.method_label || "Online"}`;
-            const paymentDetail = p.method_detail
-                ? `<div style="font-size:10px;color:#64748b;margin-top:3px;">${p.method_detail}</div>`
-                : "";
- 
-            html += `
-                <tr>
-                    <td style="color:#94a3b8;font-weight:600;">${idx + 1}</td>
-                    <td style="font-family:monospace;font-size:11px;">${p.payment_id || "—"}</td>
-                    <td>
-                        <div style="font-weight:700;">${paymentMethod}</div>
-                        ${paymentDetail}
-                    </td>
-                    <td>
-                        <span class="plan-pill ${p.plan}">${p.plan.toUpperCase()}</span>
-                    </td>
-                    <td style="font-weight:700;color:#16a34a;">
-                        ₹${Number(p.amount).toLocaleString("en-IN")}
-                    </td>
-                    <td>
-                        <span style="font-weight:700;color:${color};">
-                            ${icon} ${p.status.replace(/_/g, " ").toUpperCase()}
-                        </span>
-                    </td>
-                    <td style="white-space:nowrap;">${dt}</td>
-                </tr>`;
-        });
- 
-        html += `</tbody></table></div>`;
- 
-        const paid  = payments.filter(p => p.status === "paid");
-        const total = paid.reduce((a, p) => a + (p.amount || 0), 0);
-        html += `
-            <div style="
-                padding:14px 20px;
-                background:#f8fafc;
-                border-top:1px solid #e2e8f0;
-                display:flex; flex-wrap:wrap; gap:16px;
-                align-items:center; font-size:12px;
-            ">
-                <div><span style="color:#64748b;">Total transactions:</span> <b>${payments.length}</b></div>
-                <div><span style="color:#16a34a;">Successful:</span> <b>${paid.length}</b></div>
-                <div style="margin-left:auto;font-size:13px;font-weight:700;color:#0f172a;">
-                    Total Paid: ₹${total.toLocaleString("en-IN")}
+        document.getElementById("payHistSection").style.display = "block";
+        document.getElementById("payHistBody").innerHTML = payments.map(p => `
+            <div style="padding:10px 14px;border-bottom:1px solid #f1f5f9;
+                        display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <span class="plan-pill-sm ${p.plan}">${p.plan.toUpperCase()}</span>
+                    <div style="font-size:10px;color:#94a3b8;margin-top:3px;">
+                        ${p.created_at ? new Date(p.created_at).toLocaleDateString("en-IN") : ""}
+                    </div>
                 </div>
-            </div>`;
+                <div style="font-weight:700;color:#16a34a;">
+                    ₹${Number(p.amount).toLocaleString("en-IN")}
+                </div>
+            </div>`).join("");
+    } catch(e) { /* silent */ }
+}
  
-        wrap.innerHTML = html;
+/* ══════════════════════════════════════════════════════════
+   PAYMENT OVERLAY
+══════════════════════════════════════════════════════════ */
+function showOverlay(icon, title, msg, btnText, btnCb) {
+    document.getElementById("overlayIcon").textContent  = icon;
+    document.getElementById("overlayTitle").textContent = title;
+    document.getElementById("overlayMsg").innerHTML     = msg;
+    const btn = document.getElementById("overlayBtn");
+    if (btnText) {
+        btn.style.display = "inline-block";
+        btn.textContent   = btnText;
+        btn.className     = "pay-btn-ok" + (icon === "❌" ? " pay-btn-err" : "");
+        btn.onclick       = btnCb;
+    } else {
+        btn.style.display = "none";
+    }
+    document.getElementById("paymentOverlay").classList.add("show");
+}
+function hideOverlay()  { document.getElementById("paymentOverlay").classList.remove("show"); }
+function overlayDone()  { hideOverlay(); window.location.href = "/account"; }
  
-    } catch(err) {
-        console.error("loadPaymentHistory:", err);
-        wrap.innerHTML = `
-            <div class="sub-empty">
-                <div class="sub-empty-icon">⚠️</div>
-                <p>Failed to load payment data.</p>
-            </div>`;
+/* ══════════════════════════════════════════════════════════
+   RAZORPAY PAYMENT FLOW
+══════════════════════════════════════════════════════════ */
+function startPayment() {
+    const cb   = document.getElementById("consentCheck");
+    const box  = document.getElementById("consentBox");
+    const warn = document.getElementById("consentWarning");
+ 
+    if (!cb.checked) {
+        box.classList.add("error");
+        warn.classList.add("show");
+        box.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => box.classList.remove("error"), 600);
+        return;
+    }
+ 
+    const cfg = PLAN_DATA[_planKey];
+    if (!confirm(`Confirm payment of ₹${cfg ? cfg.price.toLocaleString("en-IN") : "?"} for ${cfg ? cfg.name : ""} plan via Razorpay?`))
+        return;
+ 
+    const btn = document.getElementById("payBtn");
+    btn.disabled    = true;
+    btn.textContent = "⏳ Creating order…";
+ 
+    fetch("/api/create-order", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: _planKey })
+    })
+    .then(r => r.json())
+    .then(orderData => {
+        if (orderData.error) {
+            btn.disabled    = false;
+            btn.textContent = "💳 Pay with Razorpay";
+            alert("❌ Order creation failed: " + orderData.error);
+            return;
+        }
+ 
+        const options = {
+            key:         orderData.key_id,
+            amount:      orderData.amount,
+            currency:    orderData.currency,
+            name:        "TraderBro",
+            description: `${PLAN_DATA[_planKey].name} Plan — ${PLAN_DATA[_planKey].tradingDays} Trading Days`,
+            image:       "/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png",
+            order_id:    orderData.order_id,
+            prefill: {
+                name:    orderData.name  || "",
+                email:   orderData.email || "",
+                contact: orderData.phone || "",
+            },
+            theme: { color: "#EB4201" },
+            modal: {
+                ondismiss: function() {
+                    btn.disabled    = false;
+                    btn.textContent = "💳 Pay with Razorpay";
+                }
+            },
+            handler: function(response) {
+                verifyPayment(response);
+            }
+        };
+ 
+        const rzp = new Razorpay(options);
+        rzp.on("payment.failed", function(resp) {
+            btn.disabled    = false;
+            btn.textContent = "💳 Pay with Razorpay";
+            showOverlay(
+                "❌", "Payment Failed",
+                `<b>${resp.error.description}</b><br>
+                 <small style="color:#94a3b8;">Code: ${resp.error.code} | Reason: ${resp.error.reason}</small>`,
+                "Try Again",
+                () => { hideOverlay(); btn.disabled = false; btn.textContent = "💳 Pay with Razorpay"; }
+            );
+        });
+        rzp.open();
+    })
+    .catch(err => {
+        btn.disabled    = false;
+        btn.textContent = "💳 Pay with Razorpay";
+        alert("Network error. Please try again.");
+        console.error(err);
+    });
+}
+ 
+async function verifyPayment(response) {
+    showOverlay("⏳", "Verifying Payment…",
+        "Please wait while we confirm your payment with Razorpay.", null, null);
+    try {
+        const res  = await fetch("/api/verify-payment", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id:   response.razorpay_order_id,
+                razorpay_signature:  response.razorpay_signature,
+            })
+        });
+        const data = await res.json();
+ 
+        if (data.success) {
+            const planName = (PLAN_DATA[_planKey] || {}).name || _planKey.toUpperCase();
+            showOverlay(
+                "✅", "Payment Successful!",
+                `Your <b>${planName}</b> plan is now ${data.status === "active" ? "active" : "queued"}.<br>
+                 <small style="color:#64748b;">
+                     Start: ${fmt(data.plan_start)}<br>Expiry: ${fmt(data.plan_expiry)}
+                 </small>`,
+                "Go to My Account →",
+                overlayDone
+            );
+        } else {
+            showOverlay(
+                "❌", "Verification Failed",
+                `${data.error || "Signature mismatch."}<br>
+                 <small style="color:#94a3b8;">
+                     If money was deducted, it will be refunded by Razorpay within 5-7 business days.
+                 </small>`,
+                "Back to Plans",
+                () => { hideOverlay(); window.location.href = "/trading-plan"; }
+            );
+        }
+    } catch(e) {
+        showOverlay(
+            "❌", "Network Error",
+            "Could not verify payment. If money was deducted, contact support with your Payment ID.",
+            "Back to Plans",
+            () => { hideOverlay(); window.location.href = "/trading-plan"; }
+        );
     }
 }
+ 
 /* ══════════════════════════════════════════════════════════
-   BOOT — each function called exactly ONCE
+   INIT
 ══════════════════════════════════════════════════════════ */
-loadUser();
-loadSubscriptions();
-renderUpcomingHolidays();
-loadPaymentHistory();  
+async function initCheckout() {
+    const params  = new URLSearchParams(window.location.search);
+    _planKey      = (params.get("plan") || "").toLowerCase();
+ 
+    if (!PLAN_DATA[_planKey]) {
+        alert("Invalid plan selected. Redirecting…");
+        window.location.href = "/trading-plan";
+        return;
+    }
+ 
+    try {
+        const [meRes, subsRes, holRes] = await Promise.all([
+            fetch("/api/me",               { credentials: "include" }),
+            fetch("/api/my-subscriptions", { credentials: "include" }),
+            fetch("/api/market-holidays",  { credentials: "include" }),
+        ]);
+        const [meData, subsData, holData] = [
+            await meRes.json(),
+            await subsRes.json(),
+            await holRes.json(),
+        ];
+ 
+        if (!meData.username) { window.location.href = "/user-login"; return; }
+ 
+        _user = {
+            username:   meData.username,
+            email:      meData.email,
+            plan:       (meData.plan || "free").toLowerCase(),
+            planExpiry: meData.plan_expiry,
+            planStart:  meData.plan_start,
+        };
+        _allSubs  = subsData.subscriptions || [];
+        _holidays = {};
+        (holData.holidays || []).forEach(h => { _holidays[h.date] = h.reason; });
+ 
+    } catch(e) {
+        console.error("Checkout init failed:", e);
+    }
+ 
+    document.getElementById("userName").innerText  = _user ? _user.username : "—";
+    document.getElementById("userEmail").innerText = _user ? _user.email    : "—";
+ 
+    renderCurrentPlan();
+ 
+    _computed = computePreview(_planKey);
+    renderNewPlan(_computed);
+    renderQueueTimeline(_computed);
+    loadPaymentHistory();
+}
+ 
+initCheckout();
 </script>
 
 <!-- NAVBAR -->
 <script>
-async function renderNavbar() {
-    try {
-        const res  = await fetch("/api/me", { credentials:"include" });
-        const data = await res.json();
-        const nav  = document.getElementById("navAuth");
-        const mob  = document.getElementById("mobileNavAuth");
-        if (!nav) return;
-        if (data.username) {
-            const fl = data.username.charAt(0).toUpperCase();
-            nav.innerHTML = `<div class="d-flex align-items-center gap-3">
-                <a href="/dashboard" class="btn btn-success" style="border-radius:12px;font-weight:600;padding:10px 18px;box-shadow:0 4px 15px rgba(0,255,120,.25);">📊 Dashboard</a>
-                ${data.role==="admin"?`<a href="/admin" class="btn btn-warning" style="border-radius:12px;font-weight:600;padding:10px 18px;">⚙ Admin</a>`:""}
-                <div class="dropdown">
-                    <div class="d-flex align-items-center" style="cursor:pointer;" data-bs-toggle="dropdown">
-                        <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#00c6ff,#0072ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;margin-right:10px;">${fl}</div>
-                        <span class="text-white fw-bold">${data.username}</span>
-                    </div>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="/account">👤 My Account</a></li>
-                        <li><a class="dropdown-item" href="/dashboard">📊 Dashboard</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="#" onclick="logout()">🚪 Logout</a></li>
-                    </ul>
-                </div>
-            </div>`;
-            if (mob) mob.innerHTML = `<div class="w-100 d-flex flex-column gap-2">
-                <a href="/dashboard" class="btn btn-primary w-100">📊 Dashboard</a>
-                <a href="/account" class="btn btn-outline-primary w-100">👤 My Account</a>
-                ${data.role==="admin"?`<a href="/admin" class="btn btn-warning w-100">⚙ Admin Panel</a>`:""}
-                <button onclick="logout()" class="btn btn-danger w-100">🚪 Logout</button>
-            </div>`;
+async function renderNavbar(){
+    try{
+        const res=await fetch("/api/me",{credentials:"include"});
+        const data=await res.json();
+        const nav=document.getElementById("navAuth");if(!nav)return;
+        if(data.username){
+            const fl=data.username.charAt(0).toUpperCase();
+            nav.innerHTML=`<div class="dropdown"><div class="d-flex align-items-center" style="cursor:pointer;" data-bs-toggle="dropdown"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#00c6ff,#0072ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;margin-right:10px;">${fl}</div><span class="text-white">Hi, ${data.username}</span></div>
+            <ul class="dropdown-menu dropdown-menu-end"><li><a class="dropdown-item" href="/account">👤 My Account</a></li><li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-danger" href="#" onclick="logout()">🚪 Logout</a></li></ul></div>`;
         } else {
-            nav.innerHTML = `<a class="btn btn-outline-primary me-2" href="/user-login">Login</a><a class="btn btn-primary" href="/register">Register</a>`;
+            nav.innerHTML=`<a class="btn btn-outline-primary me-2" href="/user-login">Login</a><a class="btn btn-primary" href="/register">Register</a>`;
         }
-    } catch(e) {}
+    }catch(e){}
 }
-function logout() { window.location.href="/logout"; }
+function logout(){window.location.href="/logout";}
 renderNavbar();
 </script>
-
-<!-- UPDATE PROFILE -->
-<script>
-async function updateProfile() {
-    const name=document.getElementById("editName").value.trim(), phone=document.getElementById("editPhone").value.trim(), msg=document.getElementById("saveMsg");
-    try {
-        const res  = await fetch("/update-profile",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:name,phone:phone})});
-        const data = await res.json();
-        msg.style.display="block";
-        if (data.success) {
-            msg.style.cssText="display:block;background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;margin-bottom:10px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;";
-            msg.innerText="✅ Profile updated successfully!";
-            loadUser(); loadSubscriptions();
-        } else {
-            msg.style.cssText="display:block;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;margin-bottom:10px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;";
-            msg.innerText="❌ "+(data.message||"Update failed");
-        }
-        setTimeout(()=>msg.style.display="none",3500);
-    } catch {
-        msg.style.cssText="display:block;background:#fee2e2;color:#991b1b;margin-bottom:10px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;";
-        msg.innerText="❌ Network error.";
-    }
-}
-</script>
-
 
 <!-- One device login -->
 <script>
