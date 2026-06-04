@@ -1292,23 +1292,62 @@ def session_check(request: Request):
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard_page(request: Request):
 
-    if "user" in request.session:
+    # ADMIN ALWAYS ALLOWED
+    if "admin" in request.session:
+        path = os.path.join(STATIC_DIR, "dashboard.html")
 
-        if not validate_user_session(request):
+        with open(path, "r", encoding="utf-8") as f:
+            return HTMLResponse(f.read())
 
-            request.session.clear()
-
-            return RedirectResponse("/user-login")
-
-    if "user" not in request.session and "admin" not in request.session:
+    # USER LOGIN CHECK
+    if "user" not in request.session:
         return RedirectResponse("/user-login")
+
+    if not validate_user_session(request):
+        request.session.clear()
+        return RedirectResponse("/user-login")
+
+    username = request.session["user"]
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    c.execute("""
+        SELECT plan, plan_start, plan_expiry
+        FROM users
+        WHERE username=?
+    """, (username,))
+
+    row = c.fetchone()
+    conn.close()
+
+    # NO PLAN
+    if not row:
+        return RedirectResponse("/trading-plan")
+
+    plan, plan_start, plan_expiry = row
+
+    if not plan or plan == "free":
+        return RedirectResponse("/trading-plan")
+
+    try:
+        now = datetime.now(IST)
+
+        expiry = datetime.fromisoformat(plan_expiry)
+
+        if expiry.tzinfo is None:
+            expiry = IST.localize(expiry)
+
+        if now > expiry:
+            return RedirectResponse("/trading-plan")
+
+    except:
+        return RedirectResponse("/trading-plan")
 
     path = os.path.join(STATIC_DIR, "dashboard.html")
 
     with open(path, "r", encoding="utf-8") as f:
-        html = f.read()
-
-    return HTMLResponse(html)
+        return HTMLResponse(f.read())
 # My Account
 @app.get("/account", response_class=HTMLResponse)
 def account_page(request: Request):
