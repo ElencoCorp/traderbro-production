@@ -358,68 +358,47 @@ const PLAN_BG = { free:"#64748b", basic:"#0ea5e9", essential:"#8b5cf6", pro:"#f5
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-/* ── Holiday cache (loaded once) ── */
-let _HOLIDAYS = {};   // { "YYYY-MM-DD": "Reason" }
+/* ── Holiday cache ── */
+let _HOLIDAYS = {};     // { "YYYY-MM-DD": "Holiday Name" }
 let _holidaysLoaded = false;
-
+ 
 async function loadHolidaysOnce() {
     if (_holidaysLoaded) return;
     try {
-        const res  = await fetch('/api/market-holidays', { credentials:'include' });
+        const res  = await fetch("/api/market-holidays", { credentials: "include" });
         const data = await res.json();
-        _HOLIDAYS = {};
+        _HOLIDAYS  = {};
         (data.holidays || []).forEach(h => { _HOLIDAYS[h.date] = h.reason; });
         _holidaysLoaded = true;
-    } catch(e) {}
+    } catch(e) {
+        console.error("loadHolidaysOnce:", e);
+    }
 }
-
+ 
+/**
+ * Returns all NSE holidays (from _HOLIDAYS cache) that fall on
+ * weekdays between startIso and endIso (inclusive).
+ */
 function getHolidaysBetween(startIso, endIso) {
     if (!startIso || !endIso) return [];
+ 
     const start = new Date(startIso);
     const end   = new Date(endIso);
+ 
     return Object.entries(_HOLIDAYS)
-        .filter(([d]) => {
-            let dt = "—";
-
-                try {
-
-                    const paymentDate =
-                        p.verified_at ||
-                        p.created_at ||
-                        p.payment_date ||
-                        p.timestamp;
-
-                    if (paymentDate) {
-
-                        const d = new Date(paymentDate);
-
-                        if (!isNaN(d.getTime())) {
-
-                            dt = d.toLocaleString("en-IN", {
-                                timeZone: "Asia/Kolkata",
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                second: "2-digit",
-                                hour12: true
-                            });
-
-                        }
-                    }
-
-                } catch(e) {
-                    console.error(e);
-                }
-                    dt = "—";{
-                }
-                            return dt >= start && dt <= end && dt.getDay() !== 0 && dt.getDay() !== 6;
-                        })
-                        .map(([d, r]) => ({ date:d, reason:r }))
-                        .sort((a,b) => a.date.localeCompare(b.date));
-                }
-
+        .filter(([dateStr]) => {
+            try {
+                const dt = new Date(dateStr + "T00:00:00");
+                const dow = dt.getDay();
+                // Must be a weekday and within the subscription window
+                return dt >= start && dt <= end && dow !== 0 && dow !== 6;
+            } catch(e) {
+                return false;
+            }
+        })
+        .map(([dateStr, reason]) => ({ date: dateStr, reason }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+}
 /* ══════════════════════════════════════════════════════════
    DATE FORMATTER
 ══════════════════════════════════════════════════════════ */
@@ -653,106 +632,136 @@ async function renderUpcomingHolidays() {
 async function loadPaymentHistory() {
     const wrap  = document.getElementById("paymentHistoryWrap");
     const badge = document.getElementById("payCountBadge");
+    if (!wrap) return;
+ 
     try {
         const res  = await fetch("/api/payment-history", { credentials: "include" });
         const data = await res.json();
+ 
         if (data.error) {
-            wrap.innerHTML = `<div class="sub-empty"><div class="sub-empty-icon">⚠️</div><p>${data.error}</p></div>`;
+            wrap.innerHTML = `
+                <div class="sub-empty">
+                    <div class="sub-empty-icon">⚠️</div>
+                    <p>${data.error}</p>
+                </div>`;
             return;
         }
+ 
         const payments = data.payments || [];
         badge.textContent = payments.length + (payments.length === 1 ? " payment" : " payments");
+ 
         if (!payments.length) {
-            wrap.innerHTML = `<div class="sub-empty"><div class="sub-empty-icon">📭</div><p>No payment records yet.</p><a href="/trading-plan" class="btn btn-primary btn-sm">Browse Plans →</a></div>`;
+            wrap.innerHTML = `
+                <div class="sub-empty">
+                    <div class="sub-empty-icon">📭</div>
+                    <p>No payment records yet.</p>
+                    <a href="/trading-plan" class="btn btn-primary btn-sm">Browse Plans →</a>
+                </div>`;
             return;
         }
  
-        const statusIcon  = { paid: "✅", created: "⏳", sig_mismatch: "⚠️", failed: "❌" };
-        const statusColor = { paid: "#16a34a", created: "#2563eb", sig_mismatch: "#d97706", failed: "#dc2626" };
+        const statusIcon  = { paid:"✅", created:"⏳", sig_mismatch:"⚠️", failed:"❌" };
+        const statusColor = { paid:"#16a34a", created:"#2563eb", sig_mismatch:"#d97706", failed:"#dc2626" };
  
-        let html = `<div class="sub-table-wrap"><table class="sub-table">
-            <thead><tr>
-            <th>#</th>
-            <th>Payment ID</th>
-            <th>Payment Method</th>
-            <th>Plan</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Date & Time</th>
-        </tr></thead>
-        <tbody>`;
+        let html = `
+            <div class="sub-table-wrap">
+                <table class="sub-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Payment ID</th>
+                            <th>Payment Method</th>
+                            <th>Plan</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date &amp; Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
  
         payments.forEach((p, idx) => {
             const icon  = statusIcon[p.status]  || "❓";
             const color = statusColor[p.status] || "#64748b";
-            const dt = p.verified_at ? p.verified_at : (p.created_at || "—");
  
-            const paymentMethod =
-                `${p.method_icon || "💰"} ${p.method_label || "Online"}`;
-
-            const paymentDetail =
-                p.method_detail
-                ? `<div style="font-size:10px;color:#64748b;margin-top:3px;">
-                    ${p.method_detail}
-                </div>`
+            // ── Safe date formatting ──
+            let dt = "—";
+            try {
+                const rawDate = p.verified_at || p.created_at || p.payment_date || p.timestamp;
+                if (rawDate) {
+                    const d = new Date(rawDate);
+                    if (!isNaN(d.getTime())) {
+                        dt = d.toLocaleString("en-IN", {
+                            timeZone: "Asia/Kolkata",
+                            day:      "2-digit",
+                            month:    "short",
+                            year:     "numeric",
+                            hour:     "2-digit",
+                            minute:   "2-digit",
+                            second:   "2-digit",
+                            hour12:   true,
+                        });
+                    }
+                }
+            } catch(e) { dt = "—"; }
+ 
+            const paymentMethod = `${p.method_icon || "💰"} ${p.method_label || "Online"}`;
+            const paymentDetail = p.method_detail
+                ? `<div style="font-size:10px;color:#64748b;margin-top:3px;">${p.method_detail}</div>`
                 : "";
-
-html += `
-<tr>
-    <td style="color:#94a3b8;font-weight:600;">
-        ${idx + 1}
-    </td>
-
-    <td style="font-family:monospace;font-size:11px;">
-        ${p.payment_id || "—"}
-    </td>
-
-    <td>
-        <div style="font-weight:700;">
-            ${paymentMethod}
-        </div>
-        ${paymentDetail}
-    </td>
-
-    <td>
-        <span class="plan-pill ${p.plan}">
-            ${p.plan.toUpperCase()}
-        </span>
-    </td>
-
-    <td style="font-weight:700;color:#16a34a;">
-        ₹${Number(p.amount).toLocaleString("en-IN")}
-    </td>
-
-    <td>
-        <span style="font-weight:700;color:${color};">
-            ${icon} ${p.status.replace("_"," ").toUpperCase()}
-        </span>
-    </td>
-
-    <td style="white-space:nowrap;">
-        ${dt}
-    </td>
-</tr>`;
+ 
+            html += `
+                <tr>
+                    <td style="color:#94a3b8;font-weight:600;">${idx + 1}</td>
+                    <td style="font-family:monospace;font-size:11px;">${p.payment_id || "—"}</td>
+                    <td>
+                        <div style="font-weight:700;">${paymentMethod}</div>
+                        ${paymentDetail}
+                    </td>
+                    <td>
+                        <span class="plan-pill ${p.plan}">${p.plan.toUpperCase()}</span>
+                    </td>
+                    <td style="font-weight:700;color:#16a34a;">
+                        ₹${Number(p.amount).toLocaleString("en-IN")}
+                    </td>
+                    <td>
+                        <span style="font-weight:700;color:${color};">
+                            ${icon} ${p.status.replace(/_/g, " ").toUpperCase()}
+                        </span>
+                    </td>
+                    <td style="white-space:nowrap;">${dt}</td>
+                </tr>`;
         });
  
         html += `</tbody></table></div>`;
  
         const paid  = payments.filter(p => p.status === "paid");
         const total = paid.reduce((a, p) => a + (p.amount || 0), 0);
-        html += `<div style="padding:14px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;flex-wrap:wrap;gap:16px;align-items:center;font-size:12px;">
-            <div><span style="color:#64748b;">Total transactions:</span> <b>${payments.length}</b></div>
-            <div><span style="color:#16a34a;">Successful:</span> <b>${paid.length}</b></div>
-            <div style="margin-left:auto;font-size:13px;font-weight:700;color:#0f172a;">Total Paid: ₹${total.toLocaleString("en-IN")}</div>
-        </div>`;
+        html += `
+            <div style="
+                padding:14px 20px;
+                background:#f8fafc;
+                border-top:1px solid #e2e8f0;
+                display:flex; flex-wrap:wrap; gap:16px;
+                align-items:center; font-size:12px;
+            ">
+                <div><span style="color:#64748b;">Total transactions:</span> <b>${payments.length}</b></div>
+                <div><span style="color:#16a34a;">Successful:</span> <b>${paid.length}</b></div>
+                <div style="margin-left:auto;font-size:13px;font-weight:700;color:#0f172a;">
+                    Total Paid: ₹${total.toLocaleString("en-IN")}
+                </div>
+            </div>`;
  
         wrap.innerHTML = html;
-    } catch (err) {
-        wrap.innerHTML = `<div class="sub-empty"><div class="sub-empty-icon">⚠️</div><p>Failed to load payment data.</p></div>`;
+ 
+    } catch(err) {
+        console.error("loadPaymentHistory:", err);
+        wrap.innerHTML = `
+            <div class="sub-empty">
+                <div class="sub-empty-icon">⚠️</div>
+                <p>Failed to load payment data.</p>
+            </div>`;
     }
 }
-
-
 /* ══════════════════════════════════════════════════════════
    BOOT — each function called exactly ONCE
 ══════════════════════════════════════════════════════════ */
