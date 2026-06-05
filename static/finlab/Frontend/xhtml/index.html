@@ -1380,7 +1380,7 @@ setInterval(async () => {
 
         console.log("SESSION RESPONSE:", data);
 
-        if (data.logged_in && !data.valid) {
+        if (!data.valid) {
             forceLogoutOverlay();
         }
 
