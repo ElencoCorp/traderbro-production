@@ -2534,19 +2534,18 @@ let _shownSystemMsgs = new Set();  // track which ones we've injected this sessi
     /* ══════════════════════════════════════════════════════════
        LIVE DATA
     ══════════════════════════════════════════════════════════ */
-    function loadData() {
+function loadData() {
     fetch("/api/get-running")
         .then(r => r.json())
         .then(d => {
             const rows = (d.rows || []).sort(
                 (a, b) => new Date(a.datetime) - new Date(b.datetime)
             );
- 
+
             const grid = document.getElementById("rows-grid");
- 
+
             if (!rows.length) {
                 _dashboardRows = [];
-                // Don't overwrite if already showing a meaningful closed message
                 if (!grid.querySelector(".data-row")) {
                     grid.innerHTML = `
                         <div class="market-closed-box">
@@ -2563,22 +2562,22 @@ let _shownSystemMsgs = new Set();  // track which ones we've injected this sessi
                 }
                 return;
             }
- 
+
             const displayableRows = rows;
             const heroRow = displayableRows[displayableRows.length - 1];
             const heroRunning = parseFloat(heroRow.running || 0);
- 
+
             _dashboardRows = rows.map(r => ({
                 datetime:  r.datetime  || "",
                 strike:    r.strike    || "",
                 index_ltp: r.index_ltp || "",
                 running:   r.running   || 0,
             }));
- 
+
             document.getElementById("h-ltp").textContent    = heroRow.index_ltp || "—";
             document.getElementById("h-expiry").textContent = heroRow.expiry    || "—";
             document.getElementById("h-ts").textContent     = heroRow.datetime  || "—";
- 
+
             const parts = (heroRow.datetime || "").split(" ");
             document.getElementById("atm-dt").innerHTML = `
                 <span style="color:#fff">${parts[0] || ""}</span>
@@ -2591,7 +2590,7 @@ let _shownSystemMsgs = new Set();  // track which ones we've injected this sessi
                 <span style="color:var(--primary)">
                     ${parseFloat(heroRow.index_ltp || 0).toFixed(2)}
                 </span>`;
- 
+
             const box = document.getElementById("atm-run-box");
             document.getElementById("atm-run-val").textContent = heroRunning.toFixed(2);
             if (heroRunning > 0) {
@@ -2604,8 +2603,7 @@ let _shownSystemMsgs = new Set();  // track which ones we've injected this sessi
                 box.className = "atm-run-box atm-run-zero";
                 box.querySelector(".run-label").textContent = "◆ Neutral";
             }
- 
-            // Show newest first in the list
+
             const displayRows = [...displayableRows].reverse();
             let html = "";
             displayRows.forEach(r => {
@@ -2625,79 +2623,18 @@ let _shownSystemMsgs = new Set();  // track which ones we've injected this sessi
                     </div>`;
             });
             grid.innerHTML = html;
- 
+
             const last6 = displayableRows.slice(-6);
             if (last6.length) {
                 updateGauge(
                     last6.reduce((s, r) => s + parseFloat(r.running || 0), 0) / last6.length
                 );
             }
- 
+
             checkMarketCloseAutoSave();
         })
         .catch(e => console.error("loadData:", e));
 }
-    
-          // ── FIX: use ALL rows — don't drop the last "pending" row ──
-          const displayableRows = rows;                          // ← was: rows.slice(0, -1)
-          const heroRow = displayableRows[displayableRows.length - 1];
-          const heroRunning = parseFloat(heroRow.running || 0);
-    
-          // Store all rows for Excel export
-          _dashboardRows = rows.map(r => ({
-            datetime:  r.datetime  || '',
-            strike:    r.strike    || '',
-            index_ltp: r.index_ltp || '',
-            running:   r.running   || 0
-          }));
-    
-          document.getElementById("h-ltp").textContent     = heroRow.index_ltp || "—";
-          document.getElementById("h-expiry").textContent  = heroRow.expiry    || "—";
-          document.getElementById("h-ts").textContent      = heroRow.datetime  || "—";
-    
-          const parts = (heroRow.datetime || '').split(' ');
-          document.getElementById("atm-dt").innerHTML = `
-            <span style="color:#fff">${parts[0] || ''}</span>
-            <span style="color:#fff;margin:0 6px">|</span>
-            <span style="color:#fff">${parts[1] || heroRow.datetime}</span><br>
-            <span style="color:#ff6b35">Strike: </span><span class="strike-highlight">${heroRow.strike}</span>
-            <span style="color:var(--text-muted);margin:0 8px">·</span>
-            <span style="color:#ff6b35">Sensex: </span><span style="color:var(--primary)">${parseFloat(heroRow.index_ltp || 0).toFixed(2)}</span>`;
-    
-          const box = document.getElementById("atm-run-box");
-          document.getElementById("atm-run-val").textContent = heroRunning.toFixed(2);
-          if (heroRunning > 0)      { box.className = "atm-run-box atm-run-pos"; box.querySelector('.run-label').textContent = '▲ Bullish'; }
-          else if (heroRunning < 0) { box.className = "atm-run-box atm-run-neg"; box.querySelector('.run-label').textContent = '▼ Bearish'; }
-          else                      { box.className = "atm-run-box atm-run-zero"; box.querySelector('.run-label').textContent = '◆ Neutral'; }
-    
-          // Show newest first in the list
-          const displayRows = [...displayableRows].reverse();
-    
-          let html = "";
-          displayRows.forEach(r => {
-            const val  = parseFloat(r.running || 0);
-            const cls  = val > 0 ? "val-pos"  : val < 0 ? "val-neg"  : "val-zero";
-            const rcls = val > 0 ? "row-pos"  : val < 0 ? "row-neg"  : "row-zero";
-            const dt   = (r.datetime || '').split(' ');
-            html += `<div class="data-row ${rcls}">
-              <div class="row-dt">
-                <span class="row-time">${dt[1] || r.datetime}</span>
-                <span class="row-sensex">Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)}</span>
-              </div>
-              <div class="val-pill ${cls}">${val > 0 ? '+' : ''}${val.toFixed(2)}</div>
-            </div>`;
-          });
-          document.getElementById("rows-grid").innerHTML = html;
-    
-          const last6 = displayableRows.slice(-6);
-          if (last6.length) {
-            updateGauge(last6.reduce((s, r) => s + parseFloat(r.running || 0), 0) / last6.length);
-          }
-    
-          checkMarketCloseAutoSave();
-        })
-        .catch(e => console.error("loadData:", e));
-    }
     function startAutoRefresh(ms) { if (_refreshTimer) clearTimeout(_refreshTimer); doRefresh(ms); }
     function doRefresh(ms) { loadData(); _refreshTimer = setTimeout(() => doRefresh(ms), ms); }
 
@@ -2914,7 +2851,7 @@ let _shownSystemMsgs = new Set();  // track which ones we've injected this sessi
     ══════════════════════════════════════════════════════════ */
     function updateMarketMessage() {
       const note = document.getElementById("market-note"), ist = getIST(), h = ist.getHours(), m = ist.getMinutes();
-      note.style.display = ((h > 9 || (h === 9 && m >= 16)) && (h < 15 || (h === 12 && m <=00))) ? "none" : "flex";
+      note.style.display = ((h > 9 || (h === 9 && m >= 16)) && (h < 15 || (h === 12 && m <= 0))) ? "none" : "flex";
     }
 
         /* ══════════════════════════════════════════════════════════
@@ -2993,74 +2930,47 @@ let _shownSystemMsgs = new Set();  // track which ones we've injected this sessi
     /* ══════════════════════════════════════════════════════════
        AUTH CHECK
     ══════════════════════════════════════════════════════════ */
-   async function checkDashboardAccess() {
+async function checkDashboardAccess() {
+
     try {
-        const res  = await fetch("/api/dashboard-access", { credentials: "include" });
+
+        const res = await fetch("/api/dashboard-access", {
+            credentials: "include"
+        });
+
         const data = await res.json();
- 
-        if (!data.allowed) {
-            switch (data.reason) {
-                case "not_logged_in":
-                    window.location.href = "/user-login";
-                    return false;
- 
-                case "no_plan":
-                    window.location.href = "/trading-plan";
-                    return false;
- 
-                case "plan_expired":
-                    window.location.href = "/trading-plan?expired=1";
-                    return false;
- 
-                case "plan_queued": {
-                    // Show waiting overlay — plan purchased but not started yet
-                    const start = data.plan_start
-                        ? new Date(data.plan_start).toLocaleString("en-IN", {
-                            timeZone:"Asia/Kolkata",
-                            day:"2-digit", month:"short", year:"numeric",
-                            hour:"2-digit", minute:"2-digit", hour12:true
-                          })
-                        : "soon";
-                    showFullscreenClosed(
-                        "⏳",
-                        "Plan Not Started Yet",
-                        `Your subscription starts on <b>${start}</b>.<br>
-                         Please come back then to access the dashboard.`,
-                        `<a href="/account" style="
-                            display:inline-block; margin-top:16px;
-                            padding:10px 28px; border-radius:30px; font-weight:700;
-                            background:linear-gradient(135deg,#02a3fe,#0072ff); color:white;
-                            text-decoration:none;">View My Account</a>`
-                    );
-                    return false;
-                }
-                default:
-                    window.location.href = "/user-login";
-                    return false;
-            }
+
+        // NOT LOGGED IN
+        if (data.reason === "not_logged_in") {
+
+            window.location.replace("/user-login");
+            return false;
         }
- 
-        /* ── Plan is active — show market status in left panel ── */
- 
-        // Show active-users pill for admin
-        if (data.reason === "admin") {
-            const pill = document.getElementById("active-users-pill");
-            if (pill) pill.style.display = "flex";
+
+        // NO PLAN
+        if (data.reason === "no_plan") {
+
+            window.location.replace("/trading-plan");
+            return false;
         }
- 
-        // If market is closed RIGHT NOW, update the left panel message
-        // (but don't kick the user out — the data may still be visible)
-        updateMarketClosedBanner(data);
- 
+
+        // EXPIRED
+        if (data.reason === "plan_expired") {
+
+            window.location.replace("/trading-plan?expired=1");
+            return false;
+        }
+
+        // ADMIN OR ACTIVE USER
         return true;
- 
+
     } catch (err) {
-        console.error("checkDashboardAccess:", err);
-        window.location.href = "/user-login";
-        return false;
+
+        console.error(err);
+
+        return true; // IMPORTANT
     }
 }
-    
 
 function updateMarketClosedBanner(accessData) {
     const grid = document.getElementById("rows-grid");
@@ -3427,33 +3337,43 @@ function forceLogoutOverlay() {
 
     setTimeout(() => {
         window.location.replace("/user-login");
-    }, 3000);
+    }, 15000);
 }
 
 setInterval(async () => {
 
     try {
 
-        console.log("CHECKING SESSION...");
-
-        const r = await fetch("/api/session-check", {
-            cache: "no-store",
-            credentials: "same-origin"
+        const res = await fetch("/api/session-check", {
+            credentials: "include"
         });
 
-        const data = await r.json();
+        const data = await res.json();
 
-        console.log("SESSION RESPONSE:", data);
+        // NO SESSION
+        if (data.logged_in === false) {
 
-        if (data.logged_in && !data.valid) {
             forceLogoutOverlay();
+            return;
         }
 
+        // USER SESSION INVALID
+        if (data.role === "user" && data.valid === false) {
+
+            forceLogoutOverlay();
+            return;
+        }
+
+        // ADMIN ALWAYS VALID
+        // DO NOTHING
+
     } catch (e) {
-        console.error("SESSION CHECK ERROR:", e);
+
+        console.error(e);
+
     }
 
-}, 3000);
+}, 5000);
 </script>
 
 </body>
