@@ -256,13 +256,265 @@
                     </div>
                 </div>
                 <div class="col-xl-6">
-                    <div class="card">
-                        <div class="card-header"><h4 class="card-title">Security</h4></div>
-                        <div class="card-body text-center">
-                            <button class="btn btn-danger w-100" onclick="logout()">Logout</button>
+    <div class="card" style="border:none;border-radius:24px;box-shadow:0 10px 40px rgba(15,23,42,.08);overflow:hidden;">
+ 
+        <div class="card-header" style="background:linear-gradient(135deg,#0f172a,#1e293b);border:none;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;">
+            <h4 class="card-title" style="color:white;margin:0;font-size:18px;font-weight:800;">🔒 Security</h4>
+        </div>
+ 
+        <div class="card-body" style="padding:24px;">
+ 
+            <!-- Change Password Toggle -->
+            <button type="button" id="cpToggleBtn" onclick="cpToggle()"
+                style="width:100%;display:flex;align-items:center;justify-content:space-between;
+                       padding:14px 18px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);
+                       border:1.5px solid #e2e8f0;border-radius:14px;cursor:pointer;
+                       font-family:inherit;transition:all .25s ease;"
+                onmouseover="this.style.borderColor='#0ea5e9'"
+                onmouseout="this.style.borderColor='#e2e8f0'">
+                <span style="display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;color:#0f172a;">
+                    <span style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#0ea5e9,#2563eb);display:flex;align-items:center;justify-content:center;font-size:16px;">🔑</span>
+                    Change Password
+                </span>
+                <span id="cpArrow" style="font-size:18px;color:#94a3b8;transition:transform .25s;">▾</span>
+            </button>
+ 
+            <!-- Expandable Form -->
+            <div id="cpFormWrap" style="max-height:0;overflow:hidden;transition:max-height .35s ease,opacity .3s ease;opacity:0;">
+                <div style="padding-top:18px;">
+ 
+                    <div id="cpAlert" style="display:none;padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:16px;"></div>
+ 
+                    <!-- Current Password -->
+                    <div style="margin-bottom:14px;">
+                        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">Current Password</label>
+                        <div style="position:relative;">
+                            <input type="password" id="cp_current" class="form-control"
+                                   placeholder="Enter current password"
+                                   style="padding-right:44px;border-radius:12px;border:1.5px solid #e2e8f0;"
+                                   oninput="cpClearAlert()">
+                            <button type="button" onclick="cpEye('cp_current',this)"
+                                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:17px;color:#94a3b8;">👁</button>
                         </div>
                     </div>
+ 
+                    <!-- New Password -->
+                    <div style="margin-bottom:14px;">
+                        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">New Password</label>
+                        <div style="position:relative;">
+                            <input type="password" id="cp_new" class="form-control"
+                                   placeholder="Min 8 chars, 1 uppercase, 1 number"
+                                   style="padding-right:44px;border-radius:12px;border:1.5px solid #e2e8f0;"
+                                   oninput="cpStrength();cpReqs();cpClearAlert()">
+                            <button type="button" onclick="cpEye('cp_new',this)"
+                                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:17px;color:#94a3b8;">👁</button>
+                        </div>
+                        <div style="margin-top:7px;">
+                            <div style="height:4px;background:#e2e8f0;border-radius:99px;overflow:hidden;">
+                                <div id="cpStrBar" style="height:100%;width:0%;border-radius:99px;transition:width .3s,background .3s;"></div>
+                            </div>
+                            <div id="cpStrLbl" style="font-size:11px;color:#94a3b8;margin-top:4px;font-weight:600;"></div>
+                        </div>
+                    </div>
+ 
+                    <!-- Confirm Password -->
+                    <div style="margin-bottom:18px;">
+                        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">Confirm New Password</label>
+                        <div style="position:relative;">
+                            <input type="password" id="cp_confirm" class="form-control"
+                                   placeholder="Re-enter new password"
+                                   style="padding-right:80px;border-radius:12px;border:1.5px solid #e2e8f0;"
+                                   oninput="cpReqs();cpClearAlert()">
+                            <span id="cpMatchIcon" style="position:absolute;right:44px;top:50%;transform:translateY(-50%);font-size:15px;display:none;"></span>
+                            <button type="button" onclick="cpEye('cp_confirm',this)"
+                                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:17px;color:#94a3b8;">👁</button>
+                        </div>
+                    </div>
+ 
+                    <!-- Requirements -->
+                    <div style="background:#f8fafc;border-radius:12px;padding:12px 14px;margin-bottom:18px;">
+                        <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Requirements</div>
+                        <div id="cpr_len"   style="font-size:12px;color:#94a3b8;margin-bottom:4px;">✗ &nbsp;At least 8 characters</div>
+                        <div id="cpr_up"    style="font-size:12px;color:#94a3b8;margin-bottom:4px;">✗ &nbsp;At least 1 uppercase letter</div>
+                        <div id="cpr_num"   style="font-size:12px;color:#94a3b8;margin-bottom:4px;">✗ &nbsp;At least 1 number</div>
+                        <div id="cpr_match" style="font-size:12px;color:#94a3b8;">✗ &nbsp;Passwords match</div>
+                    </div>
+ 
+                    <!-- Submit -->
+                    <button type="button" id="cpSubmitBtn" onclick="cpSubmit()"
+                        style="width:100%;padding:14px;border-radius:14px;border:none;
+                               background:linear-gradient(135deg,#0ea5e9,#2563eb);color:white;
+                               font-size:15px;font-weight:700;cursor:pointer;
+                               box-shadow:0 8px 20px rgba(37,99,235,.25);
+                               transition:all .25s ease;display:flex;align-items:center;justify-content:center;gap:8px;
+                               font-family:inherit;"
+                        onmouseover="if(!this.disabled)this.style.transform='translateY(-2px)'"
+                        onmouseout="this.style.transform='translateY(0)'">
+                        <span id="cpSubmitTxt">🔐 Update Password</span>
+                    </button>
+ 
                 </div>
+            </div>
+ 
+            <!-- Divider -->
+            <div style="border-top:1px solid #f1f5f9;margin:20px 0;"></div>
+ 
+            <!-- Forgot Password Link -->
+            <div style="text-align:center;margin-bottom:14px;">
+                <a href="/forgot-password" style="font-size:13px;color:#0ea5e9;font-weight:600;text-decoration:none;">
+                    🔑 Forgot your password?
+                </a>
+            </div>
+ 
+            <!-- Logout -->
+            <button class="btn btn-danger w-100" onclick="logout()"
+                style="border-radius:14px;font-weight:700;font-size:15px;padding:14px;">
+                🚪 Logout
+            </button>
+ 
+        </div>
+    </div>
+</div>
+ 
+<script>
+/* ── Toggle ── */
+let _cpOpen = false;
+function cpToggle() {
+    _cpOpen = !_cpOpen;
+    const wrap  = document.getElementById('cpFormWrap');
+    const arrow = document.getElementById('cpArrow');
+    if (_cpOpen) {
+        wrap.style.maxHeight = '600px';
+        wrap.style.opacity   = '1';
+        arrow.style.transform = 'rotate(180deg)';
+    } else {
+        wrap.style.maxHeight = '0';
+        wrap.style.opacity   = '0';
+        arrow.style.transform = 'rotate(0deg)';
+        cpReset();
+    }
+}
+ 
+/* ── Eye toggle ── */
+function cpEye(id, btn) {
+    const inp = document.getElementById(id);
+    inp.type  = inp.type === 'password' ? 'text' : 'password';
+    btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+ 
+/* ── Strength ── */
+function cpStrength() {
+    const v   = document.getElementById('cp_new').value;
+    const bar = document.getElementById('cpStrBar');
+    const lbl = document.getElementById('cpStrLbl');
+    let sc = 0;
+    if (v.length >= 8)           sc++;
+    if (/[A-Z]/.test(v))        sc++;
+    if (/[0-9]/.test(v))        sc++;
+    if (/[^A-Za-z0-9]/.test(v)) sc++;
+    if (v.length >= 12)          sc++;
+    const MAP = [
+        {w:'0%',  c:'#e2e8f0',t:''},
+        {w:'20%', c:'#ef4444',t:'Very Weak'},
+        {w:'40%', c:'#f97316',t:'Weak'},
+        {w:'60%', c:'#eab308',t:'Fair'},
+        {w:'80%', c:'#22c55e',t:'Strong'},
+        {w:'100%',c:'#16a34a',t:'Very Strong'},
+    ];
+    const m = MAP[sc] || MAP[0];
+    bar.style.width = m.w; bar.style.background = m.c;
+    lbl.style.color = m.c; lbl.textContent = m.t;
+}
+ 
+/* ── Requirements ── */
+function cpReqs() {
+    const v = document.getElementById('cp_new').value;
+    const c = document.getElementById('cp_confirm').value;
+    const upd = (id, pass) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.color = pass ? '#16a34a' : '#94a3b8';
+        el.textContent = (pass?'✓':'✗') + ' \u00a0' + el.textContent.slice(3);
+    };
+    upd('cpr_len',   v.length >= 8);
+    upd('cpr_up',    /[A-Z]/.test(v));
+    upd('cpr_num',   /[0-9]/.test(v));
+    upd('cpr_match', v.length > 0 && v === c);
+ 
+    const ico = document.getElementById('cpMatchIcon');
+    ico.style.display = c ? 'block' : 'none';
+    ico.textContent   = v === c ? '✅' : '❌';
+}
+ 
+/* ── Alert ── */
+function cpClearAlert() { document.getElementById('cpAlert').style.display = 'none'; }
+function cpShowAlert(msg, type) {
+    const el = document.getElementById('cpAlert');
+    el.style.display = 'block';
+    if (type === 'success') {
+        el.style.cssText = 'display:block;background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:16px;';
+    } else {
+        el.style.cssText = 'display:block;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:16px;';
+    }
+    el.textContent = msg;
+}
+ 
+/* ── Reset ── */
+function cpReset() {
+    ['cp_current','cp_new','cp_confirm'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.value = ''; el.type = 'password'; }
+    });
+    const bar = document.getElementById('cpStrBar');
+    const lbl = document.getElementById('cpStrLbl');
+    const ico = document.getElementById('cpMatchIcon');
+    if (bar) { bar.style.width='0%'; bar.style.background='#e2e8f0'; }
+    if (lbl) lbl.textContent = '';
+    if (ico) ico.style.display = 'none';
+    ['cpr_len','cpr_up','cpr_num','cpr_match'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.style.color='#94a3b8'; const t=el.textContent; el.textContent='✗ \u00a0'+t.slice(3); }
+    });
+    cpClearAlert();
+}
+ 
+/* ── Submit ── */
+async function cpSubmit() {
+    cpClearAlert();
+    const current = (document.getElementById('cp_current')?.value||'').trim();
+    const newPw   = (document.getElementById('cp_new')?.value||'').trim();
+    const confirm = (document.getElementById('cp_confirm')?.value||'').trim();
+    const btn     = document.getElementById('cpSubmitBtn');
+    const txt     = document.getElementById('cpSubmitTxt');
+ 
+    if (!current || !newPw || !confirm) { cpShowAlert('⚠️ Please fill in all fields.','error'); return; }
+    if (newPw !== confirm)              { cpShowAlert('❌ New passwords do not match.','error'); return; }
+    if (newPw.length < 8)              { cpShowAlert('❌ Minimum 8 characters required.','error'); return; }
+    if (!/[A-Z]/.test(newPw))         { cpShowAlert('❌ Must contain an uppercase letter.','error'); return; }
+    if (!/[0-9]/.test(newPw))         { cpShowAlert('❌ Must contain a number.','error'); return; }
+ 
+    btn.disabled = true; txt.textContent = '⏳ Updating…';
+    try {
+        const res  = await fetch('/api/change-password', {
+            method: 'POST', credentials: 'include',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ current_password: current, new_password: newPw, confirm_password: confirm })
+        });
+        const data = await res.json();
+        if (data.success) {
+            cpShowAlert('✅ Password updated successfully!', 'success');
+            cpReset();
+            setTimeout(() => { _cpOpen = true; cpToggle(); }, 2200);
+        } else {
+            cpShowAlert('❌ ' + (data.error || 'Update failed.'), 'error');
+        }
+    } catch(e) {
+        cpShowAlert('❌ Network error. Please try again.', 'error');
+    } finally {
+        btn.disabled = false; txt.textContent = '🔐 Update Password';
+    }
+}
+</script>
             </div>
         </div>
 
