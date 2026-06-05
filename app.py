@@ -21,6 +21,7 @@ from passlib.context import CryptContext
 from dotenv import load_dotenv
 from fastapi import HTTPException
 from dhan_token_manager import init_token_manager, router as token_router
+from password_manager import router as pw_router
 load_dotenv()
 CONFIG_FILE = "config.json"
 
@@ -344,6 +345,13 @@ app.add_middleware(
     https_only=False,  
     same_site="lax"
 )
+app.include_router(pw_router)
+@app.get("/forgot-password", response_class=HTMLResponse)
+def forgot_password_page():
+    import os
+    path = os.path.join(STATIC_DIR, "finlab", "forgot-password.html")
+    with open(path, "r", encoding="utf-8") as f:
+        return HTMLResponse(f.read())
 
 # ── Serve static files (dashboard.html lives in ./static/) ──────────────
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
@@ -727,18 +735,27 @@ def api_dashboard_access(request):
             edt = IST.localize(edt)
         if now > edt:
             return JSONResponse({"allowed": False, "reason": "plan_expired"})
- 
-        sdt = datetime.fromisoformat(plan_start)
-        if sdt.tzinfo is None:
-            sdt = IST.localize(sdt)
-        if now < sdt:
-            return JSONResponse({
-                "allowed": False,
-                "reason":  "plan_queued",
-                "plan_start": sdt.isoformat(),
-            })
     except Exception as e:
-        return JSONResponse({"allowed": False, "reason": "error"})
+        print(f"api_dashboard_access expiry parse error for {username}: {e}")
+        return JSONResponse({"allowed": False, "reason": "plan_expired"})
+
+    # plan_start check — only block if plan hasn't started yet
+    # NULL plan_start means admin assigned it without a start date → treat as started
+    if plan_start:
+        try:
+            sdt = datetime.fromisoformat(plan_start)
+            if sdt.tzinfo is None:
+                sdt = IST.localize(sdt)
+            if now < sdt:
+                return JSONResponse({
+                    "allowed": False,
+                    "reason":  "plan_queued",
+                    "plan_start": sdt.isoformat(),
+                })
+        except Exception as e:
+            print(f"api_dashboard_access plan_start parse error for {username}: {e}")
+            # Don't block on parse error — let them through
+            pass
  
     # Plan is active — return full status
     return JSONResponse({
@@ -1240,29 +1257,37 @@ async def register_user(
 @app.get("/api/session-check")
 def session_check(request: Request):
 
-    # ADMIN SESSION
+    # ADMIN
     if "admin" in request.session:
         return {
             "valid": True,
+            "logged_in": True,
             "role": "admin"
         }
 
-    # USER SESSION
-    if "user" not in request.session and "admin" not in request.session:
+    # USER
+    if "user" in request.session:
+
+        valid = validate_user_session(request)
+
+        if not valid:
+
+            request.session.clear()
+
+            return {
+                "valid": False,
+                "logged_in": False
+            }
+
         return {
-            "valid": False,
-            "logged_in": False
+            "valid": True,
+            "logged_in": True,
+            "role": "user"
         }
 
-    valid = validate_user_session(request)
-
-    if not valid:
-        request.session.clear()
-
     return {
-        "valid": valid,
-        "logged_in": True,
-        "role": "user"
+        "valid": False,
+        "logged_in": False
     }
 
 # @app.middleware("http")
@@ -1292,10 +1317,9 @@ def session_check(request: Request):
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard_page(request: Request):
 
-    # ADMIN ALWAYS ALLOWED
+    # ADMIN ALWAYS ALLOWED — no plan check needed
     if "admin" in request.session:
         path = os.path.join(STATIC_DIR, "dashboard.html")
-
         with open(path, "r", encoding="utf-8") as f:
             return HTMLResponse(f.read())
 
@@ -1311,43 +1335,70 @@ def dashboard_page(request: Request):
 
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-
     c.execute("""
         SELECT plan, plan_start, plan_expiry
         FROM users
         WHERE username=?
     """, (username,))
-
     row = c.fetchone()
     conn.close()
 
-    # NO PLAN
     if not row:
         return RedirectResponse("/trading-plan")
 
     plan, plan_start, plan_expiry = row
 
+    # No plan at all
     if not plan or plan == "free":
         return RedirectResponse("/trading-plan")
 
-    try:
-        now = datetime.now(IST)
-
-        expiry = datetime.fromisoformat(plan_expiry)
-
-        if expiry.tzinfo is None:
-            expiry = IST.localize(expiry)
-
-        if now > expiry:
-            return RedirectResponse("/trading-plan")
-
-    except:
+    # No expiry set
+    if not plan_expiry:
         return RedirectResponse("/trading-plan")
 
-    path = os.path.join(STATIC_DIR, "dashboard.html")
+    # Check expiry — use IST, handle timezone-naive stored values
+    try:
+        now = datetime.now(IST)
+        expiry = datetime.fromisoformat(plan_expiry)
+        if expiry.tzinfo is None:
+            expiry = IST.localize(expiry)
+        if now > expiry:
+            return RedirectResponse("/trading-plan?expired=1")
+    except Exception as e:
+        print(f"dashboard_page expiry parse error for {username}: {e}")
+        # Don't block on parse error — let them in and let /api/dashboard-access handle it
+        pass
 
+    # Check plan_start — if plan hasn't started yet, still allow dashboard
+    # (the JS checkDashboardAccess() will show the "plan not started" overlay)
+    # DO NOT redirect here — let the frontend handle it gracefully
+
+    path = os.path.join(STATIC_DIR, "dashboard.html")
     with open(path, "r", encoding="utf-8") as f:
         return HTMLResponse(f.read())
+
+
+@app.get("/api/debug-user")
+def debug_user(request: Request):
+    username = request.session.get("user") or request.session.get("admin")
+    if not username:
+        return JSONResponse({"error": "not logged in"})
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT username, plan, plan_start, plan_expiry, role FROM users WHERE username=?", (username,))
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        return JSONResponse({"error": "user not found"})
+    return JSONResponse({
+        "username": row[0],
+        "plan": row[1],
+        "plan_start": row[2],
+        "plan_expiry": row[3],
+        "role": row[4],
+        "session_keys": list(request.session.keys())
+    })
+
 # My Account
 @app.get("/account", response_class=HTMLResponse)
 def account_page(request: Request):
