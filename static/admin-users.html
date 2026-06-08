@@ -465,6 +465,9 @@
       .stats { grid-template-columns:1fr 1fr; }
       .page  { padding:12px 12px 40px; }
     }
+
+.ibtn-dl { border-color:rgba(0,212,170,.25); color:var(--green); background:rgba(0,212,170,.07); }
+.ibtn-dl:hover { background:rgba(0,212,170,.18); }
   </style>
 </head>
 
@@ -944,6 +947,7 @@
           <td><div class="actions">
             <div class="ibtn ibtn-eye"   title="View"   onclick="openDetail(${u.id})"><i class="fas fa-eye"></i></div>
             <div class="ibtn ibtn-crown" title="Plan"   onclick="openPlan(${u.id})"><i class="fas fa-crown"></i></div>
+            <div class="ibtn ibtn-dl"    title="Download Disclaimer" onclick="dlDisclaimer(${u.id})"><i class="fas fa-file-pdf"></i></div>
             <div class="ibtn ibtn-key"   title="Edit"   onclick="openEdit(${u.id})"><i class="fas fa-key"></i></div>
             <div class="ibtn ibtn-trash" title="Delete" onclick="openDel(${u.id})"><i class="fas fa-trash"></i></div>
           </div></td>
@@ -969,6 +973,7 @@
           <div class="mob-card-actions">
             <div class="ibtn ibtn-eye"   onclick="openDetail(${u.id})" title="View"><i class="fas fa-eye"></i></div>
             <div class="ibtn ibtn-crown" onclick="openPlan(${u.id})"   title="Plan"><i class="fas fa-crown"></i></div>
+            <div class="ibtn ibtn-dl"    onclick="dlDisclaimer(${u.id})" title="Disclaimer"><i class="fas fa-file-pdf"></i></div>
             <div class="ibtn ibtn-key"   onclick="openEdit(${u.id})"   title="Edit"><i class="fas fa-key"></i></div>
             <div class="ibtn ibtn-trash" onclick="openDel(${u.id})"    title="Delete"><i class="fas fa-trash"></i></div>
           </div>
@@ -1190,6 +1195,13 @@
     /* ════════ INIT ════════ */
     loadUsers();
     setInterval(loadUsers, 60000);
+
+    function dlDisclaimer(id) {
+      window.open(`/api/admin/user/disclaimer-pdf/${id}`, '_blank');
+    }
+    function dlFromDetail() {
+      if (_du) dlDisclaimer(_du.id);
+    }
   </script>
 </body>
 </html>
