@@ -22,6 +22,13 @@ from dotenv import load_dotenv
 from fastapi import HTTPException
 from dhan_token_manager import init_token_manager, router as token_router
 from password_manager import router as pw_router
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+from reportlab.lib.units import mm
+from io import BytesIO
+from fastapi.responses import StreamingResponse
 load_dotenv()
 CONFIG_FILE = "config.json"
 
@@ -234,6 +241,22 @@ def init_db():
     conn.close()
 init_db()
 
+def migrate_db():
+    """Add columns that may be missing from older DB versions."""
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    # Add created_at to users if missing
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN created_at TEXT")
+        # Backfill existing rows with a placeholder date
+        c.execute("UPDATE users SET created_at = datetime('now') WHERE created_at IS NULL")
+        conn.commit()
+        print("✅ DB migrated: added created_at to users")
+    except:
+        pass  # Column already exists
+    conn.close()
+
+migrate_db()
 
 def init_subscriptions_table():
     conn = sqlite3.connect(DB_FILE)
@@ -664,6 +687,155 @@ def get_current_user(request: Request):
             "role": role,
             "is_admin": role == "admin"
         }
+
+
+@app.get("/api/admin/user/disclaimer-pdf/{user_id}")
+async def download_disclaimer_pdf(user_id: int, request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    conn.close()
+
+    if not user:
+        return JSONResponse({"error": "User not found"}, status_code=404)
+
+    # Get join date — use created_at if exists, else fallback
+    user_dict = dict(user)
+    join_raw = user_dict.get("created_at") or ""
+    try:
+        d = datetime.fromisoformat(str(join_raw))
+        join_fmt = f"{d.day}/{d.month}/{d.year}"
+    except:
+        join_fmt = datetime.now(IST).strftime("%d/%m/%Y")
+
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+                            rightMargin=20*mm, leftMargin=20*mm,
+                            topMargin=20*mm, bottomMargin=20*mm)
+
+    styles = getSampleStyleSheet()
+    h1   = ParagraphStyle('h1',   parent=styles['Heading1'], fontSize=14, spaceAfter=4,  alignment=1)
+    h2   = ParagraphStyle('h2',   parent=styles['Heading2'], fontSize=11, spaceAfter=4,  spaceBefore=10)
+    body = ParagraphStyle('body', parent=styles['Normal'],   fontSize=9,  spaceAfter=4,  leading=14)
+    small= ParagraphStyle('small',parent=styles['Normal'],   fontSize=8,  textColor=colors.grey, spaceAfter=3)
+
+    story = []
+
+    story.append(Paragraph("TRADERBRO.IN", h1))
+    story.append(Paragraph("DISCLAIMER: USER AGREEMENT &amp; EDUCATIONAL SERVICES", h1))
+    story.append(Spacer(1, 4*mm))
+    story.append(Paragraph(
+        "(This document is electronically generated in connection with the TraderBro Education Services "
+        "subscription availed via TraderBro.in. It incorporates data furnished by the user at the time of "
+        "registration and is valid without a handwritten or digital signature.)", small))
+    story.append(Spacer(1, 4*mm))
+
+    # User info table — exactly matching the registration form fields
+    info = [
+        ["Name",                       user_dict.get("username") or ""],
+        ["Contact No.",                (user_dict.get("phone") or "") + "  (Verified)"],
+        ["Email ID",                   user_dict.get("email") or ""],
+        ["Date of Joining TraderBro",  join_fmt],
+    ]
+    t = Table(info, colWidths=[55*mm, 110*mm])
+    t.setStyle(TableStyle([
+        ('FONTSIZE',       (0, 0), (-1, -1), 9),
+        ('FONTNAME',       (0, 0), (0, -1),  'Helvetica-Bold'),
+        ('BOTTOMPADDING',  (0, 0), (-1, -1), 5),
+        ('TOPPADDING',     (0, 0), (-1, -1), 5),
+        ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.HexColor('#f0f0f0'), colors.white]),
+        ('BOX',            (0, 0), (-1, -1), 0.5, colors.grey),
+        ('INNERGRID',      (0, 0), (-1, -1), 0.25, colors.lightgrey),
+    ]))
+    story.append(t)
+    story.append(Spacer(1, 5*mm))
+    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.grey))
+
+    sections = [
+        ("Disclaimer",
+         "The information available on this website (\"TraderBro.in\") is provided strictly for general "
+         "informational and educational purposes only. This Website displays market-related data, calculations, "
+         "Option Chain mathematical interrelation, and also mathematical/statistical interpretations (including "
+         "but not limited to option chain analytics, option Greeks, probability models, and data for learning "
+         "through back-testing, learning videos etc). Such content is not intended as investment advice, trading "
+         "advice, legal advice, tax advice, or financial planning advice. The Website and its owners are not "
+         "registered with SEBI as a Research Analyst (RA), Investment Adviser (IA), Portfolio Manager, Stock "
+         "Broker, or any other SEBI-registered intermediary."),
+        ("No Recommendation / No Advice",
+         "Nothing on this Website shall be construed as a recommendation to buy, sell, or hold any security or "
+         "derivative instrument, a solicitation or offer to trade, or a guarantee of profit or assurance of returns. "
+         "Users are advised to consult with a SEBI-registered investment adviser or qualified professional before "
+         "making any investment or trading decision."),
+        ("Market Risk Warning",
+         "Trading and investing in futures and options involves substantial risk, including the risk of losing the "
+         "entire capital. Past performance, back-tested performance, and simulated results do not guarantee future performance."),
+        ("Accuracy of Data",
+         "Although reasonable efforts are made to ensure accuracy, the Website does not guarantee the completeness, "
+         "correctness, timeliness, or reliability of any data displayed. Market data may be delayed, incomplete, or "
+         "sourced from third-party providers. The Website shall not be responsible for any errors, omissions, or interruptions."),
+        ("Third-Party Data and Links",
+         "This Website may use third-party data feeds and may contain links to third-party websites. "
+         "The Website does not control or endorse such third-party content and is not responsible for their accuracy, "
+         "availability, or policies."),
+        ("Limitation of Liability",
+         "Under no circumstances shall the Website, its owners, developers, employees, or affiliates be liable for "
+         "any direct or indirect loss, including loss of profits, loss of capital, trading losses, or any other "
+         "damages arising from the use of or reliance on any content available on this Website. "
+         "By using this Website, you acknowledge that you have read, understood, and agreed to this Disclaimer."),
+        ("Data Usage Policy",
+         "Users may access and use the Website content solely for personal and educational viewing, non-commercial "
+         "research, and general informational reference. Users agree not to copy, scrape, harvest, or extract data "
+         "using automated tools, redistribute or commercially exploit the data, or use the Website for any unlawful purpose. "
+         "All proprietary analytics, mathematical models, visualizations, design elements, and platform logic are the "
+         "intellectual property of TraderBro.in and are protected under applicable intellectual property laws."),
+    ]
+
+    for title, text in sections:
+        story.append(Paragraph(title, h2))
+        story.append(Paragraph(text, body))
+
+    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.grey))
+    story.append(Spacer(1, 4*mm))
+    story.append(Paragraph("Agreement", h2))
+    story.append(Paragraph(
+        f"I, <b>{user_dict.get('username', '')}</b>, "
+        f"Contact No: <b>{user_dict.get('phone', '') or ''}</b>, "
+        "have read and agree to the terms and conditions of this disclaimer. "
+        "I solely and unconditionally accept all terms and conditions herein.", body))
+    story.append(Spacer(1, 3*mm))
+    story.append(Paragraph(
+        "(This document is electronically generated in connection with the TraderBro Education Services "
+        "subscription availed via TraderBro.in. It incorporates data furnished by the user at the time of "
+        "registration and is valid without a handwritten or digital signature.)", small))
+
+    story.append(Spacer(1, 5*mm))
+    consent_val = user_dict.get("consent") or 0
+    if consent_val:
+        consent_text = "Consent Provided — User scrolled and ticked the disclaimer checkbox at registration."
+        consent_color = colors.HexColor('#1a7a1a')
+    else:
+        consent_text = "Consent NOT recorded — User may have been added manually by admin."
+        consent_color = colors.HexColor('#cc0000')
+    ct = ParagraphStyle('ct', parent=styles['Normal'], fontSize=9,
+                        textColor=consent_color, fontName='Helvetica-Bold')
+    story.append(Paragraph(consent_text, ct))
+
+    doc.build(story)
+    buf.seek(0)
+
+    safe_name = (user_dict.get("username") or f"user_{user_id}").replace(" ", "_")
+    phone_part = user_dict.get("phone") or str(user_id)
+    filename = f"disclaimer_{safe_name}_{phone_part}.pdf"
+
+    return StreamingResponse(
+        buf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
 
 @app.get("/api/dashboard-access")
 def api_dashboard_access(request):
@@ -1222,10 +1394,11 @@ async def register_user(
 
         hashed_pw = hash_password(password)
 
+        now_ist = datetime.now(IST).isoformat()
         c.execute("""
-        INSERT INTO users (username, email, password, phone, consent)
-        VALUES (?, ?, ?, ?, ?)
-        """, (username, email, hashed_pw, phone, consent_value))
+        INSERT INTO users (username, email, password, phone, consent, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """, (username, email, hashed_pw, phone, consent_value, now_ist))
 
         conn.commit()
         conn.close()
