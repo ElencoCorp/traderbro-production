@@ -156,11 +156,11 @@
 								strategies.</p>
 							<div class="contant-box style-1 wow fadeInUp" data-wow-delay="0.6s">
 								<a href="trading-plan" class="btn btn-lg btn-shadow btn-primary m-r30">START LEARNING</a>
-								<a class="video-btn style-1 popup-youtube"
+								<!-- <a class="video-btn style-1 popup-youtube"
 									href="https://www.youtube.com/watch?v=cfmQFW1DpA0">
 									<i class="fa fa-play"></i>
 									<span class="text">How it works</span>
-								</a>
+								</a> -->
 							</div>
 						</div>
 						<div class="col-xl-5 col-md-6">
@@ -1263,10 +1263,9 @@
 	}
 
 	function logout() {
-
-    window.location.href = "/logout";
-
-}
+		sessionStorage.setItem("loggedOut", "1");
+		window.location.href = "/logout";
+	}
 
 	renderNavbar();
 </script>
@@ -1335,12 +1334,8 @@
 let sessionKilled = false;
 
 function forceLogoutOverlay() {
-
     if (sessionKilled) return;
-
     sessionKilled = true;
-
-    console.log("SESSION INVALID - LOGGING OUT");
 
     document.body.innerHTML = `
         <div style="
@@ -1366,28 +1361,30 @@ function forceLogoutOverlay() {
 }
 
 setInterval(async () => {
+    // Skip if this tab just performed a logout
+    if (sessionStorage.getItem("loggedOut")) return;
+
+    // Skip on public pages — no session expected here
+    const publicPages = ["/", "/user-login", "/register", "/admin-login",
+                         "/about-us", "/trading-plan", "/contact-us",
+                         "/terms-and-conditions", "/privacy-policy",
+                         "/disclaimer", "/refund-policy", "/webinars"];
+    const path = window.location.pathname;
+    if (publicPages.some(p => path === p || path.startsWith(p + "?"))) return;
 
     try {
-
-        console.log("CHECKING SESSION...");
-
         const r = await fetch("/api/session-check", {
             cache: "no-store",
             credentials: "same-origin"
         });
-
         const data = await r.json();
-
-        console.log("SESSION RESPONSE:", data);
 
         if (!data.valid) {
             forceLogoutOverlay();
         }
-
     } catch (e) {
         console.error("SESSION CHECK ERROR:", e);
     }
-
 }, 3000);
 </script>
 
