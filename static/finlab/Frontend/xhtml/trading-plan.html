@@ -726,15 +726,8 @@ async function selectPlan(plan) {
 	}
 
 	function logout() {
-
-		fetch("/logout", {
-			method: "POST",
-			credentials: "include"
-		})
-		.then(() => {
-			window.location.href = "/";
-		});
-
+		sessionStorage.setItem("loggedOut", "1");
+		window.location.href = "/logout";
 	}
 
 	renderNavbar();
@@ -824,12 +817,8 @@ async function selectPlan(plan) {
 let sessionKilled = false;
 
 function forceLogoutOverlay() {
-
     if (sessionKilled) return;
-
     sessionKilled = true;
-
-    console.log("SESSION INVALID - LOGGING OUT");
 
     document.body.innerHTML = `
         <div style="
@@ -855,28 +844,30 @@ function forceLogoutOverlay() {
 }
 
 setInterval(async () => {
+    // Skip if this tab just performed a logout
+    if (sessionStorage.getItem("loggedOut")) return;
+
+    // Skip on public pages — no session expected here
+    const publicPages = ["/", "/user-login", "/register", "/admin-login",
+                         "/about-us", "/trading-plan", "/contact-us",
+                         "/terms-and-conditions", "/privacy-policy",
+                         "/disclaimer", "/refund-policy", "/webinars"];
+    const path = window.location.pathname;
+    if (publicPages.some(p => path === p || path.startsWith(p + "?"))) return;
 
     try {
-
-        console.log("CHECKING SESSION...");
-
         const r = await fetch("/api/session-check", {
             cache: "no-store",
             credentials: "same-origin"
         });
-
         const data = await r.json();
-
-        console.log("SESSION RESPONSE:", data);
 
         if (!data.valid) {
             forceLogoutOverlay();
         }
-
     } catch (e) {
         console.error("SESSION CHECK ERROR:", e);
     }
-
 }, 3000);
 </script>
 
