@@ -1,5 +1,8 @@
 async function checkSession() {
 
+    // Don't run on public pages or right after a deliberate logout
+    if (sessionStorage.getItem("loggedOut")) return;
+
     try {
 
         const response = await fetch("/api/me");
@@ -9,6 +12,7 @@ async function checkSession() {
         const currentPath = window.location.pathname;
 
         const excludedPages = [
+            "/",
             "/user-login",
             "/register",
             "/admin-login"
@@ -16,7 +20,7 @@ async function checkSession() {
 
         if (
             !user.username &&
-            !excludedPages.some(p => currentPath.includes(p))
+            !excludedPages.some(p => currentPath === p || currentPath.startsWith(p + "?"))
         ) {
 
             alert(
