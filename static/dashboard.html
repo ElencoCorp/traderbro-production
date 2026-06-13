@@ -2534,6 +2534,66 @@ let _shownSystemMsgs = new Set();  // track which ones we've injected this sessi
     /* ══════════════════════════════════════════════════════════
        LIVE DATA
     ══════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════
+       CLOSED BOX STATE — set by checkDashboardAccess
+    ══════════════════════════════════════════════════════════ */
+    let _closedReason = null;   // null = unknown, object = { icon, title, desc, time }
+
+    function buildClosedBox() {
+      const ist = getIST();
+      const day = ist.getDay();   // 0=Sun, 6=Sat
+      const mins = ist.getHours() * 60 + ist.getMinutes();
+      const marketOpen  = 9 * 60 + 16;
+      const marketClose = 12 * 60;
+
+      let icon, title, desc, time;
+
+      if (_closedReason) {
+        // API told us exactly why
+        icon  = _closedReason.icon;
+        title = _closedReason.title;
+        desc  = _closedReason.desc;
+        time  = _closedReason.time;
+      } else if (day === 6) {
+        icon  = "📅";
+        title = "Market Closed — Saturday";
+        desc  = "NSE is closed on weekends. No live values are generated today.";
+        time  = "Next session: <b>Monday at 9:16 AM IST</b>";
+      } else if (day === 0) {
+        icon  = "📅";
+        title = "Market Closed — Sunday";
+        desc  = "NSE is closed on weekends. No live values are generated today.";
+        time  = "Next session: <b>Monday at 9:16 AM IST</b>";
+      } else if (mins < marketOpen) {
+        icon  = "⏰";
+        title = "Pre-Market — Session Not Started";
+        desc  = "Live Black-Box-Engine values are generated during active market analysis hours.";
+        time  = "Session opens at <b>9:16 AM IST</b>";
+      } else if (mins > marketClose) {
+        icon  = "🔔";
+        title = "Market Session Ended for Today";
+        desc  = "Today's session has closed. Data will be available again next trading day.";
+        time  = "Next session: <b>Tomorrow at 9:16 AM IST</b>";
+      } else {
+        icon  = "⏰";
+        title = "Market Insight Window Closed";
+        desc  = "Live Black-Box-Engine values are generated during active market hours.";
+        time  = "9:16 AM → 12:00 PM IST";
+      }
+
+      return `
+        <div class="market-closed-box">
+          <div class="market-icon">${icon}</div>
+          <div class="market-title">${title}</div>
+          <div class="market-desc">${desc}</div>
+          <div class="market-time">${time}</div>
+          <div class="market-sub" style="margin-top:10px;">
+            Previous session values remain visible till next trading day 8:30 AM
+          </div>
+        </div>`;
+    }
+
 function loadData() {
     fetch("/api/get-running")
         .then(r => r.json())
@@ -2547,18 +2607,7 @@ function loadData() {
             if (!rows.length) {
                 _dashboardRows = [];
                 if (!grid.querySelector(".data-row")) {
-                    grid.innerHTML = `
-                        <div class="market-closed-box">
-                            <div class="market-icon">⏰</div>
-                            <div class="market-title">Market Insight Window Closed</div>
-                            <div class="market-desc">
-                                Live Black-Box-Engine values are generated during active market hours.
-                            </div>
-                            <div class="market-time">9:16 AM → 12:00 PM IST</div>
-                            <div class="market-sub">
-                                Previous values remain visible till next trading day 8:30 AM
-                            </div>
-                        </div>`;
+                    grid.innerHTML = buildClosedBox();
                 }
                 return;
             }
@@ -2602,6 +2651,15 @@ function loadData() {
             } else {
                 box.className = "atm-run-box atm-run-zero";
                 box.querySelector(".run-label").textContent = "◆ Neutral";
+            }
+
+            // ── Filter out stale zero-value rows on non-trading days ──
+            const istNow = getIST();
+            const isWeekend = istNow.getDay() === 0 || istNow.getDay() === 6;
+            const allZero = displayableRows.every(r => parseFloat(r.running || 0) === 0);
+            if ((isWeekend || _closedReason) && allZero) {
+                grid.innerHTML = buildClosedBox();
+                return;
             }
 
             const displayRows = [...displayableRows].reverse();
@@ -2940,6 +2998,11 @@ async function checkDashboardAccess() {
 
         const data = await res.json();
 
+        // On weekends/holidays, clear stale zero rows from live_running.json display
+        if (data.is_weekend || data.is_holiday) {
+            updateMarketClosedBanner(data);
+        }
+
         // NOT LOGGED IN
         if (data.reason === "not_logged_in") {
 
@@ -2975,63 +3038,48 @@ async function checkDashboardAccess() {
 function updateMarketClosedBanner(accessData) {
     const grid = document.getElementById("rows-grid");
     if (!grid) return;
- 
-    // Only overwrite if the grid is currently showing the default "closed" box
-    // (i.e., no real data rows yet). Once loadData() fills rows, don't replace.
     if (grid.querySelector(".data-row")) return;   // real data already there
- 
-    const now = new Date();
-    const ist = new Date(now.toLocaleString("en-US", { timeZone:"Asia/Kolkata" }));
-    const h = ist.getHours(), m = ist.getMinutes();
-    const mins = h * 60 + m;
-    const marketOpen  = 9 * 60 + 16;
-    const marketClose = 12 * 60 + 0;
-    const duringMarket = mins >= marketOpen && mins <= marketClose;
- 
-    // If market is open, don't show a "closed" banner
-    if (duringMarket && !accessData.is_holiday && !accessData.is_weekend) return;
- 
-    let icon, title, desc, time;
- 
+
+    // Store the reason so buildClosedBox() can use it
     if (accessData.is_weekend) {
-        const dayName = accessData.weekday_name || (ist.getDay() === 6 ? "Saturday" : "Sunday");
-        icon  = "📅";
-        title = `Market Closed — ${dayName}`;
-        desc  = "NSE is closed on weekends. No live values are generated today.";
-        time  = `Next session: <b>${accessData.next_trading_day || "Monday"}</b>`;
- 
+        const dayName = accessData.weekday_name || "Weekend";
+        _closedReason = {
+            icon:  "📅",
+            title: `Market Closed — ${dayName}`,
+            desc:  "NSE is closed on weekends. No live values are generated today.",
+            time:  `Next session: <b>${accessData.next_trading_day || "Monday"}</b>`,
+        };
     } else if (accessData.is_holiday) {
-        icon  = "🏖️";
-        title = `Market Holiday — ${accessData.holiday_reason}`;
-        desc  = `NSE is closed today for <b>${accessData.holiday_reason}</b>. No live values are generated.`;
-        time  = `Next session: <b>${accessData.next_trading_day}</b>`;
- 
-    } else if (mins < marketOpen) {
-        icon  = "⏰";
-        title = "Pre-Market — Session Not Started";
-        desc  = "Live Black-Box-Engine values are generated during active market analysis hours.";
-        time  = "Session opens at <b>9:16 AM IST</b>";
- 
+        _closedReason = {
+            icon:  "🏖️",
+            title: `Market Holiday — ${accessData.holiday_reason}`,
+            desc:  `NSE is closed today for <b>${accessData.holiday_reason}</b>. No live values are generated.`,
+            time:  `Next session: <b>${accessData.next_trading_day}</b>`,
+        };
     } else {
-        // After 12:00 PM
-        icon  = "🔔";
-        title = "Market Session Ended";
-        desc  = "Today's session has closed. Yesterday's values are shown below.";
-        time  = `Next session: <b>${accessData.next_trading_day}</b> at <b>9:16 AM IST</b>`;
+        // Weekday, non-holiday — time-based reason
+        const now = new Date();
+        const ist = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+        const mins = ist.getHours() * 60 + ist.getMinutes();
+        if (mins < 9 * 60 + 16) {
+            _closedReason = {
+                icon:  "⏰",
+                title: "Pre-Market — Session Not Started",
+                desc:  "Live Black-Box-Engine values are generated during active market analysis hours.",
+                time:  "Session opens at <b>9:16 AM IST</b>",
+            };
+        } else if (mins > 12 * 60) {
+            _closedReason = {
+                icon:  "🔔",
+                title: "Market Session Ended for Today",
+                desc:  "Today's session has closed. Data will be available again next trading day.",
+                time:  `Next session: <b>${accessData.next_trading_day}</b> at <b>9:16 AM IST</b>`,
+            };
+        }
     }
- 
-    grid.innerHTML = `
-        <div class="market-closed-box">
-            <div class="market-icon">${icon}</div>
-            <div class="market-title">${title}</div>
-            <div class="market-desc">${desc}</div>
-            <div class="market-time">${time}</div>
-            <div class="market-sub" style="margin-top:10px;">
-                Previous session values remain visible till next trading day 8:30 AM
-            </div>
-        </div>`;
+
+    grid.innerHTML = buildClosedBox();
 }
- 
 /* ── Full-screen overlay for queued plan ── */
 function showFullscreenClosed(icon, title, body, extra) {
     // Remove any existing overlay
