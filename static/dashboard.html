@@ -728,6 +728,18 @@
       border-color: rgba(2, 163, 254, .3);
     }
 
+    /* ADD after it: */
+.plan-strip.plan-admin {
+  background: rgba(245, 166, 35, .08);
+  border-color: rgba(245, 166, 35, .3);
+}
+.plan-strip.plan-admin .plan-strip-label {
+  color: var(--gold);
+}
+.plan-strip.plan-admin .plan-strip-status {
+  color: var(--green);
+}
+
     .plan-strip.plan-premium {
       background: rgba(245, 166, 35, .08);
       border-color: rgba(245, 166, 35, .3);
@@ -2785,35 +2797,43 @@ function loadData() {
 
           // Show/hide date filter
           const filterEl = document.getElementById('dl-date-filter');
-          if (filterEl) filterEl.style.display = (canDl && plan !== 'admin') ? 'block' : 'none';
+          if (filterEl) filterEl.style.display = canDl ? 'block' : 'none';
 
           if (canDl) {
-            // Compute cutoff date
             const today = new Date();
-            const cutoff = new Date();
-            cutoff.setDate(today.getDate() - maxDays);
-
-            // Set limit note
             const noteEl = document.getElementById('dl-limit-note');
-            if (noteEl) {
-              noteEl.textContent = `Files available from last ${maxDays} days (from ${cutoff.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })})`;
-            }
-
-            // Set date input defaults & constraints only on first load
             const fromInp = document.getElementById('dl-from-date');
             const toInp = document.getElementById('dl-to-date');
-            if (fromInp && !fromInp.value) {
-              const todayStr = today.toISOString().slice(0, 10);
+            const todayStr = today.toISOString().slice(0, 10);
+
+            if (plan === 'admin') {
+              // Admin: no cutoff — show all files, set date range to cover everything
+              if (noteEl) noteEl.textContent = 'All historical files unlocked — no date restriction';
+              if (fromInp && !fromInp.value) {
+                fromInp.value = '2025-01-01';   // far enough back to cover all data
+                fromInp.min   = '2024-01-01';
+                fromInp.max   = todayStr;
+                toInp.value   = todayStr;
+                toInp.min     = '2024-01-01';
+                toInp.max     = todayStr;
+              }
+            } else {
+              const cutoff = new Date();
+              cutoff.setDate(today.getDate() - maxDays);
               const cutoffStr = cutoff.toISOString().slice(0, 10);
-              fromInp.value = cutoffStr;
-              fromInp.min = cutoffStr;
-              fromInp.max = todayStr;
-              toInp.value = todayStr;
-              toInp.min = cutoffStr;
-              toInp.max = todayStr;
+              if (noteEl) {
+                noteEl.textContent = `Files available from last ${maxDays} days (from ${cutoff.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })})`;
+              }
+              if (fromInp && !fromInp.value) {
+                fromInp.value = cutoffStr;
+                fromInp.min   = cutoffStr;
+                fromInp.max   = todayStr;
+                toInp.value   = todayStr;
+                toInp.min     = cutoffStr;
+                toInp.max     = todayStr;
+              }
             }
           }
-
           renderDlList(plan, canDl);
         })
         .catch(() => {
@@ -2881,21 +2901,28 @@ function loadData() {
 
     function applyDateFilter() {
       const plan = _userPlan.toLowerCase();
-      renderDlList(plan, plan === "pro" || plan === "premium");
+      renderDlList(plan, plan === "pro" || plan === "premium" || plan === "admin");
     }
 
     function clearDateFilter() {
       const plan = _userPlan.toLowerCase();
-      const canDl = plan === "pro" || plan === "premium";
-      const maxDays = PLAN_DL_DAYS[plan] || 0;
-      if (canDl && maxDays) {
-        const today = new Date();
-        const cutoff = new Date();
-        cutoff.setDate(today.getDate() - maxDays);
-        const fromInp = document.getElementById('dl-from-date');
-        const toInp = document.getElementById('dl-to-date');
-        if (fromInp) fromInp.value = cutoff.toISOString().slice(0, 10);
-        if (toInp) toInp.value = today.toISOString().slice(0, 10);
+      const canDl = plan === "pro" || plan === "premium" || plan === "admin";
+      const today = new Date();
+      const todayStr = today.toISOString().slice(0, 10);
+      const fromInp = document.getElementById('dl-from-date');
+      const toInp = document.getElementById('dl-to-date');
+
+      if (plan === 'admin') {
+        if (fromInp) { fromInp.value = '2025-01-01'; fromInp.min = '2024-01-01'; }
+        if (toInp)   { toInp.value   = todayStr;      toInp.min   = '2024-01-01'; }
+      } else {
+        const maxDays = PLAN_DL_DAYS[plan] || 0;
+        if (canDl && maxDays) {
+          const cutoff = new Date();
+          cutoff.setDate(today.getDate() - maxDays);
+          if (fromInp) fromInp.value = cutoff.toISOString().slice(0, 10);
+          if (toInp)   toInp.value   = todayStr;
+        }
       }
       renderDlList(plan, canDl);
     }
