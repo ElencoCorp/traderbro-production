@@ -3442,9 +3442,10 @@ def api_downloads(request: Request):
             "error": "Unauthorized"
         }, status_code=401)
 
-    plan, expiry = get_user_plan(username)
+    is_admin = request.session.get("role") == "admin"
 
-    can_dl = is_plan_active(plan, expiry)
+    plan, expiry = get_user_plan(username)
+    can_dl = is_admin or is_plan_active(plan, expiry)
 
     files = sorted(
         glob.glob(os.path.join(EXCEL_DIR, "*.xlsx")),
@@ -3456,17 +3457,12 @@ def api_downloads(request: Request):
     for f in files:
 
         name = os.path.basename(f)
-
         date_part = name.replace(".xlsx", "")
 
         try:
-
             dt = datetime.strptime(date_part, "%Y-%m-%d")
-
             display = dt.strftime("%d %b %Y — %A")
-
         except:
-
             display = date_part
 
         result.append({
@@ -3474,14 +3470,13 @@ def api_downloads(request: Request):
             "display_date": display,
             "url": f"/api/download-excel/{name}",
             "can_download": can_dl,
-            "plan": plan or "free"
+            "plan": "admin" if is_admin else (plan or "free")
         })
 
     return JSONResponse({
-        "plan": plan or "free",
+        "plan": "admin" if is_admin else (plan or "free"),
         "files": result
     })
-
 
 # ═══════════════════════════════════════════════════════════════════════
 # API — SECURE EXCEL DOWNLOAD (pro/premium only, server-side check)
