@@ -1884,6 +1884,189 @@
   background: linear-gradient(90deg, #f5a623, transparent);
   opacity: .3;
 }
+
+/* ── DASHBOARD USER DROPDOWN ── */
+.dash-user-wrap { position: relative; }
+
+.dash-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 30px;
+  padding: 5px 12px 5px 5px;
+  cursor: pointer;
+  transition: all .2s;
+  color: var(--text);
+  font-family: inherit;
+}
+.dash-user-btn:hover {
+  background: rgba(255,255,255,.1);
+  border-color: rgba(2,163,254,.4);
+}
+
+.dash-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--orange));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+}
+
+.dash-user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+.dash-username {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dash-plan {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--gold);
+  line-height: 1;
+}
+.dash-plan.plan-pro   { color: var(--primary); }
+.dash-plan.plan-premium { color: var(--gold); }
+.dash-plan.plan-admin   { color: var(--green); }
+.dash-plan.plan-free, .dash-plan.plan-basic, .dash-plan.plan-essential { color: var(--text-dim); }
+
+.dash-chevron {
+  font-size: 9px;
+  color: var(--text-muted);
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+.dash-chevron.open { transform: rotate(180deg); }
+
+/* Dropdown panel */
+.dash-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 260px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 48px rgba(0,0,0,.6);
+  z-index: 9999;
+  overflow: hidden;
+  animation: ddIn .2s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes ddIn {
+  from { opacity:0; transform:translateY(-8px) scale(.97); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+.dash-dropdown.open { display: block; }
+
+/* User info block inside dropdown */
+.dd-user-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  background: rgba(2,163,254,.04);
+  border-bottom: 1px solid var(--border);
+}
+.dd-avatar-lg {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--orange));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+}
+.dd-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+.dd-email {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Plan strip */
+.dd-plan-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,0,0,.2);
+  color: var(--text-dim);
+}
+.dd-plan-status { color: var(--green); }
+
+/* Menu items */
+.dd-divider { height: 1px; background: var(--border); margin: 4px 0; }
+.dd-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  transition: background .15s;
+  cursor: pointer;
+}
+.dd-item:hover { background: rgba(2,163,254,.07); color: #fff; }
+.dd-item:hover .dd-arrow { opacity: 1; }
+.dd-icon { font-size: 14px; width: 16px; text-align: center; color: var(--text-dim); flex-shrink: 0; }
+.dd-arrow { font-size: 9px; color: var(--text-muted); margin-left: auto; opacity: 0; transition: opacity .15s; }
+
+/* Expiry strip */
+.dd-expiry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  font-size: 10px;
+  color: var(--text-dim);
+  background: rgba(245,166,35,.04);
+  border-top: 1px solid rgba(245,166,35,.1);
+}
+
+/* Logout */
+.dd-logout { color: var(--red) !important; }
+.dd-logout:hover { background: rgba(255,77,109,.08) !important; }
+.dd-logout .dd-icon { color: var(--red) !important; }
   </style>
 </head>
 
@@ -1948,19 +2131,101 @@
       </div>
     </div>
     <div class="header-right">
-      <!-- Active users pill — visible to everyone on dashboard -->
-      <div class="active-users-pill" id="active-users-pill" style="display:none;" title="Users currently on dashboard">
-        <span class="au-dot"></span>
-        <span class="au-count" id="au-count">—</span>
-        <span>on dashboard</span>
+  <!-- Active users pill -->
+  <div class="active-users-pill" id="active-users-pill" style="display:none;" title="Users currently on dashboard">
+    <span class="au-dot"></span>
+    <span class="au-count" id="au-count">—</span>
+    <span>on dashboard</span>
+  </div>
+  <a href="/" class="chat-toggle-btn"><i class="fa-solid fa-house"></i><span>HOME</span></a>
+  <div class="live-badge"><span class="live-dot"></span>Live</div>
+  <div class="ts-block">
+    <div class="ts-label">Last Updated</div>
+    <div class="ts-val" id="h-ts">—</div>
+  </div>
+
+  <!-- ── USER ACCOUNT DROPDOWN ── -->
+  <div class="dash-user-wrap" id="dash-user-wrap" style="display:none; position:relative;">
+    <button class="dash-user-btn" id="dash-user-btn" onclick="dashToggle()" title="My Account">
+      <div class="dash-avatar" id="dash-avatar">?</div>
+      <div class="dash-user-info">
+        <div class="dash-username" id="dash-username">Loading…</div>
+        <div class="dash-plan" id="dash-plan">—</div>
       </div>
-      <a href="/" class="chat-toggle-btn"><i class="fa-solid fa-house"></i><span>HOME</span></a>
-      <div class="live-badge"><span class="live-dot"></span>Live</div>
-      <div class="ts-block">
-        <div class="ts-label">Last Updated</div>
-        <div class="ts-val" id="h-ts">—</div>
+      <i class="fas fa-chevron-down dash-chevron" id="dash-chevron"></i>
+    </button>
+
+    <div class="dash-dropdown" id="dash-dropdown">
+      <!-- User info block -->
+      <div class="dd-user-block">
+        <div class="dd-avatar-lg" id="dd-avatar-lg">?</div>
+        <div>
+          <div class="dd-name" id="dd-name">—</div>
+          <div class="dd-email" id="dd-email">—</div>
+        </div>
       </div>
+
+      <!-- Plan status strip -->
+      <div class="dd-plan-strip" id="dd-plan-strip">
+        <span id="dd-plan-label">—</span>
+        <span class="dd-plan-status" id="dd-plan-status">—</span>
+      </div>
+
+      <div class="dd-divider"></div>
+
+      <!-- Links -->
+      <a href="/account" class="dd-item">
+        <i class="fas fa-user-circle dd-icon"></i>
+        <span>My Account</span>
+        <i class="fas fa-chevron-right dd-arrow"></i>
+      </a>
+      <a href="/trading-plan" class="dd-item">
+        <i class="fas fa-crown dd-icon" style="color:var(--gold)"></i>
+        <span>Upgrade Plan</span>
+        <i class="fas fa-chevron-right dd-arrow"></i>
+      </a>
+      <a href="/webinars" class="dd-item">
+        <i class="fas fa-video dd-icon" style="color:var(--primary)"></i>
+        <span>Webinars</span>
+        <i class="fas fa-chevron-right dd-arrow"></i>
+      </a>
+
+      <!-- Admin-only links -->
+      <div id="dd-admin-section" style="display:none;">
+        <div class="dd-divider"></div>
+        <a href="/admin/users" class="dd-item">
+          <i class="fas fa-users-cog dd-icon" style="color:var(--orange)"></i>
+          <span>User Management</span>
+          <i class="fas fa-chevron-right dd-arrow"></i>
+        </a>
+        <a href="/admin/webinars" class="dd-item">
+          <i class="fas fa-calendar-alt dd-icon" style="color:var(--orange)"></i>
+          <span>Manage Webinars</span>
+          <i class="fas fa-chevron-right dd-arrow"></i>
+        </a>
+        <a href="/admin" class="dd-item">
+          <i class="fas fa-chart-line dd-icon" style="color:var(--orange)"></i>
+          <span>Admin Panel</span>
+          <i class="fas fa-chevron-right dd-arrow"></i>
+        </a>
+      </div>
+
+      <div class="dd-divider"></div>
+
+      <!-- Expiry countdown -->
+      <div class="dd-expiry" id="dd-expiry" style="display:none;">
+        <i class="fas fa-clock" style="color:var(--gold);font-size:11px;"></i>
+        <span id="dd-expiry-text">—</span>
+      </div>
+
+      <!-- Logout -->
+      <a href="/logout" class="dd-item dd-logout">
+        <i class="fas fa-sign-out-alt dd-icon"></i>
+        <span>Logout</span>
+      </a>
     </div>
+  </div>
+</div>
   </header>
 
   <div class="main-grid">
@@ -3262,6 +3527,103 @@ function showFullscreenClosed(icon, title, body, extra) {
       setInterval(sendHeartbeat, 20000);
       setInterval(fetchActiveUsers, 20000);
     })();
+
+
+    /* ══════════════════════════════════════════════════════════
+   DASHBOARD USER DROPDOWN
+══════════════════════════════════════════════════════════ */
+let _dashUser = null;
+
+async function loadDashUser() {
+  try {
+    const res  = await fetch('/api/me', { credentials: 'include' });
+    const data = await res.json();
+    if (!data.username) return;
+    _dashUser = data;
+
+    const plan    = (data.plan || 'free').toLowerCase();
+    const isAdmin = data.role === 'admin';
+    const initial = (data.username || '?').charAt(0).toUpperCase();
+
+    // Avatar
+    document.getElementById('dash-avatar').textContent    = initial;
+    document.getElementById('dd-avatar-lg').textContent   = initial;
+    document.getElementById('dash-username').textContent  = data.username;
+    document.getElementById('dd-name').textContent        = data.username;
+    document.getElementById('dd-email').textContent       = data.email || '—';
+
+    // Plan label in button
+    const planLabels = { admin:'Admin', premium:'👑 Premium', pro:'⚡ Pro', essential:'Essential', basic:'Basic', free:'Free' };
+    const planEl = document.getElementById('dash-plan');
+    planEl.textContent = planLabels[isAdmin ? 'admin' : plan] || plan.toUpperCase();
+    planEl.className = `dash-plan plan-${isAdmin ? 'admin' : plan}`;
+
+    // Plan strip inside dropdown
+    const stripLabels = { admin:'🔑 Admin Access', premium:'👑 Premium Plan', pro:'⚡ Pro Plan', essential:'Essential Plan', basic:'Basic Plan', free:'Free Plan' };
+    document.getElementById('dd-plan-label').textContent = stripLabels[isAdmin ? 'admin' : plan] || plan;
+
+    // Plan status
+    const statusEl = document.getElementById('dd-plan-status');
+    if (isAdmin) {
+      statusEl.textContent = '✅ Full Access';
+      statusEl.style.color = 'var(--green)';
+    } else if (data.plan_expiry) {
+      const diff = new Date(data.plan_expiry) - Date.now();
+      if (diff > 0) {
+        const d = Math.floor(diff / 86400000);
+        statusEl.textContent = `✅ ${d}d left`;
+        statusEl.style.color = d <= 3 ? 'var(--gold)' : 'var(--green)';
+      } else {
+        statusEl.textContent = '❌ Expired';
+        statusEl.style.color = 'var(--red)';
+      }
+    } else {
+      statusEl.textContent = plan === 'free' ? '⛔ No plan' : '—';
+      statusEl.style.color = 'var(--text-dim)';
+    }
+
+    // Expiry countdown mini bar
+    if (!isAdmin && data.plan_expiry) {
+      const diff = new Date(data.plan_expiry) - Date.now();
+      if (diff > 0 && diff < 7 * 86400000) {
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor((diff % 86400000) / 3600000);
+        document.getElementById('dd-expiry').style.display = 'flex';
+        document.getElementById('dd-expiry-text').textContent = `Plan expires in ${d}d ${h}h`;
+      }
+    }
+
+    // Admin section
+    if (isAdmin) {
+      document.getElementById('dd-admin-section').style.display = 'block';
+    }
+
+    // Show the whole wrapper
+    document.getElementById('dash-user-wrap').style.display = 'block';
+
+  } catch(e) { console.error('loadDashUser:', e); }
+}
+
+function dashToggle() {
+  const dd  = document.getElementById('dash-dropdown');
+  const ch  = document.getElementById('dash-chevron');
+  const open = dd.classList.toggle('open');
+  ch.classList.toggle('open', open);
+}
+
+// Close on outside click
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('dash-user-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('dash-dropdown').classList.remove('open');
+    document.getElementById('dash-chevron').classList.remove('open');
+  }
+});
+
+// Load on init
+loadDashUser();
+
+
   </script>
 
 <script>
