@@ -30,6 +30,19 @@ from reportlab.lib.units import mm
 from io import BytesIO
 from fastapi.responses import StreamingResponse
 load_dotenv()
+
+# ── Time Configuration ─────────────────────────────
+IST = pytz.timezone("Asia/Kolkata")
+
+MARKET_OPEN_HOUR = 9
+MARKET_OPEN_MIN = 16
+
+MARKET_CLOSE_HOUR = 12
+MARKET_CLOSE_MIN = 0
+
+DASHBOARD_OPEN_HOUR = 8
+DASHBOARD_OPEN_MIN = 30
+
 CONFIG_FILE = "config.json"
 
 def get_interval():
@@ -429,8 +442,19 @@ def auto_market_recorder():
     global AUTO_RUNNING
 
     now = datetime.now(IST)
-    hour = now.hour
-    minute = now.minute
+
+    # ── HARD BLOCK: weekends and holidays never record ──────────────────
+    if now.weekday() >= 5:          # Saturday=5, Sunday=6
+        if AUTO_RUNNING:
+            print("⛔ WEEKEND — recorder idle")
+            AUTO_RUNNING = False
+        return
+
+    if is_market_holiday(now):
+        if AUTO_RUNNING:
+            print(f"⛔ HOLIDAY ({get_holiday_reason(now)}) — recorder idle")
+            AUTO_RUNNING = False
+        return
 
     # if True:  # keep your market hours check here if needed
     if is_market_open():
@@ -1965,24 +1989,19 @@ def build_df_from_oc(ltp, oc, expiry, dt_label):
 #     return True
 
 def is_market_open():
-
     now = datetime.now(IST)
 
-    current_seconds = (
-        now.hour * 3600
-    ) + (
-        now.minute * 60
-    ) + now.second
+    # Never open on weekends or holidays
+    if now.weekday() >= 5:
+        return False
+    if is_market_holiday(now):
+        return False
 
-    # TEST WINDOW
-    start_seconds = (9 * 3600) + (16 * 60) + 0
-    end_seconds   = (12 * 3600) + (00 * 60) + 0
+    current_seconds = (now.hour * 3600) + (now.minute * 60) + now.second
+    start_seconds   = (9 * 3600) + (16 * 60) + 0
+    end_seconds     = (12 * 3600) + (0 * 60) + 0
 
-    return (
-        current_seconds >= start_seconds
-        and
-        current_seconds <= end_seconds
-    )
+    return start_seconds <= current_seconds <= end_seconds
 
 
 def get_live_chain(expiry, force_live=False):
@@ -2296,6 +2315,14 @@ def load_existing_records():
             LIVE_RUNNING_RECORDS = []
 
 load_existing_records()  # Call this once at startup
+
+# On startup: if it's a weekend or holiday, wipe stale zero data
+_startup_now = datetime.now(IST)
+if _startup_now.weekday() >= 5 or is_market_holiday(_startup_now):
+    LIVE_RUNNING_RECORDS = []
+    if os.path.exists(RUNNING_FILE):
+        os.remove(RUNNING_FILE)
+        print(f"🧹 STARTUP: Cleared stale data (weekend/holiday: {_startup_now.strftime('%A')})")
 
 
 def daily_cleanup():
@@ -2830,17 +2857,6 @@ async def save_running(request: Request):
             "error": str(e)
         }, status_code=500)
 
-
-IST = pytz.timezone("Asia/Kolkata")
-
-MARKET_OPEN_HOUR = 9
-MARKET_OPEN_MIN = 16
-MARKET_CLOSE_HOUR = 12
-MARKET_CLOSE_MIN = 0
-
-DASHBOARD_OPEN_HOUR = 8
-DASHBOARD_OPEN_MIN = 30
-
 # AFTER
 def get_subscription_start_date():
     """
@@ -3234,6 +3250,16 @@ def save_daily_excel():
     This matches exactly what is visible on the dashboard.
     """
     global LIVE_RUNNING_RECORDS
+
+    # ── GUARD: never save on weekends or NSE holidays ──────────────
+    _now = datetime.now(IST)
+    if _now.weekday() >= 5:
+        print(f"⛔ save_daily_excel: skipped — {_now.strftime('%A')} is a weekend")
+        return
+    if is_market_holiday(_now):
+        print(f"⛔ save_daily_excel: skipped — {get_holiday_reason(_now)} (holiday)")
+        return
+    # ───────────────────────────────────────────────────────────────
 
     try:
         # Filter to TODAY's date only
@@ -4233,11 +4259,11 @@ async def api_admin_assign_plan(request: Request):
     if request.session.get("role") != "admin":
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
 
-    data    = await request.json()
-    user_id = data.get("user_id")
-    plan    = (data.get("plan") or "free").strip().lower()
-    custom_expiry = data.get("custom_expiry")   # ISO string or None
-    note    = data.get("note", "")              # payment reference (stored nowhere yet – extend DB if needed)
+    data         = await request.json()
+    user_id      = data.get("user_id")
+    plan         = (data.get("plan") or "free").strip().lower()
+    custom_expiry = data.get("custom_expiry")
+    note         = data.get("note", "")
 
     if not user_id:
         return JSONResponse({"success": False, "error": "user_id required"})
@@ -4252,8 +4278,15 @@ async def api_admin_assign_plan(request: Request):
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
 
+    # Get username for subscriptions table
+    c.execute("SELECT username FROM users WHERE id=?", (user_id,))
+    urow = c.fetchone()
+    if not urow:
+        conn.close()
+        return JSONResponse({"success": False, "error": "User not found"})
+    username = urow[0]
+
     if plan == "free":
-        # Remove subscription
         c.execute("""
             UPDATE users SET plan='free', plan_start=NULL, plan_expiry=NULL
             WHERE id=?
@@ -4262,44 +4295,101 @@ async def api_admin_assign_plan(request: Request):
         conn.close()
         return JSONResponse({"success": True})
 
-    # Compute start & expiry
+    now = datetime.now(IST)
+
     if custom_expiry:
-        # Admin provided explicit expiry
+        # Admin provided an explicit end date — respect it exactly
         try:
             expiry_dt = datetime.fromisoformat(custom_expiry)
             if expiry_dt.tzinfo is None:
-                expiry_dt = expiry_dt.replace(tzinfo=timezone.utc)
+                expiry_dt = IST.localize(expiry_dt)
         except Exception:
             conn.close()
             return JSONResponse({"success": False, "error": "Invalid custom_expiry format"})
-        start_dt = datetime.now(IST)
-    else:
-        # Calculate trading-day-aware expiry
-        start_dt = datetime.now(IST)
-        days = PLAN_DAYS.get(plan, 30)
-        expiry_dt = start_dt
-        added = 0
-        while added < days:
-            expiry_dt += timedelta(days=1)
-            if expiry_dt.weekday() < 5:   # Mon–Fri only
-                added += 1
-        expiry_dt = expiry_dt.replace(hour=15, minute=30, second=0, microsecond=0)
+        start_dt    = now
+        t_days      = PLAN_DAYS.get(plan, 0)
+        total_cal   = (expiry_dt.date() - start_dt.date()).days + 1
+        weekends_sk = 0
+        holidays_sk = 0
 
+    else:
+        # ── Trading-day-aware expiry: skips weekends AND NSE holidays ──
+        t_days = PLAN_DAYS.get(plan, 0)
+
+        # Check if this user already has a future active/queued sub
+        c.execute("""
+            SELECT MAX(plan_expiry) FROM subscriptions
+            WHERE username=? AND status IN ('active','queued')
+        """, (username,))
+        row = c.fetchone()
+        sub_expiry_str = row[0] if row else None
+
+        c.execute("SELECT plan_expiry FROM users WHERE id=?", (user_id,))
+        urow2 = c.fetchone()
+        user_expiry_str = urow2[0] if urow2 else None
+
+        effective_last_expiry = None
+        for es in [sub_expiry_str, user_expiry_str]:
+            if es:
+                try:
+                    edt = datetime.fromisoformat(es)
+                    if edt.tzinfo is None:
+                        edt = IST.localize(edt)
+                    if edt > now:
+                        if effective_last_expiry is None or edt > effective_last_expiry:
+                            effective_last_expiry = edt
+                except Exception:
+                    pass
+
+        if effective_last_expiry:
+            start_dt = get_next_trading_day_after(effective_last_expiry)
+        else:
+            start_dt = get_subscription_start_date()
+
+        expiry_dt, total_cal, weekends_sk, holidays_sk = calculate_expiry_from_start(
+            start_dt, t_days
+        )
+
+    new_status = "active" if start_dt <= now else "queued"
+
+    # Write to subscriptions table for history
     c.execute("""
-        UPDATE users
-        SET plan=?, plan_start=?, plan_expiry=?
-        WHERE id=?
-    """, (plan, start_dt.isoformat(), expiry_dt.isoformat(), user_id))
+        INSERT INTO subscriptions
+            (username, plan, plan_start, plan_expiry,
+             trading_days, total_calendar_days,
+             weekends_skipped, holidays_skipped,
+             status, price, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)
+    """, (
+        username, plan,
+        start_dt.isoformat(), expiry_dt.isoformat(),
+        t_days, total_cal,
+        weekends_sk, holidays_sk,
+        new_status,
+        PLAN_CONFIG_DATA.get(plan, {}).get("price", 0),
+        now.isoformat()
+    ))
+
+    # Update users table if immediately active
+    if new_status == "active":
+        c.execute("""
+            UPDATE users SET plan=?, plan_start=?, plan_expiry=?
+            WHERE id=?
+        """, (plan, start_dt.isoformat(), expiry_dt.isoformat(), user_id))
+    
     conn.commit()
     conn.close()
 
     return JSONResponse({
-        "success":     True,
-        "plan":        plan,
-        "plan_start":  start_dt.isoformat(),
-        "plan_expiry": expiry_dt.isoformat(),
+        "success":          True,
+        "plan":             plan,
+        "plan_start":       start_dt.isoformat(),
+        "plan_expiry":      expiry_dt.isoformat(),
+        "trading_days":     t_days,
+        "weekends_skipped": weekends_sk,
+        "holidays_skipped": holidays_sk,
+        "status":           new_status,
     })
-
 
 # ── DELETE USER (admin only) ─────────────────────────────────────────────
 @app.post("/api/admin/user/delete")
