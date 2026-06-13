@@ -2770,20 +2770,22 @@ function loadData() {
           if (!data) return;
           const plan = (data.plan || "free").toLowerCase();
           const files = data.files || [];
-          const canDl = (plan === "pro" || plan === "premium");
+          const canDl = (plan === "pro" || plan === "premium" || plan === "admin");
           _userPlan = plan;
           _allDlFiles = files;
 
           // Plan strip
           document.getElementById("plan-strip").className = `plan-strip plan-${plan}`;
-          const labels = { pro: '⚡ Pro Plan', premium: '👑 Premium Plan', essential: '🟡 Essential Plan', basic: '🔵 Basic Plan', free: '⭕ Free Plan' };
+          const labels = { admin: '🔑 Admin Access', pro: '⚡ Pro Plan', premium: '👑 Premium Plan', essential: '🟡 Essential Plan', basic: '🔵 Basic Plan', free: '⭕ Free Plan' };
           document.getElementById("plan-strip-label").innerHTML = labels[plan] || ('Plan: ' + plan);
           const maxDays = PLAN_DL_DAYS[plan] || 0;
-          document.getElementById("plan-strip-status").textContent = canDl ? `✅ Last ${maxDays} days unlocked` : '⛔ Downloads Locked';
+          document.getElementById("plan-strip-status").textContent = 
+            plan === "admin" ? '✅ All files unlocked' :
+            canDl ? `✅ Last ${maxDays} days unlocked` : '⛔ Downloads Locked';
 
           // Show/hide date filter
           const filterEl = document.getElementById('dl-date-filter');
-          if (filterEl) filterEl.style.display = canDl ? 'block' : 'none';
+          if (filterEl) filterEl.style.display = (canDl && plan !== 'admin') ? 'block' : 'none';
 
           if (canDl) {
             // Compute cutoff date
@@ -2830,13 +2832,13 @@ function loadData() {
 
       // Apply plan-based day limit
       const maxDays = PLAN_DL_DAYS[plan] || 0;
-      if (canDl && maxDays) {
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - maxDays);
-        cutoff.setHours(0, 0, 0, 0);
-        files = files.filter(f => {
-          try { return new Date(f.name.replace('.xlsx', '')) >= cutoff; } catch(e) { return true; }
-        });
+      if (canDl && maxDays && plan !== 'admin') {
+          const cutoff = new Date();
+          cutoff.setDate(cutoff.getDate() - maxDays);
+          cutoff.setHours(0, 0, 0, 0);
+          files = files.filter(f => {
+              try { return new Date(f.name.replace('.xlsx', '')) >= cutoff; } catch(e) { return true; }
+          });
       }
 
       // Apply user date filter
