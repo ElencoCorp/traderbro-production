@@ -1089,7 +1089,6 @@ async function updateProfile() {
 }
 </script>
 
-
 <!-- One device login -->
 <script>
 let sessionKilled = false;
@@ -1122,33 +1121,43 @@ function forceLogoutOverlay() {
 
     setTimeout(() => {
         window.location.replace("/user-login");
-    }, 3000);
+    }, 15000);
 }
 
 setInterval(async () => {
 
     try {
 
-        console.log("CHECKING SESSION...");
-
-        const r = await fetch("/api/session-check", {
-            cache: "no-store",
-            credentials: "same-origin"
+        const res = await fetch("/api/session-check", {
+            credentials: "include"
         });
 
-        const data = await r.json();
+        const data = await res.json();
 
-        console.log("SESSION RESPONSE:", data);
+        // NO SESSION
+        if (data.logged_in === false) {
 
-        if (!data.valid) {
             forceLogoutOverlay();
+            return;
         }
 
+        // USER SESSION INVALID
+        if (data.role === "user" && data.valid === false) {
+
+            forceLogoutOverlay();
+            return;
+        }
+
+        // ADMIN ALWAYS VALID
+        // DO NOTHING
+
     } catch (e) {
-        console.error("SESSION CHECK ERROR:", e);
+
+        console.error(e);
+
     }
 
-}, 3000);
+}, 5000);
 </script>
 
 </body>
