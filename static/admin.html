@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>TraderBro Admin Panel</title>
-<link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png">
+<link rel="icon" type="image/png" href="static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png">
 
 <!-- GOOGLE FONTS -->
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -38,12 +38,44 @@ body{
   padding:0 24px;
 }
 
-.logo{
-  font-size:20px;
-  font-weight:800;
-  color:var(--accent);
-}
+    .logo-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background-image: url(static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png);
+      background-size: contain;
+      background-repeat: no-repeat;
+    }
+
+    .logo-text-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .logo-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .logo-title span {
+      color: var(--accent);
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 2.5px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
 .header-right{
   margin-left:auto;
 }
@@ -277,9 +309,16 @@ tbody tr:hover td {
 <body>
 
 <!-- HEADER -->
-<div class="header">
-  <div class="logo"><img src="" alt="TraderBro Admin"> Admin</div>
-
+<header class="header">
+  <div class="logo-block">
+        <a href="/">
+          <div class="logo-icon"></div>
+        </a>
+        <div class="logo-text-wrap">
+          <div class="logo-title">Trader<span>Bro.in</span></div>
+          <div class="logo-sub">Admin Panel</div>
+        </div>
+      </div>
   <div class="header-right">
     <a href="/simple">
       <button class="btn">Recorder Page</button>
@@ -294,7 +333,7 @@ tbody tr:hover td {
       <button class="btn">👥 Token Management</button>
     </a>
   </div>
-</div>
+</header>
 
 <div class="container">
 
