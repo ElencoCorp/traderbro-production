@@ -817,8 +817,12 @@ async function selectPlan(plan) {
 let sessionKilled = false;
 
 function forceLogoutOverlay() {
+
     if (sessionKilled) return;
+
     sessionKilled = true;
+
+    console.log("SESSION INVALID - LOGGING OUT");
 
     document.body.innerHTML = `
         <div style="
@@ -840,35 +844,43 @@ function forceLogoutOverlay() {
 
     setTimeout(() => {
         window.location.replace("/user-login");
-    }, 3000);
+    }, 15000);
 }
 
 setInterval(async () => {
-    // Skip if this tab just performed a logout
-    if (sessionStorage.getItem("loggedOut")) return;
-
-    // Skip on public pages — no session expected here
-    const publicPages = ["/", "/user-login", "/register", "/admin-login",
-                         "/about-us", "/trading-plan", "/contact-us",
-                         "/terms-and-conditions", "/privacy-policy",
-                         "/disclaimer", "/refund-policy", "/webinars"];
-    const path = window.location.pathname;
-    if (publicPages.some(p => path === p || path.startsWith(p + "?"))) return;
 
     try {
-        const r = await fetch("/api/session-check", {
-            cache: "no-store",
-            credentials: "same-origin"
-        });
-        const data = await r.json();
 
-        if (!data.valid) {
+        const res = await fetch("/api/session-check", {
+            credentials: "include"
+        });
+
+        const data = await res.json();
+
+        // NO SESSION
+        if (data.logged_in === false) {
+
             forceLogoutOverlay();
+            return;
         }
+
+        // USER SESSION INVALID
+        if (data.role === "user" && data.valid === false) {
+
+            forceLogoutOverlay();
+            return;
+        }
+
+        // ADMIN ALWAYS VALID
+        // DO NOTHING
+
     } catch (e) {
-        console.error("SESSION CHECK ERROR:", e);
+
+        console.error(e);
+
     }
-}, 3000);
+
+}, 5000);
 </script>
 
 
