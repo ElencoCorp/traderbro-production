@@ -950,76 +950,7 @@
 	});
 </script>
 
-<!-- One device login -->
-<script>
-let sessionKilled = false;
-
-function forceLogoutOverlay() {
-
-    if (sessionKilled) return;
-
-    sessionKilled = true;
-
-    console.log("SESSION INVALID - LOGGING OUT");
-
-    document.body.innerHTML = `
-        <div style="
-            position:fixed;
-            inset:0;
-            background:#050814;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            z-index:999999;
-            color:white;
-            font-family:Poppins;
-            flex-direction:column;
-        ">
-            <h1>🔒 Session Ended</h1>
-            <p>Logged in from another device</p>
-        </div>
-    `;
-
-    setTimeout(() => {
-        window.location.replace("/user-login");
-    }, 15000);
-}
-
-setInterval(async () => {
-
-    try {
-
-        const res = await fetch("/api/session-check", {
-            credentials: "include"
-        });
-
-        const data = await res.json();
-
-        // NO SESSION
-        if (data.logged_in === false) {
-
-            forceLogoutOverlay();
-            return;
-        }
-
-        // USER SESSION INVALID
-        if (data.role === "user" && data.valid === false) {
-
-            forceLogoutOverlay();
-            return;
-        }
-
-        // ADMIN ALWAYS VALID
-        // DO NOTHING
-
-    } catch (e) {
-
-        console.error(e);
-
-    }
-
-}, 5000);
-</script>
+<script src="/static/session-monitor.js"></script>
 
 </body>
 
