@@ -1,445 +1,1142 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Live Webinars — TraderBro</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<style>
-:root{
-  --bg:#080810;--bg2:#0e0e1a;--bg3:#13132a;
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
-  --orange:#eb4201;--orange2:#ff6935;--orange-bg:rgba(235,66,1,0.10);
-  --text:#e8eaf0;--muted:#7c7e8e;--muted2:#454657;
-  --green:#00d4aa;--green-bg:rgba(0,212,170,0.10);
-  --red:#ff4d6d;--red-bg:rgba(255,77,109,0.10);
-  --blue:#02a3fe;--blue-bg:rgba(2,163,254,0.10);
-  --gold:#f5a623;--gold-bg:rgba(245,166,35,0.10);
-  --radius:12px;--font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Webinars — TraderBro</title>
+<link rel="icon" type="image/png" href="static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #080810;
+      --bg2: #0e0e1a;
+      --bg3: #13132a;
+      --border: rgba(255, 255, 255, 0.07);
+      --border2: rgba(255, 255, 255, 0.14);
+      --orange: #eb4201;
+      --orange2: #ff6935;
+      --orange-bg: rgba(235, 66, 1, 0.10);
+      --text: #e8eaf0;
+      --muted: #7c7e8e;
+      --muted2: #454657;
+      --green: #00d4aa;
+      --green-bg: rgba(0, 212, 170, 0.10);
+      --red: #ff4d6d;
+      --red-bg: rgba(255, 77, 109, 0.10);
+      --blue: #02a3fe;
+      --blue-bg: rgba(2, 163, 254, 0.10);
+      --gold: #f5a623;
+      --gold-bg: rgba(245, 166, 35, 0.10);
+      --radius: 12px;
+      --font: 'Space Grotesk', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+/* HEADER */
+.header{
+  height:70px;
+  background:var(--white);
+  border-bottom:2px solid var(--accent);
+  display:flex;
+  align-items:center;
+  padding:0 24px;
 }
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;line-height:1.6;}
-a{text-decoration:none;}
 
-.nav{position:sticky;top:0;z-index:100;background:rgba(8,8,16,0.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;}
-.nav-logo{font-size:1.1rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:4px;}
-.nav-logo .dot{color:var(--orange);}
-.nav-links{display:flex;gap:.5rem;align-items:center;}
-.nav-link{color:var(--muted);font-size:.875rem;padding:6px 12px;border-radius:8px;transition:all .2s;}
-.nav-link:hover{color:var(--text);background:var(--bg3);}
-.nav-link.active{color:var(--orange);}
-.nav-cta{background:var(--orange);color:#fff;font-size:.8rem;font-weight:600;padding:6px 16px;border-radius:8px;transition:background .2s;}
-.nav-cta:hover{background:var(--orange2);}
+    .logo-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-#next-banner{background:linear-gradient(135deg,rgba(235,66,1,.15),rgba(235,66,1,.04));border:1px solid rgba(235,66,1,.3);border-radius:var(--radius);padding:1rem 1.25rem;display:flex;align-items:center;gap:1rem;margin:1.25rem auto;max-width:1060px;cursor:pointer;transition:border-color .2s;}
-#next-banner:hover{border-color:rgba(235,66,1,.55);}
-#next-banner.hidden{display:none;}
-.live-pill{background:var(--orange);color:#fff;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 10px;border-radius:100px;white-space:nowrap;animation:pulseShadow 1.5s ease-in-out infinite;}
-@keyframes pulseShadow{0%,100%{box-shadow:0 0 0 0 rgba(235,66,1,.4);}50%{box-shadow:0 0 0 6px rgba(235,66,1,0);}}
-.upcoming-pill{background:var(--blue-bg);border:1px solid rgba(2,163,254,.3);color:var(--blue);font-size:.68rem;font-weight:700;text-transform:uppercase;padding:3px 10px;border-radius:100px;white-space:nowrap;}
-.banner-info{flex:1;}
-.banner-info strong{font-size:.95rem;display:block;margin-bottom:2px;}
-.banner-info span{font-size:.78rem;color:var(--muted);}
-#banner-countdown{font-family:var(--mono);font-size:.78rem;color:var(--orange2);margin-top:3px;}
-.banner-meet{background:var(--orange);color:#fff;font-size:.8rem;font-weight:600;padding:8px 18px;border-radius:8px;white-space:nowrap;transition:background .2s;}
-.banner-meet:hover{background:var(--orange2);}
-.banner-btn-outline{background:transparent;border:1px solid rgba(235,66,1,.5);color:var(--orange2);font-size:.8rem;font-weight:600;padding:8px 18px;border-radius:8px;white-space:nowrap;cursor:pointer;transition:all .2s;}
-.banner-btn-outline:hover{background:var(--orange-bg);}
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background-image: url(static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png);
+      background-size: contain;
+      background-repeat: no-repeat;
+    }
 
-.hero{padding:2.5rem 2rem 1.5rem;max-width:1100px;margin:0 auto;}
-.hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--orange-bg);border:1px solid rgba(235,66,1,.3);color:var(--orange2);font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:100px;margin-bottom:1rem;}
-.pulse{width:6px;height:6px;background:var(--orange);border-radius:50%;animation:pulseA 1.5s ease-in-out infinite;}
-@keyframes pulseA{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.4);}}
-.hero h1{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:700;line-height:1.2;margin-bottom:.75rem;}
-.hero h1 span{color:var(--orange);}
-.hero p{color:var(--muted);font-size:.95rem;max-width:520px;}
+    .logo-text-wrap {
+      display: flex;
+      flex-direction: column;
+    }
 
-.content{max-width:1100px;margin:0 auto;padding:0 2rem 4rem;}
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:2rem;}
-.tab-btn{background:none;border:none;color:var(--muted);font-family:var(--font);font-size:.875rem;font-weight:500;padding:10px 18px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;border-radius:8px 8px 0 0;}
-.tab-btn:hover{color:var(--text);}
-.tab-btn.active{color:var(--orange);border-bottom-color:var(--orange);}
+    .logo-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+    }
 
-.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.25rem;}
+    .logo-title span {
+      color: var(--accent);
+    }
 
-.wcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;transition:border-color .25s,box-shadow .25s,transform .25s;}
-.wcard:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.4);}
-.wcard.is-live{border-color:rgba(235,66,1,.4);}
-.wcard.is-completed{opacity:.82;}
-.wcard-top{padding:1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:1rem;}
-.wcard-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
-.wcard-meta{flex:1;min-width:0;}
-.wcard-status{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
-.wcard-status.upcoming{color:var(--blue);}
-.wcard-status.live{color:var(--orange);}
-.wcard-status.completed{color:var(--green);}
-.wcard-status.cancelled{color:var(--red);}
-.wcard h3{font-size:.95rem;font-weight:600;line-height:1.3;margin-bottom:3px;}
-.wcard-host{font-size:.78rem;color:var(--muted);}
-.wcard-body{padding:1rem 1.25rem;flex:1;}
-.wcard-desc{font-size:.83rem;color:var(--muted);line-height:1.55;margin-bottom:.875rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
-.wcard-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:.875rem;}
-.wcard-cell{background:var(--bg3);border-radius:8px;padding:7px 10px;}
-.wcard-cell .lbl{font-size:.65rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:1px;}
-.wcard-cell .val{font-size:.8rem;font-weight:600;font-family:var(--mono);}
-.topics{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.875rem;}
-.topic{background:var(--bg3);border:1px solid var(--border);color:var(--muted);font-size:.7rem;padding:2px 9px;border-radius:100px;}
-/* countdown — updated via textContent only, no DOM rebuild */
-.cd{font-family:var(--mono);font-size:.77rem;color:var(--orange2);margin-top:4px;min-height:1.2em;}
-
-.meet-link-row{display:flex;align-items:center;gap:8px;background:rgba(235,66,1,.08);border:1px solid rgba(235,66,1,.2);border-radius:8px;padding:8px 12px;margin-top:10px;margin-bottom:.5rem;}
-.meet-link-row span{font-size:.78rem;color:var(--muted);flex:1;}
-.meet-link-row a{font-size:.78rem;font-weight:600;color:var(--orange2);text-decoration:none;}
-.meet-link-row a:hover{color:var(--orange);}
-
-.wcard-foot{padding:.875rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
-.price-tag{font-size:.73rem;font-weight:600;padding:3px 10px;border-radius:6px;margin-right:auto;}
-.price-tag.free{background:var(--green-bg);color:var(--green);}
-.price-tag.paid{background:var(--gold-bg);color:var(--gold);}
-.seats-txt{font-size:.75rem;color:var(--muted);}
-
-.btn{padding:7px 16px;border-radius:8px;font-family:var(--font);font-size:.8rem;font-weight:600;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:5px;transition:all .2s;}
-.btn-primary{background:var(--orange);color:#fff;}
-.btn-primary:hover{background:var(--orange2);}
-.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border2);}
-.btn-outline:hover{background:var(--bg3);}
-.btn-success{background:var(--green-bg);color:var(--green);border:1px solid rgba(0,212,170,.3);cursor:default;}
-.btn-watch{background:var(--blue-bg);color:var(--blue);border:1px solid rgba(2,163,254,.3);}
-.btn-watch:hover{background:rgba(2,163,254,.18);}
-.btn-live{background:var(--orange);color:#fff;animation:pulseShadow 1.5s ease-in-out infinite;}
-.btn-sm{padding:5px 12px;font-size:.75rem;}
-
-.empty{text-align:center;padding:4rem 2rem;color:var(--muted);}
-.empty-icon{font-size:3rem;margin-bottom:1rem;opacity:.25;}
-.empty h3{font-size:1.05rem;color:var(--muted);}
-
-.spinner{width:26px;height:26px;border:2px solid var(--border2);border-top-color:var(--orange);border-radius:50%;animation:spin .7s linear infinite;margin:3rem auto;}
-@keyframes spin{to{transform:rotate(360deg);}}
-
-.mbdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:300;align-items:center;justify-content:center;}
-.mbdrop.open{display:flex;}
-.mbox{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:2rem;max-width:520px;width:92%;max-height:85vh;overflow-y:auto;position:relative;}
-.mclose{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;line-height:1;}
-.mbox h2{font-size:1.2rem;margin-bottom:.4rem;}
-.mstatus{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.5rem;}
-.mhost{font-size:.82rem;color:var(--muted);margin-bottom:1.25rem;}
-.mgrid{background:var(--bg3);border-radius:10px;padding:1rem;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem;}
-.mgrid-item .lbl{font-size:.67rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
-.mgrid-item .val{font-size:.85rem;font-weight:600;}
-.mdesc{color:var(--muted);font-size:.86rem;line-height:1.6;margin-bottom:1.25rem;}
-.mtopics-label{font-size:.75rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
-.mtopics{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem;}
-.modal-meet{display:flex;align-items:center;gap:10px;background:var(--orange-bg);border:1px solid rgba(235,66,1,.3);border-radius:10px;padding:12px 16px;margin-bottom:1.5rem;}
-.modal-meet-icon{font-size:1.2rem;}
-.modal-meet-info{flex:1;}
-.modal-meet-info .lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
-.modal-meet-info a{font-size:.88rem;font-weight:600;color:var(--orange2);word-break:break-all;}
-.modal-meet-info a:hover{color:var(--orange);}
-.maction{margin-top:1.5rem;}
-.maction a,.maction button,.maction div{display:block;width:100%;text-align:center;justify-content:center;}
-
-#toast{position:fixed;bottom:2rem;right:2rem;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:11px 18px;border-radius:var(--radius);font-size:.875rem;font-weight:500;z-index:9999;transform:translateY(70px);opacity:0;transition:all .3s ease;max-width:300px;pointer-events:none;}
-#toast.show{transform:translateY(0);opacity:1;}
-#toast.ok{border-color:rgba(0,212,170,.4);color:var(--green);}
-#toast.err{border-color:rgba(255,77,109,.4);color:var(--red);}
-
-@media(max-width:640px){
-  .nav{padding:0 1rem;}
-  .hero,.content{padding-left:1rem;padding-right:1rem;}
-  #next-banner{margin-left:1rem;margin-right:1rem;flex-wrap:wrap;}
-  .wcard-grid{grid-template-columns:1fr;}
-  .mgrid{grid-template-columns:1fr;}
+    .logo-sub {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 2.5px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+.header-right{
+  margin-left:auto;
 }
-</style>
+
+    #next-banner {
+      background: linear-gradient(135deg, rgba(235, 66, 1, .15), rgba(235, 66, 1, .04));
+      border: 1px solid rgba(235, 66, 1, .3);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 1.25rem auto;
+      max-width: 1060px;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+
+    #next-banner:hover {
+      border-color: rgba(235, 66, 1, .55);
+    }
+
+    #next-banner.hidden {
+      display: none;
+    }
+
+    .live-pill {
+      background: var(--orange);
+      color: #fff;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 100px;
+      white-space: nowrap;
+      animation: pulseShadow 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulseShadow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(235, 66, 1, .4);
+      }
+
+      50% {
+        box-shadow: 0 0 0 6px rgba(235, 66, 1, 0);
+      }
+    }
+
+    .upcoming-pill {
+      background: var(--blue-bg);
+      border: 1px solid rgba(2, 163, 254, .3);
+      color: var(--blue);
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+
+    .banner-info {
+      flex: 1;
+    }
+
+    .banner-info strong {
+      font-size: .95rem;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .banner-info span {
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    #banner-countdown {
+      font-family: var(--mono);
+      font-size: .78rem;
+      color: var(--orange2);
+      margin-top: 3px;
+    }
+
+    .banner-meet {
+      background: var(--orange);
+      color: #fff;
+      font-size: .8rem;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 8px;
+      white-space: nowrap;
+      transition: background .2s;
+    }
+
+    .banner-meet:hover {
+      background: var(--orange2);
+    }
+
+    .banner-btn-outline {
+      background: transparent;
+      border: 1px solid rgba(235, 66, 1, .5);
+      color: var(--orange2);
+      font-size: .8rem;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 8px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .banner-btn-outline:hover {
+      background: var(--orange-bg);
+    }
+
+    .hero {
+      padding: 2.5rem 2rem 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--orange-bg);
+      border: 1px solid rgba(235, 66, 1, .3);
+      color: var(--orange2);
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-bottom: 1rem;
+    }
+
+    .pulse {
+      width: 6px;
+      height: 6px;
+      background: var(--orange);
+      border-radius: 50%;
+      animation: pulseA 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulseA {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: .5;
+        transform: scale(1.4);
+      }
+    }
+
+    .hero h1 {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: .75rem;
+    }
+
+    .hero h1 span {
+      color: var(--orange);
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: .95rem;
+      max-width: 520px;
+    }
+
+    .content {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem 4rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: .875rem;
+      font-weight: 500;
+      padding: 10px 18px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all .2s;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      color: var(--orange);
+      border-bottom-color: var(--orange);
+    }
+
+    .wgrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .wcard {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      transition: border-color .25s, box-shadow .25s, transform .25s;
+    }
+
+    .wcard:hover {
+      border-color: var(--border2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
+    }
+
+    .wcard.is-live {
+      border-color: rgba(235, 66, 1, .4);
+    }
+
+    .wcard.is-completed {
+      opacity: .82;
+    }
+
+    .wcard-top {
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .wcard-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    .wcard-meta {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .wcard-status {
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .wcard-status.upcoming {
+      color: var(--blue);
+    }
+
+    .wcard-status.live {
+      color: var(--orange);
+    }
+
+    .wcard-status.completed {
+      color: var(--green);
+    }
+
+    .wcard-status.cancelled {
+      color: var(--red);
+    }
+
+    .wcard h3 {
+      font-size: .95rem;
+      font-weight: 600;
+      line-height: 1.3;
+      margin-bottom: 3px;
+    }
+
+    .wcard-host {
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    .wcard-body {
+      padding: 1rem 1.25rem;
+      flex: 1;
+    }
+
+    .wcard-desc {
+      font-size: .83rem;
+      color: var(--muted);
+      line-height: 1.55;
+      margin-bottom: .875rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .wcard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-bottom: .875rem;
+    }
+
+    .wcard-cell {
+      background: var(--bg3);
+      border-radius: 8px;
+      padding: 7px 10px;
+    }
+
+    .wcard-cell .lbl {
+      font-size: .65rem;
+      color: var(--muted2);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 1px;
+    }
+
+    .wcard-cell .val {
+      font-size: .8rem;
+      font-weight: 600;
+      font-family: var(--mono);
+    }
+
+    .topics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: .875rem;
+    }
+
+    .topic {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .7rem;
+      padding: 2px 9px;
+      border-radius: 100px;
+    }
+
+    /* countdown — updated via textContent only, no DOM rebuild */
+    .cd {
+      font-family: var(--mono);
+      font-size: .77rem;
+      color: var(--orange2);
+      margin-top: 4px;
+      min-height: 1.2em;
+    }
+
+    .meet-link-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(235, 66, 1, .08);
+      border: 1px solid rgba(235, 66, 1, .2);
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-top: 10px;
+      margin-bottom: .5rem;
+    }
+
+    .meet-link-row span {
+      font-size: .78rem;
+      color: var(--muted);
+      flex: 1;
+    }
+
+    .meet-link-row a {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--orange2);
+      text-decoration: none;
+    }
+
+    .meet-link-row a:hover {
+      color: var(--orange);
+    }
+
+    .wcard-foot {
+      padding: .875rem 1.25rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .price-tag {
+      font-size: .73rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 6px;
+      margin-right: auto;
+    }
+
+    .price-tag.free {
+      background: var(--green-bg);
+      color: var(--green);
+    }
+
+    .price-tag.paid {
+      background: var(--gold-bg);
+      color: var(--gold);
+    }
+
+    .seats-txt {
+      font-size: .75rem;
+      color: var(--muted);
+    }
+
+    .btn {
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-family: var(--font);
+      font-size: .8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all .2s;
+    }
+
+    .btn-primary {
+      background: var(--orange);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: var(--orange2);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border2);
+    }
+
+    .btn-outline:hover {
+      background: var(--bg3);
+    }
+
+    .btn-success {
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid rgba(0, 212, 170, .3);
+      cursor: default;
+    }
+
+    .btn-watch {
+      background: var(--blue-bg);
+      color: var(--blue);
+      border: 1px solid rgba(2, 163, 254, .3);
+    }
+
+    .btn-watch:hover {
+      background: rgba(2, 163, 254, .18);
+    }
+
+    .btn-live {
+      background: var(--orange);
+      color: #fff;
+      animation: pulseShadow 1.5s ease-in-out infinite;
+    }
+
+    .btn-sm {
+      padding: 5px 12px;
+      font-size: .75rem;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted);
+    }
+
+    .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: .25;
+    }
+
+    .empty h3 {
+      font-size: 1.05rem;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 26px;
+      height: 26px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--orange);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 3rem auto;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .mbdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .72);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mbdrop.open {
+      display: flex;
+    }
+
+    .mbox {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 520px;
+      width: 92%;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .mclose {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.1rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .mbox h2 {
+      font-size: 1.2rem;
+      margin-bottom: .4rem;
+    }
+
+    .mstatus {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: .5rem;
+    }
+
+    .mhost {
+      font-size: .82rem;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .mgrid {
+      background: var(--bg3);
+      border-radius: 10px;
+      padding: 1rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+
+    .mgrid-item .lbl {
+      font-size: .67rem;
+      color: var(--muted2);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 2px;
+    }
+
+    .mgrid-item .val {
+      font-size: .85rem;
+      font-weight: 600;
+    }
+
+    .mdesc {
+      color: var(--muted);
+      font-size: .86rem;
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+    }
+
+    .mtopics-label {
+      font-size: .75rem;
+      color: var(--muted2);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 6px;
+    }
+
+    .mtopics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 1rem;
+    }
+
+    .modal-meet {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--orange-bg);
+      border: 1px solid rgba(235, 66, 1, .3);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-meet-icon {
+      font-size: 1.2rem;
+    }
+
+    .modal-meet-info {
+      flex: 1;
+    }
+
+    .modal-meet-info .lbl {
+      font-size: .7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 2px;
+    }
+
+    .modal-meet-info a {
+      font-size: .88rem;
+      font-weight: 600;
+      color: var(--orange2);
+      word-break: break-all;
+    }
+
+    .modal-meet-info a:hover {
+      color: var(--orange);
+    }
+
+    .maction {
+      margin-top: 1.5rem;
+    }
+
+    .maction a,
+    .maction button,
+    .maction div {
+      display: block;
+      width: 100%;
+      text-align: center;
+      justify-content: center;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      padding: 11px 18px;
+      border-radius: var(--radius);
+      font-size: .875rem;
+      font-weight: 500;
+      z-index: 9999;
+      transform: translateY(70px);
+      opacity: 0;
+      transition: all .3s ease;
+      max-width: 300px;
+      pointer-events: none;
+    }
+
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    #toast.ok {
+      border-color: rgba(0, 212, 170, .4);
+      color: var(--green);
+    }
+
+    #toast.err {
+      border-color: rgba(255, 77, 109, .4);
+      color: var(--red);
+    }
+
+    @media(max-width:640px) {
+      .nav {
+        padding: 0 1rem;
+      }
+
+      .hero,
+      .content {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+
+      #next-banner {
+        margin-left: 1rem;
+        margin-right: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .wcard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mgrid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<nav class="nav">
-  <a href="/" class="nav-logo">Trader<span class="dot">Bro</span></a>
-  <div class="nav-links">
-    <a href="/dashboard" class="nav-link">Dashboard</a>
-    <a href="/webinars" class="nav-link active">Webinars</a>
-    <a href="/trading-plan" class="nav-cta">Upgrade Plan</a>
+  <header class="header">
+  <div class="logo-block">
+        <a href="/">
+          <div class="logo-icon"></div>
+        </a>
+        <div class="logo-text-wrap">
+          <div class="logo-title">Trader<span>Bro.in</span></div>
+          <div class="logo-sub">Webinars</div>
+        </div>
+      </div>
+</header>
+
+  <div id="next-banner" class="hidden">
+    <span id="banner-pill" class="upcoming-pill">UPCOMING</span>
+    <div class="banner-info">
+      <strong id="banner-title">—</strong>
+      <span id="banner-sub">—</span>
+      <div id="banner-countdown"></div>
+    </div>
+    <div id="banner-actions"></div>
   </div>
-</nav>
 
-<div id="next-banner" class="hidden">
-  <span id="banner-pill" class="upcoming-pill">UPCOMING</span>
-  <div class="banner-info">
-    <strong id="banner-title">—</strong>
-    <span id="banner-sub">—</span>
-    <div id="banner-countdown"></div>
+  <div class="hero">
+    <div class="hero-badge"><span class="pulse"></span>Live Learning Sessions</div>
+    <h1>Market <span>Webinars</span><br>&amp; Live Sessions</h1>
+    <p>Expert-led sessions on options trading, Black-Box-Engine insights, and market strategy. Join live or watch
+      recordings.</p>
   </div>
-  <div id="banner-actions"></div>
-</div>
 
-<div class="hero">
-  <div class="hero-badge"><span class="pulse"></span>Live Learning Sessions</div>
-  <h1>Market <span>Webinars</span><br>&amp; Live Sessions</h1>
-  <p>Expert-led sessions on options trading, Black-Box-Engine insights, and market strategy. Join live or watch recordings.</p>
-</div>
-
-<div class="content">
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('upcoming')">🔜 Upcoming</button>
-    <button class="tab-btn" onclick="switchTab('live')">🔴 Live Now</button>
-    <button class="tab-btn" onclick="switchTab('completed')">📹 Recordings</button>
-    <button class="tab-btn" onclick="switchTab('all')">📋 All</button>
+  <div class="content">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('upcoming')">🔜 Upcoming</button>
+      <button class="tab-btn" onclick="switchTab('live')">🔴 Live Now</button>
+      <button class="tab-btn" onclick="switchTab('completed')">📹 Recordings</button>
+      <button class="tab-btn" onclick="switchTab('all')">📋 All</button>
+    </div>
+    <div id="container">
+      <div class="spinner"></div>
+    </div>
   </div>
-  <div id="container"><div class="spinner"></div></div>
-</div>
 
-<div id="toast"></div>
+  <div id="toast"></div>
 
-<div class="mbdrop" id="modal" onclick="if(event.target===this)closeModal()">
-  <div class="mbox">
-    <button class="mclose" onclick="closeModal()">✕</button>
-    <div id="modal-body"></div>
+  <div class="mbdrop" id="modal" onclick="if(event.target===this)closeModal()">
+    <div class="mbox">
+      <button class="mclose" onclick="closeModal()">✕</button>
+      <div id="modal-body"></div>
+    </div>
   </div>
-</div>
 
-<script>
-/* ─────────────────────────────────────────────
-   STATUS ENGINE  (shared across all pages)
-   Rules:
-     cancelled                        → cancelled
-     now ∈ [start, start+dur)         → live
-     now ≥ start+dur                  → completed
-     now < start                      → upcoming
-     DB status="live" & now < end     → force live (admin override)
-───────────────────────────────────────────── */
-function effectiveStatus(w) {
-  if (w.status === 'cancelled') return 'cancelled';
-  const start = new Date(w.scheduled_at).getTime();
-  const end   = start + (w.duration_minutes || 60) * 60000;
-  const now   = Date.now();
-  if (w.status === 'live' && now < end) return 'live';
-  if (now >= start && now < end)        return 'live';
-  if (now >= end)                       return 'completed';
-  return 'upcoming';
-}
+  <script>
+    /* ─────────────────────────────────────────────
+       STATUS ENGINE  (shared across all pages)
+       Rules:
+         cancelled                        → cancelled
+         now ∈ [start, start+dur)         → live
+         now ≥ start+dur                  → completed
+         now < start                      → upcoming
+         DB status="live" & now < end     → force live (admin override)
+    ───────────────────────────────────────────── */
+    function effectiveStatus(w) {
+      if (w.status === 'cancelled') return 'cancelled';
+      const start = new Date(w.scheduled_at).getTime();
+      const end = start + (w.duration_minutes || 60) * 60000;
+      const now = Date.now();
+      if (w.status === 'live' && now < end) return 'live';
+      if (now >= start && now < end) return 'live';
+      if (now >= end) return 'completed';
+      return 'upcoming';
+    }
 
-/* Snapshot of status string for each webinar id, used to detect changes */
-function statusSnapshot(list) {
-  return list.map(w => w.id + ':' + w.status).join('|');
-}
+    /* Snapshot of status string for each webinar id, used to detect changes */
+    function statusSnapshot(list) {
+      return list.map(w => w.id + ':' + w.status).join('|');
+    }
 
-let activeTab    = 'upcoming';
-let me           = null;
-let rawWebinars  = [];   // from API, untouched
-let allWebinars  = [];   // rawWebinars + computed .status
-let bannerWebinar = null; // the webinar currently shown in the top banner
+    let activeTab = 'upcoming';
+    let me = null;
+    let rawWebinars = [];   // from API, untouched
+    let allWebinars = [];   // rawWebinars + computed .status
+    let bannerWebinar = null; // the webinar currently shown in the top banner
 
-const ICONS   = {orange:'📊',blue:'📈',green:'💹',gold:'🎯'};
-const ICON_BG = {orange:'var(--orange-bg)',blue:'var(--blue-bg)',green:'var(--green-bg)',gold:'var(--gold-bg)'};
-const STATUS_LABEL = {upcoming:'Upcoming',live:'🔴 Live Now',completed:'Completed',cancelled:'Cancelled'};
+    const ICONS = { orange: '📊', blue: '📈', green: '💹', gold: '🎯' };
+    const ICON_BG = { orange: 'var(--orange-bg)', blue: 'var(--blue-bg)', green: 'var(--green-bg)', gold: 'var(--gold-bg)' };
+    const STATUS_LABEL = { upcoming: 'Upcoming', live: '🔴 Live Now', completed: 'Completed', cancelled: 'Cancelled' };
 
-/* ── INIT ── */
-async function init() {
-  try { const r = await fetch('/api/me'); me = await r.json(); } catch(e) {}
-  await loadWebinars();
-  // Tick every second: ONLY updates countdown text nodes — no DOM rebuild
-  setInterval(tick, 1000);
-  // Full server re-fetch every 60 s (picks up admin changes)
-  setInterval(loadWebinars, 60000);
-}
+    /* ── INIT ── */
+    async function init() {
+      try { const r = await fetch('/api/me'); me = await r.json(); } catch (e) { }
+      await loadWebinars();
+      // Tick every second: ONLY updates countdown text nodes — no DOM rebuild
+      setInterval(tick, 1000);
+      // Full server re-fetch every 60 s (picks up admin changes)
+      setInterval(loadWebinars, 60000);
+    }
 
-/* ── SERVER FETCH ── */
-async function loadWebinars() {
-  const firstLoad = rawWebinars.length === 0;
-  if (firstLoad) document.getElementById('container').innerHTML = '<div class="spinner"></div>';
+    /* ── SERVER FETCH ── */
+    async function loadWebinars() {
+      const firstLoad = rawWebinars.length === 0;
+      if (firstLoad) document.getElementById('container').innerHTML = '<div class="spinner"></div>';
 
-  try {
-    const r = await fetch('/api/webinars');
-    const d = await r.json();
-    rawWebinars = d.webinars || [];
-  } catch(e) {
-    if (firstLoad) document.getElementById('container').innerHTML =
-      '<div class="empty"><div class="empty-icon">⚠️</div><h3>Could not load webinars. Please refresh.</h3></div>';
-    return;
-  }
+      try {
+        const r = await fetch('/api/webinars');
+        const d = await r.json();
+        rawWebinars = d.webinars || [];
+      } catch (e) {
+        if (firstLoad) document.getElementById('container').innerHTML =
+          '<div class="empty"><div class="empty-icon">⚠️</div><h3>Could not load webinars. Please refresh.</h3></div>';
+        return;
+      }
 
-  rebuildFromRaw(true); // force full render after fetch
-}
+      rebuildFromRaw(true); // force full render after fetch
+    }
 
-/* ── REBUILD (called after fetch, or when a status actually changes) ── */
-function rebuildFromRaw(force) {
-  const prevSnap = statusSnapshot(allWebinars);
-  allWebinars = rawWebinars.map(w => ({ ...w, status: effectiveStatus(w) }));
-  const nextSnap = statusSnapshot(allWebinars);
+    /* ── REBUILD (called after fetch, or when a status actually changes) ── */
+    function rebuildFromRaw(force) {
+      const prevSnap = statusSnapshot(allWebinars);
+      allWebinars = rawWebinars.map(w => ({ ...w, status: effectiveStatus(w) }));
+      const nextSnap = statusSnapshot(allWebinars);
 
-  if (force || prevSnap !== nextSnap) {
-    renderBanner();
-    renderTab();
-  }
-}
+      if (force || prevSnap !== nextSnap) {
+        renderBanner();
+        renderTab();
+      }
+    }
 
-/* ── TICK (every 1 s) — touch only text nodes, never rebuild HTML ── */
-function tick() {
-  // 1. Recompute statuses
-  const prevSnap = statusSnapshot(allWebinars);
-  allWebinars = rawWebinars.map(w => ({ ...w, status: effectiveStatus(w) }));
-  const nextSnap = statusSnapshot(allWebinars);
+    /* ── TICK (every 1 s) — touch only text nodes, never rebuild HTML ── */
+    function tick() {
+      // 1. Recompute statuses
+      const prevSnap = statusSnapshot(allWebinars);
+      allWebinars = rawWebinars.map(w => ({ ...w, status: effectiveStatus(w) }));
+      const nextSnap = statusSnapshot(allWebinars);
 
-  // 2. If any status changed → rebuild DOM (rare, e.g. session starts/ends)
-  if (prevSnap !== nextSnap) {
-    renderBanner();
-    renderTab();
-    return; // countdowns will be fresh from the new HTML
-  }
+      // 2. If any status changed → rebuild DOM (rare, e.g. session starts/ends)
+      if (prevSnap !== nextSnap) {
+        renderBanner();
+        renderTab();
+        return; // countdowns will be fresh from the new HTML
+      }
 
-  // 3. No status change → just update countdown text nodes cheaply
-  updateCountdownNodes();
-  updateBannerCountdown();
-}
+      // 3. No status change → just update countdown text nodes cheaply
+      updateCountdownNodes();
+      updateBannerCountdown();
+    }
 
-/* Update only .cd span text for upcoming cards already in the DOM */
-function updateCountdownNodes() {
-  allWebinars.forEach(w => {
-    if (w.status !== 'upcoming') return;
-    const el = document.getElementById('cd-' + w.id);
-    if (!el) return;
-    const diff = new Date(w.scheduled_at).getTime() - Date.now();
-    el.textContent = diff <= 0 ? 'Starting soon…' : '⏱ ' + fmtDiff(diff);
-  });
-}
+    /* Update only .cd span text for upcoming cards already in the DOM */
+    function updateCountdownNodes() {
+      allWebinars.forEach(w => {
+        if (w.status !== 'upcoming') return;
+        const el = document.getElementById('cd-' + w.id);
+        if (!el) return;
+        const diff = new Date(w.scheduled_at).getTime() - Date.now();
+        el.textContent = diff <= 0 ? 'Starting soon…' : '⏱ ' + fmtDiff(diff);
+      });
+    }
 
-function updateBannerCountdown() {
-  if (!bannerWebinar || bannerWebinar.status === 'live') return;
-  const el = document.getElementById('banner-countdown');
-  if (!el) return;
-  const diff = new Date(bannerWebinar.scheduled_at).getTime() - Date.now();
-  el.textContent = diff <= 0 ? 'Starting soon…' : '⏱ ' + fmtDiff(diff);
-}
+    function updateBannerCountdown() {
+      if (!bannerWebinar || bannerWebinar.status === 'live') return;
+      const el = document.getElementById('banner-countdown');
+      if (!el) return;
+      const diff = new Date(bannerWebinar.scheduled_at).getTime() - Date.now();
+      el.textContent = diff <= 0 ? 'Starting soon…' : '⏱ ' + fmtDiff(diff);
+    }
 
-/* ── BANNER ── */
-function renderBanner() {
-  const b = document.getElementById('next-banner');
-  const live     = allWebinars.filter(w => w.status === 'live')
-                               .sort((a,b) => new Date(a.scheduled_at)-new Date(b.scheduled_at));
-  const upcoming = allWebinars.filter(w => w.status === 'upcoming')
-                               .sort((a,b) => new Date(a.scheduled_at)-new Date(b.scheduled_at));
-  const w = live[0] || upcoming[0];
+    /* ── BANNER ── */
+    function renderBanner() {
+      const b = document.getElementById('next-banner');
+      const live = allWebinars.filter(w => w.status === 'live')
+        .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
+      const upcoming = allWebinars.filter(w => w.status === 'upcoming')
+        .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at));
+      const w = live[0] || upcoming[0];
 
-  if (!w) { b.classList.add('hidden'); bannerWebinar = null; return; }
-  bannerWebinar = w;
-  const isLive = w.status === 'live';
+      if (!w) { b.classList.add('hidden'); bannerWebinar = null; return; }
+      bannerWebinar = w;
+      const isLive = w.status === 'live';
 
-  const pill = document.getElementById('banner-pill');
-  pill.className   = isLive ? 'live-pill' : 'upcoming-pill';
-  pill.textContent = isLive ? '🔴 LIVE NOW' : 'UPCOMING WEBINAR';
+      const pill = document.getElementById('banner-pill');
+      pill.className = isLive ? 'live-pill' : 'upcoming-pill';
+      pill.textContent = isLive ? '🔴 LIVE NOW' : 'UPCOMING WEBINAR';
 
-  document.getElementById('banner-title').textContent = w.title;
-  document.getElementById('banner-sub').textContent   = isLive
-    ? 'Live session in progress!'
-    : 'Starts: ' + fmtDT(w.scheduled_at);
+      document.getElementById('banner-title').textContent = w.title;
+      document.getElementById('banner-sub').textContent = isLive
+        ? 'Live session in progress!'
+        : 'Starts: ' + fmtDT(w.scheduled_at);
 
-  const acts = document.getElementById('banner-actions');
-  acts.innerHTML = isLive && w.meeting_link
-    ? `<a href="${esc(w.meeting_link)}" target="_blank" class="banner-meet">🔴 Join Live →</a>`
-    : `<button class="banner-btn-outline" onclick="event.stopPropagation();openDetail(${w.id})">View Details</button>`;
+      const acts = document.getElementById('banner-actions');
+      acts.innerHTML = isLive && w.meeting_link
+        ? `<a href="${esc(w.meeting_link)}" target="_blank" class="banner-meet">🔴 Join Live →</a>`
+        : `<button class="banner-btn-outline" onclick="event.stopPropagation();openDetail(${w.id})">View Details</button>`;
 
-  b.onclick = () => openDetail(w.id);
-  b.classList.remove('hidden');
+      b.onclick = () => openDetail(w.id);
+      b.classList.remove('hidden');
 
-  // Seed countdown text immediately
-  updateBannerCountdown();
-}
+      // Seed countdown text immediately
+      updateBannerCountdown();
+    }
 
-/* ── TABS ── */
-function switchTab(t) {
-  activeTab = t;
-  document.querySelectorAll('.tab-btn').forEach((b,i) => {
-    b.classList.toggle('active', ['upcoming','live','completed','all'][i] === t);
-  });
-  renderTab();
-}
+    /* ── TABS ── */
+    function switchTab(t) {
+      activeTab = t;
+      document.querySelectorAll('.tab-btn').forEach((b, i) => {
+        b.classList.toggle('active', ['upcoming', 'live', 'completed', 'all'][i] === t);
+      });
+      renderTab();
+    }
 
-/* ── GRID RENDER ── */
-function renderTab() {
-  const list = activeTab === 'all'
-    ? allWebinars
-    : allWebinars.filter(w => w.status === activeTab);
+    /* ── GRID RENDER ── */
+    function renderTab() {
+      const list = activeTab === 'all'
+        ? allWebinars
+        : allWebinars.filter(w => w.status === activeTab);
 
-  const msgs = {
-    upcoming:'No upcoming webinars scheduled. Check back soon!',
-    live:'No live session right now.',
-    completed:'No recordings yet.',
-    all:'No webinars found.'
-  };
+      const msgs = {
+        upcoming: 'No upcoming webinars scheduled. Check back soon!',
+        live: 'No live session right now.',
+        completed: 'No recordings yet.',
+        all: 'No webinars found.'
+      };
 
-  if (!list.length) {
-    document.getElementById('container').innerHTML =
-      `<div class="empty"><div class="empty-icon">📅</div><h3>${msgs[activeTab]}</h3></div>`;
-    return;
-  }
+      if (!list.length) {
+        document.getElementById('container').innerHTML =
+          `<div class="empty"><div class="empty-icon">📅</div><h3>${msgs[activeTab]}</h3></div>`;
+        return;
+      }
 
-  const sorted = [...list].sort((a,b) => {
-    const o = {live:0,upcoming:1,completed:2,cancelled:3};
-    return (o[a.status]??4)-(o[b.status]??4) || new Date(a.scheduled_at)-new Date(b.scheduled_at);
-  });
+      const sorted = [...list].sort((a, b) => {
+        const o = { live: 0, upcoming: 1, completed: 2, cancelled: 3 };
+        return (o[a.status] ?? 4) - (o[b.status] ?? 4) || new Date(a.scheduled_at) - new Date(b.scheduled_at);
+      });
 
-  document.getElementById('container').innerHTML =
-    `<div class="wgrid">${sorted.map(cardHTML).join('')}</div>`;
+      document.getElementById('container').innerHTML =
+        `<div class="wgrid">${sorted.map(cardHTML).join('')}</div>`;
 
-  // Seed countdown text immediately after render (avoids 1-second blank gap)
-  updateCountdownNodes();
-}
+      // Seed countdown text immediately after render (avoids 1-second blank gap)
+      updateCountdownNodes();
+    }
 
-/* ── CARD HTML ── */
-function cardHTML(w) {
-  const icon  = ICONS[w.cover_color]    || '📊';
-  const ibg   = ICON_BG[w.cover_color]  || 'var(--orange-bg)';
-  const dt    = new Date(w.scheduled_at);
-  const dateS = dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
-  const timeS = dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
-  const dur   = w.duration_minutes >= 60 ? (w.duration_minutes/60).toFixed(1)+'h' : w.duration_minutes+'m';
-  const endDt = new Date(dt.getTime() + (w.duration_minutes||60)*60000);
-  const endS  = endDt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
-  const seats = w.max_seats > 0
-    ? `${Math.max(0, w.max_seats - w.registrations)} seats left`
-    : `${w.registrations} registered`;
-  const topicsHTML = w.topics.slice(0,4).map(t => `<span class="topic">${esc(t)}</span>`).join('');
+    /* ── CARD HTML ── */
+    function cardHTML(w) {
+      const icon = ICONS[w.cover_color] || '📊';
+      const ibg = ICON_BG[w.cover_color] || 'var(--orange-bg)';
+      const dt = new Date(w.scheduled_at);
+      const dateS = dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      const timeS = dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+      const dur = w.duration_minutes >= 60 ? (w.duration_minutes / 60).toFixed(1) + 'h' : w.duration_minutes + 'm';
+      const endDt = new Date(dt.getTime() + (w.duration_minutes || 60) * 60000);
+      const endS = endDt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+      const seats = w.max_seats > 0
+        ? `${Math.max(0, w.max_seats - w.registrations)} seats left`
+        : `${w.registrations} registered`;
+      const topicsHTML = w.topics.slice(0, 4).map(t => `<span class="topic">${esc(t)}</span>`).join('');
 
-  let meetRow = '';
-  if (w.meeting_link && (w.status === 'live' || w.status === 'upcoming')) {
-    meetRow = `<div class="meet-link-row">
+      let meetRow = '';
+      if (w.meeting_link && (w.status === 'live' || w.status === 'upcoming')) {
+        meetRow = `<div class="meet-link-row">
       <span>📹 ${w.status === 'live' ? 'Join session:' : 'Meeting link:'}</span>
       <a href="${esc(w.meeting_link)}" target="_blank">${w.status === 'live' ? 'Join Now →' : 'View Link'}</a>
     </div>`;
-  }
+      }
 
-  let liveNote = '';
-  if (w.status === 'live') {
-    liveNote = `<div style="font-size:.72rem;color:var(--orange);margin-top:4px;">🔴 Live until ${endS}</div>`;
-  }
+      let liveNote = '';
+      if (w.status === 'live') {
+        liveNote = `<div style="font-size:.72rem;color:var(--orange);margin-top:4px;">🔴 Live until ${endS}</div>`;
+      }
 
-  let actionBtn = '';
-  if (w.status === 'upcoming') {
-    if (!me?.username)        actionBtn = `<a href="/user-login" class="btn btn-primary btn-sm">Login to Register</a>`;
-    else if (w.is_registered) actionBtn = `<span class="btn btn-success btn-sm">✓ Registered</span>`;
-    else                      actionBtn = `<button class="btn btn-primary btn-sm" onclick="register(${w.id},this)">Register</button>`;
-  } else if (w.status === 'live') {
-    actionBtn = w.meeting_link
-      ? `<a href="${esc(w.meeting_link)}" target="_blank" class="btn btn-live btn-sm">🔴 Join Live</a>`
-      : `<span class="btn btn-sm" style="color:var(--orange)">🔴 In Progress</span>`;
-  } else if (w.status === 'completed') {
-    actionBtn = w.recording_link
-      ? `<a href="${esc(w.recording_link)}" target="_blank" class="btn btn-watch btn-sm">▶ Watch</a>`
-      : `<span class="btn btn-sm" style="color:var(--muted);cursor:default">Recording Soon</span>`;
-  }
+      let actionBtn = '';
+      if (w.status === 'upcoming') {
+        if (!me?.username) actionBtn = `<a href="/user-login" class="btn btn-primary btn-sm">Login to Register</a>`;
+        else if (w.is_registered) actionBtn = `<span class="btn btn-success btn-sm">✓ Registered</span>`;
+        else actionBtn = `<button class="btn btn-primary btn-sm" onclick="register(${w.id},this)">Register</button>`;
+      } else if (w.status === 'live') {
+        actionBtn = w.meeting_link
+          ? `<a href="${esc(w.meeting_link)}" target="_blank" class="btn btn-live btn-sm">🔴 Join Live</a>`
+          : `<span class="btn btn-sm" style="color:var(--orange)">🔴 In Progress</span>`;
+      } else if (w.status === 'completed') {
+        actionBtn = w.recording_link
+          ? `<a href="${esc(w.recording_link)}" target="_blank" class="btn btn-watch btn-sm">▶ Watch</a>`
+          : `<span class="btn btn-sm" style="color:var(--muted);cursor:default">Recording Soon</span>`;
+      }
 
-  /* countdown span — will be updated by updateCountdownNodes() via textContent only */
-  const cdSpan = w.status === 'upcoming'
-    ? `<div class="cd" id="cd-${w.id}"></div>` : '';
+      /* countdown span — will be updated by updateCountdownNodes() via textContent only */
+      const cdSpan = w.status === 'upcoming'
+        ? `<div class="cd" id="cd-${w.id}"></div>` : '';
 
-  return `
-  <div class="wcard${w.status==='live'?' is-live':''}${w.status==='completed'?' is-completed':''}" data-id="${w.id}">
+      return `
+  <div class="wcard${w.status === 'live' ? ' is-live' : ''}${w.status === 'completed' ? ' is-completed' : ''}" data-id="${w.id}">
     <div class="wcard-top">
       <div class="wcard-icon" style="background:${ibg}">${icon}</div>
       <div class="wcard-meta">
-        <div class="wcard-status ${w.status}">${STATUS_LABEL[w.status]||w.status}</div>
+        <div class="wcard-status ${w.status}">${STATUS_LABEL[w.status] || w.status}</div>
         <h3>${esc(w.title)}</h3>
         <div class="wcard-host">by ${esc(w.host)}</div>
       </div>
@@ -458,76 +1155,76 @@ function cardHTML(w) {
       ${cdSpan}
     </div>
     <div class="wcard-foot">
-      <span class="price-tag ${w.is_free?'free':'paid'}">${w.is_free?'FREE':'PAID'}</span>
+      <span class="price-tag ${w.is_free ? 'free' : 'paid'}">${w.is_free ? 'FREE' : 'PAID'}</span>
       <span class="seats-txt">${seats}</span>
       <button class="btn btn-outline btn-sm" onclick="openDetail(${w.id})">Details</button>
       ${actionBtn}
     </div>
   </div>`;
-}
+    }
 
-/* ── REGISTER ── */
-async function register(wid, btn) {
-  if (!me?.username) { location.href='/user-login'; return; }
-  btn.disabled = true; btn.textContent = '…';
-  try {
-    const r = await fetch('/api/webinar/register',{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({webinar_id:wid})
-    });
-    const d = await r.json();
-    if (d.success) { toast('✓ Registered!','ok'); await loadWebinars(); }
-    else { toast(d.error||'Registration failed','err'); btn.disabled=false; btn.textContent='Register'; }
-  } catch(e) { toast('Network error','err'); btn.disabled=false; btn.textContent='Register'; }
-}
+    /* ── REGISTER ── */
+    async function register(wid, btn) {
+      if (!me?.username) { location.href = '/user-login'; return; }
+      btn.disabled = true; btn.textContent = '…';
+      try {
+        const r = await fetch('/api/webinar/register', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ webinar_id: wid })
+        });
+        const d = await r.json();
+        if (d.success) { toast('✓ Registered!', 'ok'); await loadWebinars(); }
+        else { toast(d.error || 'Registration failed', 'err'); btn.disabled = false; btn.textContent = 'Register'; }
+      } catch (e) { toast('Network error', 'err'); btn.disabled = false; btn.textContent = 'Register'; }
+    }
 
-/* ── DETAIL MODAL ── */
-function openDetail(id) {
-  const w = allWebinars.find(x => x.id===id);
-  if (!w) return;
-  const dt    = new Date(w.scheduled_at);
-  const dateS = dt.toLocaleDateString('en-IN',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
-  const timeS = dt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
-  const endDt = new Date(dt.getTime() + (w.duration_minutes||60)*60000);
-  const endS  = endDt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});
+    /* ── DETAIL MODAL ── */
+    function openDetail(id) {
+      const w = allWebinars.find(x => x.id === id);
+      if (!w) return;
+      const dt = new Date(w.scheduled_at);
+      const dateS = dt.toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+      const timeS = dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+      const endDt = new Date(dt.getTime() + (w.duration_minutes || 60) * 60000);
+      const endS = endDt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-  let meetBlock = '';
-  if (w.meeting_link) {
-    meetBlock = `
+      let meetBlock = '';
+      if (w.meeting_link) {
+        meetBlock = `
     <div class="modal-meet">
-      <div class="modal-meet-icon">${w.status==='live'?'🔴':'📹'}</div>
+      <div class="modal-meet-icon">${w.status === 'live' ? '🔴' : '📹'}</div>
       <div class="modal-meet-info">
-        <div class="lbl">${w.status==='live'?'Live Session — Join Now':'Meeting Link'}</div>
+        <div class="lbl">${w.status === 'live' ? 'Live Session — Join Now' : 'Meeting Link'}</div>
         <a href="${esc(w.meeting_link)}" target="_blank">
-          ${w.status==='live'?'Click here to join →':esc(w.meeting_link)}
+          ${w.status === 'live' ? 'Click here to join →' : esc(w.meeting_link)}
         </a>
       </div>
     </div>`;
-  }
+      }
 
-  const topicsHTML = w.topics.length
-    ? `<div class="mtopics-label">Topics Covered</div>
-       <div class="mtopics">${w.topics.map(t=>`<span class="topic">${esc(t)}</span>`).join('')}</div>`
-    : '';
+      const topicsHTML = w.topics.length
+        ? `<div class="mtopics-label">Topics Covered</div>
+       <div class="mtopics">${w.topics.map(t => `<span class="topic">${esc(t)}</span>`).join('')}</div>`
+        : '';
 
-  let action = '';
-  if (!me?.username) {
-    action = `<a href="/user-login" class="btn btn-primary">Login to Register</a>`;
-  } else if (w.status==='upcoming') {
-    action = w.is_registered
-      ? `<div class="btn btn-success" style="cursor:default;justify-content:center">✓ You are registered</div>`
-      : `<button class="btn btn-primary" onclick="register(${w.id},this)">Register for Free</button>`;
-  } else if (w.status==='live') {
-    action = w.meeting_link
-      ? `<a href="${esc(w.meeting_link)}" target="_blank" class="btn btn-live">🔴 Join Live Session →</a>`
-      : `<div style="color:var(--orange);font-size:.9rem;text-align:center">🔴 Session is live — check your email for link</div>`;
-  } else if (w.status==='completed') {
-    action = w.recording_link
-      ? `<a href="${esc(w.recording_link)}" target="_blank" class="btn btn-watch">▶ Watch Recording</a>`
-      : `<div style="color:var(--muted);font-size:.85rem;text-align:center">Recording will be available soon.</div>`;
-  }
+      let action = '';
+      if (!me?.username) {
+        action = `<a href="/user-login" class="btn btn-primary">Login to Register</a>`;
+      } else if (w.status === 'upcoming') {
+        action = w.is_registered
+          ? `<div class="btn btn-success" style="cursor:default;justify-content:center">✓ You are registered</div>`
+          : `<button class="btn btn-primary" onclick="register(${w.id},this)">Register for Free</button>`;
+      } else if (w.status === 'live') {
+        action = w.meeting_link
+          ? `<a href="${esc(w.meeting_link)}" target="_blank" class="btn btn-live">🔴 Join Live Session →</a>`
+          : `<div style="color:var(--orange);font-size:.9rem;text-align:center">🔴 Session is live — check your email for link</div>`;
+      } else if (w.status === 'completed') {
+        action = w.recording_link
+          ? `<a href="${esc(w.recording_link)}" target="_blank" class="btn btn-watch">▶ Watch Recording</a>`
+          : `<div style="color:var(--muted);font-size:.85rem;text-align:center">Recording will be available soon.</div>`;
+      }
 
-  document.getElementById('modal-body').innerHTML = `
+      document.getElementById('modal-body').innerHTML = `
     <div class="mstatus ${w.status}">${w.status.toUpperCase()}</div>
     <h2>${esc(w.title)}</h2>
     <div class="mhost">Hosted by ${esc(w.host)}</div>
@@ -535,37 +1232,38 @@ function openDetail(id) {
       <div class="mgrid-item"><div class="lbl">Date</div><div class="val" style="font-size:.82rem">${dateS}</div></div>
       <div class="mgrid-item"><div class="lbl">Time (IST)</div><div class="val" style="font-family:var(--mono)">${timeS} – ${endS}</div></div>
       <div class="mgrid-item"><div class="lbl">Duration</div><div class="val">${w.duration_minutes} min</div></div>
-      <div class="mgrid-item"><div class="lbl">Seats</div><div class="val">${w.max_seats>0?`${Math.max(0,w.max_seats-w.registrations)} left`:'Unlimited'}</div></div>
+      <div class="mgrid-item"><div class="lbl">Seats</div><div class="val">${w.max_seats > 0 ? `${Math.max(0, w.max_seats - w.registrations)} left` : 'Unlimited'}</div></div>
     </div>
     ${w.description ? `<p class="mdesc">${esc(w.description)}</p>` : ''}
     ${topicsHTML}
     ${meetBlock}
     <div class="maction">${action}</div>
   `;
-  document.getElementById('modal').classList.add('open');
-}
+      document.getElementById('modal').classList.add('open');
+    }
 
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
+    function closeModal() { document.getElementById('modal').classList.remove('open'); }
 
-/* ── HELPERS ── */
-function fmtDiff(ms) {
-  const d=Math.floor(ms/86400000), h=Math.floor((ms%86400000)/3600000),
-        m=Math.floor((ms%3600000)/60000),  s=Math.floor((ms%60000)/1000);
-  return d>0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m ${s}s`;
-}
-function fmtDT(iso) {
-  return new Date(iso).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true});
-}
-function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
-let toastT;
-function toast(msg,type=''){
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.className=`show ${type}`;
-  clearTimeout(toastT); toastT=setTimeout(()=>el.className='',3200);
-}
+    /* ── HELPERS ── */
+    function fmtDiff(ms) {
+      const d = Math.floor(ms / 86400000), h = Math.floor((ms % 86400000) / 3600000),
+        m = Math.floor((ms % 3600000) / 60000), s = Math.floor((ms % 60000) / 1000);
+      return d > 0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m ${s}s`;
+    }
+    function fmtDT(iso) {
+      return new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+    function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+    let toastT;
+    function toast(msg, type = '') {
+      const el = document.getElementById('toast');
+      el.textContent = msg; el.className = `show ${type}`;
+      clearTimeout(toastT); toastT = setTimeout(() => el.className = '', 3200);
+    }
 
-document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
-init();
-</script>
+    document.getElementById('modal').addEventListener('click', function (e) { if (e.target === this) closeModal(); });
+    init();
+  </script>
 </body>
+
 </html>
