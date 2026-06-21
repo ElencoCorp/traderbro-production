@@ -29,6 +29,7 @@ from reportlab.lib import colors
 from reportlab.lib.units import mm
 from io import BytesIO
 from fastapi.responses import StreamingResponse
+from fastapi.responses import Response
 load_dotenv()
 
 # ── Time Configuration ─────────────────────────────
@@ -357,7 +358,6 @@ def create_admin():
 
 create_admin()
 
-
 # GLOBALs
 LAST_DATA = {
     "time": None,
@@ -634,6 +634,51 @@ def load_login_template(role="admin", error=False):
 
 #     return {"username": None}
 
+
+SITE_URL = "https://traderbro.in"
+
+@app.get("/robots.txt")
+def robots_txt():
+    content = """User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin-login
+Disallow: /admin/
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /account
+Disallow: /checkout
+Disallow: /simple
+Disallow: /forgot-password
+
+Sitemap: https://traderbro.in/sitemap.xml
+"""
+    return Response(content=content, media_type="text/plain")
+
+
+@app.get("/sitemap.xml")
+def sitemap():
+    pages = [
+        {"loc": "/",                     "priority": "1.0", "changefreq": "daily"},
+        {"loc": "/about-us",             "priority": "0.8", "changefreq": "monthly"},
+        {"loc": "/trading-plan",         "priority": "0.9", "changefreq": "weekly"},
+        {"loc": "/webinars",             "priority": "0.7", "changefreq": "weekly"},
+        {"loc": "/contact-us",           "priority": "0.5", "changefreq": "yearly"},
+        {"loc": "/privacy-policy",       "priority": "0.3", "changefreq": "yearly"},
+        {"loc": "/terms-and-conditions", "priority": "0.3", "changefreq": "yearly"},
+        {"loc": "/disclaimer",           "priority": "0.3", "changefreq": "yearly"},
+        {"loc": "/refund-policy",        "priority": "0.3", "changefreq": "yearly"},
+    ]
+    xml = ['<?xml version="1.0" encoding="UTF-8"?>',
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for p in pages:
+        xml.append(
+            f"<url><loc>{SITE_URL}{p['loc']}</loc>"
+            f"<changefreq>{p['changefreq']}</changefreq>"
+            f"<priority>{p['priority']}</priority></url>"
+        )
+    xml.append("</urlset>")
+    return Response(content="\n".join(xml), media_type="application/xml")
 
 @app.get("/api/me")
 def get_current_user(request: Request):
