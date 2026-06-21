@@ -3,25 +3,27 @@
 
 <head>
 
+
+
 	<!-- Meta -->
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="keywords" content="Traderbro.in, Intraday Trading, Stock Market, Nifty, Bank Nifty, Trading Signals">
+	<meta name="keywords" content="Traderbro.in, option chain education, options trading course India, Nifty Bank Nifty Sensex FinNifty, stock market education">
 	<meta name="author" content="Traderbro.in">
 	<meta name="robots" content="">
-	<meta name="description"
-		content="Traderbro.in - Your trusted partner for intraday trading signals, market sentiments, and professional trading guidance.">
-	<meta property="og:title" content="About Us - Traderbro.in">
-	<meta property="og:description"
-		content="Traderbro.in - Your trusted partner for intraday trading signals, market sentiments, and professional trading guidance.">
-	<meta property="og:image" content="https://Traderbro.in.in/social-image.png">
+	<meta name="description" content="TraderBro.in is an educational platform teaching option chain analysis and market structure for Nifty, Bank Nifty, Sensex. Educational content only — not SEBI registered.">
+	<meta property="og:title" content="About TraderBro.in – Option Chain & Market Education">
+	<meta property="og:description" content="Structured, practical education on reading option chains and market structure for Nifty, Bank Nifty, Sensex.">
+	<meta property="og:image" content="https://traderbro.in/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png">
 	<meta name="format-detection" content="telephone=no">
 
 	<!-- Mobile Specific -->
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<!-- Title -->
-	<title>About Us - Traderbro.in</title>
+	<title>About TraderBro.in – Option Chain & Market Education Platform</title>
+	<link rel="canonical" href="https://traderbro.in/about-us">
+
 
 	<!-- Favicon icon -->
 	<link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png">
@@ -555,7 +557,7 @@
 							<div class="widget widget-social wow fadeInUp" data-wow-delay="1.4s">
 								<h6 class="footer-title">Follow Us</h6>
 								<ul>
-									<li><a target="_blank" href="https://twitter.com/"><img
+									<!-- <li><a target="_blank" href="https://twitter.com/"><img
 												src="/static/finlab/Frontend/xhtml/images//social/twitter.png"
 												alt="">Twitter / X</a></li>
 									<li><a target="_blank" href="https://www.facebook.com/"><img
@@ -566,7 +568,7 @@
 												alt="">LinkedIn</a></li>
 									<li><a target="_blank" href="https://www.instagram.com/"><img
 												src="/static/finlab/Frontend/xhtml/images//social/instagram.png"
-												alt="">Instagram</a></li>
+												alt="">Instagram</a></li> -->
 									<li><a target="_blank" href="https://www.youtube.com/"><img
 												src="/static/finlab/Frontend/xhtml/images//social/youtube.png"
 												alt="">YouTube</a></li>
@@ -589,60 +591,51 @@
 									provided.
 								</span>
 							</div>
-
-							<!-- DUPLICATE CONTENT (IMPORTANT FOR LOOP) -->
-							<div class="ticker-content">
-								<span class="ticker-item bg-warning text-dark">
-									Educational Platform (Not SEBI Registered)
-								</span>
-
-								<span class="ticker-item text-danger">
-									Traderbro.in is an educational platform. We are not SEBI registered as a Research
-									Analyst (RA) or Investment Adviser (IA). No investment or trading advice is
-									provided.
-								</span>
-							</div>
-
 						</div>
 					</div>
+					<script>
+						const track = document.getElementById('tickerTrack');
+						track.innerHTML += track.innerHTML; // clone once for seamless loop, not hardcoded twice
+					</script>
 					<style>
 						.ticker-wrapper {
-  width: 100%;
-  overflow: hidden;
-  background: #000;
-  padding: 8px 0;
-}
-
-.ticker-track {
-  display: flex;
-  width: max-content;
-  animation: tickerScroll 20s linear infinite;
-}
-
-.ticker-content {
-  display: flex;
-  white-space: nowrap;
-}
-
-.ticker-item {
-  margin-right: 50px;
-  font-size: 13px;
-  padding: 5px 10px;
-  border-radius: 5px;
-}
-
-.ticker-track:hover {
-  animation-play-state: paused;
-}
-
-@keyframes tickerScroll {
-  0% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
+							width: 100%;
+							overflow: hidden;
+							background: #000;
+							padding: 8px 0;
+						}
+					
+						.ticker-track {
+							display: flex;
+							width: max-content;
+							animation: tickerScroll 20s linear infinite;
+						}
+					
+						.ticker-content {
+							display: flex;
+							white-space: nowrap;
+						}
+					
+						.ticker-item {
+							margin-right: 50px;
+							font-size: 13px;
+							padding: 5px 10px;
+							border-radius: 5px;
+						}
+					
+						.ticker-track:hover {
+							animation-play-state: paused;
+						}
+					
+						@keyframes tickerScroll {
+							0% {
+								transform: translateX(0%);
+							}
+					
+							100% {
+								transform: translateX(-50%);
+							}
+						}
 					</style>
 				</div>
 			</div>
