@@ -1372,7 +1372,7 @@
 
     .bc-bubble-ts {
       font-size: 9px;
-      color: #2a3050;
+      color: var(--green);
     }
 
     .bc-ticks {
@@ -1871,6 +1871,25 @@
       color: var(--green);
       min-width: 18px;
       text-align: center;
+    }
+
+    /* Active users pill — responsive */
+    @media (max-width: 768px) {
+
+      .header .active-users-pill {
+        display: none !important;
+      }
+      .active-users-pill {
+        padding: 4px 10px;
+        font-size: 9px;
+        gap: 5px;
+      }
+      .active-users-pill .au-count {
+        font-size: 11px;
+      }
+      .active-users-pill span:last-child {
+        display: none; /* hide "on dashboard" text on mobile, keep count */
+      }
     }
     /* ── System / Timed Messages ── */
 .bc-msg.system-msg .bc-msg-sender {
@@ -3517,13 +3536,36 @@ function showFullscreenClosed(icon, title, body, extra) {
           const res = await fetch('/api/active-users', { credentials: 'include' });
           if (!res.ok) return;
           const data = await res.json();
-          const el = document.getElementById('au-count');
-          if (el) el.textContent = data.total ?? '—';
+
+          // Only show for admin
+          const isAdmin = _dashUser
+            ? _dashUser.role === 'admin'
+            : false;
+
+          if (!isAdmin) return;
+
+          const count = data.total ?? '0';
+
+          // ── Desktop pill (in header) ──
+          const pill    = document.getElementById('active-users-pill');
+          const countEl = document.getElementById('au-count');
+          if (countEl) countEl.textContent = count;
+          if (pill)    pill.style.display  = 'flex';
+
+          // ── Mobile pill (below holiday strip) ──
+          const isMobile     = window.innerWidth <= 768;
+          const mobileStrip  = document.getElementById('mobile-au-strip');
+          const mobilePill   = document.getElementById('active-users-pill-mobile');
+          const mobileCount  = document.getElementById('au-count-mobile');
+          if (mobileCount) mobileCount.textContent = count;
+          if (mobilePill)  mobilePill.style.display  = 'flex';
+          if (mobileStrip) mobileStrip.style.display = isMobile ? 'flex' : 'none';
+
         } catch (e) { }
       }
 
       sendHeartbeat();
-      fetchActiveUsers();
+      setTimeout(fetchActiveUsers, 1500);   // ← small delay, _dashUser is loaded by then
       setInterval(sendHeartbeat, 20000);
       setInterval(fetchActiveUsers, 20000);
     })();
@@ -3623,6 +3665,13 @@ document.addEventListener('click', function(e) {
 // Load on init
 loadDashUser();
 
+// Recheck mobile AU strip visibility on resize/rotate
+window.addEventListener('resize', () => {
+  const mobileStrip = document.getElementById('mobile-au-strip');
+  const mobilePill  = document.getElementById('active-users-pill-mobile');
+  if (!mobileStrip || !mobilePill || mobilePill.style.display === 'none') return;
+  mobileStrip.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+});
 
   </script>
 
