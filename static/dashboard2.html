@@ -1,0 +1,3851 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TraderBro — Black-Box-Engine Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Roboto+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --primary: #02A3FE;
+      --primary-dark: #0082cc;
+      --bg-dark: #0a0a18;
+      --bg-card: #0f0f22;
+      --bg-card2: #13132a;
+      --bg-card3: #191932;
+      --border: rgba(2, 163, 254, 0.15);
+      --border-bright: rgba(2, 163, 254, 0.4);
+      --text: #e8eaf0;
+      --text-dim: #7a8099;
+      --text-muted: #4a5068;
+      --green: #00d4aa;
+      --green-bg: rgba(0, 212, 170, 0.1);
+      --red: #ff4d6d;
+      --red-bg: rgba(255, 77, 109, 0.1);
+      --gold: #f5a623;
+      --gold-bg: rgba(245, 166, 35, 0.1);
+      --orange: #EB4201;
+      --header-h: 70px;
+      --radius: 12px;
+      --radius-lg: 18px;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: "Poppins", sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      background-image: radial-gradient(ellipse at 20% 50%, rgba(2, 163, 254, .04) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(235, 66, 1, .04) 0%, transparent 60%);
+    }
+
+    .welcome-bar {
+      background: linear-gradient(90deg, var(--orange), #ff6b35);
+      text-align: center;
+      padding: 8px 20px;
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .header {
+      height: var(--header-h);
+      background: rgba(9, 9, 21, .95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 20px;
+      position: relative;
+      z-index: 100;
+    }
+
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary), var(--orange), var(--primary), transparent);
+      opacity: .5;
+    }
+
+    .logo-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background-image: url(static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png);
+      background-size: contain;
+      background-repeat: no-repeat;
+    }
+
+    .logo-text-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .logo-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: white;
+      line-height: 1;
+    }
+
+    .logo-title span {
+      color: var(--primary);
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 2.5px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .header-divider {
+      width: 1px;
+      height: 36px;
+      background: var(--border);
+      margin: 0 4px;
+    }
+
+    .header-indices {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+    }
+
+    .idx-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .idx-label {
+      font-size: 10px;
+      color: #fff;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .idx-val {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ff6b35;
+      margin-top: 1px;
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .chat-toggle-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(2, 163, 254, .1);
+      border: 1px solid rgba(2, 163, 254, .3);
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      cursor: pointer;
+      transition: all .2s;
+      letter-spacing: .5px;
+      text-decoration: none;
+    }
+
+    .chat-toggle-btn:hover {
+      background: rgba(2, 163, 254, .18);
+      border-color: var(--primary);
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--green-bg);
+      border: 1px solid rgba(0, 212, 170, .3);
+      padding: 5px 14px;
+      border-radius: 30px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.5s ease-in-out infinite;
+      box-shadow: 0 0 8px var(--green);
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+
+      50% {
+        opacity: .4;
+        transform: scale(.8)
+      }
+    }
+
+    .ts-block {
+      text-align: right;
+    }
+
+    .ts-label {
+      font-size: 10px;
+      color: #fff;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .ts-val {
+      font-size: 13px;
+      font-weight: 600;
+      color: #ff6b35;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      height: calc(100vh - var(--header-h) - 36px);
+    }
+
+    .left-panel {
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .left-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--orange));
+    }
+
+    .panel-header {
+      padding: 16px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(2, 163, 254, .03);
+      flex-shrink: 0;
+    }
+
+    .panel-header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title::before {
+      content: '';
+      width: 3px;
+      height: 14px;
+      background: linear-gradient(180deg, var(--primary), var(--orange));
+      border-radius: 2px;
+    }
+
+    .atm-hero {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .atm-dt-box {
+      flex: 1;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .atm-dt-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, var(--primary), transparent);
+      opacity: .5;
+    }
+
+    .atm-dt-label {
+      font-size: 10px;
+      color: #ff6b35;
+      letter-spacing: 2px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .atm-dt-val {
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+      line-height: 1.7;
+    }
+
+    .atm-dt-val .strike-highlight {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .atm-run-box {
+      min-width: 110px;
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .atm-run-box .run-label {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      opacity: .7;
+    }
+
+    .atm-run-box .run-val {
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .atm-run-pos {
+      background: linear-gradient(135deg, rgba(0, 212, 170, .15), rgba(0, 212, 170, .05));
+      border: 1px solid rgba(0, 212, 170, .4);
+      color: var(--green);
+    }
+
+    .atm-run-pos .run-label {
+      color: var(--green);
+    }
+
+    .atm-run-neg {
+      background: linear-gradient(135deg, rgba(255, 77, 109, .15), rgba(255, 77, 109, .05));
+      border: 1px solid rgba(255, 77, 109, .4);
+      color: var(--red);
+    }
+
+    .atm-run-neg .run-label {
+      color: var(--red);
+    }
+
+    .atm-run-zero {
+      background: linear-gradient(135deg, rgba(245, 166, 35, .15), rgba(245, 166, 35, .05));
+      border: 1px solid rgba(245, 166, 35, .4);
+      color: var(--gold);
+    }
+
+    .atm-run-zero .run-label {
+      color: var(--gold);
+    }
+
+    .market-note {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--gold);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--gold-bg);
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(245, 166, 35, .2);
+    }
+
+    .rows-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+    }
+
+    .rows-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .rows-scroll::-webkit-scrollbar-thumb {
+      background: rgba(2, 163, 254, .2);
+      border-radius: 2px;
+    }
+
+    .rows-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-bottom: 20px;
+    }
+
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      transition: all .2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .data-row::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      border-radius: 0 2px 2px 0;
+    }
+
+    .data-row.row-neg::before {
+      background: var(--red);
+    }
+
+    .data-row.row-pos::before {
+      background: var(--green);
+    }
+
+    .data-row.row-zero::before {
+      background: var(--gold);
+    }
+
+    .data-row:hover {
+      border-color: var(--border-bright);
+      background: var(--bg-card3);
+      transform: translateX(2px);
+    }
+
+    .row-dt {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .row-time {
+      font-size: 13px;
+      font-family: "Roboto Mono", monospace;
+      font-weight: 600;
+      color: #ff6b35;
+    }
+
+    .row-sensex {
+      font-size: 12px;
+      color: #e8eaf0;
+    }
+
+    .val-pill {
+      min-width: 80px;
+      text-align: center;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .val-pos {
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid rgba(0, 212, 170, .25);
+    }
+
+    .val-neg {
+      background: var(--red-bg);
+      color: var(--red);
+      border: 1px solid rgba(255, 77, 109, .25);
+    }
+
+    .val-zero {
+      background: var(--gold-bg);
+      color: var(--gold);
+      border: 1px solid rgba(245, 166, 35, .25);
+    }
+
+    .market-closed-box {
+      margin: 20px auto;
+      background: linear-gradient(135deg, rgba(245, 166, 35, .08), rgba(235, 66, 1, .04));
+      border: 1px solid rgba(245, 166, 35, .2);
+      border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      text-align: center;
+      animation: fadeInUp .5s ease;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .market-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+
+    .market-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .market-desc {
+      font-size: 12px;
+      color: red;
+      margin-bottom: 18px;
+      line-height: 1.6;
+    }
+
+    .market-time {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--gold), var(--orange));
+      color: white;
+      padding: 8px 24px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .market-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .right-panel {
+      background: var(--bg-dark);
+      display: grid;
+      grid-template-rows: 48% 52%;
+      overflow: hidden;
+      position: relative;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .gauge-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .gauge-card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .gauge-card-title::before,
+    .gauge-card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border));
+    }
+
+    .gauge-card-title::after {
+      background: linear-gradient(90deg, var(--border), transparent);
+    }
+
+    .gauge-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+
+    canvas#gauge {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .gauge-value-display {
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 24px;
+      font-weight: 900;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .sentiment-text {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    .sentiment-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 14px;
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .download-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .dl-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .plan-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      border: 1px solid;
+      flex-shrink: 0;
+    }
+
+    .plan-strip.plan-pro {
+      background: rgba(2, 163, 254, .08);
+      border-color: rgba(2, 163, 254, .3);
+    }
+
+    .plan-strip.plan-admin {
+      background: rgba(245, 166, 35, .08);
+      border-color: rgba(245, 166, 35, .3);
+    }
+    .plan-strip.plan-admin .plan-strip-label {
+      color: var(--gold);
+    }
+    .plan-strip.plan-admin .plan-strip-status {
+      color: var(--green);
+    }
+
+    .plan-strip.plan-premium {
+      background: rgba(245, 166, 35, .08);
+      border-color: rgba(245, 166, 35, .3);
+    }
+
+    .plan-strip.plan-basic,
+    .plan-strip.plan-essential,
+    .plan-strip.plan-free {
+      background: rgba(255, 77, 109, .06);
+      border-color: rgba(255, 77, 109, .2);
+    }
+
+    .plan-strip-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .plan-strip.plan-pro .plan-strip-label {
+      color: var(--primary);
+    }
+
+    .plan-strip.plan-premium .plan-strip-label {
+      color: var(--gold);
+    }
+
+    .plan-strip.plan-basic .plan-strip-label,
+    .plan-strip.plan-essential .plan-strip-label,
+    .plan-strip.plan-free .plan-strip-label {
+      color: var(--red);
+    }
+
+    .plan-strip-status {
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .plan-strip.plan-pro .plan-strip-status,
+    .plan-strip.plan-premium .plan-strip-status {
+      color: var(--green);
+    }
+
+    .plan-strip.plan-basic .plan-strip-status,
+    .plan-strip.plan-essential .plan-strip-status,
+    .plan-strip.plan-free .plan-strip-status {
+      color: var(--red);
+    }
+
+    .dl-scroll {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+      padding-right: 4px;
+    }
+
+    .dl-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .dl-scroll::-webkit-scrollbar-thumb {
+      background: rgba(2, 163, 254, .25);
+      border-radius: 10px;
+    }
+
+    .dl-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 6px;
+      background: var(--bg-card2);
+      transition: all .2s;
+    }
+
+    .dl-item:hover {
+      border-color: var(--border-bright);
+      background: var(--bg-card3);
+    }
+
+    .dl-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dl-item-icon {
+      font-size: 18px;
+    }
+
+    .dl-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .dl-date {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .dl-btn {
+      padding: 6px 14px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .2s;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .dl-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(2, 163, 254, .4);
+    }
+
+    .dl-upgrade-btn {
+      padding: 6px 12px;
+      background: linear-gradient(135deg, #ff6b35, var(--orange));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .dl-upgrade-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(235, 66, 1, .4);
+    }
+
+    .no-files {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .no-files i {
+      font-size: 22px;
+      color: var(--border-bright);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .top-combined-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .gauge-card {
+      margin: 0;
+      height: 100%;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+    }
+
+    .upgrade-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .7);
+      backdrop-filter: blur(6px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .upgrade-overlay.active {
+      display: flex;
+    }
+
+    .upgrade-modal {
+      background: var(--bg-card);
+      border: 1px solid rgba(245, 166, 35, .3);
+      border-radius: 20px;
+      padding: 36px 32px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      animation: fadeInUp .3s ease;
+      position: relative;
+    }
+
+    .upgrade-modal-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .upgrade-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .upgrade-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .upgrade-desc {
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    .upgrade-plans {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .upgrade-plan-card {
+      flex: 1;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid;
+      text-align: center;
+    }
+
+    .upgrade-plan-card.plan-pro {
+      border-color: rgba(2, 163, 254, .4);
+      background: rgba(2, 163, 254, .06);
+    }
+
+    .upgrade-plan-card.plan-premium {
+      border-color: rgba(245, 166, 35, .4);
+      background: rgba(245, 166, 35, .06);
+    }
+
+    .upgrade-plan-name {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .upgrade-plan-card.plan-pro .upgrade-plan-name {
+      color: var(--primary);
+    }
+
+    .upgrade-plan-card.plan-premium .upgrade-plan-name {
+      color: var(--gold);
+    }
+
+    .upgrade-plan-feature {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .upgrade-cta {
+      display: inline-block;
+      padding: 12px 32px;
+      background: linear-gradient(135deg, var(--gold), var(--orange));
+      color: white;
+      border: none;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .2s;
+    }
+
+    .upgrade-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(245, 166, 35, .35);
+    }
+
+    /* ═══════════════════════════════════════════
+       BROADCAST CHAT — WhatsApp Admin Style
+    ═══════════════════════════════════════════ */
+    .bc-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: 100%;
+      min-height: 0;
+      position: relative;
+    }
+
+    .bc-wrap::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--orange), var(--primary), var(--orange));
+      opacity: .6;
+    }
+
+    /* Header */
+    .bc-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(2, 163, 254, .1);
+      background: rgba(9, 9, 21, .6);
+      flex-shrink: 0;
+    }
+
+    .bc-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #eb4201, #ff6b35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .bc-avatar::after {
+      content: '';
+      position: absolute;
+      bottom: 1px;
+      right: 1px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+      border: 2px solid var(--bg-card);
+    }
+
+    .bc-header-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .bc-header-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .bc-header-sub {
+      font-size: 10px;
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
+    .bc-online-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
+    }
+
+    .bc-header-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+    }
+
+    .bc-tab {
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 9px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid;
+      transition: all .2s;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    .bc-tab.active {
+      border-color: #02a3fe;
+      color: #02a3fe;
+      background: rgba(2, 163, 254, .15);
+    }
+
+    .bc-tab:not(.active) {
+      border-color: rgba(255, 255, 255, .1);
+      color: #3a4060;
+      background: transparent;
+    }
+
+    .bc-msg-count {
+      font-size: 9px;
+      color: #3a4060;
+    }
+
+    /* Pinned banner */
+    .bc-pinned {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      background: rgba(2, 163, 254, .06);
+      border-bottom: 1px solid rgba(2, 163, 254, .12);
+      border-left: 3px solid #02a3fe;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background .2s;
+    }
+
+    .bc-pinned:hover {
+      background: rgba(2, 163, 254, .1);
+    }
+
+    .bc-pinned.show {
+      display: flex;
+    }
+
+    .bc-pinned-icon {
+      font-size: 10px;
+      color: #02a3fe;
+      flex-shrink: 0;
+    }
+
+    .bc-pinned-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: #02a3fe;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .bc-pinned-text {
+      font-size: 10px;
+      color: #8090b8;
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    /* Messages area */
+    .bc-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 14px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-height: 0;
+      background: var(--bg-dark);
+      background-image: radial-gradient(ellipse at 50% 100%, rgba(2, 163, 254, .03) 0%, transparent 70%);
+    }
+
+    .bc-messages::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .bc-messages::-webkit-scrollbar-thumb {
+      background: rgba(2, 163, 254, .15);
+      border-radius: 2px;
+    }
+
+    /* Date separator */
+    .bc-date-sep {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 9px;
+      color: #2a3050;
+      letter-spacing: .5px;
+      margin: 8px 0 6px;
+    }
+
+    .bc-date-sep::before,
+    .bc-date-sep::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, .04);
+    }
+
+    .bc-date-sep span {
+      background: rgba(2, 163, 254, .06);
+      padding: 2px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(2, 163, 254, .08);
+      color: #3a4060;
+      white-space: nowrap;
+    }
+
+    /* Individual message */
+    .bc-msg {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 6px;
+      animation: bcMsgIn .25s cubic-bezier(.34, 1.56, .64, 1);
+    }
+
+    @keyframes bcMsgIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(.97)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1)
+      }
+    }
+
+    .bc-msg-meta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 4px;
+      margin-bottom: 4px;
+    }
+
+    .bc-msg-sender {
+      font-size: 10px;
+      font-weight: 700;
+      color: #eb4201;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .bc-msg-time {
+      font-size: 9px;
+      color: #2a3050;
+    }
+
+    .bc-msg-pin-tag {
+      font-size: 8px;
+      color: #02a3fe;
+      background: rgba(2, 163, 254, .08);
+      padding: 1px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(2, 163, 254, .18);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .bc-msg-body-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      width: 100%;
+      max-width: 90%;
+    }
+
+    .bc-bubble {
+      background: #161628;
+      border: 1px solid rgba(2, 163, 254, .1);
+      border-radius: 3px 14px 14px 14px;
+      padding: 9px 14px 8px;
+      font-size: 12px;
+      color: var(--gold);
+      line-height: 1.65;
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      word-break: break-word;
+      transition: border-color .2s;
+    }
+
+    .bc-bubble::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #eb4201, transparent);
+      opacity: .2;
+      border-radius: 3px 14px 0 0;
+    }
+
+    .bc-bubble.is-pinned {
+      background: rgba(2, 163, 254, .07);
+      border-color: rgba(2, 163, 254, .22);
+    }
+
+    .bc-bubble.is-pinned::before {
+      background: linear-gradient(90deg, #02a3fe, transparent);
+      opacity: .3;
+    }
+
+    .bc-bubble-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 5px;
+      margin-top: 5px;
+    }
+
+    .bc-bubble-ts {
+      font-size: 9px;
+      color: var(--green);
+    }
+
+    .bc-ticks {
+      font-size: 10px;
+      color: #02a3fe;
+      opacity: .6;
+    }
+
+    /* Admin action buttons — appear on hover */
+    .bc-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity .15s;
+      flex-shrink: 0;
+    }
+
+    .bc-msg-body-row:hover .bc-actions {
+      opacity: 1;
+    }
+
+    .bc-act-btn {
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-size: 9px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid;
+      white-space: nowrap;
+      line-height: 1.6;
+      transition: all .15s;
+      background: var(--bg-card2);
+    }
+
+    .bc-act-btn.pin {
+      color: #02a3fe;
+      border-color: rgba(2, 163, 254, .3);
+    }
+
+    .bc-act-btn.pin:hover {
+      background: rgba(2, 163, 254, .15);
+    }
+
+    .bc-act-btn.del {
+      color: #ff4d6d;
+      border-color: rgba(255, 77, 109, .3);
+    }
+
+    .bc-act-btn.del:hover {
+      background: rgba(255, 77, 109, .15);
+    }
+
+    /* Empty state */
+    .bc-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #2a3050;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .bc-empty-icon {
+      font-size: 36px;
+      opacity: .3;
+    }
+
+    .bc-empty-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #3a4060;
+    }
+
+    .bc-empty-sub {
+      font-size: 11px;
+      color: #2a3050;
+      line-height: 1.5;
+    }
+
+    /* Compose area */
+    .bc-compose {
+      border-top: 1px solid rgba(2, 163, 254, .1);
+      padding: 10px 12px;
+      background: rgba(9, 9, 21, .5);
+      flex-shrink: 0;
+    }
+
+    .bc-compose-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .bc-textarea {
+      flex: 1;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid rgba(2, 163, 254, .18);
+      border-radius: 22px;
+      color: #e8eaf0;
+      font-family: 'Poppins', sans-serif;
+      font-size: 11px;
+      padding: 9px 16px;
+      resize: none;
+      height: 38px;
+      max-height: 100px;
+      outline: none;
+      line-height: 1.5;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .bc-textarea:focus {
+      border-color: rgba(2, 163, 254, .45);
+      box-shadow: 0 0 0 3px rgba(2, 163, 254, .07);
+    }
+
+    .bc-textarea::placeholder {
+      color: #2a3050;
+    }
+
+    .bc-send-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #02a3fe, #0082cc);
+      border: none;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+      transition: all .2s;
+      box-shadow: 0 4px 14px rgba(2, 163, 254, .35);
+    }
+
+    .bc-send-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 20px rgba(2, 163, 254, .5);
+    }
+
+    .bc-send-btn:active {
+      transform: scale(.95);
+    }
+
+    .bc-send-btn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .bc-compose-hint {
+      font-size: 9px;
+      color: #2a3050;
+      text-align: center;
+      margin-top: 6px;
+    }
+
+    /* User read-only bar */
+    .bc-readonly {
+      border-top: 1px solid rgba(0, 212, 170, .08);
+      padding: 9px 14px;
+      background: rgba(0, 212, 170, .03);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 10px;
+      color: #2a5048;
+      flex-shrink: 0;
+    }
+
+    .bc-readonly-icon {
+      font-size: 12px;
+    }
+
+    /* New message notification badge */
+    .bc-new-badge {
+      display: none;
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #02a3fe, #0082cc);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(2, 163, 254, .4);
+      animation: bcBadgePop .3s ease;
+      z-index: 10;
+      white-space: nowrap;
+    }
+
+    .bc-new-badge.show {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    @keyframes bcBadgePop {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0)
+      }
+    }
+
+    @media(max-width:768px) {
+
+      html,
+      body {
+        overflow-y: auto;
+        height: auto;
+      }
+
+      .main-grid {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+      }
+
+      .left-panel,
+      .right-panel {
+        overflow: visible;
+        width: 100%;
+      }
+
+      .right-panel {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        padding: 10px;
+      }
+
+      .top-combined-box {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+      }
+
+      .gauge-card,
+      .download-card,
+      .bc-wrap {
+        width: 100%;
+        height: auto;
+        min-height: auto;
+      }
+
+      .gauge-wrapper {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      canvas#gauge {
+        width: 100% !important;
+        max-width: 280px;
+        height: auto !important;
+      }
+
+      .gauge-value-display {
+        font-size: 20px;
+        bottom: -7px;
+      }
+
+      .rows-scroll {
+        max-height: 55vh;
+      }
+
+      .bc-wrap {
+        min-height: 400px;
+      }
+    }
+
+    .quick-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(235, 66, 1, .12);
+      border: 1px solid rgba(235, 66, 1, .3);
+      color: #eb4201;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      transition: all .2s;
+      position: absolute;
+      right: 60px;
+      bottom: 32px;
+    }
+
+    .quick-btn:hover {
+      background: rgba(235, 66, 1, .22);
+      border-color: #eb4201;
+      transform: scale(1.05);
+    }
+
+    .quick-btn.open {
+      background: rgba(235, 66, 1, .22);
+      border-color: #eb4201;
+      transform: rotate(45deg);
+    }
+
+    .quick-menu {
+      position: absolute;
+      bottom: 50px;
+      left: 0;
+      right: 50px;
+      background: #0f0f22;
+      border: 1px solid rgba(2, 163, 254, .2);
+      border-radius: 12px;
+      overflow: hidden;
+      z-index: 100;
+      box-shadow: 0 -8px 32px rgba(0, 0, 0, .5);
+      display: none;
+    }
+
+    .quick-menu.show {
+      display: block;
+      animation: qmUp .2s ease;
+    }
+
+    @keyframes qmUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes fadeInDown {
+      from { opacity:0; transform:translateY(-12px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .quick-menu-header {
+      padding: 8px 14px 6px;
+      border-bottom: 1px solid rgba(2, 163, 254, .1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .quick-menu-title {
+      font-size: 9px;
+      font-weight: 700;
+      color: #02a3fe;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .quick-menu-title::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #eb4201;
+    }
+
+    .quick-menu-close {
+      background: none;
+      border: none;
+      color: #2a3050;
+      cursor: pointer;
+      font-size: 14px;
+      transition: color .15s;
+    }
+
+    .quick-menu-close:hover {
+      color: #e8eaf0;
+    }
+
+    .quick-menu-list {
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .quick-menu-list::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .quick-menu-list::-webkit-scrollbar-thumb {
+      background: rgba(2, 163, 254, .2);
+      border-radius: 2px;
+    }
+
+    .quick-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      cursor: pointer;
+      transition: background .15s;
+      border-bottom: 1px solid rgba(255, 255, 255, .03);
+    }
+
+    .quick-item:last-child {
+      border-bottom: none;
+    }
+
+    .quick-item:hover {
+      background: rgba(2, 163, 254, .07);
+    }
+
+    .quick-item:hover .qi-text {
+      color: #fff;
+    }
+
+    .qi-num {
+      min-width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(2, 163, 254, .1);
+      border: 1px solid rgba(2, 163, 254, .2);
+      font-size: 9px;
+      font-weight: 700;
+      color: #02a3fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .qi-text {
+      font-size: 11px;
+      color: var(--gold);
+      line-height: 1.4;
+      transition: color .15s;
+      flex: 1;
+    }
+
+    .qi-arrow {
+      font-size: 10px;
+      color: #2a3050;
+      flex-shrink: 0;
+      transition: color .15s;
+    }
+
+    .quick-item:hover .qi-arrow {
+      color: #02a3fe;
+    }
+
+
+    /* ── Active Users Widget ── */
+    .active-users-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(0, 212, 170, .08);
+      border: 1px solid rgba(0, 212, 170, .25);
+      padding: 5px 13px;
+      border-radius: 30px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: .5px;
+      cursor: default;
+      transition: border-color .3s;
+    }
+
+    .active-users-pill .au-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      flex-shrink: 0;
+      animation: pulse 2s infinite;
+    }
+
+    .active-users-pill .au-count {
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--green);
+      min-width: 18px;
+      text-align: center;
+    }
+
+    /* Active users pill — responsive */
+    @media (max-width: 768px) {
+
+      .header .active-users-pill {
+        display: none !important;
+      }
+      .active-users-pill {
+        padding: 4px 10px;
+        font-size: 9px;
+        gap: 5px;
+      }
+      .active-users-pill .au-count {
+        font-size: 11px;
+      }
+      .active-users-pill span:last-child {
+        display: none; /* hide "on dashboard" text on mobile, keep count */
+      }
+    }
+    /* ── System / Timed Messages ── */
+.bc-msg.system-msg .bc-msg-sender {
+  color: var(--gold);
+}
+.bc-bubble.system-bubble {
+  background: rgba(245, 166, 35, .06);
+  border-color: rgba(245, 166, 35, .2);
+}
+.bc-bubble.system-bubble::before {
+  background: linear-gradient(90deg, #f5a623, transparent);
+  opacity: .3;
+}
+
+/* ── DASHBOARD USER DROPDOWN ── */
+.dash-user-wrap { position: relative; }
+
+.dash-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 30px;
+  padding: 5px 12px 5px 5px;
+  cursor: pointer;
+  transition: all .2s;
+  color: var(--text);
+  font-family: inherit;
+}
+.dash-user-btn:hover {
+  background: rgba(255,255,255,.1);
+  border-color: rgba(2,163,254,.4);
+}
+
+.dash-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--orange));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+}
+
+.dash-user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+.dash-username {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dash-plan {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--gold);
+  line-height: 1;
+}
+.dash-plan.plan-pro   { color: var(--primary); }
+.dash-plan.plan-premium { color: var(--gold); }
+.dash-plan.plan-admin   { color: var(--green); }
+.dash-plan.plan-free, .dash-plan.plan-basic, .dash-plan.plan-essential { color: var(--text-dim); }
+
+.dash-chevron {
+  font-size: 9px;
+  color: var(--text-muted);
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+.dash-chevron.open { transform: rotate(180deg); }
+
+/* Dropdown panel */
+.dash-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 260px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 48px rgba(0,0,0,.6);
+  z-index: 9999;
+  overflow: hidden;
+  animation: ddIn .2s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes ddIn {
+  from { opacity:0; transform:translateY(-8px) scale(.97); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
+}
+.dash-dropdown.open { display: block; }
+
+/* User info block inside dropdown */
+.dd-user-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  background: rgba(2,163,254,.04);
+  border-bottom: 1px solid var(--border);
+}
+.dd-avatar-lg {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--orange));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+}
+.dd-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+.dd-email {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 2px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Plan strip */
+.dd-plan-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,0,0,.2);
+  color: var(--text-dim);
+}
+.dd-plan-status { color: var(--green); }
+
+/* Menu items */
+.dd-divider { height: 1px; background: var(--border); margin: 4px 0; }
+.dd-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  transition: background .15s;
+  cursor: pointer;
+}
+.dd-item:hover { background: rgba(2,163,254,.07); color: #fff; }
+.dd-item:hover .dd-arrow { opacity: 1; }
+.dd-icon { font-size: 14px; width: 16px; text-align: center; color: var(--text-dim); flex-shrink: 0; }
+.dd-arrow { font-size: 9px; color: var(--text-muted); margin-left: auto; opacity: 0; transition: opacity .15s; }
+
+/* Expiry strip */
+.dd-expiry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  font-size: 10px;
+  color: var(--text-dim);
+  background: rgba(245,166,35,.04);
+  border-top: 1px solid rgba(245,166,35,.1);
+}
+
+/* Logout */
+.dd-logout { color: var(--red) !important; }
+.dd-logout:hover { background: rgba(255,77,109,.08) !important; }
+.dd-logout .dd-icon { color: var(--red) !important; }
+  </style>
+</head>
+
+<body>
+
+  <div class="welcome-bar">Welcome to the Black-Box-Engine Developed by TraderBro.in</div>
+
+<div id="holiday-banner" style="
+  display:none;
+  background: linear-gradient(135deg,#1a0a00,#2d1500);
+  border-bottom: 2px solid #f5a623;
+  padding: 10px 28px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  animation: fadeInDown 0.4s ease;
+">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span style="font-size:24px;">🏖️</span>
+    <div>
+      <div style="font-size:13px;font-weight:800;color:#f5a623;letter-spacing:0.5px;">
+        MARKET HOLIDAY TODAY
+      </div>
+      <div style="font-size:12px;color:#e0a060;" id="holiday-reason-text">
+        Market is closed today
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <div id="upcoming-holiday-chips" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    <button onclick="document.getElementById('holiday-banner').style.display='none'"
+      style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+             color:#aaa;font-size:12px;padding:4px 10px;border-radius:8px;cursor:pointer;">
+      ✕
+    </button>
+  </div>
+</div>
+ 
+<div id="upcoming-holiday-strip" style="display:none;"></div>
+
+  <header class="header">
+    <div class="logo-block">
+      <a href="/">
+        <div class="logo-icon"></div>
+      </a>
+      <div class="logo-text-wrap">
+        <div class="logo-title">Trader<span>Bro.in</span></div>
+        <div class="logo-sub">Black-Box-Engine Dashboard</div>
+      </div>
+    </div>
+    <div class="header-divider"></div>
+    <div class="header-indices">
+      <div class="idx-item">
+        <div class="idx-label">Sensex</div>
+        <div class="idx-val" id="h-ltp">—</div>
+      </div>
+      <div class="idx-item">
+        <div class="idx-label">Expiry</div>
+        <div class="idx-val" id="h-expiry" style="font-size:11px">—</div>
+      </div>
+    </div>
+    <div class="header-right">
+  <div class="active-users-pill" id="active-users-pill" style="display:none;" title="Users currently on dashboard">
+    <span class="au-dot"></span>
+    <span class="au-count" id="au-count">—</span>
+    <span>on dashboard</span>
+  </div>
+  <a href="/" class="chat-toggle-btn"><i class="fa-solid fa-house"></i><span>HOME</span></a>
+  <div class="live-badge"><span class="live-dot"></span>Live</div>
+  <div class="ts-block">
+    <div class="ts-label">Last Updated</div>
+    <div class="ts-val" id="h-ts">—</div>
+  </div>
+
+  <div class="dash-user-wrap" id="dash-user-wrap" style="display:none; position:relative;">
+    <button class="dash-user-btn" id="dash-user-btn" onclick="dashToggle()" title="My Account">
+      <div class="dash-avatar" id="dash-avatar">?</div>
+      <div class="dash-user-info">
+        <div class="dash-username" id="dash-username">Loading…</div>
+        <div class="dash-plan" id="dash-plan">—</div>
+      </div>
+      <i class="fas fa-chevron-down dash-chevron" id="dash-chevron"></i>
+    </button>
+
+    <div class="dash-dropdown" id="dash-dropdown">
+      <div class="dd-user-block">
+        <div class="dd-avatar-lg" id="dd-avatar-lg">?</div>
+        <div>
+          <div class="dd-name" id="dd-name">—</div>
+          <div class="dd-email" id="dd-email">—</div>
+        </div>
+      </div>
+
+      <div class="dd-plan-strip" id="dd-plan-strip">
+        <span id="dd-plan-label">—</span>
+        <span class="dd-plan-status" id="dd-plan-status">—</span>
+      </div>
+
+      <div class="dd-divider"></div>
+
+      <a href="/account" class="dd-item">
+        <i class="fas fa-user-circle dd-icon"></i>
+        <span>My Account</span>
+        <i class="fas fa-chevron-right dd-arrow"></i>
+      </a>
+      <a href="/trading-plan" class="dd-item">
+        <i class="fas fa-crown dd-icon" style="color:var(--gold)"></i>
+        <span>Upgrade Plan</span>
+        <i class="fas fa-chevron-right dd-arrow"></i>
+      </a>
+      <a href="/webinars" class="dd-item">
+        <i class="fas fa-video dd-icon" style="color:var(--primary)"></i>
+        <span>Webinars</span>
+        <i class="fas fa-chevron-right dd-arrow"></i>
+      </a>
+
+      <div id="dd-admin-section" style="display:none;">
+        <div class="dd-divider"></div>
+        <a href="/admin/users" class="dd-item">
+          <i class="fas fa-users-cog dd-icon" style="color:var(--orange)"></i>
+          <span>User Management</span>
+          <i class="fas fa-chevron-right dd-arrow"></i>
+        </a>
+        <a href="/admin/webinars" class="dd-item">
+          <i class="fas fa-calendar-alt dd-icon" style="color:var(--orange)"></i>
+          <span>Manage Webinars</span>
+          <i class="fas fa-chevron-right dd-arrow"></i>
+        </a>
+        <a href="/admin" class="dd-item">
+          <i class="fas fa-chart-line dd-icon" style="color:var(--orange)"></i>
+          <span>Admin Panel</span>
+          <i class="fas fa-chevron-right dd-arrow"></i>
+        </a>
+      </div>
+
+      <div class="dd-divider"></div>
+
+      <div class="dd-expiry" id="dd-expiry" style="display:none;">
+        <i class="fas fa-clock" style="color:var(--gold);font-size:11px;"></i>
+        <span id="dd-expiry-text">—</span>
+      </div>
+
+      <a href="/logout" class="dd-item dd-logout">
+        <i class="fas fa-sign-out-alt dd-icon"></i>
+        <span>Logout</span>
+      </a>
+    </div>
+  </div>
+</div>
+  </header>
+
+  <div class="main-grid">
+
+    <div class="left-panel">
+      <div class="panel-header">
+        <div class="panel-header-top">
+          <div class="panel-title">Black-Box-Engine</div>
+        </div>
+        <div class="atm-hero">
+          <div class="atm-dt-box">
+            <div class="atm-dt-label">ATM Strike &amp; Timestamp</div>
+            <div class="atm-dt-val" id="atm-dt">Waiting for market session...</div>
+          </div>
+          <div class="atm-run-box atm-run-zero" id="atm-run-box">
+            <span class="run-label">Running</span>
+            <span class="run-val" id="atm-run-val">—</span>
+          </div>
+        </div>
+        <div class="market-note" id="market-note" style="display:none;">
+          <i class="fas fa-clock"></i>Values generated 9:16 AM – 12 PM IST · Visible till next trading session
+        </div>
+      </div>
+      <div class="rows-scroll">
+        <div class="rows-grid" id="rows-grid">
+          <div class="market-closed-box">
+            <div class="market-icon">⏰</div>
+            <div class="market-title">Market Insight Window Closed</div>
+            <div class="market-desc">Live Black-Box-Engine values are generated during active market analysis hours.
+            </div>
+            <div class="market-time">9:16 AM → 12 PM</div>
+            <div class="market-sub">Previous values remain visible till next trading day 8:30 AM</div>
+          </div>
+        </div>
+      </div>
+      <div
+        style="padding:8px 14px;background:rgba(235,66,1,.06);border-top:1px solid rgba(235,66,1,.12);font-size:11px;color:yellow;text-align:center;flex-shrink:0;">
+        ⚠️ Traderbro.in is an educational platform. Not SEBI registered as RA or IA. No investment advice provided.
+      </div>
+    </div>
+
+    <div class="right-panel">
+
+      <div class="top-combined-box">
+        <div class="gauge-card">
+          <div class="gauge-card-title">Sentimental Dial Gauge</div>
+          <div class="gauge-wrapper">
+            <canvas id="gauge" width="600" height="370"></canvas>
+            <div class="gauge-value-display" id="gauge-val" style="color:var(--gold)">0</div>
+          </div>
+          <div class="sentiment-text" id="sentiment-text">
+            <span class="sentiment-badge"
+              style="background:rgba(245,166,35,.1);color:var(--gold);border:1px solid rgba(245,166,35,.3);">◆
+              Neutral</span>
+          </div>
+        </div>
+
+        <div class="download-card">
+          <div class="dl-title"><i class="fas fa-download"></i>Historical Data Downloads</div>
+          <div class="plan-strip plan-free" id="plan-strip">
+            <span class="plan-strip-label" id="plan-strip-label">⭕ Free Plan</span>
+            <span class="plan-strip-status" id="plan-strip-status">⛔ Downloads Locked</span>
+          </div>
+
+          <div id="dl-date-filter" style="display:none; margin-bottom:8px; flex-shrink:0;">
+            <div style="display:flex; gap:6px; align-items:flex-end; flex-wrap:wrap;">
+              <div style="display:flex; flex-direction:column; flex:1; min-width:90px;">
+                <label style="font-size:9px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">From</label>
+                <input type="date" id="dl-from-date" style="background:var(--bg-card2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:10px; padding:5px 8px; outline:none; width:100%; color-scheme:dark;">
+              </div>
+              <div style="display:flex; flex-direction:column; flex:1; min-width:90px;">
+                <label style="font-size:9px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">To</label>
+                <input type="date" id="dl-to-date" style="background:var(--bg-card2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:10px; padding:5px 8px; outline:none; width:100%; color-scheme:dark;">
+              </div>
+              <button onclick="applyDateFilter()" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark)); border:none; border-radius:8px; color:white; font-size:10px; font-weight:700; padding:5px 12px; cursor:pointer; white-space:nowrap; height:29px;">Filter</button>
+              <button onclick="clearDateFilter()" style="background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:8px; color:var(--text-dim); font-size:10px; font-weight:700; padding:5px 10px; cursor:pointer; height:29px;">✕</button>
+            </div>
+            <div id="dl-limit-note" style="font-size:9px; color:var(--text-muted); margin-top:5px; padding:4px 8px; background:var(--bg-card2); border-radius:6px; border:1px solid var(--border);"></div>
+          </div>
+
+          <div class="dl-scroll" id="dl-list">
+            <div class="no-files"><i class="fas fa-circle-notch fa-spin"></i>Loading files…</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bc-wrap" id="bc-wrap">
+
+        <div class="bc-header">
+          <div class="bc-avatar">📢</div>
+          <div class="bc-header-info">
+            <div class="bc-header-name">TraderBro Admin</div>
+            <div class="bc-header-sub"><span class="bc-online-dot"></span><span id="bc-status-text">Broadcast
+                Channel</span></div>
+          </div>
+          <div class="bc-header-right">
+            <span class="bc-msg-count" id="bc-msg-count"></span>
+            <span class="bc-tab active" id="tab-all" onclick="setMsgTab('all')">All</span>
+            <span class="bc-tab" id="tab-pinned" onclick="setMsgTab('pinned')">📌 Pinned</span>
+          </div>
+        </div>
+
+        <div class="bc-pinned" id="bc-pinned" onclick="setMsgTab('pinned')">
+          <span class="bc-pinned-icon"><i class="fas fa-thumbtack"></i></span>
+          <span class="bc-pinned-label">Pinned</span>
+          <span class="bc-pinned-text" id="bc-pinned-text"></span>
+        </div>
+
+        <div class="bc-new-badge" id="bc-new-badge" onclick="scrollToLatest()">
+          <i class="fas fa-arrow-down"></i><span id="bc-new-badge-text">New message</span>
+        </div>
+
+        <div class="bc-messages" id="bc-messages">
+          <div class="bc-empty">
+            <div class="bc-empty-icon">📢</div>
+            <div class="bc-empty-title">No broadcasts yet</div>
+            <div class="bc-empty-sub">Admin messages will appear here instantly</div>
+          </div>
+        </div>
+
+        <div class="bc-compose" id="bc-compose" style="display:none;">
+          <div class="bc-compose-row">
+            <textarea id="bc-input" class="bc-textarea" placeholder="Type a broadcast message…" maxlength="500"
+              onkeydown="bcKeydown(event)" oninput="bcAutoResize(this)">
+            </textarea>
+            <button class="quick-btn" id="quickBtn" onclick="bcToggleQuick()" title="Quick messages">＋</button>
+            <button class="bc-send-btn" id="bc-send-btn" onclick="bcSend()" title="Send (Ctrl+Enter)">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+            <div class="quick-menu" id="quickMenu">
+              <div class="quick-menu-header">
+                <span class="quick-menu-title">Quick broadcasts</span>
+                <button class="quick-menu-close" onclick="bcToggleQuick()">✕</button>
+              </div>
+              <div class="quick-menu-list" id="quickMenuList"></div>
+            </div>
+          </div>
+          <div class="bc-compose-hint">Ctrl+Enter to send &nbsp;·&nbsp; <span id="bc-char-count"
+              style="color:#3a4060;">0/500</span></div>
+        </div>
+
+        <div class="bc-readonly" id="bc-readonly" style="display:none;">
+          <span class="bc-readonly-icon">🔒</span>
+          <span>Read-only &nbsp;·&nbsp; Only admin can broadcast</span>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <div class="upgrade-overlay" id="upgrade-overlay">
+    <div class="upgrade-modal">
+      <button class="upgrade-modal-close" onclick="closeUpgradeModal()"><i class="fas fa-times"></i></button>
+      <div class="upgrade-icon">🔒</div>
+      <div class="upgrade-title">Upgrade to Download</div>
+      <div class="upgrade-desc">Historical data files are available exclusively to <strong
+          style="color:var(--primary)">Pro</strong> and <strong style="color:var(--gold)">Premium</strong> members.
+      </div>
+      <div class="upgrade-plans">
+        <div class="upgrade-plan-card plan-pro">
+          <div class="upgrade-plan-name">Pro</div>
+          <div class="upgrade-plan-feature">22 trading days<br>Full data access</div>
+        </div>
+        <div class="upgrade-plan-card plan-premium">
+          <div class="upgrade-plan-name">Premium</div>
+          <div class="upgrade-plan-feature">250 trading days<br>Full data access</div>
+        </div>
+      </div>
+      <a href="/trading-plan" class="upgrade-cta"><i class="fas fa-arrow-up"></i> &nbsp;Upgrade My Plan</a>
+    </div>
+  </div>
+
+  <div id="session-kick-overlay" style="
+display:none;
+position:fixed;
+inset:0;
+background:rgba(5,8,20,.96);
+backdrop-filter:blur(12px);
+z-index:999999;
+align-items:center;
+justify-content:center;
+">
+
+<div style="
+width:420px;
+max-width:90%;
+background:#111827;
+border:1px solid rgba(2,163,254,.35);
+border-radius:20px;
+padding:40px 30px;
+text-align:center;
+box-shadow:0 0 50px rgba(2,163,254,.2);
+">
+
+<div style="
+font-size:60px;
+margin-bottom:15px;
+">
+🔒
+</div>
+
+<h2 style="
+color:#02A3FE;
+margin-bottom:10px;
+font-size:24px;
+font-weight:800;
+">
+Session Ended
+</h2>
+
+<p style="
+color:#cbd5e1;
+line-height:1.7;
+font-size:14px;
+margin-bottom:20px;
+">
+Your TraderBro account has been signed in from another device.
+
+For security reasons this session has been terminated.
+</p>
+
+<div style="
+color:#f59e0b;
+font-size:13px;
+font-weight:600;
+">
+Redirecting to login...
+</div>
+
+</div>
+</div>
+
+  <script>
+
+    /* ══════════════════════════════════════════════════════════
+   TIMED SYSTEM MESSAGES
+══════════════════════════════════════════════════════════ */
+const TIMED_MESSAGES = [
+  {
+    id: 'sys-market-soon',
+    fromMins: 9 * 60,          // 9:00 AM
+    toMins:   9 * 60 + 15,     // 9:15 AM (show for 15 mins)
+    text: '🔔 Market Opening Soon — Session starts at 9:16 AM IST'
+  },
+  {
+    id: 'sys-closing-soon',
+    fromMins: 11 * 60 + 45,    // 11:45 AM
+    toMins:   12 * 60,         // 12:00 PM
+    text: '⏳ TraderBro.in session will be closing at 12:00 PM IST'
+  },
+  {
+    id: 'sys-download-ready',
+    fromMins: 12 * 60 + 1,     // 12:01 PM
+    toMins:   14 * 60,         // show till 2 PM
+    text: '📥 You can now download today\'s data — Available with Pro & Premium Plans only'
+  }
+];
+
+let _shownSystemMsgs = new Set();  // track which ones we've injected this session
+    /* ══════════════════════════════════════════════════════════
+       GLOBALS
+    ══════════════════════════════════════════════════════════ */
+    let _refreshTimer = null;
+    let _dashboardRows = [];
+    let _userPlan = "free";
+    let _marketCloseTriggered = false;
+
+    /* ══════════════════════════════════════════════════════════
+       BROADCAST STATE
+    ══════════════════════════════════════════════════════════ */
+    let _bcIsAdmin = false;
+    let _bcMessages = [];        // full list from server
+    let _bcTab = 'all';
+    let _bcPollTimer = null;
+    let _bcLastId = 0;         // highest message id seen
+    let _bcAtBottom = true;      // is user scrolled to bottom?
+    let _bcNewCount = 0;         // unseen messages while scrolled up
+
+    /* ══════════════════════════════════════════════════════════
+       MARKET HELPERS
+    ══════════════════════════════════════════════════════════ */
+    function getIST() {
+      const now = new Date();
+      return new Date(now.getTime() + now.getTimezoneOffset() * 60000 + 5.5 * 60 * 60 * 1000);
+    }
+    function isMarketOpen() {
+      const ist = getIST(); const mins = ist.getHours() * 60 + ist.getMinutes();
+      return mins >= 9 * 60 + 16 && mins <= 12 * 60 + 30;
+    }
+    // REPLACE WITH:
+    function isJustAfterMarketClose() {
+      const ist = getIST(); const mins = ist.getHours() * 60 + ist.getMinutes();
+      return mins >= 12 * 60 + 0 && mins <= 12 * 60 + 30;   // 12:00 PM – 12:30 PM IST
+    }
+
+    async function checkMarketCloseAutoSave() {
+      if (_marketCloseTriggered) return;
+      if (!isJustAfterMarketClose()) return;
+      _marketCloseTriggered = true;
+      try {
+        const res = await fetch('/api/trigger-eod-save', { method: 'POST', credentials: 'include' });
+        if (res.ok) {
+          console.log('✅ EOD Excel saved at market close');
+          setTimeout(loadDownloads, 3000);
+          setTimeout(loadDownloads, 8000);
+        }
+      } catch (e) { console.error('EOD save error:', e); }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       BROADCAST — CORE
+    ══════════════════════════════════════════════════════════ */
+    function escH(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function scrollToLatest() {
+      const el = document.getElementById('bc-messages');
+      if (el) el.scrollTop = el.scrollHeight;
+      hideBadge();
+    }
+
+    function hideBadge() {
+      _bcNewCount = 0;
+      const b = document.getElementById('bc-new-badge');
+      if (b) b.classList.remove('show');
+    }
+
+    function setMsgTab(tab) {
+      _bcTab = tab;
+      document.getElementById('tab-all').className = 'bc-tab' + (tab === 'all' ? ' active' : '');
+      document.getElementById('tab-pinned').className = 'bc-tab' + (tab === 'pinned' ? ' active' : '');
+      renderBroadcasts();
+      if (tab !== 'pinned') scrollToLatest();
+    }
+
+    function renderBroadcasts() {
+      const container = document.getElementById('bc-messages');
+      const pinnedEl = document.getElementById('bc-pinned');
+      const pinnedText = document.getElementById('bc-pinned-text');
+      const countEl = document.getElementById('bc-msg-count');
+      if (!container) return;
+
+      // Update pinned banner
+      const pinnedMsg = _bcMessages.find(m => m.pinned);
+      if (pinnedMsg) {
+        pinnedText.textContent = pinnedMsg.message;
+        pinnedEl.classList.add('show');
+      } else {
+        pinnedEl.classList.remove('show');
+      }
+
+      // Filter & sort
+      let shown = _bcTab === 'pinned'
+        ? _bcMessages.filter(m => m.pinned)
+        : [..._bcMessages];
+      shown.sort((a, b) => a.id - b.id);
+
+      if (countEl) countEl.textContent = shown.length ? shown.length + (shown.length === 1 ? ' msg' : ' msgs') : '';
+
+      // Empty state
+      if (!shown.length) {
+        container.innerHTML = `
+      <div class="bc-empty">
+        <div class="bc-empty-icon">📢</div>
+        <div class="bc-empty-title">${_bcTab === 'pinned' ? 'No pinned messages' : 'No broadcasts yet'}</div>
+        <div class="bc-empty-sub">${_bcTab === 'pinned' ? 'Pin a message to highlight it' : 'Admin messages will appear here instantly'}</div>
+      </div>`;
+        return;
+      }
+
+      let html = '';
+      let lastDate = '';
+
+      shown.forEach(msg => {
+        const rawDate = (msg.timestamp || '').split(' ')[0] || '';
+        const timeStr = (msg.timestamp || '').split(' ')[1] || '';
+        const todayStr = getIST().toISOString().slice(0, 10);
+        const dispDate = rawDate === todayStr ? 'Today' : rawDate;
+
+        if (dispDate !== lastDate) {
+          html += `<div class="bc-date-sep"><span>${dispDate}</span></div>`;
+          lastDate = dispDate;
+        }
+
+        const adminBtns = _bcIsAdmin ? `
+      <div class="bc-actions">
+        <button class="bc-act-btn pin" onclick="bcPin(${msg.id},${msg.pinned ? 0 : 1})">
+          <i class="fas fa-thumbtack"></i> ${msg.pinned ? 'Unpin' : 'Pin'}
+        </button>
+        <button class="bc-act-btn del" onclick="bcDel(${msg.id})">
+          <i class="fas fa-trash"></i> Delete
+        </button>
+      </div>` : '';
+
+        html += `
+      <div class="bc-msg" id="bcm-${msg.id}">
+        <div class="bc-msg-meta">
+          <span class="bc-msg-sender">🛡️ TraderBro Admin</span>
+          <span class="bc-msg-time">${timeStr}</span>
+          ${msg.pinned ? '<span class="bc-msg-pin-tag"><i class="fas fa-thumbtack"></i> Pinned</span>' : ''}
+        </div>
+        <div class="bc-msg-body-row">
+          <div class="bc-bubble${msg.pinned ? ' is-pinned' : ''}">
+            ${escH(msg.message)}
+            <div class="bc-bubble-footer">
+              <span class="bc-bubble-ts">${timeStr}</span>
+              <span class="bc-ticks">✓✓</span>
+            </div>
+          </div>
+          ${adminBtns}
+        </div>
+      </div>`;
+      });
+
+      const wasAtBottom = _bcAtBottom;
+      container.innerHTML = html;
+      if (wasAtBottom) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+
+    /* ── Load from server ── */
+    async function loadBroadcasts(silent) {
+      try {
+        const res = await fetch('/api/broadcast', { credentials: 'include' });
+        if (res.status === 401) return;
+        const data = await res.json();
+
+        _bcIsAdmin = data.is_admin || false;
+        const msgs = data.messages || [];
+
+        // Sort by id ascending
+        msgs.sort((a, b) => a.id - b.id);
+
+        // Detect new messages
+        const maxId = msgs.length ? Math.max(...msgs.map(m => m.id)) : 0;
+        const hasNew = maxId > _bcLastId && _bcLastId > 0;
+        _bcLastId = maxId;
+
+        _bcMessages = msgs;
+
+        // Show/hide compose vs readonly
+        const compose = document.getElementById('bc-compose');
+        const readonly = document.getElementById('bc-readonly');
+        const statusEl = document.getElementById('bc-status-text');
+        if (_bcIsAdmin) {
+          if (compose) compose.style.display = 'block';
+          if (readonly) readonly.style.display = 'none';
+          if (statusEl) statusEl.textContent = 'Admin · Broadcast Channel';
+        } else {
+          if (compose) compose.style.display = 'none';
+          if (readonly) readonly.style.display = 'flex';
+          if (statusEl) statusEl.textContent = 'Read-only · Broadcast Channel';
+        }
+
+        // New message badge for users who scrolled up
+        if (hasNew && !_bcAtBottom && !_bcIsAdmin) {
+          _bcNewCount++;
+          const badge = document.getElementById('bc-new-badge');
+          const badgeText = document.getElementById('bc-new-badge-text');
+          if (badge) {
+            badgeText.textContent = _bcNewCount === 1 ? 'New message ↓' : `${_bcNewCount} new messages ↓`;
+            badge.classList.add('show');
+          }
+        }
+
+        renderBroadcasts();
+
+        // Auto-scroll if at bottom
+        if (_bcAtBottom) scrollToLatest();
+
+      } catch (e) { console.error('loadBroadcasts:', e); }
+    }
+
+    /* ── Track scroll position ── */
+    (function () {
+      document.addEventListener('DOMContentLoaded', () => {
+        const el = document.getElementById('bc-messages');
+        if (!el) return;
+        el.addEventListener('scroll', () => {
+          _bcAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+          if (_bcAtBottom) hideBadge();
+        });
+      });
+    })();
+
+    /* ── Send message (admin) ── */
+    async function bcSend() {
+      const inp = document.getElementById('bc-input');
+      const btn = document.getElementById('bc-send-btn');
+      const text = inp ? inp.value.trim() : '';
+      if (!text) return;
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+
+      try {
+        const res = await fetch('/api/admin/broadcast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ message: text, pinned: 0 })
+        });
+        const data = await res.json();
+        if (data.success) {
+          inp.value = '';
+          bcUpdateCharCount('');
+          inp.style.height = '38px';
+          _bcAtBottom = true;
+          await loadBroadcasts();
+        }
+      } catch (e) { console.error('bcSend:', e); }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+      inp.focus();
+    }
+
+    /* ── Delete ── */
+    async function bcDel(id) {
+      if (!confirm('Delete this broadcast message?')) return;
+      try {
+        await fetch(`/api/admin/broadcast/${id}`, { method: 'DELETE', credentials: 'include' });
+        await loadBroadcasts();
+      } catch (e) { }
+    }
+
+    /* ── Pin / Unpin ── */
+    async function bcPin(id, val) {
+      try {
+        await fetch(`/api/admin/broadcast/${id}/pin`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ pinned: val })
+        });
+        await loadBroadcasts();
+      } catch (e) { }
+    }
+
+    /* ── Compose helpers ── */
+    function bcKeydown(e) {
+      if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); bcSend(); }
+    }
+    function bcAutoResize(el) {
+      el.style.height = '38px';
+      el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+      bcUpdateCharCount(el.value);
+    }
+    function bcUpdateCharCount(val) {
+      const el = document.getElementById('bc-char-count');
+      if (!el) return;
+      const n = val.length;
+      el.textContent = n + '/500';
+      el.style.color = n > 450 ? '#f5a623' : n > 490 ? '#ff4d6d' : '#2a3050';
+    }
+
+    /* ── Start polling ──
+       Admin: every 8s (they don't need instant feedback, they send)
+       User:  every 4s (near-instant delivery)
+    ─────────────────────────────────────────── */
+    function startBcPoll() {
+      loadBroadcasts();
+      if (_bcPollTimer) clearInterval(_bcPollTimer);
+      // Start at 4s; after first load we know if admin and can adjust
+      _bcPollTimer = setInterval(() => loadBroadcasts(true), 4000);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       LIVE DATA
+    ══════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════
+       CLOSED BOX STATE — set by checkDashboardAccess
+    ══════════════════════════════════════════════════════════ */
+    let _closedReason = null;   // null = unknown, object = { icon, title, desc, time }
+
+    function buildClosedBox() {
+      const ist = getIST();
+      const day = ist.getDay();   // 0=Sun, 6=Sat
+      const mins = ist.getHours() * 60 + ist.getMinutes();
+      const marketOpen  = 9 * 60 + 16;
+      const marketClose = 12 * 60;
+
+      let icon, title, desc, time;
+
+      if (_closedReason) {
+        // API told us exactly why
+        icon  = _closedReason.icon;
+        title = _closedReason.title;
+        desc  = _closedReason.desc;
+        time  = _closedReason.time;
+      } else if (day === 6) {
+        icon  = "📅";
+        title = "Market Closed — Saturday";
+        desc  = "NSE is closed on weekends. No live values are generated today.";
+        time  = "Next session: <b>Monday at 9:16 AM IST</b>";
+      } else if (day === 0) {
+        icon  = "📅";
+        title = "Market Closed — Sunday";
+        desc  = "NSE is closed on weekends. No live values are generated today.";
+        time  = "Next session: <b>Monday at 9:16 AM IST</b>";
+      } else if (mins < marketOpen) {
+        icon  = "⏰";
+        title = "Pre-Market — Session Not Started";
+        desc  = "Live Black-Box-Engine values are generated during active market analysis hours.";
+        time  = "Session opens at <b>9:16 AM IST</b>";
+      } else if (mins > marketClose) {
+        icon  = "🔔";
+        title = "Market Session Ended for Today";
+        desc  = "Today's session has closed. Data will be available again next trading day.";
+        time  = "Next session: <b>Tomorrow at 9:16 AM IST</b>";
+      } else {
+        icon  = "⏰";
+        title = "Market Insight Window Closed";
+        desc  = "Live Black-Box-Engine values are generated during active market hours.";
+        time  = "9:16 AM → 12:00 PM IST";
+      }
+
+      return `
+        <div class="market-closed-box">
+          <div class="market-icon">${icon}</div>
+          <div class="market-title">${title}</div>
+          <div class="market-desc">${desc}</div>
+          <div class="market-time">${time}</div>
+          <div class="market-sub" style="margin-top:10px;">
+            Previous session values remain visible till next trading day 8:30 AM
+          </div>
+        </div>`;
+    }
+
+function loadData() {
+    fetch("/api/get-running")
+        .then(r => r.json())
+        .then(d => {
+            const rows = (d.rows || []).sort(
+                (a, b) => new Date(a.datetime) - new Date(b.datetime)
+            );
+
+            const grid = document.getElementById("rows-grid");
+
+            if (!rows.length) {
+                _dashboardRows = [];
+                if (!grid.querySelector(".data-row")) {
+                    grid.innerHTML = buildClosedBox();
+                }
+                return;
+            }
+
+            const displayableRows = rows;
+            
+            // --- NEW BLACK BOX INDEX (BBI) LOGIC ---
+            let bbiAcc = 0;
+            let prevBbi = null;
+            let prevRunning = null;
+
+            for (let i = 0; i < displayableRows.length; i++) {
+                let rVal = parseFloat(displayableRows[i].running || 0);
+
+                if (i === 0) {
+                    displayableRows[i].bbi = null;
+                    prevRunning = rVal;
+                } else if (i >= 1 && i <= 6) {
+                    bbiAcc += rVal;
+                    displayableRows[i].bbi = null;
+                    if (i === 6) {
+                        let avg = bbiAcc / 6;
+                        displayableRows[i].bbi = avg;
+                        prevBbi = avg;
+                    }
+                    prevRunning = rVal;
+                } else {
+                    let currentBbi = prevBbi + rVal - prevRunning;
+                    displayableRows[i].bbi = currentBbi;
+                    prevBbi = currentBbi;
+                    prevRunning = rVal;
+                }
+            }
+            // ---------------------------------------
+
+            const heroRow = displayableRows[displayableRows.length - 1];
+            const heroRunning = parseFloat(heroRow.running || 0);
+
+            _dashboardRows = displayableRows.map(r => ({
+                datetime:  r.datetime  || "",
+                strike:    r.strike    || "",
+                index_ltp: r.index_ltp || "",
+                running:   r.running   || 0,
+                bbi:       r.bbi
+            }));
+
+            document.getElementById("h-ltp").textContent    = heroRow.index_ltp || "—";
+            document.getElementById("h-expiry").textContent = heroRow.expiry    || "—";
+            document.getElementById("h-ts").textContent     = heroRow.datetime  || "—";
+
+            const parts = (heroRow.datetime || "").split(" ");
+            document.getElementById("atm-dt").innerHTML = `
+                <span style="color:#fff">${parts[0] || ""}</span>
+                <span style="color:#fff;margin:0 6px">|</span>
+                <span style="color:#fff">${parts[1] || heroRow.datetime}</span><br>
+                <span style="color:#ff6b35">Strike: </span>
+                <span class="strike-highlight">${heroRow.strike}</span>
+                <span style="color:var(--text-muted);margin:0 8px">·</span>
+                <span style="color:#ff6b35">Sensex: </span>
+                <span style="color:var(--primary)">
+                    ${parseFloat(heroRow.index_ltp || 0).toFixed(2)}
+                </span>`;
+
+            const box = document.getElementById("atm-run-box");
+            document.getElementById("atm-run-val").textContent = heroRunning.toFixed(2);
+            if (heroRunning > 0) {
+                box.className = "atm-run-box atm-run-pos";
+                box.querySelector(".run-label").textContent = "▲ Bullish";
+            } else if (heroRunning < 0) {
+                box.className = "atm-run-box atm-run-neg";
+                box.querySelector(".run-label").textContent = "▼ Bearish";
+            } else {
+                box.className = "atm-run-box atm-run-zero";
+                box.querySelector(".run-label").textContent = "◆ Neutral";
+            }
+
+            // ── Filter out stale zero-value rows on non-trading days ──
+            const istNow = getIST();
+            const isWeekend = istNow.getDay() === 0 || istNow.getDay() === 6;
+            const allZero = displayableRows.every(r => parseFloat(r.running || 0) === 0);
+            if ((isWeekend || _closedReason) && allZero) {
+                grid.innerHTML = buildClosedBox();
+                return;
+            }
+
+            const displayRows = [...displayableRows].reverse();
+            
+            // --- INJECT BBI HEADERS & PILLS ---
+            let html = `
+                <div style="display: flex; justify-content: space-between; padding: 0 14px 8px; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
+                    <span>Time & Sensex</span>
+                    <div style="display: flex; gap: 6px; text-align: center;">
+                        <span style="width: 80px;">Running</span>
+                        <span style="width: 80px; color: var(--primary);">BBI</span>
+                    </div>
+                </div>
+            `;
+            
+            displayRows.forEach(r => {
+                const val  = parseFloat(r.running || 0);
+                const cls  = val > 0 ? "val-pos"  : val < 0 ? "val-neg"  : "val-zero";
+                const rcls = val > 0 ? "row-pos"  : val < 0 ? "row-neg"  : "row-zero";
+                const dt   = (r.datetime || "").split(" ");
+
+                // Setup BBI Pill
+                let bbiStr = "—";
+                let bbiCls = "val-zero";
+                let bbiBorder = "rgba(245, 166, 35, 0.3)";
+                let bbiBg = "rgba(245, 166, 35, 0.08)";
+                let bbiColor = "var(--gold)";
+
+                if (r.bbi !== null && r.bbi !== undefined) {
+                    const bbiVal = parseFloat(r.bbi);
+                    bbiStr = (bbiVal > 0 ? "+" : "") + bbiVal.toFixed(2);
+                    if (bbiVal > 0) {
+                        bbiCls = "val-pos";
+                        bbiBorder = "rgba(0, 212, 170, 0.4)";
+                        bbiBg = "rgba(0, 212, 170, 0.08)";
+                        bbiColor = "var(--green)";
+                    } else if (bbiVal < 0) {
+                        bbiCls = "val-neg";
+                        bbiBorder = "rgba(255, 77, 109, 0.4)";
+                        bbiBg = "rgba(255, 77, 109, 0.08)";
+                        bbiColor = "var(--red)";
+                    }
+                }
+
+                html += `
+                    <div class="data-row ${rcls}">
+                        <div class="row-dt">
+                            <span class="row-time">${dt[1] || r.datetime}</span>
+                            <span class="row-sensex">Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)}</span>
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <div class="val-pill ${cls}" title="Running Value">
+                                ${val > 0 ? "+" : ""}${val.toFixed(2)}
+                            </div>
+                            <div class="val-pill ${bbiCls}" title="Black Box Index" style="background: ${bbiBg}; border: 1px solid ${bbiBorder}; color: ${bbiColor}; box-shadow: inset 0 0 8px rgba(0,0,0,0.2);">
+                                ${bbiStr}
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            grid.innerHTML = html;
+
+            const last6 = displayableRows.slice(-6);
+            if (last6.length) {
+                updateGauge(
+                    last6.reduce((s, r) => s + parseFloat(r.running || 0), 0) / last6.length
+                );
+            }
+
+            checkMarketCloseAutoSave();
+        })
+        .catch(e => console.error("loadData:", e));
+}
+    function startAutoRefresh(ms) { if (_refreshTimer) clearTimeout(_refreshTimer); doRefresh(ms); }
+    function doRefresh(ms) { loadData(); _refreshTimer = setTimeout(() => doRefresh(ms), ms); }
+
+    /* ══════════════════════════════════════════════════════════
+       GAUGE
+    ══════════════════════════════════════════════════════════ */
+    function drawGauge() {
+      const cv = document.getElementById("gauge"), ctx = cv.getContext("2d"), w = cv.width, h = cv.height;
+      ctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h * .82, r = w * .36, arcW = 30;
+      ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = arcW + 4; ctx.arc(cx, cy, r, Math.PI, 0); ctx.stroke();
+      const rg = ctx.createLinearGradient(cx - r, cy, cx - r * .3, cy);
+      rg.addColorStop(0, '#ff2d55'); rg.addColorStop(1, '#ff6b35');
+      ctx.beginPath(); ctx.strokeStyle = rg; ctx.lineWidth = arcW; ctx.arc(cx, cy, r, Math.PI, Math.PI * (1 + 2 / 6)); ctx.stroke();
+      ctx.beginPath(); ctx.strokeStyle = '#f5a623'; ctx.lineWidth = arcW; ctx.arc(cx, cy, r, Math.PI * (1 + 2 / 6), Math.PI * (1 + 4 / 6)); ctx.stroke();
+      const gg = ctx.createLinearGradient(cx + r * .3, cy, cx + r, cy);
+      gg.addColorStop(0, '#00c9a7'); gg.addColorStop(1, '#00d4aa');
+      ctx.beginPath(); ctx.strokeStyle = gg; ctx.lineWidth = arcW; ctx.arc(cx, cy, r, Math.PI * (1 + 4 / 6), 0); ctx.stroke();
+      ctx.beginPath(); ctx.strokeStyle = 'rgba(2,163,254,0.07)'; ctx.lineWidth = 2; ctx.arc(cx, cy, r + arcW / 2 + 10, Math.PI, 0); ctx.stroke();
+      [-180, -120, -60, 0, 60, 120, 180].forEach(lv => {
+        const frac = (lv + 180) / 360, angle = Math.PI + frac * Math.PI, c = Math.cos(angle), s = Math.sin(angle);
+        ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 2;
+        ctx.moveTo(cx + (r - arcW / 2 - 4) * c, cy + (r - arcW / 2 - 4) * s); ctx.lineTo(cx + (r + arcW / 2 + 4) * c, cy + (r + arcW / 2 + 4) * s); ctx.stroke();
+        const lr = r + arcW / 2 + 22;
+        ctx.font = 'bold 16px "Roboto Mono",monospace'; ctx.fillStyle = 'rgba(150,160,185,0.85)';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(lv === 0 ? '0' : (lv > 0 ? '+' + lv : '' + lv), cx + lr * c, cy + lr * s);
+      });
+      for (let i = 1; i <= 11; i += 2) {
+        const angle = Math.PI + (i / 12) * Math.PI, c = Math.cos(angle), s = Math.sin(angle);
+        ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
+        ctx.moveTo(cx + (r - arcW / 2 - 1) * c, cy + (r - arcW / 2 - 1) * s); ctx.lineTo(cx + (r + arcW / 2 + 2) * c, cy + (r + arcW / 2 + 2) * s); ctx.stroke();
+      }
+    }
+
+    function updateGauge(val) {
+      val = Math.max(-180, Math.min(180, parseFloat(val) || 0));
+      drawGauge();
+      const cv = document.getElementById("gauge"), ctx = cv.getContext("2d"), w = cv.width, h = cv.height;
+      const cx = w / 2, cy = h * .82, nr = w * .30, frac = (val + 180) / 360, angle = Math.PI + frac * Math.PI;
+      const nc = val > 0 ? '#00d4aa' : val < 0 ? '#ff4d6d' : '#f5a623';
+      ctx.shadowBlur = 14; ctx.shadowColor = nc;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + nr * Math.cos(angle), cy + nr * Math.sin(angle));
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.stroke(); ctx.shadowBlur = 0;
+      ctx.beginPath(); ctx.arc(cx, cy, 13, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fillStyle = nc; ctx.fill();
+      const gv = document.getElementById("gauge-val");
+      gv.textContent = (val > 0 ? '+' : '') + Math.round(val); gv.style.color = val > 0 ? 'var(--green)' : val < 0 ? 'var(--red)' : 'var(--gold)';
+      let label, bg, border, color;
+      if (val > 60) { label = '▲ Strong Bullish'; bg = 'rgba(0,212,170,0.1)'; border = 'rgba(0,212,170,0.3)'; color = 'var(--green)'; }
+      else if (val > 0) { label = '▲ Mildly Bullish'; bg = 'rgba(0,212,170,0.08)'; border = 'rgba(0,212,170,0.2)'; color = 'var(--green)'; }
+      else if (val < -60) { label = '▼ Strong Bearish'; bg = 'rgba(255,77,109,0.1)'; border = 'rgba(255,77,109,0.3)'; color = 'var(--red)'; }
+      else if (val < 0) { label = '▼ Mildly Bearish'; bg = 'rgba(255,77,109,0.08)'; border = 'rgba(255,77,109,0.2)'; color = 'var(--red)'; }
+      else { label = '◆ Neutral'; bg = 'rgba(245,166,35,0.1)'; border = 'rgba(245,166,35,0.3)'; color = 'var(--gold)'; }
+      document.getElementById("sentiment-text").innerHTML = `<span class="sentiment-badge" style="background:${bg};color:${color};border:1px solid ${border}">${label}</span>`;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       DOWNLOADS
+    ══════════════════════════════════════════════════════════ */
+    let _allDlFiles = [];
+    const PLAN_DL_DAYS = { pro: 7, premium: 30 };
+
+    function loadDownloads() {
+      fetch('/api/downloads', { credentials: 'include' })
+        .then(res => {
+          if (res.status === 401) { window.location.href = '/user-login'; return null; }
+          return res.json();
+        })
+        .then(data => {
+          if (!data) return;
+          const plan = (data.plan || "free").toLowerCase();
+          const files = data.files || [];
+          const canDl = (plan === "pro" || plan === "premium" || plan === "admin");
+          _userPlan = plan;
+          _allDlFiles = files;
+
+          // Plan strip
+          document.getElementById("plan-strip").className = `plan-strip plan-${plan}`;
+          const labels = { admin: '🔑 Admin Access', pro: '⚡ Pro Plan', premium: '👑 Premium Plan', essential: '🟡 Essential Plan', basic: '🔵 Basic Plan', free: '⭕ Free Plan' };
+          document.getElementById("plan-strip-label").innerHTML = labels[plan] || ('Plan: ' + plan);
+          const maxDays = PLAN_DL_DAYS[plan] || 0;
+          document.getElementById("plan-strip-status").textContent = 
+            plan === "admin" ? '✅ All files unlocked' :
+            canDl ? `✅ Last ${maxDays} days unlocked` : '⛔ Downloads Locked';
+
+          // Show/hide date filter
+          const filterEl = document.getElementById('dl-date-filter');
+          if (filterEl) filterEl.style.display = canDl ? 'block' : 'none';
+
+          if (canDl) {
+            const today = new Date();
+            const noteEl = document.getElementById('dl-limit-note');
+            const fromInp = document.getElementById('dl-from-date');
+            const toInp = document.getElementById('dl-to-date');
+            const todayStr = today.toISOString().slice(0, 10);
+
+            if (plan === 'admin') {
+              // Admin: no cutoff — show all files, set date range to cover everything
+              if (noteEl) noteEl.textContent = 'All historical files unlocked — no date restriction';
+              if (fromInp && !fromInp.value) {
+                fromInp.value = '2025-01-01';   // far enough back to cover all data
+                fromInp.min   = '2024-01-01';
+                fromInp.max   = todayStr;
+                toInp.value   = todayStr;
+                toInp.min     = '2024-01-01';
+                toInp.max     = todayStr;
+              }
+            } else {
+              const cutoff = new Date();
+              cutoff.setDate(today.getDate() - maxDays);
+              const cutoffStr = cutoff.toISOString().slice(0, 10);
+              if (noteEl) {
+                noteEl.textContent = `Files available from last ${maxDays} days (from ${cutoff.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })})`;
+              }
+              if (fromInp && !fromInp.value) {
+                fromInp.value = cutoffStr;
+                fromInp.min   = cutoffStr;
+                fromInp.max   = todayStr;
+                toInp.value   = todayStr;
+                toInp.min     = cutoffStr;
+                toInp.max     = todayStr;
+              }
+            }
+          }
+          renderDlList(plan, canDl);
+        })
+        .catch(() => {
+          document.getElementById("dl-list").innerHTML = `<div class="no-files"><i class="fas fa-exclamation-triangle"></i>Error loading files.</div>`;
+        });
+    }
+
+    function renderDlList(plan, canDl) {
+      const container = document.getElementById("dl-list");
+      let files = [..._allDlFiles];
+
+      if (!files.length) {
+        container.innerHTML = `<div class="no-files"><i class="fas fa-folder-open"></i>No historical files yet.<br><span style="font-size:10px;margin-top:4px;display:block">Files are auto-saved after each market session</span></div>`;
+        return;
+      }
+
+      // Apply plan-based day limit
+      const maxDays = PLAN_DL_DAYS[plan] || 0;
+      if (canDl && maxDays && plan !== 'admin') {
+          const cutoff = new Date();
+          cutoff.setDate(cutoff.getDate() - maxDays);
+          cutoff.setHours(0, 0, 0, 0);
+          files = files.filter(f => {
+              try { return new Date(f.name.replace('.xlsx', '')) >= cutoff; } catch(e) { return true; }
+          });
+      }
+
+      // Apply user date filter
+      const fromVal = document.getElementById('dl-from-date') ? document.getElementById('dl-from-date').value : '';
+      const toVal   = document.getElementById('dl-to-date')   ? document.getElementById('dl-to-date').value   : '';
+      if (fromVal) {
+        const from = new Date(fromVal + 'T00:00:00');
+        files = files.filter(f => { try { return new Date(f.name.replace('.xlsx', '') + 'T00:00:00') >= from; } catch(e) { return true; } });
+      }
+      if (toVal) {
+        const to = new Date(toVal + 'T23:59:59');
+        files = files.filter(f => { try { return new Date(f.name.replace('.xlsx', '') + 'T00:00:00') <= to; } catch(e) { return true; } });
+      }
+
+      if (!files.length) {
+        container.innerHTML = `<div class="no-files"><i class="fas fa-calendar-times"></i>No files in selected date range.<br><span style="font-size:10px;margin-top:4px;display:block">Try adjusting the date filter.</span></div>`;
+        return;
+      }
+
+      container.innerHTML = files.map(f => {
+        if (canDl) {
+          return `<div class="dl-item">
+            <div class="dl-item-left">
+              <span class="dl-item-icon">📊</span>
+              <div><div class="dl-name">${f.display_date}</div><div class="dl-date">${f.name}</div></div>
+            </div>
+            <a href="${f.url}" class="dl-btn"><i class="fas fa-file-excel"></i> Download</a>
+          </div>`;
+        } else {
+          return `<div class="dl-item">
+            <div class="dl-item-left">
+              <span class="dl-item-icon">🔒</span>
+              <div><div class="dl-name">${f.display_date}</div><div class="dl-date">${f.name}</div></div>
+            </div>
+            <button class="dl-upgrade-btn" onclick="showUpgradeModal()"><i class="fas fa-lock"></i> Upgrade</button>
+          </div>`;
+        }
+      }).join('');
+    }
+
+    function applyDateFilter() {
+      const plan = _userPlan.toLowerCase();
+      renderDlList(plan, plan === "pro" || plan === "premium" || plan === "admin");
+    }
+
+    function clearDateFilter() {
+      const plan = _userPlan.toLowerCase();
+      const canDl = plan === "pro" || plan === "premium" || plan === "admin";
+      const today = new Date();
+      const todayStr = today.toISOString().slice(0, 10);
+      const fromInp = document.getElementById('dl-from-date');
+      const toInp = document.getElementById('dl-to-date');
+
+      if (plan === 'admin') {
+        if (fromInp) { fromInp.value = '2025-01-01'; fromInp.min = '2024-01-01'; }
+        if (toInp)   { toInp.value   = todayStr;      toInp.min   = '2024-01-01'; }
+      } else {
+        const maxDays = PLAN_DL_DAYS[plan] || 0;
+        if (canDl && maxDays) {
+          const cutoff = new Date();
+          cutoff.setDate(today.getDate() - maxDays);
+          if (fromInp) fromInp.value = cutoff.toISOString().slice(0, 10);
+          if (toInp)   toInp.value   = todayStr;
+        }
+      }
+      renderDlList(plan, canDl);
+    }
+    /* ══════════════════════════════════════════════════════════
+       UPGRADE MODAL
+    ══════════════════════════════════════════════════════════ */
+    function showUpgradeModal() { document.getElementById("upgrade-overlay").classList.add("active"); }
+    function closeUpgradeModal() { document.getElementById("upgrade-overlay").classList.remove("active"); }
+    document.getElementById("upgrade-overlay").addEventListener("click", function (e) { if (e.target === this) closeUpgradeModal(); });
+
+    /* ══════════════════════════════════════════════════════════
+       MARKET NOTE
+    ══════════════════════════════════════════════════════════ */
+    function updateMarketMessage() {
+      const note = document.getElementById("market-note"), ist = getIST(), h = ist.getHours(), m = ist.getMinutes();
+      note.style.display = ((h > 9 || (h === 9 && m >= 16)) && (h < 15 || (h === 12 && m <= 0))) ? "none" : "flex";
+    }
+
+        /* ══════════════════════════════════════════════════════════
+      TIMED SYSTEM MESSAGES — inject into chat at the right time
+    ══════════════════════════════════════════════════════════ */
+    function checkTimedMessages() {
+      const ist = getIST();
+      const nowMins = ist.getHours() * 60 + ist.getMinutes();
+
+      TIMED_MESSAGES.forEach(msg => {
+        const isActive = nowMins >= msg.fromMins && nowMins < msg.toMins;
+        const alreadyShown = _shownSystemMsgs.has(msg.id);
+        const existingEl = document.getElementById('sys-' + msg.id);
+
+        // Remove if time window passed
+        if (!isActive && existingEl) {
+          existingEl.remove();
+          _shownSystemMsgs.delete(msg.id);
+          return;
+        }
+
+        // Inject if time window active and not yet shown
+        if (isActive && !alreadyShown) {
+          _shownSystemMsgs.add(msg.id);
+          injectSystemMessage(msg);
+        }
+      });
+    }
+
+    function injectSystemMessage(msg) {
+      const container = document.getElementById('bc-messages');
+      if (!container) return;
+
+      // Don't inject into the empty state — wait for it to be replaced
+      if (container.querySelector('.bc-empty')) {
+        // Retry after broadcasts load
+        setTimeout(() => injectSystemMessage(msg), 1000);
+        return;
+      }
+
+      // Don't double-inject
+      if (document.getElementById('sys-' + msg.id)) return;
+
+      const ist = getIST();
+      const timeStr = ist.toTimeString().slice(0, 5);
+
+      const div = document.createElement('div');
+      div.className = 'bc-msg system-msg';
+      div.id = 'sys-' + msg.id;
+      div.innerHTML = `
+        <div class="bc-msg-meta">
+          <span class="bc-msg-sender">🤖 TraderBro System</span>
+          <span class="bc-msg-time">${timeStr}</span>
+        </div>
+        <div class="bc-msg-body-row">
+          <div class="bc-bubble system-bubble">
+            ${msg.text}
+            <div class="bc-bubble-footer">
+              <span class="bc-bubble-ts">${timeStr}</span>
+            </div>
+          </div>
+        </div>`;
+
+      // Insert before the first real admin message, or append at bottom
+      const firstMsg = container.querySelector('.bc-msg:not(.system-msg)');
+      if (firstMsg) {
+        container.insertBefore(div, firstMsg);
+      } else {
+        container.appendChild(div);
+      }
+
+      // Scroll to bottom if user is already there
+      if (_bcAtBottom) container.scrollTop = container.scrollHeight;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       AUTH CHECK
+    ══════════════════════════════════════════════════════════ */
+async function checkDashboardAccess() {
+
+    try {
+
+        const res = await fetch("/api/dashboard-access", {
+            credentials: "include"
+        });
+
+        const data = await res.json();
+
+        // On weekends/holidays, clear stale zero rows from live_running.json display
+        if (data.is_weekend || data.is_holiday) {
+            updateMarketClosedBanner(data);
+        }
+
+        // NOT LOGGED IN
+        if (data.reason === "not_logged_in") {
+
+            window.location.replace("/user-login");
+            return false;
+        }
+
+        // NO PLAN
+        if (data.reason === "no_plan") {
+
+            window.location.replace("/trading-plan");
+            return false;
+        }
+
+        // EXPIRED
+        if (data.reason === "plan_expired") {
+
+            window.location.replace("/trading-plan?expired=1");
+            return false;
+        }
+
+        // ADMIN OR ACTIVE USER
+        return true;
+
+    } catch (err) {
+
+        console.error(err);
+
+        return true; // IMPORTANT
+    }
+}
+
+function updateMarketClosedBanner(accessData) {
+    const grid = document.getElementById("rows-grid");
+    if (!grid) return;
+    if (grid.querySelector(".data-row")) return;   // real data already there
+
+    // Store the reason so buildClosedBox() can use it
+    if (accessData.is_weekend) {
+        const dayName = accessData.weekday_name || "Weekend";
+        _closedReason = {
+            icon:  "📅",
+            title: `Market Closed — ${dayName}`,
+            desc:  "NSE is closed on weekends. No live values are generated today.",
+            time:  `Next session: <b>${accessData.next_trading_day || "Monday"}</b>`,
+        };
+    } else if (accessData.is_holiday) {
+        _closedReason = {
+            icon:  "🏖️",
+            title: `Market Holiday — ${accessData.holiday_reason}`,
+            desc:  `NSE is closed today for <b>${accessData.holiday_reason}</b>. No live values are generated.`,
+            time:  `Next session: <b>${accessData.next_trading_day}</b>`,
+        };
+    } else {
+        // Weekday, non-holiday — time-based reason
+        const now = new Date();
+        const ist = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+        const mins = ist.getHours() * 60 + ist.getMinutes();
+        if (mins < 9 * 60 + 16) {
+            _closedReason = {
+                icon:  "⏰",
+                title: "Pre-Market — Session Not Started",
+                desc:  "Live Black-Box-Engine values are generated during active market analysis hours.",
+                time:  "Session opens at <b>9:16 AM IST</b>",
+            };
+        } else if (mins > 12 * 60) {
+            _closedReason = {
+                icon:  "🔔",
+                title: "Market Session Ended for Today",
+                desc:  "Today's session has closed. Data will be available again next trading day.",
+                time:  `Next session: <b>${accessData.next_trading_day}</b> at <b>9:16 AM IST</b>`,
+            };
+        }
+    }
+
+    grid.innerHTML = buildClosedBox();
+}
+/* ── Full-screen overlay for queued plan ── */
+function showFullscreenClosed(icon, title, body, extra) {
+    // Remove any existing overlay
+    const existing = document.getElementById("_accessOverlay");
+    if (existing) existing.remove();
+ 
+    const div = document.createElement("div");
+    div.id = "_accessOverlay";
+    div.style.cssText = `
+        position:fixed; inset:0; z-index:99999;
+        background:rgba(5,8,20,0.97);
+        display:flex; align-items:center; justify-content:center;
+        font-family:'Poppins',sans-serif;
+    `;
+    div.innerHTML = `
+        <div style="
+            max-width:420px; width:90%;
+            background:#111827;
+            border:1px solid rgba(2,163,254,0.3);
+            border-radius:20px;
+            padding:40px 28px;
+            text-align:center;
+            box-shadow:0 0 60px rgba(2,163,254,0.15);
+        ">
+            <div style="font-size:56px;margin-bottom:16px;">${icon}</div>
+            <h2 style="color:#02A3FE;font-size:22px;font-weight:800;margin-bottom:12px;">${title}</h2>
+            <p style="color:#cbd5e1;font-size:14px;line-height:1.7;margin-bottom:0;">${body}</p>
+            ${extra || ""}
+        </div>`;
+    document.body.appendChild(div);
+}
+
+
+/* ══════════════════════════════════════════════════════════
+       INIT
+    ══════════════════════════════════════════════════════════ */
+    drawGauge();
+    updateGauge(0);
+    checkDashboardAccess();
+    loadDownloads();
+    startAutoRefresh(15000);
+    setInterval(loadDownloads, 30000);
+    updateMarketMessage();
+    setInterval(updateMarketMessage, 60000);
+    setInterval(checkMarketCloseAutoSave, 60000);
+    checkTimedMessages();
+    setInterval(checkTimedMessages, 30000);  // check every 30 seconds
+
+    // Broadcast — start after DOM ready to ensure scroll tracking works
+    document.addEventListener('DOMContentLoaded', () => {
+      const msgEl = document.getElementById('bc-messages');
+      if (msgEl) {
+        msgEl.addEventListener('scroll', () => {
+          _bcAtBottom = msgEl.scrollHeight - msgEl.scrollTop - msgEl.clientHeight < 40;
+          if (_bcAtBottom) hideBadge();
+        });
+      }
+      startBcPoll();
+    });
+    // Fallback if DOMContentLoaded already fired
+    if (document.readyState !== 'loading') {
+      const msgEl = document.getElementById('bc-messages');
+      if (msgEl && !msgEl._scrollBound) {
+        msgEl._scrollBound = true;
+        msgEl.addEventListener('scroll', () => {
+          _bcAtBottom = msgEl.scrollHeight - msgEl.scrollTop - msgEl.clientHeight < 40;
+          if (_bcAtBottom) hideBadge();
+        });
+      }
+      startBcPoll();
+    }
+
+    const BC_QUICK_MSGS = [
+      "Anticipating Bullish Movement",
+      "Anticipating Bearish Movement",
+      "TraderBro.in anticipating liquidity sweep at break-down of 3min candle",
+      "TraderBro.in anticipating liquidity sweep at break-out of 3min candle",
+      "TraderBro.in is done with the day",
+      "Site is facing technical failure, Sorry for inconvenience.",
+    ];
+
+    (function bcBuildQuickMenu() {
+      const list = document.getElementById('quickMenuList');
+      if (!list) return;
+      BC_QUICK_MSGS.forEach((msg, i) => {
+        const el = document.createElement('div');
+        el.className = 'quick-item';
+        el.innerHTML = `<span class="qi-num">${i + 1}</span><span class="qi-text">${msg}</span><span class="qi-arrow">→</span>`;
+        el.onclick = () => bcInsertQuick(msg);
+        list.appendChild(el);
+      });
+    })();
+
+    function bcToggleQuick() {
+      const menu = document.getElementById('quickMenu');
+      const btn = document.getElementById('quickBtn');
+      const open = menu.classList.toggle('show');
+      btn.classList.toggle('open', open);
+    }
+
+    function bcInsertQuick(text) {
+      const inp = document.getElementById('bc-input');
+      inp.value = text;
+      bcUpdateCharCount(text);
+      inp.style.height = '38px';
+      inp.style.height = Math.min(inp.scrollHeight, 100) + 'px';
+      inp.focus();
+      document.getElementById('quickMenu').classList.remove('show');
+      document.getElementById('quickBtn').classList.remove('open');
+    }
+
+    // Close quick menu on outside click
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.bc-compose')) {
+        const menu = document.getElementById('quickMenu');
+        const btn = document.getElementById('quickBtn');
+        if (menu) menu.classList.remove('show');
+        if (btn) btn.classList.remove('open');
+      }
+    });
+
+    /* ══════════════════════════════════════════════════════════
+       ACTIVE USERS — heartbeat + counter
+    ══════════════════════════════════════════════════════════ */
+    (function () {
+      // Send heartbeat every 20 seconds
+      async function sendHeartbeat() {
+        try {
+          await fetch('/api/heartbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ page: 'dashboard' })
+          });
+        } catch (e) { }
+      }
+
+      // Fetch and display active user count
+      async function fetchActiveUsers() {
+        try {
+          const res = await fetch('/api/active-users', { credentials: 'include' });
+          if (!res.ok) return;
+          const data = await res.json();
+
+          // Only show for admin
+          const isAdmin = _dashUser
+            ? _dashUser.role === 'admin'
+            : false;
+
+          if (!isAdmin) return;
+
+          const count = data.total ?? '0';
+
+          // ── Desktop pill (in header) ──
+          const pill    = document.getElementById('active-users-pill');
+          const countEl = document.getElementById('au-count');
+          if (countEl) countEl.textContent = count;
+          if (pill)    pill.style.display  = 'flex';
+
+          // ── Mobile pill (below holiday strip) ──
+          const isMobile     = window.innerWidth <= 768;
+          const mobileStrip  = document.getElementById('mobile-au-strip');
+          const mobilePill   = document.getElementById('active-users-pill-mobile');
+          const mobileCount  = document.getElementById('au-count-mobile');
+          if (mobileCount) mobileCount.textContent = count;
+          if (mobilePill)  mobilePill.style.display  = 'flex';
+          if (mobileStrip) mobileStrip.style.display = isMobile ? 'flex' : 'none';
+
+        } catch (e) { }
+      }
+
+      sendHeartbeat();
+      setTimeout(fetchActiveUsers, 1500);   // ← small delay, _dashUser is loaded by then
+      setInterval(sendHeartbeat, 20000);
+      setInterval(fetchActiveUsers, 20000);
+    })();
+
+
+    /* ══════════════════════════════════════════════════════════
+   DASHBOARD USER DROPDOWN
+══════════════════════════════════════════════════════════ */
+let _dashUser = null;
+
+async function loadDashUser() {
+  try {
+    const res  = await fetch('/api/me', { credentials: 'include' });
+    const data = await res.json();
+    if (!data.username) return;
+    _dashUser = data;
+
+    const plan    = (data.plan || 'free').toLowerCase();
+    const isAdmin = data.role === 'admin';
+    const initial = (data.username || '?').charAt(0).toUpperCase();
+
+    // Avatar
+    document.getElementById('dash-avatar').textContent    = initial;
+    document.getElementById('dd-avatar-lg').textContent   = initial;
+    document.getElementById('dash-username').textContent  = data.username;
+    document.getElementById('dd-name').textContent        = data.username;
+    document.getElementById('dd-email').textContent       = data.email || '—';
+
+    // Plan label in button
+    const planLabels = { admin:'Admin', premium:'👑 Premium', pro:'⚡ Pro', essential:'Essential', basic:'Basic', free:'Free' };
+    const planEl = document.getElementById('dash-plan');
+    planEl.textContent = planLabels[isAdmin ? 'admin' : plan] || plan.toUpperCase();
+    planEl.className = `dash-plan plan-${isAdmin ? 'admin' : plan}`;
+
+    // Plan strip inside dropdown
+    const stripLabels = { admin:'🔑 Admin Access', premium:'👑 Premium Plan', pro:'⚡ Pro Plan', essential:'Essential Plan', basic:'Basic Plan', free:'Free Plan' };
+    document.getElementById('dd-plan-label').textContent = stripLabels[isAdmin ? 'admin' : plan] || plan;
+
+    // Plan status
+    const statusEl = document.getElementById('dd-plan-status');
+    if (isAdmin) {
+      statusEl.textContent = '✅ Full Access';
+      statusEl.style.color = 'var(--green)';
+    } else if (data.plan_expiry) {
+      const diff = new Date(data.plan_expiry) - Date.now();
+      if (diff > 0) {
+        const d = Math.floor(diff / 86400000);
+        statusEl.textContent = `✅ ${d}d left`;
+        statusEl.style.color = d <= 3 ? 'var(--gold)' : 'var(--green)';
+      } else {
+        statusEl.textContent = '❌ Expired';
+        statusEl.style.color = 'var(--red)';
+      }
+    } else {
+      statusEl.textContent = plan === 'free' ? '⛔ No plan' : '—';
+      statusEl.style.color = 'var(--text-dim)';
+    }
+
+    // Expiry countdown mini bar
+    if (!isAdmin && data.plan_expiry) {
+      const diff = new Date(data.plan_expiry) - Date.now();
+      if (diff > 0 && diff < 7 * 86400000) {
+        const d = Math.floor(diff / 86400000);
+        const h = Math.floor((diff % 86400000) / 3600000);
+        document.getElementById('dd-expiry').style.display = 'flex';
+        document.getElementById('dd-expiry-text').textContent = `Plan expires in ${d}d ${h}h`;
+      }
+    }
+
+    // Admin section
+    if (isAdmin) {
+      document.getElementById('dd-admin-section').style.display = 'block';
+    }
+
+    // Show the whole wrapper
+    document.getElementById('dash-user-wrap').style.display = 'block';
+
+  } catch(e) { console.error('loadDashUser:', e); }
+}
+
+function dashToggle() {
+  const dd  = document.getElementById('dash-dropdown');
+  const ch  = document.getElementById('dash-chevron');
+  const open = dd.classList.toggle('open');
+  ch.classList.toggle('open', open);
+}
+
+// Close on outside click
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('dash-user-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('dash-dropdown').classList.remove('open');
+    document.getElementById('dash-chevron').classList.remove('open');
+  }
+});
+
+// Load on init
+loadDashUser();
+
+// Recheck mobile AU strip visibility on resize/rotate
+window.addEventListener('resize', () => {
+  const mobileStrip = document.getElementById('mobile-au-strip');
+  const mobilePill  = document.getElementById('active-users-pill-mobile');
+  if (!mobileStrip || !mobilePill || mobilePill.style.display === 'none') return;
+  mobileStrip.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+});
+
+  </script>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   HOLIDAY NOTIFICATION SYSTEM
+   • Shows banner when TODAY is a holiday
+   • Shows strip notification 1–5 days before a holiday
+   • Multiple holidays can be queued in the strip
+════════════════════════════════════════════════════════════════════ */
+ 
+const HOLIDAY_COLORS = {
+  0: { bg:"#1a0a00", border:"#f5a623", text:"#f5a623", badge:"#eb4201" },   // today
+  1: { bg:"rgba(235,66,1,0.10)", border:"rgba(235,66,1,0.4)", text:"#ff6b35", badge:"#eb4201" },
+  2: { bg:"rgba(245,166,35,0.10)", border:"rgba(245,166,35,0.35)", text:"#f5a623", badge:"#c8841a" },
+  3: { bg:"rgba(245,166,35,0.07)", border:"rgba(245,166,35,0.25)", text:"#c8841a", badge:"#a06010" },
+  4: { bg:"rgba(245,166,35,0.05)", border:"rgba(245,166,35,0.18)", text:"#a06010", badge:"#806000" },
+  5: { bg:"rgba(245,166,35,0.04)", border:"rgba(245,166,35,0.14)", text:"#806000", badge:"#606000" },
+};
+ 
+function _dayLabel(daysAway) {
+  if (daysAway === 0) return "TODAY";
+  if (daysAway === 1) return "TOMORROW";
+  return ` HOLIDAY IN ${daysAway} DAYS`;
+}
+ 
+function _urgencyIcon(daysAway) {
+  if (daysAway === 0) return "🏖️";
+  if (daysAway === 1) return "⚠️";
+  if (daysAway === 2) return "📅";
+  return "🗓️";
+}
+ 
+function _buildStripItem(h) {
+  const col = HOLIDAY_COLORS[Math.min(h.days_away, 5)];
+  const label = _dayLabel(h.days_away);
+  const icon  = _urgencyIcon(h.days_away);
+  const adj   = h.is_weekend_adjacent
+    ? `<span style="font-size:9px;background:rgba(255,255,255,0.12);padding:1px 6px;border-radius:6px;margin-left:6px;">🔁 Long Weekend</span>`
+    : "";
+ 
+  return `
+    <div style="
+      display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      gap:8px; padding:7px 28px;
+      background:${col.bg};
+      border-bottom:1px solid ${col.border};
+      font-size:11px; font-weight:600;
+      animation: fadeInDown 0.3s ease;
+    ">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:14px;">${icon}</span>
+        <span style="color:${col.text};font-weight:800;letter-spacing:0.5px;">${label}:</span>
+        <span style="color:#e8eaf0;">${h.reason}</span>
+        <span style="color:${col.text};font-size:10px;">· ${h.formatted_date} (${h.weekday_name})</span>
+        ${adj}
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="
+          background:${col.badge}; color:white;
+          padding:2px 10px; border-radius:20px;
+          font-size:10px; font-weight:700; letter-spacing:0.5px;
+          @media (max-width: 500px) { display:none; }
+        ">MARKET WILL BE CLOSED · ${h.formatted_date}</span>
+      </div>
+    </div>`;
+}
+ 
+async function checkHolidayStatus() {
+  try {
+    const res  = await fetch('/api/market-holidays', { credentials: 'include' });
+    const data = await res.json();
+ 
+    /* ── TODAY IS A HOLIDAY ─────────────────────────────────────── */
+    if (data.today_is_holiday) {
+      const banner   = document.getElementById('holiday-banner');
+      const reasonEl = document.getElementById('holiday-reason-text');
+      if (banner) {
+        banner.style.display = 'flex';
+        if (reasonEl) reasonEl.textContent = `${data.today_reason} — NSE is closed`;
+      }
+    }
+ 
+    /* ── UPCOMING (next 5 days, not today) ──────────────────────── */
+    const upcoming = (data.upcoming || []).filter(h => !h.is_today);
+ 
+    // Chips inside today's banner
+    const chipsEl = document.getElementById('upcoming-holiday-chips');
+    if (chipsEl && upcoming.length) {
+      chipsEl.innerHTML = upcoming.slice(0, 2).map(h =>
+        `<span style="
+          background:rgba(245,166,35,0.15);
+          border:1px solid rgba(245,166,35,0.3);
+          color:#f5a623; padding:3px 10px;
+          border-radius:20px; font-size:10px; font-weight:700;
+        ">📅 ${h.reason} — ${_dayLabel(h.days_away)}</span>`
+      ).join('');
+    }
+ 
+    /* ── STRIP: show ALL upcoming holidays within 5 days ────────── */
+    const strip = document.getElementById('upcoming-holiday-strip');
+    if (strip && upcoming.length) {
+      // Sort by proximity
+      const sorted = [...upcoming].sort((a, b) => a.days_away - b.days_away);
+      strip.style.display = 'block';
+      strip.innerHTML = sorted.map(h => _buildStripItem(h)).join('');
+    } else if (strip) {
+      strip.style.display = 'none';
+    }
+ 
+  } catch (e) {
+    console.error('Holiday check failed:', e);
+  }
+}
+ 
+// Run on load
+checkHolidayStatus();
+// Refresh every hour (holidays don't change mid-day)
+setInterval(checkHolidayStatus, 60 * 60 * 1000);
+
+function logout() {
+		sessionStorage.setItem("loggedOut", "1");
+		window.location.href = "/logout";
+	}
+</script>
+
+<script src="/static/session-monitor.js"></script>
+
+</body>
+
+</html>
