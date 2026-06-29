@@ -2085,7 +2085,25 @@
 .dd-logout { color: var(--red) !important; }
 .dd-logout:hover { background: rgba(255,77,109,.08) !important; }
 .dd-logout .dd-icon { color: var(--red) !important; }
-  </style>
+
+/* Grayscale BBI Theme */
+.val-pill.bbi-pos {
+    background: #e0e0e0;
+    color: #333333;
+    border: 1px solid #bcbcbc;
+}
+.val-pill.bbi-neg {
+    background: #4a4a4a;
+    color: #e0e0e0;
+    border: 1px solid #2d2d2d;
+}
+.val-pill.bbi-zero {
+    background: #2a2a3a;
+    color: #888888;
+    border: 1px solid #3d3d4d;
+}
+
+</style>
 </head>
 
 <body>
@@ -2988,42 +3006,36 @@ function loadData() {
 
                 // Setup BBI Pill
                 let bbiStr = "—";
-                let bbiCls = "val-zero";
-                let bbiBorder = "rgba(245, 166, 35, 0.3)";
-                let bbiBg = "rgba(245, 166, 35, 0.08)";
-                let bbiColor = "var(--gold)";
-
-                if (r.bbi !== null && r.bbi !== undefined) {
-                    const bbiVal = parseFloat(r.bbi);
-                    bbiStr = (bbiVal > 0 ? "+" : "") + bbiVal.toFixed(2);
-                    if (bbiVal > 0) {
-                        bbiCls = "val-pos";
-                        bbiBorder = "rgba(0, 212, 170, 0.4)";
-                        bbiBg = "rgba(0, 212, 170, 0.08)";
-                        bbiColor = "#B8B8B8";
-                    } else if (bbiVal < 0) {
-                        bbiCls = "val-neg";
-                        bbiBorder = "rgba(255, 77, 109, 0.4)";
-                        bbiBg = "rgba(255, 77, 109, 0.08)";
-                        bbiColor = "#4C4C4C";
-                    }
-                }
-
-                html += `
-                    <div class="data-row ${rcls}">
-                        <div class="row-dt">
-                            <span class="row-time">${dt[1] || r.datetime}</span>
-                            <span class="row-sensex">Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)}</span>
-                        </div>
-                        <div style="display: flex; gap: 6px;">
-                            <div class="val-pill ${cls}" title="Running Value">
-                                ${val > 0 ? "+" : ""}${val.toFixed(2)}
-                            </div>
-                            <div class="val-pill ${bbiCls}" title="Black Box Index" style="background: ${bbiBg}; border: 1px solid ${bbiBorder}; color: ${bbiColor}; box-shadow: inset 0 0 8px rgba(0,0,0,0.2);">
-                                ${bbiStr}
-                            </div>
-                        </div>
-                    </div>`;
+                let bbiCls = "bbi-zero"; // Using our new grayscale classes
+				
+				if (r.bbi !== null && r.bbi !== undefined) {
+				    const bbiVal = parseFloat(r.bbi);
+				    bbiStr = (bbiVal > 0 ? "+" : "") + bbiVal.toFixed(2);
+				    
+				    if (bbiVal > 0) {
+				        bbiCls = "bbi-pos";
+				    } else if (bbiVal < 0) {
+				        bbiCls = "bbi-neg";
+				    } else {
+				        bbiCls = "bbi-zero";
+				    }
+				}
+				
+				html += `
+				    <div class="data-row ${rcls}">
+				        <div class="row-dt">
+				            <span class="row-time">${dt[1] || r.datetime}</span>
+				            <span class="row-sensex">Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)}</span>
+				        </div>
+				        <div style="display: flex; gap: 6px;">
+				            <div class="val-pill ${cls}" title="Running Value">
+				                ${val > 0 ? "+" : ""}${val.toFixed(2)}
+				            </div>
+				            <div class="val-pill ${bbiCls}" title="Black Box Index">
+				                ${bbiStr}
+				            </div>
+				        </div>
+   					 </div>`;
             });
             grid.innerHTML = html;
 
