@@ -728,17 +728,16 @@
       border-color: rgba(2, 163, 254, .3);
     }
 
-    /* ADD after it: */
-.plan-strip.plan-admin {
-  background: rgba(245, 166, 35, .08);
-  border-color: rgba(245, 166, 35, .3);
-}
-.plan-strip.plan-admin .plan-strip-label {
-  color: var(--gold);
-}
-.plan-strip.plan-admin .plan-strip-status {
-  color: var(--green);
-}
+    .plan-strip.plan-admin {
+      background: rgba(245, 166, 35, .08);
+      border-color: rgba(245, 166, 35, .3);
+    }
+    .plan-strip.plan-admin .plan-strip-label {
+      color: var(--gold);
+    }
+    .plan-strip.plan-admin .plan-strip-status {
+      color: var(--green);
+    }
 
     .plan-strip.plan-premium {
       background: rgba(245, 166, 35, .08);
@@ -2125,7 +2124,6 @@
   </div>
 </div>
  
-<!-- ── UPCOMING HOLIDAY STRIP (≤5 days away, not today) ───────────────── -->
 <div id="upcoming-holiday-strip" style="display:none;"></div>
 
   <header class="header">
@@ -2150,7 +2148,6 @@
       </div>
     </div>
     <div class="header-right">
-  <!-- Active users pill -->
   <div class="active-users-pill" id="active-users-pill" style="display:none;" title="Users currently on dashboard">
     <span class="au-dot"></span>
     <span class="au-count" id="au-count">—</span>
@@ -2163,7 +2160,6 @@
     <div class="ts-val" id="h-ts">—</div>
   </div>
 
-  <!-- ── USER ACCOUNT DROPDOWN ── -->
   <div class="dash-user-wrap" id="dash-user-wrap" style="display:none; position:relative;">
     <button class="dash-user-btn" id="dash-user-btn" onclick="dashToggle()" title="My Account">
       <div class="dash-avatar" id="dash-avatar">?</div>
@@ -2175,7 +2171,6 @@
     </button>
 
     <div class="dash-dropdown" id="dash-dropdown">
-      <!-- User info block -->
       <div class="dd-user-block">
         <div class="dd-avatar-lg" id="dd-avatar-lg">?</div>
         <div>
@@ -2184,7 +2179,6 @@
         </div>
       </div>
 
-      <!-- Plan status strip -->
       <div class="dd-plan-strip" id="dd-plan-strip">
         <span id="dd-plan-label">—</span>
         <span class="dd-plan-status" id="dd-plan-status">—</span>
@@ -2192,7 +2186,6 @@
 
       <div class="dd-divider"></div>
 
-      <!-- Links -->
       <a href="/account" class="dd-item">
         <i class="fas fa-user-circle dd-icon"></i>
         <span>My Account</span>
@@ -2209,7 +2202,6 @@
         <i class="fas fa-chevron-right dd-arrow"></i>
       </a>
 
-      <!-- Admin-only links -->
       <div id="dd-admin-section" style="display:none;">
         <div class="dd-divider"></div>
         <a href="/admin/users" class="dd-item">
@@ -2231,13 +2223,11 @@
 
       <div class="dd-divider"></div>
 
-      <!-- Expiry countdown -->
       <div class="dd-expiry" id="dd-expiry" style="display:none;">
         <i class="fas fa-clock" style="color:var(--gold);font-size:11px;"></i>
         <span id="dd-expiry-text">—</span>
       </div>
 
-      <!-- Logout -->
       <a href="/logout" class="dd-item dd-logout">
         <i class="fas fa-sign-out-alt dd-icon"></i>
         <span>Logout</span>
@@ -2249,7 +2239,6 @@
 
   <div class="main-grid">
 
-    <!-- ── LEFT PANEL ── -->
     <div class="left-panel">
       <div class="panel-header">
         <div class="panel-header-top">
@@ -2287,10 +2276,8 @@
       </div>
     </div>
 
-    <!-- ── RIGHT PANEL ── -->
     <div class="right-panel">
 
-      <!-- TOP: gauge + downloads -->
       <div class="top-combined-box">
         <div class="gauge-card">
           <div class="gauge-card-title">Sentimental Dial Gauge</div>
@@ -2312,7 +2299,6 @@
             <span class="plan-strip-status" id="plan-strip-status">⛔ Downloads Locked</span>
           </div>
 
-          <!-- Date range filter — shown only to pro/premium -->
           <div id="dl-date-filter" style="display:none; margin-bottom:8px; flex-shrink:0;">
             <div style="display:flex; gap:6px; align-items:flex-end; flex-wrap:wrap;">
               <div style="display:flex; flex-direction:column; flex:1; min-width:90px;">
@@ -2335,10 +2321,8 @@
         </div>
       </div>
 
-      <!-- BOTTOM: broadcast chatbox -->
       <div class="bc-wrap" id="bc-wrap">
 
-        <!-- Header -->
         <div class="bc-header">
           <div class="bc-avatar">📢</div>
           <div class="bc-header-info">
@@ -2353,19 +2337,16 @@
           </div>
         </div>
 
-        <!-- Pinned banner -->
         <div class="bc-pinned" id="bc-pinned" onclick="setMsgTab('pinned')">
           <span class="bc-pinned-icon"><i class="fas fa-thumbtack"></i></span>
           <span class="bc-pinned-label">Pinned</span>
           <span class="bc-pinned-text" id="bc-pinned-text"></span>
         </div>
 
-        <!-- New message notification (for users who scrolled up) -->
         <div class="bc-new-badge" id="bc-new-badge" onclick="scrollToLatest()">
           <i class="fas fa-arrow-down"></i><span id="bc-new-badge-text">New message</span>
         </div>
 
-        <!-- Messages -->
         <div class="bc-messages" id="bc-messages">
           <div class="bc-empty">
             <div class="bc-empty-icon">📢</div>
@@ -2374,7 +2355,6 @@
           </div>
         </div>
 
-        <!-- Admin compose -->
         <div class="bc-compose" id="bc-compose" style="display:none;">
           <div class="bc-compose-row">
             <textarea id="bc-input" class="bc-textarea" placeholder="Type a broadcast message…" maxlength="500"
@@ -2396,7 +2376,6 @@
               style="color:#3a4060;">0/500</span></div>
         </div>
 
-        <!-- User read-only bar -->
         <div class="bc-readonly" id="bc-readonly" style="display:none;">
           <span class="bc-readonly-icon">🔒</span>
           <span>Read-only &nbsp;·&nbsp; Only admin can broadcast</span>
@@ -2407,7 +2386,6 @@
     </div>
   </div>
 
-  <!-- Upgrade modal -->
   <div class="upgrade-overlay" id="upgrade-overlay">
     <div class="upgrade-modal">
       <button class="upgrade-modal-close" onclick="closeUpgradeModal()"><i class="fas fa-times"></i></button>
@@ -2909,14 +2887,45 @@ function loadData() {
             }
 
             const displayableRows = rows;
+            
+            // --- NEW BLACK BOX INDEX (BBI) LOGIC ---
+            let bbiAcc = 0;
+            let prevBbi = null;
+            let prevRunning = null;
+
+            for (let i = 0; i < displayableRows.length; i++) {
+                let rVal = parseFloat(displayableRows[i].running || 0);
+
+                if (i === 0) {
+                    displayableRows[i].bbi = null;
+                    prevRunning = rVal;
+                } else if (i >= 1 && i <= 6) {
+                    bbiAcc += rVal;
+                    displayableRows[i].bbi = null;
+                    if (i === 6) {
+                        let avg = bbiAcc / 6;
+                        displayableRows[i].bbi = avg;
+                        prevBbi = avg;
+                    }
+                    prevRunning = rVal;
+                } else {
+                    let currentBbi = prevBbi + rVal - prevRunning;
+                    displayableRows[i].bbi = currentBbi;
+                    prevBbi = currentBbi;
+                    prevRunning = rVal;
+                }
+            }
+            // ---------------------------------------
+
             const heroRow = displayableRows[displayableRows.length - 1];
             const heroRunning = parseFloat(heroRow.running || 0);
 
-            _dashboardRows = rows.map(r => ({
+            _dashboardRows = displayableRows.map(r => ({
                 datetime:  r.datetime  || "",
                 strike:    r.strike    || "",
                 index_ltp: r.index_ltp || "",
                 running:   r.running   || 0,
+                bbi:       r.bbi
             }));
 
             document.getElementById("h-ltp").textContent    = heroRow.index_ltp || "—";
@@ -2959,20 +2968,60 @@ function loadData() {
             }
 
             const displayRows = [...displayableRows].reverse();
-            let html = "";
+            
+            // --- INJECT BBI HEADERS & PILLS ---
+            let html = `
+                <div style="display: flex; justify-content: space-between; padding: 0 14px 8px; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
+                    <span>Time & Sensex</span>
+                    <div style="display: flex; gap: 6px; text-align: center;">
+                        <span style="width: 80px;">Running</span>
+                        <span style="width: 80px; color: var(--primary);">BBI</span>
+                    </div>
+                </div>
+            `;
+            
             displayRows.forEach(r => {
                 const val  = parseFloat(r.running || 0);
                 const cls  = val > 0 ? "val-pos"  : val < 0 ? "val-neg"  : "val-zero";
                 const rcls = val > 0 ? "row-pos"  : val < 0 ? "row-neg"  : "row-zero";
                 const dt   = (r.datetime || "").split(" ");
+
+                // Setup BBI Pill
+                let bbiStr = "—";
+                let bbiCls = "val-zero";
+                let bbiBorder = "rgba(245, 166, 35, 0.3)";
+                let bbiBg = "rgba(245, 166, 35, 0.08)";
+                let bbiColor = "var(--gold)";
+
+                if (r.bbi !== null && r.bbi !== undefined) {
+                    const bbiVal = parseFloat(r.bbi);
+                    bbiStr = (bbiVal > 0 ? "+" : "") + bbiVal.toFixed(2);
+                    if (bbiVal > 0) {
+                        bbiCls = "val-pos";
+                        bbiBorder = "rgba(0, 212, 170, 0.4)";
+                        bbiBg = "rgba(0, 212, 170, 0.08)";
+                        bbiColor = "#B8B8B8";
+                    } else if (bbiVal < 0) {
+                        bbiCls = "val-neg";
+                        bbiBorder = "rgba(255, 77, 109, 0.4)";
+                        bbiBg = "rgba(255, 77, 109, 0.08)";
+                        bbiColor = "#4C4C4C";
+                    }
+                }
+
                 html += `
                     <div class="data-row ${rcls}">
                         <div class="row-dt">
                             <span class="row-time">${dt[1] || r.datetime}</span>
                             <span class="row-sensex">Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)}</span>
                         </div>
-                        <div class="val-pill ${cls}">
-                            ${val > 0 ? "+" : ""}${val.toFixed(2)}
+                        <div style="display: flex; gap: 6px;">
+                            <div class="val-pill ${cls}" title="Running Value">
+                                ${val > 0 ? "+" : ""}${val.toFixed(2)}
+                            </div>
+                            <div class="val-pill ${bbiCls}" title="Black Box Index" style="background: ${bbiBg}; border: 1px solid ${bbiBorder}; color: ${bbiColor}; box-shadow: inset 0 0 8px rgba(0,0,0,0.2);">
+                                ${bbiStr}
+                            </div>
                         </div>
                     </div>`;
             });
@@ -3047,9 +3096,6 @@ function loadData() {
       document.getElementById("sentiment-text").innerHTML = `<span class="sentiment-badge" style="background:${bg};color:${color};border:1px solid ${border}">${label}</span>`;
     }
 
-    /* ══════════════════════════════════════════════════════════
-       DOWNLOADS
-    ══════════════════════════════════════════════════════════ */
     /* ══════════════════════════════════════════════════════════
        DOWNLOADS
     ══════════════════════════════════════════════════════════ */
