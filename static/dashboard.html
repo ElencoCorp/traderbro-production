@@ -524,7 +524,7 @@
       /* background: var(--green-bg);
       color: var(--green); */
       /* background: var(--green-bg); */
-      color: #d6cacaa4 ;
+      color: #d6cacaa4;
       border: 1px solid rgba(0, 212, 170, .25);
       font-size: 10px;
       font-weight: 300;
@@ -740,9 +740,11 @@
       background: rgba(245, 166, 35, .08);
       border-color: rgba(245, 166, 35, .3);
     }
+
     .plan-strip.plan-admin .plan-strip-label {
       color: var(--gold);
     }
+
     .plan-strip.plan-admin .plan-strip-status {
       color: var(--green);
     }
@@ -1730,8 +1732,15 @@
     }
 
     @keyframes fadeInDown {
-      from { opacity:0; transform:translateY(-12px); }
-      to   { opacity:1; transform:translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(-12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .quick-menu-header {
@@ -1886,244 +1895,322 @@
       .header .active-users-pill {
         display: none !important;
       }
+
       .active-users-pill {
         padding: 4px 10px;
         font-size: 9px;
         gap: 5px;
       }
+
       .active-users-pill .au-count {
         font-size: 11px;
       }
+
       .active-users-pill span:last-child {
-        display: none; /* hide "on dashboard" text on mobile, keep count */
+        display: none;
+        /* hide "on dashboard" text on mobile, keep count */
       }
     }
+
     /* ── System / Timed Messages ── */
-.bc-msg.system-msg .bc-msg-sender {
-  color: var(--gold);
-}
-.bc-bubble.system-bubble {
-  background: rgba(245, 166, 35, .06);
-  border-color: rgba(245, 166, 35, .2);
-}
-.bc-bubble.system-bubble::before {
-  background: linear-gradient(90deg, #f5a623, transparent);
-  opacity: .3;
-}
+    .bc-msg.system-msg .bc-msg-sender {
+      color: var(--gold);
+    }
 
-/* ── DASHBOARD USER DROPDOWN ── */
-.dash-user-wrap { position: relative; }
+    .bc-bubble.system-bubble {
+      background: rgba(245, 166, 35, .06);
+      border-color: rgba(245, 166, 35, .2);
+    }
 
-.dash-user-btn {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 30px;
-  padding: 5px 12px 5px 5px;
-  cursor: pointer;
-  transition: all .2s;
-  color: var(--text);
-  font-family: inherit;
-}
-.dash-user-btn:hover {
-  background: rgba(255,255,255,.1);
-  border-color: rgba(2,163,254,.4);
-}
+    .bc-bubble.system-bubble::before {
+      background: linear-gradient(90deg, #f5a623, transparent);
+      opacity: .3;
+    }
 
-.dash-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary), var(--orange));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 800;
-  color: white;
-  flex-shrink: 0;
-}
+    /* ── DASHBOARD USER DROPDOWN ── */
+    .dash-user-wrap {
+      position: relative;
+    }
 
-.dash-user-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 1px;
-}
-.dash-username {
-  font-size: 12px;
-  font-weight: 700;
-  color: #fff;
-  line-height: 1;
-  max-width: 90px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.dash-plan {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--gold);
-  line-height: 1;
-}
-.dash-plan.plan-pro   { color: var(--primary); }
-.dash-plan.plan-premium { color: var(--gold); }
-.dash-plan.plan-admin   { color: var(--green); }
-.dash-plan.plan-free, .dash-plan.plan-basic, .dash-plan.plan-essential { color: var(--text-dim); }
+    .dash-user-btn {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 30px;
+      padding: 5px 12px 5px 5px;
+      cursor: pointer;
+      transition: all .2s;
+      color: var(--text);
+      font-family: inherit;
+    }
 
-.dash-chevron {
-  font-size: 9px;
-  color: var(--text-muted);
-  transition: transform .2s;
-  flex-shrink: 0;
-}
-.dash-chevron.open { transform: rotate(180deg); }
+    .dash-user-btn:hover {
+      background: rgba(255, 255, 255, .1);
+      border-color: rgba(2, 163, 254, .4);
+    }
 
-/* Dropdown panel */
-.dash-dropdown {
-  display: none;
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  width: 260px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-bright);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 16px 48px rgba(0,0,0,.6);
-  z-index: 9999;
-  overflow: hidden;
-  animation: ddIn .2s cubic-bezier(.34,1.56,.64,1);
-}
-@keyframes ddIn {
-  from { opacity:0; transform:translateY(-8px) scale(.97); }
-  to   { opacity:1; transform:translateY(0) scale(1); }
-}
-.dash-dropdown.open { display: block; }
+    .dash-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--orange));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: white;
+      flex-shrink: 0;
+    }
 
-/* User info block inside dropdown */
-.dd-user-block {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 16px 12px;
-  background: rgba(2,163,254,.04);
-  border-bottom: 1px solid var(--border);
-}
-.dd-avatar-lg {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary), var(--orange));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  font-weight: 800;
-  color: white;
-  flex-shrink: 0;
-}
-.dd-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  line-height: 1.2;
-}
-.dd-email {
-  font-size: 10px;
-  color: var(--text-dim);
-  margin-top: 2px;
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+    .dash-user-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1px;
+    }
 
-/* Plan strip */
-.dd-plan-strip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--border);
-  background: rgba(0,0,0,.2);
-  color: var(--text-dim);
-}
-.dd-plan-status { color: var(--green); }
+    .dash-username {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+      max-width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
-/* Menu items */
-.dd-divider { height: 1px; background: var(--border); margin: 4px 0; }
-.dd-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text);
-  text-decoration: none;
-  transition: background .15s;
-  cursor: pointer;
-}
-.dd-item:hover { background: rgba(2,163,254,.07); color: #fff; }
-.dd-item:hover .dd-arrow { opacity: 1; }
-.dd-icon { font-size: 14px; width: 16px; text-align: center; color: var(--text-dim); flex-shrink: 0; }
-.dd-arrow { font-size: 9px; color: var(--text-muted); margin-left: auto; opacity: 0; transition: opacity .15s; }
+    .dash-plan {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--gold);
+      line-height: 1;
+    }
 
-/* Expiry strip */
-.dd-expiry {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 16px;
-  font-size: 10px;
-  color: var(--text-dim);
-  background: rgba(245,166,35,.04);
-  border-top: 1px solid rgba(245,166,35,.1);
-}
+    .dash-plan.plan-pro {
+      color: var(--primary);
+    }
 
-/* Logout */
-.dd-logout { color: var(--red) !important; }
-.dd-logout:hover { background: rgba(255,77,109,.08) !important; }
-.dd-logout .dd-icon { color: var(--red) !important; }
+    .dash-plan.plan-premium {
+      color: var(--gold);
+    }
 
-/* BBI Grayscale Theme matching the Running Index style */
-.val-pill.bbi-pos {
-    background: var(--green-bg);
-    color: var(--green); 
-    border: 1px solid rgba(232, 234, 240, 0.25);
-    font-weight: 700;
-}
+    .dash-plan.plan-admin {
+      color: var(--green);
+    }
 
-.val-pill.bbi-neg {
-    background: var(--red-bg);
-    color: var(--red); 
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    font-weight: 700;
-}
+    .dash-plan.plan-free,
+    .dash-plan.plan-basic,
+    .dash-plan.plan-essential {
+      color: var(--text-dim);
+    }
 
-.val-pill.bbi-zero {
-    background: rgba(40, 40, 50, 0.5);
-    color: #7a8099;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-}
+    .dash-chevron {
+      font-size: 9px;
+      color: var(--text-muted);
+      transition: transform .2s;
+      flex-shrink: 0;
+    }
 
+    .dash-chevron.open {
+      transform: rotate(180deg);
+    }
 
-</style>
+    /* Dropdown panel */
+    .dash-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      width: 260px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-bright);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, .6);
+      z-index: 9999;
+      overflow: hidden;
+      animation: ddIn .2s cubic-bezier(.34, 1.56, .64, 1);
+    }
+
+    @keyframes ddIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px) scale(.97);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .dash-dropdown.open {
+      display: block;
+    }
+
+    /* User info block inside dropdown */
+    .dd-user-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px 12px;
+      background: rgba(2, 163, 254, .04);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dd-avatar-lg {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--orange));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 800;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .dd-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .dd-email {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 2px;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Plan strip */
+    .dd-plan-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0, 0, 0, .2);
+      color: var(--text-dim);
+    }
+
+    .dd-plan-status {
+      color: var(--green);
+    }
+
+    /* Menu items */
+    .dd-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    .dd-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      text-decoration: none;
+      transition: background .15s;
+      cursor: pointer;
+    }
+
+    .dd-item:hover {
+      background: rgba(2, 163, 254, .07);
+      color: #fff;
+    }
+
+    .dd-item:hover .dd-arrow {
+      opacity: 1;
+    }
+
+    .dd-icon {
+      font-size: 14px;
+      width: 16px;
+      text-align: center;
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    .dd-arrow {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-left: auto;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+
+    /* Expiry strip */
+    .dd-expiry {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      font-size: 10px;
+      color: var(--text-dim);
+      background: rgba(245, 166, 35, .04);
+      border-top: 1px solid rgba(245, 166, 35, .1);
+    }
+
+    /* Logout */
+    .dd-logout {
+      color: var(--red) !important;
+    }
+
+    .dd-logout:hover {
+      background: rgba(255, 77, 109, .08) !important;
+    }
+
+    .dd-logout .dd-icon {
+      color: var(--red) !important;
+    }
+
+    /* BBI Grayscale Theme matching the Running Index style */
+    .val-pill.bbi-pos {
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid rgba(232, 234, 240, 0.25);
+      font-weight: 700;
+    }
+
+    .val-pill.bbi-neg {
+      background: var(--red-bg);
+      color: var(--red);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-weight: 700;
+    }
+
+    .val-pill.bbi-zero {
+      background: rgba(40, 40, 50, 0.5);
+      color: #7a8099;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+  </style>
 </head>
 
 <body>
 
   <div class="welcome-bar">Welcome to the Black-Box-Engine Developed by TraderBro.in</div>
 
-<div id="holiday-banner" style="
+  <div id="holiday-banner" style="
   display:none;
   background: linear-gradient(135deg,#1a0a00,#2d1500);
   border-bottom: 2px solid #f5a623;
@@ -2134,28 +2221,27 @@
   flex-wrap: wrap;
   animation: fadeInDown 0.4s ease;
 ">
-  <div style="display:flex;align-items:center;gap:12px;">
-    <span style="font-size:24px;">🏖️</span>
-    <div>
-      <div style="font-size:13px;font-weight:800;color:#f5a623;letter-spacing:0.5px;">
-        MARKET HOLIDAY TODAY
-      </div>
-      <div style="font-size:12px;color:#e0a060;" id="holiday-reason-text">
-        Market is closed today
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:24px;">🏖️</span>
+      <div>
+        <div style="font-size:13px;font-weight:800;color:#f5a623;letter-spacing:0.5px;">
+          MARKET HOLIDAY TODAY
+        </div>
+        <div style="font-size:12px;color:#e0a060;" id="holiday-reason-text">
+          Market is closed today
+        </div>
       </div>
     </div>
-  </div>
-  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-    <div id="upcoming-holiday-chips" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
-    <button onclick="document.getElementById('holiday-banner').style.display='none'"
-      style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <div id="upcoming-holiday-chips" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      <button onclick="document.getElementById('holiday-banner').style.display='none'" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
              color:#aaa;font-size:12px;padding:4px 10px;border-radius:8px;cursor:pointer;">
-      ✕
-    </button>
+        ✕
+      </button>
+    </div>
   </div>
-</div>
- 
-<div id="upcoming-holiday-strip" style="display:none;"></div>
+
+  <div id="upcoming-holiday-strip" style="display:none;"></div>
 
   <header class="header">
     <div class="logo-block">
@@ -2179,93 +2265,93 @@
       </div>
     </div>
     <div class="header-right">
-  <div class="active-users-pill" id="active-users-pill" style="display:none;" title="Users currently on dashboard">
-    <span class="au-dot"></span>
-    <span class="au-count" id="au-count">—</span>
-    <span>on dashboard</span>
-  </div>
-  <a href="/" class="chat-toggle-btn"><i class="fa-solid fa-house"></i><span>HOME</span></a>
-  <div class="live-badge"><span class="live-dot"></span>Live</div>
-  <div class="ts-block">
-    <div class="ts-label">Last Updated</div>
-    <div class="ts-val" id="h-ts">—</div>
-  </div>
-
-  <div class="dash-user-wrap" id="dash-user-wrap" style="display:none; position:relative;">
-    <button class="dash-user-btn" id="dash-user-btn" onclick="dashToggle()" title="My Account">
-      <div class="dash-avatar" id="dash-avatar">?</div>
-      <div class="dash-user-info">
-        <div class="dash-username" id="dash-username">Loading…</div>
-        <div class="dash-plan" id="dash-plan">—</div>
+      <div class="active-users-pill" id="active-users-pill" style="display:none;" title="Users currently on dashboard">
+        <span class="au-dot"></span>
+        <span class="au-count" id="au-count">—</span>
+        <span>on dashboard</span>
       </div>
-      <i class="fas fa-chevron-down dash-chevron" id="dash-chevron"></i>
-    </button>
+      <a href="/" class="chat-toggle-btn"><i class="fa-solid fa-house"></i><span>HOME</span></a>
+      <div class="live-badge"><span class="live-dot"></span>Live</div>
+      <div class="ts-block">
+        <div class="ts-label">Last Updated</div>
+        <div class="ts-val" id="h-ts">—</div>
+      </div>
 
-    <div class="dash-dropdown" id="dash-dropdown">
-      <div class="dd-user-block">
-        <div class="dd-avatar-lg" id="dd-avatar-lg">?</div>
-        <div>
-          <div class="dd-name" id="dd-name">—</div>
-          <div class="dd-email" id="dd-email">—</div>
+      <div class="dash-user-wrap" id="dash-user-wrap" style="display:none; position:relative;">
+        <button class="dash-user-btn" id="dash-user-btn" onclick="dashToggle()" title="My Account">
+          <div class="dash-avatar" id="dash-avatar">?</div>
+          <div class="dash-user-info">
+            <div class="dash-username" id="dash-username">Loading…</div>
+            <div class="dash-plan" id="dash-plan">—</div>
+          </div>
+          <i class="fas fa-chevron-down dash-chevron" id="dash-chevron"></i>
+        </button>
+
+        <div class="dash-dropdown" id="dash-dropdown">
+          <div class="dd-user-block">
+            <div class="dd-avatar-lg" id="dd-avatar-lg">?</div>
+            <div>
+              <div class="dd-name" id="dd-name">—</div>
+              <div class="dd-email" id="dd-email">—</div>
+            </div>
+          </div>
+
+          <div class="dd-plan-strip" id="dd-plan-strip">
+            <span id="dd-plan-label">—</span>
+            <span class="dd-plan-status" id="dd-plan-status">—</span>
+          </div>
+
+          <div class="dd-divider"></div>
+
+          <a href="/account" class="dd-item">
+            <i class="fas fa-user-circle dd-icon"></i>
+            <span>My Account</span>
+            <i class="fas fa-chevron-right dd-arrow"></i>
+          </a>
+          <a href="/trading-plan" class="dd-item">
+            <i class="fas fa-crown dd-icon" style="color:var(--gold)"></i>
+            <span>Upgrade Plan</span>
+            <i class="fas fa-chevron-right dd-arrow"></i>
+          </a>
+          <a href="/webinars" class="dd-item">
+            <i class="fas fa-video dd-icon" style="color:var(--primary)"></i>
+            <span>Webinars</span>
+            <i class="fas fa-chevron-right dd-arrow"></i>
+          </a>
+
+          <div id="dd-admin-section" style="display:none;">
+            <div class="dd-divider"></div>
+            <a href="/admin/users" class="dd-item">
+              <i class="fas fa-users-cog dd-icon" style="color:var(--orange)"></i>
+              <span>User Management</span>
+              <i class="fas fa-chevron-right dd-arrow"></i>
+            </a>
+            <a href="/admin/webinars" class="dd-item">
+              <i class="fas fa-calendar-alt dd-icon" style="color:var(--orange)"></i>
+              <span>Manage Webinars</span>
+              <i class="fas fa-chevron-right dd-arrow"></i>
+            </a>
+            <a href="/admin" class="dd-item">
+              <i class="fas fa-chart-line dd-icon" style="color:var(--orange)"></i>
+              <span>Admin Panel</span>
+              <i class="fas fa-chevron-right dd-arrow"></i>
+            </a>
+          </div>
+
+          <div class="dd-divider"></div>
+
+          <div class="dd-expiry" id="dd-expiry" style="display:none;">
+            <i class="fas fa-clock" style="color:var(--gold);font-size:11px;"></i>
+            <span id="dd-expiry-text">—</span>
+          </div>
+
+          <a href="/logout" class="dd-item dd-logout">
+            <i class="fas fa-sign-out-alt dd-icon"></i>
+            <span>Logout</span>
+          </a>
         </div>
       </div>
-
-      <div class="dd-plan-strip" id="dd-plan-strip">
-        <span id="dd-plan-label">—</span>
-        <span class="dd-plan-status" id="dd-plan-status">—</span>
-      </div>
-
-      <div class="dd-divider"></div>
-
-      <a href="/account" class="dd-item">
-        <i class="fas fa-user-circle dd-icon"></i>
-        <span>My Account</span>
-        <i class="fas fa-chevron-right dd-arrow"></i>
-      </a>
-      <a href="/trading-plan" class="dd-item">
-        <i class="fas fa-crown dd-icon" style="color:var(--gold)"></i>
-        <span>Upgrade Plan</span>
-        <i class="fas fa-chevron-right dd-arrow"></i>
-      </a>
-      <a href="/webinars" class="dd-item">
-        <i class="fas fa-video dd-icon" style="color:var(--primary)"></i>
-        <span>Webinars</span>
-        <i class="fas fa-chevron-right dd-arrow"></i>
-      </a>
-
-      <div id="dd-admin-section" style="display:none;">
-        <div class="dd-divider"></div>
-        <a href="/admin/users" class="dd-item">
-          <i class="fas fa-users-cog dd-icon" style="color:var(--orange)"></i>
-          <span>User Management</span>
-          <i class="fas fa-chevron-right dd-arrow"></i>
-        </a>
-        <a href="/admin/webinars" class="dd-item">
-          <i class="fas fa-calendar-alt dd-icon" style="color:var(--orange)"></i>
-          <span>Manage Webinars</span>
-          <i class="fas fa-chevron-right dd-arrow"></i>
-        </a>
-        <a href="/admin" class="dd-item">
-          <i class="fas fa-chart-line dd-icon" style="color:var(--orange)"></i>
-          <span>Admin Panel</span>
-          <i class="fas fa-chevron-right dd-arrow"></i>
-        </a>
-      </div>
-
-      <div class="dd-divider"></div>
-
-      <div class="dd-expiry" id="dd-expiry" style="display:none;">
-        <i class="fas fa-clock" style="color:var(--gold);font-size:11px;"></i>
-        <span id="dd-expiry-text">—</span>
-      </div>
-
-      <a href="/logout" class="dd-item dd-logout">
-        <i class="fas fa-sign-out-alt dd-icon"></i>
-        <span>Logout</span>
-      </a>
     </div>
-  </div>
-</div>
   </header>
 
   <div class="main-grid">
@@ -2333,17 +2419,25 @@
           <div id="dl-date-filter" style="display:none; margin-bottom:8px; flex-shrink:0;">
             <div style="display:flex; gap:6px; align-items:flex-end; flex-wrap:wrap;">
               <div style="display:flex; flex-direction:column; flex:1; min-width:90px;">
-                <label style="font-size:9px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">From</label>
-                <input type="date" id="dl-from-date" style="background:var(--bg-card2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:10px; padding:5px 8px; outline:none; width:100%; color-scheme:dark;">
+                <label
+                  style="font-size:9px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">From</label>
+                <input type="date" id="dl-from-date"
+                  style="background:var(--bg-card2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:10px; padding:5px 8px; outline:none; width:100%; color-scheme:dark;">
               </div>
               <div style="display:flex; flex-direction:column; flex:1; min-width:90px;">
-                <label style="font-size:9px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">To</label>
-                <input type="date" id="dl-to-date" style="background:var(--bg-card2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:10px; padding:5px 8px; outline:none; width:100%; color-scheme:dark;">
+                <label
+                  style="font-size:9px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">To</label>
+                <input type="date" id="dl-to-date"
+                  style="background:var(--bg-card2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:10px; padding:5px 8px; outline:none; width:100%; color-scheme:dark;">
               </div>
-              <button onclick="applyDateFilter()" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark)); border:none; border-radius:8px; color:white; font-size:10px; font-weight:700; padding:5px 12px; cursor:pointer; white-space:nowrap; height:29px;">Filter</button>
-              <button onclick="clearDateFilter()" style="background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:8px; color:var(--text-dim); font-size:10px; font-weight:700; padding:5px 10px; cursor:pointer; height:29px;">✕</button>
+              <button onclick="applyDateFilter()"
+                style="background:linear-gradient(135deg,var(--primary),var(--primary-dark)); border:none; border-radius:8px; color:white; font-size:10px; font-weight:700; padding:5px 12px; cursor:pointer; white-space:nowrap; height:29px;">Filter</button>
+              <button onclick="clearDateFilter()"
+                style="background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:8px; color:var(--text-dim); font-size:10px; font-weight:700; padding:5px 10px; cursor:pointer; height:29px;">✕</button>
             </div>
-            <div id="dl-limit-note" style="font-size:9px; color:var(--text-muted); margin-top:5px; padding:4px 8px; background:var(--bg-card2); border-radius:6px; border:1px solid var(--border);"></div>
+            <div id="dl-limit-note"
+              style="font-size:9px; color:var(--text-muted); margin-top:5px; padding:4px 8px; background:var(--bg-card2); border-radius:6px; border:1px solid var(--border);">
+            </div>
           </div>
 
           <div class="dl-scroll" id="dl-list">
@@ -2450,7 +2544,7 @@ align-items:center;
 justify-content:center;
 ">
 
-<div style="
+    <div style="
 width:420px;
 max-width:90%;
 background:#111827;
@@ -2461,71 +2555,71 @@ text-align:center;
 box-shadow:0 0 50px rgba(2,163,254,.2);
 ">
 
-<div style="
+      <div style="
 font-size:60px;
 margin-bottom:15px;
 ">
-🔒
-</div>
+        🔒
+      </div>
 
-<h2 style="
+      <h2 style="
 color:#02A3FE;
 margin-bottom:10px;
 font-size:24px;
 font-weight:800;
 ">
-Session Ended
-</h2>
+        Session Ended
+      </h2>
 
-<p style="
+      <p style="
 color:#cbd5e1;
 line-height:1.7;
 font-size:14px;
 margin-bottom:20px;
 ">
-Your TraderBro account has been signed in from another device.
+        Your TraderBro account has been signed in from another device.
 
-For security reasons this session has been terminated.
-</p>
+        For security reasons this session has been terminated.
+      </p>
 
-<div style="
+      <div style="
 color:#f59e0b;
 font-size:13px;
 font-weight:600;
 ">
-Redirecting to login...
-</div>
+        Redirecting to login...
+      </div>
 
-</div>
-</div>
+    </div>
+  </div>
 
   <script>
 
     /* ══════════════════════════════════════════════════════════
    TIMED SYSTEM MESSAGES
 ══════════════════════════════════════════════════════════ */
-const TIMED_MESSAGES = [
-  {
-    id: 'sys-market-soon',
-    fromMins: 9 * 60,          // 9:00 AM
-    toMins:   9 * 60 + 15,     // 9:15 AM (show for 15 mins)
-    text: '🔔 Market Opening Soon — Session starts at 9:16 AM IST'
-  },
-  {
-    id: 'sys-closing-soon',
-    fromMins: 11 * 60 + 45,    // 11:45 AM
-    toMins:   12 * 60,         // 12:00 PM
-    text: '⏳ TraderBro.in session will be closing at 12:00 PM IST'
-  },
-  {
-    id: 'sys-download-ready',
-    fromMins: 12 * 60 + 1,     // 12:01 PM
-    toMins:   14 * 60,         // show till 2 PM
-    text: '📥 You can now download today\'s data — Available with Pro & Premium Plans only'
-  }
-];
+    const TIMED_MESSAGES = [
+      {
+        id: 'sys-market-soon',
+        fromMins: 9 * 60,          // 9:00 AM
+        toMins: 9 * 60 + 15,     // 9:15 AM (show for 15 mins)
+        text: '🔔 Market Opening Soon — Session starts at 9:16 AM IST'
+      },
+      {
+        id: 'sys-closing-soon',
+        fromMins: 11 * 60 + 45,    // 11:45 AM
+        toMins: 12 * 60,         // 12:00 PM
+        text: '⏳ TraderBro.in session will be closing at 12:00 PM IST'
+      },
+      {
+        id: 'sys-download-ready',
+        fromMins: 12 * 60 + 1,     // 12:01 PM
+        toMins: 14 * 60,         // show till 2 PM
+        text: '📥 You can now download today\'s data — Available with Pro & Premium Plans only'
+      }
+    ];
 
-let _shownSystemMsgs = new Set();  // track which ones we've injected this session
+    let _shownSystemMsgs = new Set();  // track which ones we've injected this session
     /* ══════════════════════════════════════════════════════════
        GLOBALS
     ══════════════════════════════════════════════════════════ */
@@ -2840,51 +2934,51 @@ let _shownSystemMsgs = new Set();  // track which ones we've injected this sessi
        LIVE DATA
     ══════════════════════════════════════════════════════════ */
 
-/* ══════════════════════════════════════════════════════════
-       CLOSED BOX STATE — set by checkDashboardAccess
-    ══════════════════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════════════════
+           CLOSED BOX STATE — set by checkDashboardAccess
+        ══════════════════════════════════════════════════════════ */
     let _closedReason = null;   // null = unknown, object = { icon, title, desc, time }
 
     function buildClosedBox() {
       const ist = getIST();
       const day = ist.getDay();   // 0=Sun, 6=Sat
       const mins = ist.getHours() * 60 + ist.getMinutes();
-      const marketOpen  = 9 * 60 + 16;
+      const marketOpen = 9 * 60 + 16;
       const marketClose = 12 * 60;
 
       let icon, title, desc, time;
 
       if (_closedReason) {
         // API told us exactly why
-        icon  = _closedReason.icon;
+        icon = _closedReason.icon;
         title = _closedReason.title;
-        desc  = _closedReason.desc;
-        time  = _closedReason.time;
+        desc = _closedReason.desc;
+        time = _closedReason.time;
       } else if (day === 6) {
-        icon  = "📅";
+        icon = "📅";
         title = "Market Closed — Saturday";
-        desc  = "NSE is closed on weekends. No live values are generated today.";
-        time  = "Next session: <b>Monday at 9:16 AM IST</b>";
+        desc = "NSE is closed on weekends. No live values are generated today.";
+        time = "Next session: <b>Monday at 9:16 AM IST</b>";
       } else if (day === 0) {
-        icon  = "📅";
+        icon = "📅";
         title = "Market Closed — Sunday";
-        desc  = "NSE is closed on weekends. No live values are generated today.";
-        time  = "Next session: <b>Monday at 9:16 AM IST</b>";
+        desc = "NSE is closed on weekends. No live values are generated today.";
+        time = "Next session: <b>Monday at 9:16 AM IST</b>";
       } else if (mins < marketOpen) {
-        icon  = "⏰";
+        icon = "⏰";
         title = "Pre-Market — Session Not Started";
-        desc  = "Live Black-Box-Engine values are generated during active market analysis hours.";
-        time  = "Session opens at <b>9:16 AM IST</b>";
+        desc = "Live Black-Box-Engine values are generated during active market analysis hours.";
+        time = "Session opens at <b>9:16 AM IST</b>";
       } else if (mins > marketClose) {
-        icon  = "🔔";
+        icon = "🔔";
         title = "Market Session Ended for Today";
-        desc  = "Today's session has closed. Data will be available again next trading day.";
-        time  = "Next session: <b>Tomorrow at 9:16 AM IST</b>";
+        desc = "Today's session has closed. Data will be available again next trading day.";
+        time = "Next session: <b>Tomorrow at 9:16 AM IST</b>";
       } else {
-        icon  = "⏰";
+        icon = "⏰";
         title = "Market Insight Window Closed";
-        desc  = "Live Black-Box-Engine values are generated during active market hours.";
-        time  = "9:16 AM → 12:00 PM IST";
+        desc = "Live Black-Box-Engine values are generated during active market hours.";
+        time = "9:16 AM → 12:00 PM IST";
       }
 
       return `
@@ -2899,72 +2993,74 @@ let _shownSystemMsgs = new Set();  // track which ones we've injected this sessi
         </div>`;
     }
 
-function loadData() {
-    fetch("/api/get-running")
+    function loadData() {
+      fetch("/api/get-running")
         .then(r => r.json())
         .then(d => {
-            const rows = (d.rows || []).sort(
-                (a, b) => new Date(a.datetime) - new Date(b.datetime)
-            );
+          const rows = (d.rows || []).sort(
+            (a, b) => new Date(a.datetime) - new Date(b.datetime)
+          );
 
-            const grid = document.getElementById("rows-grid");
+          const grid = document.getElementById("rows-grid");
 
-            if (!rows.length) {
-                _dashboardRows = [];
-                if (!grid.querySelector(".data-row")) {
-                    grid.innerHTML = buildClosedBox();
-                }
-                return;
+          if (!rows.length) {
+            _dashboardRows = [];
+            if (!grid.querySelector(".data-row")) {
+              grid.innerHTML = buildClosedBox();
             }
+            return;
+          }
 
-            const displayableRows = rows;
-            
-            // --- NEW BLACK BOX INDEX (BBI) LOGIC ---
-            let bbiAcc = 0;
-            let prevBbi = null;
-            let prevRunning = null;
+          const displayableRows = rows;
 
-            for (let i = 0; i < displayableRows.length; i++) {
-                let rVal = parseFloat(displayableRows[i].running || 0);
+          // --- NEW BLACK BOX INDEX (BBI) LOGIC ---
+          let bbiAcc = 0;
+          let prevBbi = null;
+          let prevRunning = null;
 
-                if (i === 0) {
-                    displayableRows[i].bbi = null;
-                    prevRunning = rVal;
-                } else if (i >= 1 && i <= 6) {
-                    bbiAcc += rVal;
-                    displayableRows[i].bbi = null;
-                    if (i === 6) {
-                        let avg = bbiAcc / 6;
-                        displayableRows[i].bbi = avg;
-                        prevBbi = avg;
-                    }
-                    prevRunning = rVal;
-                } else {
-                    let currentBbi = prevBbi + rVal - prevRunning;
-                    displayableRows[i].bbi = currentBbi;
-                    prevBbi = currentBbi;
-                    prevRunning = rVal;
-                }
+          for (let i = 0; i < displayableRows.length; i++) {
+            let rVal = parseFloat(displayableRows[i].running || 0);
+
+            if (i === 0) {
+              displayableRows[i].bbi = null;
+              prevRunning = rVal;
+            } else if (i >= 1 && i <= 6) {
+              bbiAcc += rVal;
+              displayableRows[i].bbi = null;
+              if (i === 6) {
+                let avg = bbiAcc / 6;
+                displayableRows[i].bbi = avg;
+                prevBbi = avg;
+              }
+              prevRunning = rVal;
+            } else {
+              let currentBbi = prevBbi + rVal - prevRunning;
+              displayableRows[i].bbi = currentBbi;
+              prevBbi = currentBbi;
+              prevRunning = rVal;
             }
-            // ---------------------------------------
+          }
+          // ---------------------------------------
 
-            const heroRow = displayableRows[displayableRows.length - 1];
-            const heroRunning = parseFloat(heroRow.running || 0);
+          const heroRow = displayableRows[displayableRows.length - 1];
+          // Extract BBI instead of Running
+          const heroBbiRaw = heroRow.bbi;
+          const heroBbi = (heroBbiRaw !== null && heroBbiRaw !== undefined) ? parseFloat(heroBbiRaw) : null;
 
-            _dashboardRows = displayableRows.map(r => ({
-                datetime:  r.datetime  || "",
-                strike:    r.strike    || "",
-                index_ltp: r.index_ltp || "",
-                running:   r.running   || 0,
-                bbi:       r.bbi
-            }));
+          _dashboardRows = displayableRows.map(r => ({
+            datetime: r.datetime || "",
+            strike: r.strike || "",
+            index_ltp: r.index_ltp || "",
+            running: r.running || 0,
+            bbi: r.bbi
+          }));
 
-            document.getElementById("h-ltp").textContent    = heroRow.index_ltp || "—";
-            document.getElementById("h-expiry").textContent = heroRow.expiry    || "—";
-            document.getElementById("h-ts").textContent     = heroRow.datetime  || "—";
+          document.getElementById("h-ltp").textContent = heroRow.index_ltp || "—";
+          document.getElementById("h-expiry").textContent = heroRow.expiry || "—";
+          document.getElementById("h-ts").textContent = heroRow.datetime || "—";
 
-            const parts = (heroRow.datetime || "").split(" ");
-            document.getElementById("atm-dt").innerHTML = `
+          const parts = (heroRow.datetime || "").split(" ");
+          document.getElementById("atm-dt").innerHTML = `
                 <span style="color:#fff">${parts[0] || ""}</span>
                 <span style="color:#fff;margin:0 6px">|</span>
                 <span style="color:#fff">${parts[1] || heroRow.datetime}</span><br>
@@ -2976,32 +3072,41 @@ function loadData() {
                     ${parseFloat(heroRow.index_ltp || 0).toFixed(2)}
                 </span>`;
 
-            const box = document.getElementById("atm-run-box");
-            document.getElementById("atm-run-val").textContent = heroRunning.toFixed(2);
-            if (heroRunning > 0) {
-                box.className = "atm-run-box atm-run-pos";
-                box.querySelector(".run-label").textContent = "▲ Bullish";
-            } else if (heroRunning < 0) {
-                box.className = "atm-run-box atm-run-neg";
-                box.querySelector(".run-label").textContent = "▼ Bearish";
+          const box = document.getElementById("atm-run-box");
+
+          // Check if BBI has been calculated (it skips the first 6 ticks based on your logic)
+          if (heroBbi !== null) {
+            document.getElementById("atm-run-val").textContent = heroBbi.toFixed(2);
+            if (heroBbi > 0) {
+              box.className = "atm-run-box atm-run-pos";
+              box.querySelector(".run-label").textContent = "▲ Bullish";
+            } else if (heroBbi < 0) {
+              box.className = "atm-run-box atm-run-neg";
+              box.querySelector(".run-label").textContent = "▼ Bearish";
             } else {
-                box.className = "atm-run-box atm-run-zero";
-                box.querySelector(".run-label").textContent = "◆ Neutral";
+              box.className = "atm-run-box atm-run-zero";
+              box.querySelector(".run-label").textContent = "◆ Neutral";
             }
+          } else {
+            // Fallback for the first few ticks before BBI calculates
+            document.getElementById("atm-run-val").textContent = "—";
+            box.className = "atm-run-box atm-run-zero";
+            box.querySelector(".run-label").textContent = "Waiting for BBI...";
+          }
 
-            // ── Filter out stale zero-value rows on non-trading days ──
-            const istNow = getIST();
-            const isWeekend = istNow.getDay() === 0 || istNow.getDay() === 6;
-            const allZero = displayableRows.every(r => parseFloat(r.running || 0) === 0);
-            if ((isWeekend || _closedReason) && allZero) {
-                grid.innerHTML = buildClosedBox();
-                return;
-            }
+          // ── Filter out stale zero-value rows on non-trading days ──
+          const istNow = getIST();
+          const isWeekend = istNow.getDay() === 0 || istNow.getDay() === 6;
+          const allZero = displayableRows.every(r => parseFloat(r.running || 0) === 0);
+          if ((isWeekend || _closedReason) && allZero) {
+            grid.innerHTML = buildClosedBox();
+            return;
+          }
 
-            const displayRows = [...displayableRows].reverse();
-            
-            // --- INJECT BBI HEADERS & PILLS ---
-            let html = `
+          const displayRows = [...displayableRows].reverse();
+
+          // --- INJECT BBI HEADERS & PILLS ---
+          let html = `
                 <div style="display: flex; justify-content: space-between; padding: 0 14px 8px; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
                     <span>Time & Sensex</span>
                     <div style="display: flex; gap: 6px; text-align: center;">
@@ -3010,31 +3115,31 @@ function loadData() {
                     </div>
                 </div>
             `;
-            
-            displayRows.forEach(r => {
-                const val  = parseFloat(r.running || 0);
-                const cls  = val > 0 ? "val-pos"  : val < 0 ? "val-neg"  : "val-zero";
-                const rcls = val > 0 ? "row-pos"  : val < 0 ? "row-neg"  : "row-zero";
-                const dt   = (r.datetime || "").split(" ");
 
-                // Setup BBI Pill
-                let bbiStr = "—";
-                let bbiCls = "bbi-zero"; // Using our new grayscale classes
-				
-				if (r.bbi !== null && r.bbi !== undefined) {
-				    const bbiVal = parseFloat(r.bbi);
-				    bbiStr = (bbiVal > 0 ? "+" : "") + bbiVal.toFixed(2);
-				    
-				    if (bbiVal > 0) {
-				        bbiCls = "bbi-pos";
-				    } else if (bbiVal < 0) {
-				        bbiCls = "bbi-neg";
-				    } else {
-				        bbiCls = "bbi-zero";
-				    }
-				}
-				
-				html += `
+          displayRows.forEach(r => {
+            const val = parseFloat(r.running || 0);
+            const cls = val > 0 ? "val-pos" : val < 0 ? "val-neg" : "val-zero";
+            const rcls = val > 0 ? "row-pos" : val < 0 ? "row-neg" : "row-zero";
+            const dt = (r.datetime || "").split(" ");
+
+            // Setup BBI Pill
+            let bbiStr = "—";
+            let bbiCls = "bbi-zero"; // Using our new grayscale classes
+
+            if (r.bbi !== null && r.bbi !== undefined) {
+              const bbiVal = parseFloat(r.bbi);
+              bbiStr = (bbiVal > 0 ? "+" : "") + bbiVal.toFixed(2);
+
+              if (bbiVal > 0) {
+                bbiCls = "bbi-pos";
+              } else if (bbiVal < 0) {
+                bbiCls = "bbi-neg";
+              } else {
+                bbiCls = "bbi-zero";
+              }
+            }
+
+            html += `
 				    <div class="data-row ${rcls}">
 				        <div class="row-dt">
 				            <span class="row-time">${dt[1] || r.datetime}</span>
@@ -3049,20 +3154,25 @@ function loadData() {
 				            </div>
 				        </div>
    					 </div>`;
-            });
-            grid.innerHTML = html;
+          });
+          grid.innerHTML = html;
 
-            const last6 = displayableRows.slice(-6);
-            if (last6.length) {
-                updateGauge(
-                    last6.reduce((s, r) => s + parseFloat(r.running || 0), 0) / last6.length
-                );
+          const last6 = displayableRows.slice(-6);
+          if (last6.length) {
+            const bbiVals = last6.map(r => r.bbi).filter(v => v !== null && v !== undefined);
+            if (bbiVals.length > 0) {
+              updateGauge(
+                bbiVals.reduce((s, v) => s + parseFloat(v), 0) / bbiVals.length
+              );
+            } else {
+              updateGauge(0);
             }
+          }
 
-            checkMarketCloseAutoSave();
+          checkMarketCloseAutoSave();
         })
         .catch(e => console.error("loadData:", e));
-}
+    }
     function startAutoRefresh(ms) { if (_refreshTimer) clearTimeout(_refreshTimer); doRefresh(ms); }
     function doRefresh(ms) { loadData(); _refreshTimer = setTimeout(() => doRefresh(ms), ms); }
 
@@ -3146,9 +3256,9 @@ function loadData() {
           const labels = { admin: '🔑 Admin Access', pro: '⚡ Pro Plan', premium: '👑 Premium Plan', essential: '🟡 Essential Plan', basic: '🔵 Basic Plan', free: '⭕ Free Plan' };
           document.getElementById("plan-strip-label").innerHTML = labels[plan] || ('Plan: ' + plan);
           const maxDays = PLAN_DL_DAYS[plan] || 0;
-          document.getElementById("plan-strip-status").textContent = 
+          document.getElementById("plan-strip-status").textContent =
             plan === "admin" ? '✅ All files unlocked' :
-            canDl ? `✅ Last ${maxDays} days unlocked` : '⛔ Downloads Locked';
+              canDl ? `✅ Last ${maxDays} days unlocked` : '⛔ Downloads Locked';
 
           // Show/hide date filter
           const filterEl = document.getElementById('dl-date-filter');
@@ -3166,11 +3276,11 @@ function loadData() {
               if (noteEl) noteEl.textContent = 'All historical files unlocked — no date restriction';
               if (fromInp && !fromInp.value) {
                 fromInp.value = '2025-01-01';   // far enough back to cover all data
-                fromInp.min   = '2024-01-01';
-                fromInp.max   = todayStr;
-                toInp.value   = todayStr;
-                toInp.min     = '2024-01-01';
-                toInp.max     = todayStr;
+                fromInp.min = '2024-01-01';
+                fromInp.max = todayStr;
+                toInp.value = todayStr;
+                toInp.min = '2024-01-01';
+                toInp.max = todayStr;
               }
             } else {
               const cutoff = new Date();
@@ -3181,11 +3291,11 @@ function loadData() {
               }
               if (fromInp && !fromInp.value) {
                 fromInp.value = cutoffStr;
-                fromInp.min   = cutoffStr;
-                fromInp.max   = todayStr;
-                toInp.value   = todayStr;
-                toInp.min     = cutoffStr;
-                toInp.max     = todayStr;
+                fromInp.min = cutoffStr;
+                fromInp.max = todayStr;
+                toInp.value = todayStr;
+                toInp.min = cutoffStr;
+                toInp.max = todayStr;
               }
             }
           }
@@ -3208,24 +3318,24 @@ function loadData() {
       // Apply plan-based day limit
       const maxDays = PLAN_DL_DAYS[plan] || 0;
       if (canDl && maxDays && plan !== 'admin') {
-          const cutoff = new Date();
-          cutoff.setDate(cutoff.getDate() - maxDays);
-          cutoff.setHours(0, 0, 0, 0);
-          files = files.filter(f => {
-              try { return new Date(f.name.replace('.xlsx', '')) >= cutoff; } catch(e) { return true; }
-          });
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - maxDays);
+        cutoff.setHours(0, 0, 0, 0);
+        files = files.filter(f => {
+          try { return new Date(f.name.replace('.xlsx', '')) >= cutoff; } catch (e) { return true; }
+        });
       }
 
       // Apply user date filter
       const fromVal = document.getElementById('dl-from-date') ? document.getElementById('dl-from-date').value : '';
-      const toVal   = document.getElementById('dl-to-date')   ? document.getElementById('dl-to-date').value   : '';
+      const toVal = document.getElementById('dl-to-date') ? document.getElementById('dl-to-date').value : '';
       if (fromVal) {
         const from = new Date(fromVal + 'T00:00:00');
-        files = files.filter(f => { try { return new Date(f.name.replace('.xlsx', '') + 'T00:00:00') >= from; } catch(e) { return true; } });
+        files = files.filter(f => { try { return new Date(f.name.replace('.xlsx', '') + 'T00:00:00') >= from; } catch (e) { return true; } });
       }
       if (toVal) {
         const to = new Date(toVal + 'T23:59:59');
-        files = files.filter(f => { try { return new Date(f.name.replace('.xlsx', '') + 'T00:00:00') <= to; } catch(e) { return true; } });
+        files = files.filter(f => { try { return new Date(f.name.replace('.xlsx', '') + 'T00:00:00') <= to; } catch (e) { return true; } });
       }
 
       if (!files.length) {
@@ -3269,14 +3379,14 @@ function loadData() {
 
       if (plan === 'admin') {
         if (fromInp) { fromInp.value = '2025-01-01'; fromInp.min = '2024-01-01'; }
-        if (toInp)   { toInp.value   = todayStr;      toInp.min   = '2024-01-01'; }
+        if (toInp) { toInp.value = todayStr; toInp.min = '2024-01-01'; }
       } else {
         const maxDays = PLAN_DL_DAYS[plan] || 0;
         if (canDl && maxDays) {
           const cutoff = new Date();
           cutoff.setDate(today.getDate() - maxDays);
           if (fromInp) fromInp.value = cutoff.toISOString().slice(0, 10);
-          if (toInp)   toInp.value   = todayStr;
+          if (toInp) toInp.value = todayStr;
         }
       }
       renderDlList(plan, canDl);
@@ -3296,9 +3406,9 @@ function loadData() {
       note.style.display = ((h > 9 || (h === 9 && m >= 16)) && (h < 15 || (h === 12 && m <= 0))) ? "none" : "flex";
     }
 
-        /* ══════════════════════════════════════════════════════════
-      TIMED SYSTEM MESSAGES — inject into chat at the right time
-    ══════════════════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════════════════
+  TIMED SYSTEM MESSAGES — inject into chat at the right time
+══════════════════════════════════════════════════════════ */
     function checkTimedMessages() {
       const ist = getIST();
       const nowMins = ist.getHours() * 60 + ist.getMinutes();
@@ -3372,113 +3482,113 @@ function loadData() {
     /* ══════════════════════════════════════════════════════════
        AUTH CHECK
     ══════════════════════════════════════════════════════════ */
-async function checkDashboardAccess() {
+    async function checkDashboardAccess() {
 
-    try {
+      try {
 
         const res = await fetch("/api/dashboard-access", {
-            credentials: "include"
+          credentials: "include"
         });
 
         const data = await res.json();
 
         // On weekends/holidays, clear stale zero rows from live_running.json display
         if (data.is_weekend || data.is_holiday) {
-            updateMarketClosedBanner(data);
+          updateMarketClosedBanner(data);
         }
 
         // NOT LOGGED IN
         if (data.reason === "not_logged_in") {
 
-            window.location.replace("/user-login");
-            return false;
+          window.location.replace("/user-login");
+          return false;
         }
 
         // NO PLAN
         if (data.reason === "no_plan") {
 
-            window.location.replace("/trading-plan");
-            return false;
+          window.location.replace("/trading-plan");
+          return false;
         }
 
         // EXPIRED
         if (data.reason === "plan_expired") {
 
-            window.location.replace("/trading-plan?expired=1");
-            return false;
+          window.location.replace("/trading-plan?expired=1");
+          return false;
         }
 
         // ADMIN OR ACTIVE USER
         return true;
 
-    } catch (err) {
+      } catch (err) {
 
         console.error(err);
 
         return true; // IMPORTANT
+      }
     }
-}
 
-function updateMarketClosedBanner(accessData) {
-    const grid = document.getElementById("rows-grid");
-    if (!grid) return;
-    if (grid.querySelector(".data-row")) return;   // real data already there
+    function updateMarketClosedBanner(accessData) {
+      const grid = document.getElementById("rows-grid");
+      if (!grid) return;
+      if (grid.querySelector(".data-row")) return;   // real data already there
 
-    // Store the reason so buildClosedBox() can use it
-    if (accessData.is_weekend) {
+      // Store the reason so buildClosedBox() can use it
+      if (accessData.is_weekend) {
         const dayName = accessData.weekday_name || "Weekend";
         _closedReason = {
-            icon:  "📅",
-            title: `Market Closed — ${dayName}`,
-            desc:  "NSE is closed on weekends. No live values are generated today.",
-            time:  `Next session: <b>${accessData.next_trading_day || "Monday"}</b>`,
+          icon: "📅",
+          title: `Market Closed — ${dayName}`,
+          desc: "NSE is closed on weekends. No live values are generated today.",
+          time: `Next session: <b>${accessData.next_trading_day || "Monday"}</b>`,
         };
-    } else if (accessData.is_holiday) {
+      } else if (accessData.is_holiday) {
         _closedReason = {
-            icon:  "🏖️",
-            title: `Market Holiday — ${accessData.holiday_reason}`,
-            desc:  `NSE is closed today for <b>${accessData.holiday_reason}</b>. No live values are generated.`,
-            time:  `Next session: <b>${accessData.next_trading_day}</b>`,
+          icon: "🏖️",
+          title: `Market Holiday — ${accessData.holiday_reason}`,
+          desc: `NSE is closed today for <b>${accessData.holiday_reason}</b>. No live values are generated.`,
+          time: `Next session: <b>${accessData.next_trading_day}</b>`,
         };
-    } else {
+      } else {
         // Weekday, non-holiday — time-based reason
         const now = new Date();
         const ist = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
         const mins = ist.getHours() * 60 + ist.getMinutes();
         if (mins < 9 * 60 + 16) {
-            _closedReason = {
-                icon:  "⏰",
-                title: "Pre-Market — Session Not Started",
-                desc:  "Live Black-Box-Engine values are generated during active market analysis hours.",
-                time:  "Session opens at <b>9:16 AM IST</b>",
-            };
+          _closedReason = {
+            icon: "⏰",
+            title: "Pre-Market — Session Not Started",
+            desc: "Live Black-Box-Engine values are generated during active market analysis hours.",
+            time: "Session opens at <b>9:16 AM IST</b>",
+          };
         } else if (mins > 12 * 60) {
-            _closedReason = {
-                icon:  "🔔",
-                title: "Market Session Ended for Today",
-                desc:  "Today's session has closed. Data will be available again next trading day.",
-                time:  `Next session: <b>${accessData.next_trading_day}</b> at <b>9:16 AM IST</b>`,
-            };
+          _closedReason = {
+            icon: "🔔",
+            title: "Market Session Ended for Today",
+            desc: "Today's session has closed. Data will be available again next trading day.",
+            time: `Next session: <b>${accessData.next_trading_day}</b> at <b>9:16 AM IST</b>`,
+          };
         }
-    }
+      }
 
-    grid.innerHTML = buildClosedBox();
-}
-/* ── Full-screen overlay for queued plan ── */
-function showFullscreenClosed(icon, title, body, extra) {
-    // Remove any existing overlay
-    const existing = document.getElementById("_accessOverlay");
-    if (existing) existing.remove();
- 
-    const div = document.createElement("div");
-    div.id = "_accessOverlay";
-    div.style.cssText = `
+      grid.innerHTML = buildClosedBox();
+    }
+    /* ── Full-screen overlay for queued plan ── */
+    function showFullscreenClosed(icon, title, body, extra) {
+      // Remove any existing overlay
+      const existing = document.getElementById("_accessOverlay");
+      if (existing) existing.remove();
+
+      const div = document.createElement("div");
+      div.id = "_accessOverlay";
+      div.style.cssText = `
         position:fixed; inset:0; z-index:99999;
         background:rgba(5,8,20,0.97);
         display:flex; align-items:center; justify-content:center;
         font-family:'Poppins',sans-serif;
     `;
-    div.innerHTML = `
+      div.innerHTML = `
         <div style="
             max-width:420px; width:90%;
             background:#111827;
@@ -3493,13 +3603,13 @@ function showFullscreenClosed(icon, title, body, extra) {
             <p style="color:#cbd5e1;font-size:14px;line-height:1.7;margin-bottom:0;">${body}</p>
             ${extra || ""}
         </div>`;
-    document.body.appendChild(div);
-}
+      document.body.appendChild(div);
+    }
 
 
-/* ══════════════════════════════════════════════════════════
-       INIT
-    ══════════════════════════════════════════════════════════ */
+    /* ══════════════════════════════════════════════════════════
+           INIT
+        ══════════════════════════════════════════════════════════ */
     drawGauge();
     updateGauge(0);
     checkDashboardAccess();
@@ -3618,18 +3728,18 @@ function showFullscreenClosed(icon, title, body, extra) {
           const count = data.total ?? '0';
 
           // ── Desktop pill (in header) ──
-          const pill    = document.getElementById('active-users-pill');
+          const pill = document.getElementById('active-users-pill');
           const countEl = document.getElementById('au-count');
           if (countEl) countEl.textContent = count;
-          if (pill)    pill.style.display  = 'flex';
+          if (pill) pill.style.display = 'flex';
 
           // ── Mobile pill (below holiday strip) ──
-          const isMobile     = window.innerWidth <= 768;
-          const mobileStrip  = document.getElementById('mobile-au-strip');
-          const mobilePill   = document.getElementById('active-users-pill-mobile');
-          const mobileCount  = document.getElementById('au-count-mobile');
+          const isMobile = window.innerWidth <= 768;
+          const mobileStrip = document.getElementById('mobile-au-strip');
+          const mobilePill = document.getElementById('active-users-pill-mobile');
+          const mobileCount = document.getElementById('au-count-mobile');
           if (mobileCount) mobileCount.textContent = count;
-          if (mobilePill)  mobilePill.style.display  = 'flex';
+          if (mobilePill) mobilePill.style.display = 'flex';
           if (mobileStrip) mobileStrip.style.display = isMobile ? 'flex' : 'none';
 
         } catch (e) { }
@@ -3645,146 +3755,146 @@ function showFullscreenClosed(icon, title, body, extra) {
     /* ══════════════════════════════════════════════════════════
    DASHBOARD USER DROPDOWN
 ══════════════════════════════════════════════════════════ */
-let _dashUser = null;
+    let _dashUser = null;
 
-async function loadDashUser() {
-  try {
-    const res  = await fetch('/api/me', { credentials: 'include' });
-    const data = await res.json();
-    if (!data.username) return;
-    _dashUser = data;
+    async function loadDashUser() {
+      try {
+        const res = await fetch('/api/me', { credentials: 'include' });
+        const data = await res.json();
+        if (!data.username) return;
+        _dashUser = data;
 
-    const plan    = (data.plan || 'free').toLowerCase();
-    const isAdmin = data.role === 'admin';
-    const initial = (data.username || '?').charAt(0).toUpperCase();
+        const plan = (data.plan || 'free').toLowerCase();
+        const isAdmin = data.role === 'admin';
+        const initial = (data.username || '?').charAt(0).toUpperCase();
 
-    // Avatar
-    document.getElementById('dash-avatar').textContent    = initial;
-    document.getElementById('dd-avatar-lg').textContent   = initial;
-    document.getElementById('dash-username').textContent  = data.username;
-    document.getElementById('dd-name').textContent        = data.username;
-    document.getElementById('dd-email').textContent       = data.email || '—';
+        // Avatar
+        document.getElementById('dash-avatar').textContent = initial;
+        document.getElementById('dd-avatar-lg').textContent = initial;
+        document.getElementById('dash-username').textContent = data.username;
+        document.getElementById('dd-name').textContent = data.username;
+        document.getElementById('dd-email').textContent = data.email || '—';
 
-    // Plan label in button
-    const planLabels = { admin:'Admin', premium:'👑 Premium', pro:'⚡ Pro', essential:'Essential', basic:'Basic', free:'Free' };
-    const planEl = document.getElementById('dash-plan');
-    planEl.textContent = planLabels[isAdmin ? 'admin' : plan] || plan.toUpperCase();
-    planEl.className = `dash-plan plan-${isAdmin ? 'admin' : plan}`;
+        // Plan label in button
+        const planLabels = { admin: 'Admin', premium: '👑 Premium', pro: '⚡ Pro', essential: 'Essential', basic: 'Basic', free: 'Free' };
+        const planEl = document.getElementById('dash-plan');
+        planEl.textContent = planLabels[isAdmin ? 'admin' : plan] || plan.toUpperCase();
+        planEl.className = `dash-plan plan-${isAdmin ? 'admin' : plan}`;
 
-    // Plan strip inside dropdown
-    const stripLabels = { admin:'🔑 Admin Access', premium:'👑 Premium Plan', pro:'⚡ Pro Plan', essential:'Essential Plan', basic:'Basic Plan', free:'Free Plan' };
-    document.getElementById('dd-plan-label').textContent = stripLabels[isAdmin ? 'admin' : plan] || plan;
+        // Plan strip inside dropdown
+        const stripLabels = { admin: '🔑 Admin Access', premium: '👑 Premium Plan', pro: '⚡ Pro Plan', essential: 'Essential Plan', basic: 'Basic Plan', free: 'Free Plan' };
+        document.getElementById('dd-plan-label').textContent = stripLabels[isAdmin ? 'admin' : plan] || plan;
 
-    // Plan status
-    const statusEl = document.getElementById('dd-plan-status');
-    if (isAdmin) {
-      statusEl.textContent = '✅ Full Access';
-      statusEl.style.color = 'var(--green)';
-    } else if (data.plan_expiry) {
-      const diff = new Date(data.plan_expiry) - Date.now();
-      if (diff > 0) {
-        const d = Math.floor(diff / 86400000);
-        statusEl.textContent = `✅ ${d}d left`;
-        statusEl.style.color = d <= 3 ? 'var(--gold)' : 'var(--green)';
-      } else {
-        statusEl.textContent = '❌ Expired';
-        statusEl.style.color = 'var(--red)';
+        // Plan status
+        const statusEl = document.getElementById('dd-plan-status');
+        if (isAdmin) {
+          statusEl.textContent = '✅ Full Access';
+          statusEl.style.color = 'var(--green)';
+        } else if (data.plan_expiry) {
+          const diff = new Date(data.plan_expiry) - Date.now();
+          if (diff > 0) {
+            const d = Math.floor(diff / 86400000);
+            statusEl.textContent = `✅ ${d}d left`;
+            statusEl.style.color = d <= 3 ? 'var(--gold)' : 'var(--green)';
+          } else {
+            statusEl.textContent = '❌ Expired';
+            statusEl.style.color = 'var(--red)';
+          }
+        } else {
+          statusEl.textContent = plan === 'free' ? '⛔ No plan' : '—';
+          statusEl.style.color = 'var(--text-dim)';
+        }
+
+        // Expiry countdown mini bar
+        if (!isAdmin && data.plan_expiry) {
+          const diff = new Date(data.plan_expiry) - Date.now();
+          if (diff > 0 && diff < 7 * 86400000) {
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            document.getElementById('dd-expiry').style.display = 'flex';
+            document.getElementById('dd-expiry-text').textContent = `Plan expires in ${d}d ${h}h`;
+          }
+        }
+
+        // Admin section
+        if (isAdmin) {
+          document.getElementById('dd-admin-section').style.display = 'block';
+        }
+
+        // Show the whole wrapper
+        document.getElementById('dash-user-wrap').style.display = 'block';
+
+      } catch (e) { console.error('loadDashUser:', e); }
+    }
+
+    function dashToggle() {
+      const dd = document.getElementById('dash-dropdown');
+      const ch = document.getElementById('dash-chevron');
+      const open = dd.classList.toggle('open');
+      ch.classList.toggle('open', open);
+    }
+
+    // Close on outside click
+    document.addEventListener('click', function (e) {
+      const wrap = document.getElementById('dash-user-wrap');
+      if (wrap && !wrap.contains(e.target)) {
+        document.getElementById('dash-dropdown').classList.remove('open');
+        document.getElementById('dash-chevron').classList.remove('open');
       }
-    } else {
-      statusEl.textContent = plan === 'free' ? '⛔ No plan' : '—';
-      statusEl.style.color = 'var(--text-dim)';
-    }
+    });
 
-    // Expiry countdown mini bar
-    if (!isAdmin && data.plan_expiry) {
-      const diff = new Date(data.plan_expiry) - Date.now();
-      if (diff > 0 && diff < 7 * 86400000) {
-        const d = Math.floor(diff / 86400000);
-        const h = Math.floor((diff % 86400000) / 3600000);
-        document.getElementById('dd-expiry').style.display = 'flex';
-        document.getElementById('dd-expiry-text').textContent = `Plan expires in ${d}d ${h}h`;
-      }
-    }
+    // Load on init
+    loadDashUser();
 
-    // Admin section
-    if (isAdmin) {
-      document.getElementById('dd-admin-section').style.display = 'block';
-    }
-
-    // Show the whole wrapper
-    document.getElementById('dash-user-wrap').style.display = 'block';
-
-  } catch(e) { console.error('loadDashUser:', e); }
-}
-
-function dashToggle() {
-  const dd  = document.getElementById('dash-dropdown');
-  const ch  = document.getElementById('dash-chevron');
-  const open = dd.classList.toggle('open');
-  ch.classList.toggle('open', open);
-}
-
-// Close on outside click
-document.addEventListener('click', function(e) {
-  const wrap = document.getElementById('dash-user-wrap');
-  if (wrap && !wrap.contains(e.target)) {
-    document.getElementById('dash-dropdown').classList.remove('open');
-    document.getElementById('dash-chevron').classList.remove('open');
-  }
-});
-
-// Load on init
-loadDashUser();
-
-// Recheck mobile AU strip visibility on resize/rotate
-window.addEventListener('resize', () => {
-  const mobileStrip = document.getElementById('mobile-au-strip');
-  const mobilePill  = document.getElementById('active-users-pill-mobile');
-  if (!mobileStrip || !mobilePill || mobilePill.style.display === 'none') return;
-  mobileStrip.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
-});
+    // Recheck mobile AU strip visibility on resize/rotate
+    window.addEventListener('resize', () => {
+      const mobileStrip = document.getElementById('mobile-au-strip');
+      const mobilePill = document.getElementById('active-users-pill-mobile');
+      if (!mobileStrip || !mobilePill || mobilePill.style.display === 'none') return;
+      mobileStrip.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+    });
 
   </script>
 
-<script>
-/* ════════════════════════════════════════════════════════════════════
-   HOLIDAY NOTIFICATION SYSTEM
-   • Shows banner when TODAY is a holiday
-   • Shows strip notification 1–5 days before a holiday
-   • Multiple holidays can be queued in the strip
-════════════════════════════════════════════════════════════════════ */
- 
-const HOLIDAY_COLORS = {
-  0: { bg:"#1a0a00", border:"#f5a623", text:"#f5a623", badge:"#eb4201" },   // today
-  1: { bg:"rgba(235,66,1,0.10)", border:"rgba(235,66,1,0.4)", text:"#ff6b35", badge:"#eb4201" },
-  2: { bg:"rgba(245,166,35,0.10)", border:"rgba(245,166,35,0.35)", text:"#f5a623", badge:"#c8841a" },
-  3: { bg:"rgba(245,166,35,0.07)", border:"rgba(245,166,35,0.25)", text:"#c8841a", badge:"#a06010" },
-  4: { bg:"rgba(245,166,35,0.05)", border:"rgba(245,166,35,0.18)", text:"#a06010", badge:"#806000" },
-  5: { bg:"rgba(245,166,35,0.04)", border:"rgba(245,166,35,0.14)", text:"#806000", badge:"#606000" },
-};
- 
-function _dayLabel(daysAway) {
-  if (daysAway === 0) return "TODAY";
-  if (daysAway === 1) return "TOMORROW";
-  return ` HOLIDAY IN ${daysAway} DAYS`;
-}
- 
-function _urgencyIcon(daysAway) {
-  if (daysAway === 0) return "🏖️";
-  if (daysAway === 1) return "⚠️";
-  if (daysAway === 2) return "📅";
-  return "🗓️";
-}
- 
-function _buildStripItem(h) {
-  const col = HOLIDAY_COLORS[Math.min(h.days_away, 5)];
-  const label = _dayLabel(h.days_away);
-  const icon  = _urgencyIcon(h.days_away);
-  const adj   = h.is_weekend_adjacent
-    ? `<span style="font-size:9px;background:rgba(255,255,255,0.12);padding:1px 6px;border-radius:6px;margin-left:6px;">🔁 Long Weekend</span>`
-    : "";
- 
-  return `
+  <script>
+    /* ════════════════════════════════════════════════════════════════════
+       HOLIDAY NOTIFICATION SYSTEM
+       • Shows banner when TODAY is a holiday
+       • Shows strip notification 1–5 days before a holiday
+       • Multiple holidays can be queued in the strip
+    ════════════════════════════════════════════════════════════════════ */
+
+    const HOLIDAY_COLORS = {
+      0: { bg: "#1a0a00", border: "#f5a623", text: "#f5a623", badge: "#eb4201" },   // today
+      1: { bg: "rgba(235,66,1,0.10)", border: "rgba(235,66,1,0.4)", text: "#ff6b35", badge: "#eb4201" },
+      2: { bg: "rgba(245,166,35,0.10)", border: "rgba(245,166,35,0.35)", text: "#f5a623", badge: "#c8841a" },
+      3: { bg: "rgba(245,166,35,0.07)", border: "rgba(245,166,35,0.25)", text: "#c8841a", badge: "#a06010" },
+      4: { bg: "rgba(245,166,35,0.05)", border: "rgba(245,166,35,0.18)", text: "#a06010", badge: "#806000" },
+      5: { bg: "rgba(245,166,35,0.04)", border: "rgba(245,166,35,0.14)", text: "#806000", badge: "#606000" },
+    };
+
+    function _dayLabel(daysAway) {
+      if (daysAway === 0) return "TODAY";
+      if (daysAway === 1) return "TOMORROW";
+      return ` HOLIDAY IN ${daysAway} DAYS`;
+    }
+
+    function _urgencyIcon(daysAway) {
+      if (daysAway === 0) return "🏖️";
+      if (daysAway === 1) return "⚠️";
+      if (daysAway === 2) return "📅";
+      return "🗓️";
+    }
+
+    function _buildStripItem(h) {
+      const col = HOLIDAY_COLORS[Math.min(h.days_away, 5)];
+      const label = _dayLabel(h.days_away);
+      const icon = _urgencyIcon(h.days_away);
+      const adj = h.is_weekend_adjacent
+        ? `<span style="font-size:9px;background:rgba(255,255,255,0.12);padding:1px 6px;border-radius:6px;margin-left:6px;">🔁 Long Weekend</span>`
+        : "";
+
+      return `
     <div style="
       display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
       gap:8px; padding:7px 28px;
@@ -3809,67 +3919,67 @@ function _buildStripItem(h) {
         ">MARKET WILL BE CLOSED · ${h.formatted_date}</span>
       </div>
     </div>`;
-}
- 
-async function checkHolidayStatus() {
-  try {
-    const res  = await fetch('/api/market-holidays', { credentials: 'include' });
-    const data = await res.json();
- 
-    /* ── TODAY IS A HOLIDAY ─────────────────────────────────────── */
-    if (data.today_is_holiday) {
-      const banner   = document.getElementById('holiday-banner');
-      const reasonEl = document.getElementById('holiday-reason-text');
-      if (banner) {
-        banner.style.display = 'flex';
-        if (reasonEl) reasonEl.textContent = `${data.today_reason} — NSE is closed`;
-      }
     }
- 
-    /* ── UPCOMING (next 5 days, not today) ──────────────────────── */
-    const upcoming = (data.upcoming || []).filter(h => !h.is_today);
- 
-    // Chips inside today's banner
-    const chipsEl = document.getElementById('upcoming-holiday-chips');
-    if (chipsEl && upcoming.length) {
-      chipsEl.innerHTML = upcoming.slice(0, 2).map(h =>
-        `<span style="
+
+    async function checkHolidayStatus() {
+      try {
+        const res = await fetch('/api/market-holidays', { credentials: 'include' });
+        const data = await res.json();
+
+        /* ── TODAY IS A HOLIDAY ─────────────────────────────────────── */
+        if (data.today_is_holiday) {
+          const banner = document.getElementById('holiday-banner');
+          const reasonEl = document.getElementById('holiday-reason-text');
+          if (banner) {
+            banner.style.display = 'flex';
+            if (reasonEl) reasonEl.textContent = `${data.today_reason} — NSE is closed`;
+          }
+        }
+
+        /* ── UPCOMING (next 5 days, not today) ──────────────────────── */
+        const upcoming = (data.upcoming || []).filter(h => !h.is_today);
+
+        // Chips inside today's banner
+        const chipsEl = document.getElementById('upcoming-holiday-chips');
+        if (chipsEl && upcoming.length) {
+          chipsEl.innerHTML = upcoming.slice(0, 2).map(h =>
+            `<span style="
           background:rgba(245,166,35,0.15);
           border:1px solid rgba(245,166,35,0.3);
           color:#f5a623; padding:3px 10px;
           border-radius:20px; font-size:10px; font-weight:700;
         ">📅 ${h.reason} — ${_dayLabel(h.days_away)}</span>`
-      ).join('');
-    }
- 
-    /* ── STRIP: show ALL upcoming holidays within 5 days ────────── */
-    const strip = document.getElementById('upcoming-holiday-strip');
-    if (strip && upcoming.length) {
-      // Sort by proximity
-      const sorted = [...upcoming].sort((a, b) => a.days_away - b.days_away);
-      strip.style.display = 'block';
-      strip.innerHTML = sorted.map(h => _buildStripItem(h)).join('');
-    } else if (strip) {
-      strip.style.display = 'none';
-    }
- 
-  } catch (e) {
-    console.error('Holiday check failed:', e);
-  }
-}
- 
-// Run on load
-checkHolidayStatus();
-// Refresh every hour (holidays don't change mid-day)
-setInterval(checkHolidayStatus, 60 * 60 * 1000);
+          ).join('');
+        }
 
-function logout() {
-		sessionStorage.setItem("loggedOut", "1");
-		window.location.href = "/logout";
-	}
-</script>
+        /* ── STRIP: show ALL upcoming holidays within 5 days ────────── */
+        const strip = document.getElementById('upcoming-holiday-strip');
+        if (strip && upcoming.length) {
+          // Sort by proximity
+          const sorted = [...upcoming].sort((a, b) => a.days_away - b.days_away);
+          strip.style.display = 'block';
+          strip.innerHTML = sorted.map(h => _buildStripItem(h)).join('');
+        } else if (strip) {
+          strip.style.display = 'none';
+        }
 
-<script src="/static/session-monitor.js"></script>
+      } catch (e) {
+        console.error('Holiday check failed:', e);
+      }
+    }
+
+    // Run on load
+    checkHolidayStatus();
+    // Refresh every hour (holidays don't change mid-day)
+    setInterval(checkHolidayStatus, 60 * 60 * 1000);
+
+    function logout() {
+      sessionStorage.setItem("loggedOut", "1");
+      window.location.href = "/logout";
+    }
+  </script>
+
+  <script src="/static/session-monitor.js"></script>
 
 </body>
 
