@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crypto-Nexus — Live Recorder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --call: #34d399;
+      --put: #f87171;
+      --strike: #60a5fa;
+      --amber: #fbbf24;
+      --dim: #94a3b8;
+      --main: #f8fafc;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #020617; color: var(--main);
+      min-height: 100vh; padding: 24px; overflow-x: hidden; position: relative;
+      font-variant-numeric: tabular-nums;
+    }
+    .orb { position: fixed; border-radius: 50%; z-index: -1; filter: blur(120px); pointer-events: none; }
+    .orb-1 { top: -10%; left: -5%; width: 55vw; height: 55vw; background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 65%); animation: drift 18s ease-in-out infinite alternate; }
+    .orb-2 { bottom: -20%; right: -10%; width: 60vw; height: 60vw; background: radial-gradient(circle, rgba(139, 92, 246, 0.22) 0%, transparent 65%); animation: drift 22s ease-in-out infinite alternate-reverse; }
+    .orb-3 { top: 40%; left: 25%; width: 45vw; height: 45vw; background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 65%); animation: drift 26s ease-in-out infinite alternate; }
+    @keyframes drift { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(40px, -40px) scale(1.06); } }
+
+    .glass {
+      background: rgba(15, 23, 42, 0.35);
+      backdrop-filter: blur(35px); -webkit-backdrop-filter: blur(35px);
+      border: 1px solid rgba(255, 255, 255, 0.08); border-top-color: rgba(255, 255, 255, 0.12);
+      border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    }
+
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px; }
+    .brand { font-size: 24px; font-weight: 800; letter-spacing: -1px; }
+    .brand span { font-size: 13px; font-weight: 500; color: var(--dim); margin-left: 8px; }
+
+    .nav-strip { display: flex; gap: 12px; }
+    .nav-btn {
+      padding: 10px 20px; border-radius: 12px; font-weight: 700; font-size: 13px;
+      cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.08); text-decoration: none;
+      transition: .25s; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .nav-adm { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
+    .nav-adm:hover { background: rgba(59, 130, 246, 0.2); }
+    .nav-active { background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(52, 211, 153, 0.3); }
+    .nav-dash { background: rgba(139, 92, 246, 0.1); color: #c084fc; }
+    .nav-dash:hover { background: rgba(139, 92, 246, 0.2); }
+
+    .ctrl-panel { padding: 18px 24px; margin-bottom: 18px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+    .fgroup { display: flex; align-items: center; gap: 10px; }
+    .fgroup label { font-size: 11px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+    input[type=number] {
+      width: 80px; padding: 10px 12px; border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px; background: rgba(255, 255, 255, 0.04); color: #fff;
+      font-size: 14px; font-weight: 700; outline: none; text-align: center;
+      font-family: 'JetBrains Mono', monospace; transition: .25s;
+    }
+    input[type=number]:focus { border-color: var(--strike); }
+    
+    .btn {
+      padding: 10px 20px; border-radius: 11px; font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 700; font-size: 13px; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: .25s;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .btn-blue:hover { background: rgba(59, 130, 246, 0.3); border-color: #60a5fa; }
+    .btn-teal { background: rgba(16, 185, 129, 0.1); color: #34d399; }
+    .btn-teal:hover { background: rgba(16, 185, 129, 0.25); border-color: #34d399; }
+    .btn-red { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+    .btn-red:hover { background: rgba(239, 68, 68, 0.25); border-color: #f87171; }
+
+    .ribbon { padding: 14px 24px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+    .badge { padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; border: 1px solid; }
+    .badge-live { background: rgba(52, 211, 153, 0.08); color: #34d399; border-color: rgba(52, 211, 153, 0.25); }
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+    .pill-amber { background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.2); color: #fbbf24; }
+    .pill-green { background: rgba(52, 211, 153, 0.08); border: 1px solid rgba(52, 211, 153, 0.2); color: #34d399; }
+    .pill-red { background: rgba(248, 113, 113, 0.08); border: 1px solid rgba(248, 113, 113, 0.2); color: #f87171; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; }
+    .dot-a { background: #fbbf24; animation: blink 1.5s infinite; }
+    .dot-g { background: #34d399; }
+    .dot-r { background: #f87171; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+    .meta-row { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
+    .mi { font-size: 12px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+    .mi b { color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 14px; margin-left: 6px; }
+
+    .tbl-wrap { overflow: auto; border-radius: 20px; max-height: calc(100vh - 310px); }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1500px; text-align: center; }
+    thead th {
+      position: sticky; top: 0; z-index: 5; background: rgba(10, 15, 30, 0.4);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      color: #cbd5e1; font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 1.5px; padding: 16px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      white-space: nowrap; font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .thc { color: var(--call); }
+    .thp { color: var(--put); }
+    .ths { color: var(--strike); }
+    tbody td {
+      padding: 13px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+      font-size: 12px; font-family: 'JetBrains Mono', monospace; white-space: nowrap;
+      background: transparent; transition: .15s; color: #cbd5e1;
+    }
+    tbody tr:hover td { background: rgba(255, 255, 255, 0.02); color: #fff; }
+    tbody tr:nth-child(even) td { background: rgba(255, 255, 255, 0.005); }
+
+    .cpos { background: rgba(16, 185, 129, 0.12) !important; color: #34d399; font-weight: 700; }
+    .cneg { background: rgba(239, 68, 68, 0.12) !important; color: #f87171; font-weight: 700; }
+    .czro { color: var(--dim); }
+    .cpnd { color: var(--dim); font-style: italic; }
+    .cdp { color: #34d399; }
+    .cdn { color: #f87171; }
+    .csk { color: var(--strike); font-weight: 800; font-size: 13px; }
+    .cdt { color: #fb923c; font-size: 11px; }
+    .cidx { color: #60a5fa; }
+    
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 20px; }
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <div class="topbar">
+    <div class="brand">📊 Live Recorder <span>Crypto-Nexus-Engine by Traderbro</span></div>
+    <div class="nav-strip">
+      <a href="/" class="nav-btn nav-adm">⚙ Admin</a>
+      <a href="/simple.html" class="nav-btn nav-active">📊 Recorder</a>
+      <a href="/dashboard.html" class="nav-btn nav-dash">📈 Dashboard</a>
+    </div>
+  </div>
+
+  <div class="glass ctrl-panel">
+    <div class="fgroup">
+      <label>Interval (s)</label>
+      <input type="number" id="inp-interval" value="15" min="1">
+    </div>
+    <button class="btn btn-blue" onclick="applyInterval()">⚡ Apply</button>
+    <button class="btn btn-teal" onclick="downloadExcel()">⬇ Excel</button>
+    <button class="btn btn-red" onclick="clearData()">🗑 Clear</button>
+    <div class="pill pill-amber" style="margin-left: auto;">
+      <span class="dot dot-a"></span><span id="active-count">0</span> online
+    </div>
+  </div>
+
+  <div class="glass ribbon">
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <span class="badge badge-live">● LIVE</span>
+      <span style="font-size: 12px; color: var(--dim);" id="last-updated">Connecting…</span>
+    </div>
+    <div class="meta-row">
+      <div class="mi">Rows <b id="row-count">0</b></div>
+      <div class="mi">Strike Price <b id="last-strike">—</b></div>
+      <div class="mi">LTP <b id="last-index">—</b></div>
+      <div class="mi" id="run-pill">
+        <span class="pill pill-green"><span class="dot dot-g"></span>Running <b>0.00</b></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="glass" style="padding:0; overflow:hidden;">
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>DateTime</th><th>Expiry</th>
+            <th class="thc">CE ₹</th><th class="thc">Δ</th><th class="thc">Γ</th><th class="thc">Θ</th><th class="thc">V</th>
+            <th class="ths">Strike</th>
+            <th class="thp">PE ₹</th><th class="thp">Δ</th><th class="thp">Γ</th><th class="thp">Θ</th><th class="thp">V</th>
+            <th>Ratio</th><th class="ths">Index ₹</th><th>Reference</th><th>Stretched</th><th>Difference</th>
+            <th>Diff Prev</th><th>Running</th>
+          </tr>
+        </thead>
+        <tbody id="tbl-body">
+          <tr><td colspan="20" style="padding: 50px; color: var(--dim);">Connecting to Delta Exchange...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+let records = [], intervalSec = 15;
+let startTime = Date.now();
+let fetchCount = 0;
+
+const fmt = (v, d=2) => (v===null||v===undefined||v==="") ? "—" : isNaN(parseFloat(v)) ? "—" : parseFloat(v).toFixed(d);
+const dc = v => { const n=parseFloat(v); return isNaN(n)?"":n>0?"cdp":n<0?"cdn":""; };
+
+function buildRow(r, isPending) {
+  const rv = parseFloat(r.running||0);
+  const rc = isPending ? "cpnd" : rv>0 ? "cpos" : rv<0 ? "cneg" : "czro";
+  return `
+    <td class="cdt">${r.datetime||"—"}</td>
+    <td style="color:#a78bfa;font-size:11px;">${r.expiry||"—"}</td>
+    <td style="color:#34d399;font-weight:700;">${fmt(r.ce_ltp)}</td>
+    <td>${fmt(r.ce_delta,4)}</td><td>${fmt(r.ce_gamma,5)}</td><td>${fmt(r.ce_theta,2)}</td><td>${fmt(r.ce_vega,2)}</td>
+    <td class="csk">${r.strike||"—"}</td>
+    <td style="color:#f87171;font-weight:700;">${fmt(r.pe_ltp)}</td>
+    <td>${fmt(r.pe_delta,4)}</td><td>${fmt(r.pe_gamma,5)}</td><td>${fmt(r.pe_theta,2)}</td><td>${fmt(r.pe_vega,2)}</td>
+    <td class="${dc(r.delta_ratio)}">${fmt(r.delta_ratio,5)}</td>
+    <td class="cidx">${fmt(r.index_ltp,2)}</td>
+    <td>${fmt(r.reference,5)}</td>
+    <td class="${dc(r.stretched)}">${fmt(r.stretched,5)}</td>
+    <td class="${dc(r.difference)}">${fmt(r.difference,2)}</td>
+    <td class="${isPending?"cpnd":dc(r.diff_prev)}">${isPending?"—":fmt(r.diff_prev,2)}</td>
+    <td class="${rc}">${isPending?"—":rv.toFixed(2)}</td>
+  `;
+}
+
+function renderRecords() {
+  const tbody = document.getElementById("tbl-body");
+  if (records.length > 1) {
+    const prev = tbody.querySelector(`tr[data-idx="${records.length-2}"]`);
+    if (prev) {
+      prev.innerHTML = buildRow(records[records.length-2], false);
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-idx", String(records.length-1));
+      tr.innerHTML = buildRow(records[records.length-1], true);
+      tbody.appendChild(tr);
+      updateMeta(); return;
+    }
+  }
+  tbody.innerHTML = "";
+  records.forEach((r,idx) => {
+    const tr = document.createElement("tr");
+    tr.setAttribute("data-idx", String(idx));
+    tr.innerHTML = buildRow(r, idx===records.length-1);
+    tbody.appendChild(tr);
+  });
+  updateMeta();
+}
+
+function updateMeta() {
+  document.getElementById("row-count").innerText = records.length;
+  if (!records.length) return;
+  const last = records[records.length-1];
+  document.getElementById("last-strike").innerText = last.strike||"—";
+  document.getElementById("last-index").innerText = last.index_ltp ? `₹${parseFloat(last.index_ltp).toLocaleString("en-IN",{maximumFractionDigits:0})}` : "—";
+  const rv = parseFloat(records.length>=2 ? records[records.length-2].running : 0);
+  const pcls = rv>0?"pill-green":rv<0?"pill-red":"pill-amber";
+  const dcls = rv>0?"dot-g":rv<0?"dot-r":"dot-a";
+  document.getElementById("run-pill").innerHTML = `<span class="pill ${pcls}"><span class="dot ${dcls}"></span>Running <b>${rv>0?"+":""}${rv.toFixed(2)}</b></span>`;
+}
+
+async function fetchData() {
+  try {
+    const data = await (await fetch("/api/get-running?t="+Date.now())).json();
+    if (!data.rows || !data.rows.length) return;
+    if (data.rows.length !== records.length) {
+      records = data.rows;
+      renderRecords();
+      document.getElementById("last-updated").innerText = "Updated "+new Date().toLocaleTimeString();
+    }
+  } catch(e) { console.error(e); }
+}
+
+async function loadInterval() {
+  try {
+    const d = await(await fetch("/api/get-interval")).json();
+    if (d.interval) {
+      intervalSec = d.interval;
+      document.getElementById("inp-interval").value = d.interval;
+    }
+  } catch(e){}
+}
+
+async function applyInterval() {
+  const v = parseInt(document.getElementById("inp-interval").value);
+  if (!v || v < 1) return;
+  await fetch("/api/set-interval",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({interval:v})});
+  intervalSec = v;
+  // Reset precise timer baseline
+  startTime = Date.now();
+  fetchCount = 0;
+}
+
+async function clearData() {
+  if(!confirm("Delete all recorded data?")) return;
+  await fetch("/api/clear-running",{method:"POST"});
+  records = [];
+  document.getElementById("tbl-body").innerHTML = "";
+  updateMeta();
+}
+
+function downloadExcel() {
+  if (!records.length) { alert("No data."); return; }
+  const now = new Date(), ds = now.toISOString().slice(0,10), dn = now.toLocaleDateString("en-IN",{weekday:"long"});
+  const hdrs = ["DateTime","Expiry","CE ₹","CE Δ","CE Γ","CE Θ","CE V","Strike","PE ₹","PE Δ","PE Γ","PE Θ","PE V","Delta Ratio","Index ₹","Reference","Stretched","Difference","Diff Prev","Running"];
+  const fn = v => { if(v===null||v===undefined||v==="")return"";const n=parseFloat(v);return isNaN(n)?"":n; };
+  const dataRows = records.map((r,i) => {
+    const p = i === records.length-1;
+    return [
+      r.datetime??"", r.expiry??"", fn(r.ce_ltp), fn(r.ce_delta), fn(r.ce_gamma), fn(r.ce_theta), fn(r.ce_vega),
+      r.strike??"", fn(r.pe_ltp), fn(r.pe_delta), fn(r.pe_gamma), fn(r.pe_theta), fn(r.pe_vega),
+      fn(r.delta_ratio), fn(r.index_ltp), fn(r.reference), fn(r.stretched), fn(r.difference),
+      p?"":fn(r.diff_prev), p?"":fn(r.running)
+    ];
+  });
+  const lastS = records.length >= 2 ? records[records.length-2] : null;
+  const fr = lastS ? Number(lastS.running||0) : 0;
+  const wsData = [
+    [`Crypto-Nexus-Engine — Live Recorder | ${ds} (${dn})`],
+    ["Delta Exchange BTC Options | ₹INR | USD×94.33"],
+    [],
+    hdrs, ...dataRows, [],
+    [`Final Running: ${fr>=0?"+":""}${fr.toFixed(2)}`]
+  ];
+  const wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws["!cols"] = [{wch:22},{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:9},{wch:9},{wch:10},{wch:10},{wch:10},{wch:10},{wch:9},{wch:12},{wch:12},{wch:12},{wch:13},{wch:11},{wch:10},{wch:11}];
+  ws["!merges"] = [{s:{r:0,c:0},e:{r:0,c:19}},{s:{r:1,c:0},e:{r:1,c:19}},{s:{r:wsData.length-1,c:0},e:{r:wsData.length-1,c:9}}];
+  XLSX.utils.book_append_sheet(wb,ws,ds);
+  XLSX.writeFile(wb,`CryptoNexus_${ds}.xlsx`,{bookType:"xlsx",cellStyles:true});
+}
+
+async function fetchUsers() {
+  try {
+    document.getElementById("active-count").innerText = ((await(await fetch("/api/active-users")).json()).total)||0;
+  } catch(e){}
+}
+
+async function preciseLoop() {
+  fetchCount++;
+  const nextTime = startTime + (fetchCount * intervalSec * 1000);
+  const delay = nextTime - Date.now();
+  setTimeout(async () => {
+    await fetchData();
+    preciseLoop();
+  }, Math.max(0, delay));
+}
+
+async function hb() {
+  await fetch("/api/heartbeat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({page:"recorder"})}).catch(()=>{});
+}
+
+window.addEventListener("load", async () => {
+  await loadInterval();
+  await fetchData();
+  preciseLoop();
+  fetchUsers();
+  setInterval(fetchUsers, 20000);
+  hb();
+  setInterval(hb, 20000);
+});
+</script>
+</body>
+</html>
