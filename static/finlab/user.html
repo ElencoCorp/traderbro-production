@@ -24,10 +24,12 @@
 .status-tag.active{background:linear-gradient(135deg,#22c55e,#16a34a);color:white;box-shadow:0 8px 20px rgba(34,197,94,.25)}
 .status-tag.expired{background:linear-gradient(135deg,#ef4444,#dc2626);color:white}
 .status-tag.inactive{background:#64748b;color:white}
+.status-tag.revoked{background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:white;box-shadow:0 8px 20px rgba(185,28,28,.25)}
 .live-indicator{padding:10px 18px;border-radius:999px;font-size:13px;font-weight:700;color:white}
 .live-indicator.active{background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 8px 20px rgba(34,197,94,.25)}
 .live-indicator.expired{background:linear-gradient(135deg,#ef4444,#dc2626)}
 .live-indicator.inactive{background:#64748b}
+.live-indicator.revoked{background:linear-gradient(135deg,#7f1d1d,#b91c1c)}
 .subscription-card{background:linear-gradient(145deg,#ffffff,#f8fbff);border:none;border-radius:28px;padding:36px;box-shadow:0 20px 50px rgba(15,23,42,.08);position:relative;overflow:hidden}
 .subscription-card::before{content:"";position:absolute;top:-120px;right:-120px;width:240px;height:240px;background:radial-gradient(rgba(37,99,235,.1),transparent 70%)}
 .subscription-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;flex-wrap:wrap;gap:14px}
@@ -60,6 +62,7 @@
 .sub-table tbody tr:hover{background:#fafbff}
 .sub-row-active{background:#f0fdf4}
 .sub-row-queued{background:#eff6ff}
+.sub-row-revoked{background:#fef2f2}
 .sub-row-expired{background:#f9fafb}
 .plan-pill{display:inline-block;padding:3px 12px;border-radius:999px;color:white;font-size:11px;font-weight:700;letter-spacing:.3px}
 .plan-pill.free{background:#64748b}
@@ -70,6 +73,7 @@
 .status-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:700}
 .status-pill.active{background:#dcfce7;color:#166534}
 .status-pill.queued{background:#dbeafe;color:#1d4ed8}
+.status-pill.revoked{background:#fee2e2;color:#991b1b}
 .status-pill.expired{background:#f1f5f9;color:#64748b}
 .meta-chip{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#f1f5f9;color:#475569;margin:2px}
 .sub-empty{padding:50px 20px;text-align:center;color:#94a3b8}
@@ -79,7 +83,6 @@
 .loading-ring{display:inline-block;width:28px;height:28px;border:3px solid #e2e8f0;border-top-color:#2563eb;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── UPCOMING HOLIDAYS SECTION ── */
 .holiday-section{background:linear-gradient(145deg,#0f172a,#1e293b);border-radius:24px;overflow:hidden;margin-top:20px}
 .holiday-section-header{padding:18px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06)}
 .holiday-section-header h4{color:white;font-size:16px;font-weight:800;margin:0}
@@ -191,11 +194,10 @@
                 </div>
             </div>
 
-            <div class="mt-4 p-3" style="background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;color:#9a3412;font-size:13px;line-height:1.7;">
-                ⏰ Trading sessions are active between <b>9:16 AM → 12:00 PM</b>. Subscription validity is calculated using <b>trading days only</b> (weekends &amp; NSE holidays excluded).
+            <div class="mt-4 p-3" style="background:#fff7ed; border:1px solid #fed7aa; border-radius:14px; color:#9a3412; font-size:13px; line-height:1.7;">
+                📢 <b>Activation Windows:</b> Subscriptions completed before <b>10:00 AM IST</b> enable engine access for the identical trading calendar day. Subscriptions concluded after <b>10:01 AM IST</b> trigger activation records exactly at <b>12:00 AM midnight</b> starting the next trading day cycle.
             </div>
 
-            <!-- SUBSCRIPTION HISTORY -->
             <div class="mt-4">
                 <div class="sub-history-card">
                     <div class="sub-history-header">
@@ -212,7 +214,6 @@
                 </div>
             </div>
 
-            <!-- PAYMENT HISTORY -->
             <div class="mt-4">
                 <div class="sub-history-card">
                     <div class="sub-history-header">
@@ -229,16 +230,13 @@
                 </div>
             </div>
 
-            <!-- UPCOMING NSE HOLIDAYS — single instance, rendered by renderUpcomingHolidays() -->
             <div id="upcoming-holidays-section" style="display:none;" class="mt-4">
                 <div class="holiday-section">
                     <div class="holiday-section-header">
                         <h4>📅 Upcoming NSE Market Holidays</h4>
                         <span class="holiday-count" id="holiday-count-badge">—</span>
                     </div>
-                    <!-- today's holiday alert injected here if needed -->
                     <div id="today-holiday-alert"></div>
-                    <!-- list -->
                     <div class="holiday-list" id="holiday-list-wrap"></div>
                 </div>
             </div>
@@ -263,8 +261,6 @@
         </div>
  
         <div class="card-body" style="padding:24px;">
- 
-            <!-- Change Password Toggle -->
             <button type="button" id="cpToggleBtn" onclick="cpToggle()"
                 style="width:100%;display:flex;align-items:center;justify-content:space-between;
                        padding:14px 18px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);
@@ -279,13 +275,9 @@
                 <span id="cpArrow" style="font-size:18px;color:#94a3b8;transition:transform .25s;">▾</span>
             </button>
  
-            <!-- Expandable Form -->
             <div id="cpFormWrap" style="max-height:0;overflow:hidden;transition:max-height .35s ease,opacity .3s ease;opacity:0;">
                 <div style="padding-top:18px;">
- 
                     <div id="cpAlert" style="display:none;padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:16px;"></div>
- 
-                    <!-- Current Password -->
                     <div style="margin-bottom:14px;">
                         <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">Current Password</label>
                         <div style="position:relative;">
@@ -298,7 +290,6 @@
                         </div>
                     </div>
  
-                    <!-- New Password -->
                     <div style="margin-bottom:14px;">
                         <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">New Password</label>
                         <div style="position:relative;">
@@ -317,7 +308,6 @@
                         </div>
                     </div>
  
-                    <!-- Confirm Password -->
                     <div style="margin-bottom:18px;">
                         <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">Confirm New Password</label>
                         <div style="position:relative;">
@@ -331,7 +321,6 @@
                         </div>
                     </div>
  
-                    <!-- Requirements -->
                     <div style="background:#f8fafc;border-radius:12px;padding:12px 14px;margin-bottom:18px;">
                         <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Requirements</div>
                         <div id="cpr_len"   style="font-size:12px;color:#94a3b8;margin-bottom:4px;">✗ &nbsp;At least 8 characters</div>
@@ -340,7 +329,6 @@
                         <div id="cpr_match" style="font-size:12px;color:#94a3b8;">✗ &nbsp;Passwords match</div>
                     </div>
  
-                    <!-- Submit -->
                     <button type="button" id="cpSubmitBtn" onclick="cpSubmit()"
                         style="width:100%;padding:14px;border-radius:14px;border:none;
                                background:linear-gradient(135deg,#0ea5e9,#2563eb);color:white;
@@ -352,169 +340,24 @@
                         onmouseout="this.style.transform='translateY(0)'">
                         <span id="cpSubmitTxt">🔐 Update Password</span>
                     </button>
- 
                 </div>
             </div>
  
-            <!-- Divider -->
             <div style="border-top:1px solid #f1f5f9;margin:20px 0;"></div>
  
-            <!-- Forgot Password Link -->
             <div style="text-align:center;margin-bottom:14px;">
                 <a href="/forgot-password" style="font-size:13px;color:#0ea5e9;font-weight:600;text-decoration:none;">
                     🔑 Forgot your password?
                 </a>
             </div>
  
-            <!-- Logout -->
             <button class="btn btn-danger w-100" onclick="logout()"
                 style="border-radius:14px;font-weight:700;font-size:15px;padding:14px;">
                 🚪 Logout
             </button>
- 
         </div>
     </div>
 </div>
- 
-<script>
-/* ── Toggle ── */
-let _cpOpen = false;
-function cpToggle() {
-    _cpOpen = !_cpOpen;
-    const wrap  = document.getElementById('cpFormWrap');
-    const arrow = document.getElementById('cpArrow');
-    if (_cpOpen) {
-        wrap.style.maxHeight = '600px';
-        wrap.style.opacity   = '1';
-        arrow.style.transform = 'rotate(180deg)';
-    } else {
-        wrap.style.maxHeight = '0';
-        wrap.style.opacity   = '0';
-        arrow.style.transform = 'rotate(0deg)';
-        cpReset();
-    }
-}
- 
-/* ── Eye toggle ── */
-function cpEye(id, btn) {
-    const inp = document.getElementById(id);
-    inp.type  = inp.type === 'password' ? 'text' : 'password';
-    btn.textContent = inp.type === 'password' ? '👁' : '🙈';
-}
- 
-/* ── Strength ── */
-function cpStrength() {
-    const v   = document.getElementById('cp_new').value;
-    const bar = document.getElementById('cpStrBar');
-    const lbl = document.getElementById('cpStrLbl');
-    let sc = 0;
-    if (v.length >= 8)           sc++;
-    if (/[A-Z]/.test(v))        sc++;
-    if (/[0-9]/.test(v))        sc++;
-    if (/[^A-Za-z0-9]/.test(v)) sc++;
-    if (v.length >= 12)          sc++;
-    const MAP = [
-        {w:'0%',  c:'#e2e8f0',t:''},
-        {w:'20%', c:'#ef4444',t:'Very Weak'},
-        {w:'40%', c:'#f97316',t:'Weak'},
-        {w:'60%', c:'#eab308',t:'Fair'},
-        {w:'80%', c:'#22c55e',t:'Strong'},
-        {w:'100%',c:'#16a34a',t:'Very Strong'},
-    ];
-    const m = MAP[sc] || MAP[0];
-    bar.style.width = m.w; bar.style.background = m.c;
-    lbl.style.color = m.c; lbl.textContent = m.t;
-}
- 
-/* ── Requirements ── */
-function cpReqs() {
-    const v = document.getElementById('cp_new').value;
-    const c = document.getElementById('cp_confirm').value;
-    const upd = (id, pass) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.style.color = pass ? '#16a34a' : '#94a3b8';
-        el.textContent = (pass?'✓':'✗') + ' \u00a0' + el.textContent.slice(3);
-    };
-    upd('cpr_len',   v.length >= 8);
-    upd('cpr_up',    /[A-Z]/.test(v));
-    upd('cpr_num',   /[0-9]/.test(v));
-    upd('cpr_match', v.length > 0 && v === c);
- 
-    const ico = document.getElementById('cpMatchIcon');
-    ico.style.display = c ? 'block' : 'none';
-    ico.textContent   = v === c ? '✅' : '❌';
-}
- 
-/* ── Alert ── */
-function cpClearAlert() { document.getElementById('cpAlert').style.display = 'none'; }
-function cpShowAlert(msg, type) {
-    const el = document.getElementById('cpAlert');
-    el.style.display = 'block';
-    if (type === 'success') {
-        el.style.cssText = 'display:block;background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:16px;';
-    } else {
-        el.style.cssText = 'display:block;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:16px;';
-    }
-    el.textContent = msg;
-}
- 
-/* ── Reset ── */
-function cpReset() {
-    ['cp_current','cp_new','cp_confirm'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.value = ''; el.type = 'password'; }
-    });
-    const bar = document.getElementById('cpStrBar');
-    const lbl = document.getElementById('cpStrLbl');
-    const ico = document.getElementById('cpMatchIcon');
-    if (bar) { bar.style.width='0%'; bar.style.background='#e2e8f0'; }
-    if (lbl) lbl.textContent = '';
-    if (ico) ico.style.display = 'none';
-    ['cpr_len','cpr_up','cpr_num','cpr_match'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.style.color='#94a3b8'; const t=el.textContent; el.textContent='✗ \u00a0'+t.slice(3); }
-    });
-    cpClearAlert();
-}
- 
-/* ── Submit ── */
-async function cpSubmit() {
-    cpClearAlert();
-    const current = (document.getElementById('cp_current')?.value||'').trim();
-    const newPw   = (document.getElementById('cp_new')?.value||'').trim();
-    const confirm = (document.getElementById('cp_confirm')?.value||'').trim();
-    const btn     = document.getElementById('cpSubmitBtn');
-    const txt     = document.getElementById('cpSubmitTxt');
- 
-    if (!current || !newPw || !confirm) { cpShowAlert('⚠️ Please fill in all fields.','error'); return; }
-    if (newPw !== confirm)              { cpShowAlert('❌ New passwords do not match.','error'); return; }
-    if (newPw.length < 8)              { cpShowAlert('❌ Minimum 8 characters required.','error'); return; }
-    if (!/[A-Z]/.test(newPw))         { cpShowAlert('❌ Must contain an uppercase letter.','error'); return; }
-    if (!/[0-9]/.test(newPw))         { cpShowAlert('❌ Must contain a number.','error'); return; }
- 
-    btn.disabled = true; txt.textContent = '⏳ Updating…';
-    try {
-        const res  = await fetch('/api/change-password', {
-            method: 'POST', credentials: 'include',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ current_password: current, new_password: newPw, confirm_password: confirm })
-        });
-        const data = await res.json();
-        if (data.success) {
-            cpShowAlert('✅ Password updated successfully!', 'success');
-            cpReset();
-            setTimeout(() => { _cpOpen = true; cpToggle(); }, 2200);
-        } else {
-            cpShowAlert('❌ ' + (data.error || 'Update failed.'), 'error');
-        }
-    } catch(e) {
-        cpShowAlert('❌ Network error. Please try again.', 'error');
-    } finally {
-        btn.disabled = false; txt.textContent = '🔐 Update Password';
-    }
-}
-</script>
             </div>
         </div>
 
@@ -596,11 +439,9 @@ async function cpSubmit() {
 
 <script src="/static/finlab/Frontend/xhtml/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script>
-/* ══════════════════════════════════════════════════════════
-   GLOBALS
-══════════════════════════════════════════════════════════ */
+/* ─── GLOBALS ─── */
 const PLAN_COLORS = {
-    free:      { badge:"⭐ Member",           avatarGrad:"linear-gradient(135deg,#64748b,#475569)" },
+    free:      { badge:"⭐ Member",          avatarGrad:"linear-gradient(135deg,#64748b,#475569)" },
     basic:     { badge:"⭐ Basic Trader",      avatarGrad:"linear-gradient(135deg,#0ea5e9,#0284c7)" },
     essential: { badge:"🚀 Essential Trader", avatarGrad:"linear-gradient(135deg,#8b5cf6,#6d28d9)" },
     pro:       { badge:"💎 Pro Trader",        avatarGrad:"linear-gradient(135deg,#f59e0b,#d97706)" },
@@ -610,8 +451,7 @@ const PLAN_BG = { free:"#64748b", basic:"#0ea5e9", essential:"#8b5cf6", pro:"#f5
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-/* ── Holiday cache ── */
-let _HOLIDAYS = {};     // { "YYYY-MM-DD": "Holiday Name" }
+let _HOLIDAYS = {};
 let _holidaysLoaded = false;
  
 async function loadHolidaysOnce() {
@@ -627,33 +467,22 @@ async function loadHolidaysOnce() {
     }
 }
  
-/**
- * Returns all NSE holidays (from _HOLIDAYS cache) that fall on
- * weekdays between startIso and endIso (inclusive).
- */
 function getHolidaysBetween(startIso, endIso) {
     if (!startIso || !endIso) return [];
- 
     const start = new Date(startIso);
     const end   = new Date(endIso);
- 
     return Object.entries(_HOLIDAYS)
         .filter(([dateStr]) => {
             try {
                 const dt = new Date(dateStr + "T00:00:00");
                 const dow = dt.getDay();
-                // Must be a weekday and within the subscription window
                 return dt >= start && dt <= end && dow !== 0 && dow !== 6;
-            } catch(e) {
-                return false;
-            }
+            } catch(e) { return false; }
         })
         .map(([dateStr, reason]) => ({ date: dateStr, reason }))
         .sort((a, b) => a.date.localeCompare(b.date));
 }
-/* ══════════════════════════════════════════════════════════
-   DATE FORMATTER
-══════════════════════════════════════════════════════════ */
+
 function fmtDate(iso) {
     if (!iso) return "—";
     try {
@@ -664,9 +493,6 @@ function fmtDate(iso) {
     } catch { return "—"; }
 }
 
-/* ══════════════════════════════════════════════════════════
-   COUNTDOWN
-══════════════════════════════════════════════════════════ */
 let _cdInt = null;
 function startCountdown(expiryIso) {
     const el = document.getElementById("countdown");
@@ -682,9 +508,6 @@ function startCountdown(expiryIso) {
     tick(); clearInterval(_cdInt); _cdInt = setInterval(tick, 1000);
 }
 
-/* ══════════════════════════════════════════════════════════
-   LOAD USER
-══════════════════════════════════════════════════════════ */
 async function loadUser() {
     const res  = await fetch("/api/me", { credentials:"include" });
     const data = await res.json();
@@ -693,7 +516,12 @@ async function loadUser() {
     const plan     = (data.plan || "free").toLowerCase();
     const cfg      = PLAN_COLORS[plan] || PLAN_COLORS.free;
     const isActive = data.plan_expiry ? new Date() < new Date(data.plan_expiry) : false;
-    const st       = !data.plan_expiry ? "inactive" : isActive ? "active" : "expired";
+    
+    // Core fix: Intercepting structural revoked indicators across responses
+    let st = !data.plan_expiry ? "inactive" : isActive ? "active" : "expired";
+    if (data.status === "revoked" || data.plan_status === "revoked") {
+        st = "revoked";
+    }
 
     document.getElementById("username").innerText = data.username || "User";
     document.getElementById("email").innerText    = data.email    || "—";
@@ -704,7 +532,8 @@ async function loadUser() {
     document.getElementById("avatarCircle").style.background = cfg.avatarGrad;
     document.getElementById("memberBadge").innerText = cfg.badge;
     document.getElementById("planMini").innerText   = plan.toUpperCase();
-    document.getElementById("statusMini").innerText = st === "active" ? "ACTIVE" : st === "expired" ? "EXPIRED" : "NO PLAN";
+    
+    document.getElementById("statusMini").innerText = st === "active" ? "ACTIVE" : st === "expired" ? "EXPIRED" : st === "revoked" ? "REVOKED" : "NO PLAN";
 
     const ptEl = document.getElementById("planTag");
     ptEl.innerText = plan.toUpperCase(); ptEl.className = "plan-tag " + plan;
@@ -717,6 +546,10 @@ async function loadUser() {
         stEl.innerText = "Active ✅"; stEl.className = "status-tag active";
         lvEl.innerText = "● Active";  lvEl.className = "live-indicator active";
         startCountdown(data.plan_expiry);
+    } else if (st === "revoked") {
+        stEl.innerText = "Revoked 🚫"; stEl.className = "status-tag revoked";
+        lvEl.innerText = "● Revoked";  lvEl.className = "live-indicator revoked";
+        document.getElementById("countdown").innerHTML = "<span style='color:#ef4444; font-weight:700;'>🚫 This subscription plan has been revoked by admin.</span>";
     } else if (st === "expired") {
         stEl.innerText = "Expired ❌"; stEl.className = "status-tag expired";
         lvEl.innerText = "● Expired";  lvEl.className = "live-indicator expired";
@@ -727,34 +560,25 @@ async function loadUser() {
     }
 
     const ub = document.getElementById("upgradeBtn");
-    ub.textContent = st === "expired" ? "Renew Membership 🔄" : st === "active" ? "Upgrade Membership 🚀" : "Get a Plan 🚀";
+    ub.textContent = st === "expired" ? "Renew Membership 🔄" : st === "active" ? "Upgrade Membership 🚀" : st === "revoked" ? "Re-Subscribe 🚀" : "Get a Plan 🚀";
 }
 
-/* ══════════════════════════════════════════════════════════
-   BUILD HOLIDAY CHIP for subscription table
-══════════════════════════════════════════════════════════ */
 function buildHolidayCell(s) {
     const count = s.holidays_skipped || 0;
     if (!count) return `<span class="meta-chip">📅 0 holidays</span>`;
-
     const hols    = getHolidaysBetween(s.plan_start, s.plan_expiry);
     const tooltip = hols.map(h => `${h.date}: ${h.reason}`).join('\n');
     const preview = hols.slice(0,2).map(h => h.reason).join(', ');
     const more    = hols.length > 2 ? ` +${hols.length-2} more` : '';
-
     return `<span class="meta-chip" title="${tooltip}" style="cursor:help;max-width:180px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
         📅 ${count} holiday${count>1?'s':''}${preview ? ': '+preview+more : ''}
     </span>`;
 }
 
-/* ══════════════════════════════════════════════════════════
-   LOAD SUBSCRIPTIONS
-══════════════════════════════════════════════════════════ */
 async function loadSubscriptions() {
     const wrap  = document.getElementById("subscriptionTableWrap");
     const badge = document.getElementById("subCountBadge");
-
-    await loadHolidaysOnce();   // ensure holidays loaded before building cells
+    await loadHolidaysOnce();
 
     try {
         const res  = await fetch("/api/my-subscriptions", { credentials:"include" });
@@ -779,11 +603,17 @@ async function loadSubscriptions() {
 
         subs.forEach((s, idx) => {
             const isNext = s.status === "queued" && idx > 0 && subs.slice(0,idx).some(x => x.status === "active");
-            const statusHTML = {
-                active:  `<span class="status-pill active">✅ Active</span>`,
-                queued:  `<span class="status-pill queued">⏳ Queued</span>`,
-                expired: `<span class="status-pill expired">❌ Expired</span>`
-            }[s.status] || `<span class="status-pill expired">${s.status}</span>`;
+            
+            let statusHTML = "";
+            if (s.status === "active") {
+                statusHTML = `<span class="status-pill active">✅ Active</span>`;
+            } else if (s.status === "queued") {
+                statusHTML = `<span class="status-pill queued">⏳ Queued</span>`;
+            } else if (s.status === "revoked") {
+                statusHTML = `<span class="status-pill revoked">🚫 Revoked</span>`;
+            } else {
+                statusHTML = `<span class="status-pill expired">❌ Expired</span>`;
+            }
 
             let extra = "";
             if (s.status === "active" && s.plan_expiry) {
@@ -793,8 +623,12 @@ async function loadSubscriptions() {
                     extra = `<div style="font-size:10px;color:#16a34a;margin-top:3px;">⏳ ${d}d ${h}h left</div>`;
                 }
             }
-            if (s.status === "queued" && s.plan_start)
+            if (s.status === "queued" && s.plan_start) {
                 extra = `<div style="font-size:10px;color:#2563eb;margin-top:3px;">Starts: ${fmtDate(s.plan_start)}</div>`;
+            }
+            if (s.status === "revoked") {
+                extra = `<div style="font-size:10px;color:#ef4444;margin-top:3px;font-weight:700;">This plan has been revoked by admin</div>`;
+            }
 
             html += `<tr class="sub-row-${s.status}">
                 <td style="color:#94a3b8;font-weight:600;">${idx+1}</td>
@@ -813,12 +647,14 @@ async function loadSubscriptions() {
 
         const active=subs.filter(s=>s.status==="active").length,
               queued=subs.filter(s=>s.status==="queued").length,
+              revoked=subs.filter(s=>s.status==="revoked").length,
               expired=subs.filter(s=>s.status==="expired").length,
               paid=subs.reduce((a,s)=>a+(s.price||0),0);
         html += `<div style="padding:14px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;flex-wrap:wrap;gap:16px;align-items:center;font-size:12px;">
             <div><span style="color:#64748b;">Total:</span> <b>${subs.length}</b></div>
             <div><span style="color:#16a34a;">Active:</span> <b>${active}</b></div>
             <div><span style="color:#2563eb;">Queued:</span> <b>${queued}</b></div>
+            <div><span style="color:#ef4444;">Revoked:</span> <b>${revoked}</b></div>
             <div><span style="color:#64748b;">Expired:</span> <b>${expired}</b></div>
             <div style="margin-left:auto;font-size:13px;font-weight:700;color:#0f172a;">Total Paid: ₹${paid}</div>
         </div>`;
@@ -829,20 +665,15 @@ async function loadSubscriptions() {
     }
 }
 
-/* ══════════════════════════════════════════════════════════
-   UPCOMING HOLIDAYS  — called ONCE only
-══════════════════════════════════════════════════════════ */
 async function renderUpcomingHolidays() {
     try {
         const res  = await fetch('/api/market-holidays', { credentials:'include' });
         const data = await res.json();
-
         const section = document.getElementById('upcoming-holidays-section');
         const wrap    = document.getElementById('holiday-list-wrap');
         const badge   = document.getElementById('holiday-count-badge');
         const todayEl = document.getElementById('today-holiday-alert');
 
-        // Today holiday alert
         if (data.today_is_holiday && data.today_reason) {
             todayEl.innerHTML = `<div class="today-holiday-banner">
                 <span style="font-size:22px;">🏖️</span>
@@ -853,14 +684,11 @@ async function renderUpcomingHolidays() {
             </div>`;
         }
 
-        // Upcoming list (exclude today)
         const upcoming = (data.upcoming || []).filter(h => !h.is_today);
         if (!upcoming.length && !data.today_is_holiday) { section.style.display='none'; return; }
 
         section.style.display = 'block';
-        badge.textContent = data.today_is_holiday
-            ? `Today: ${data.today_reason}`
-            : `Next ${Math.min(upcoming.length, 10)} holidays`;
+        badge.textContent = data.today_is_holiday ? `Today: ${data.today_reason}` : `Next ${Math.min(upcoming.length, 10)} holidays`;
 
         wrap.innerHTML = upcoming.slice(0, 10).map(h => {
             const dt  = new Date(h.date + 'T00:00:00');
@@ -891,11 +719,7 @@ async function loadPaymentHistory() {
         const data = await res.json();
  
         if (data.error) {
-            wrap.innerHTML = `
-                <div class="sub-empty">
-                    <div class="sub-empty-icon">⚠️</div>
-                    <p>${data.error}</p>
-                </div>`;
+            wrap.innerHTML = `<div class="sub-empty"><div class="sub-empty-icon">⚠️</div><p>${data.error}</p></div>`;
             return;
         }
  
@@ -903,12 +727,7 @@ async function loadPaymentHistory() {
         badge.textContent = payments.length + (payments.length === 1 ? " payment" : " payments");
  
         if (!payments.length) {
-            wrap.innerHTML = `
-                <div class="sub-empty">
-                    <div class="sub-empty-icon">📭</div>
-                    <p>No payment records yet.</p>
-                    <a href="/trading-plan" class="btn btn-primary btn-sm">Browse Plans →</a>
-                </div>`;
+            wrap.innerHTML = `<div class="sub-empty"><div class="sub-empty-icon">📭</div><p>No payment records yet.</p><a href="/trading-plan" class="btn btn-primary btn-sm">Browse Plans →</a></div>`;
             return;
         }
  
@@ -934,8 +753,6 @@ async function loadPaymentHistory() {
         payments.forEach((p, idx) => {
             const icon  = statusIcon[p.status]  || "❓";
             const color = statusColor[p.status] || "#64748b";
- 
-            // ── Safe date formatting ──
             let dt = "—";
             try {
                 const rawDate = p.verified_at || p.created_at || p.payment_date || p.timestamp;
@@ -957,9 +774,7 @@ async function loadPaymentHistory() {
             } catch(e) { dt = "—"; }
  
             const paymentMethod = `${p.method_icon || "💰"} ${p.method_label || "Online"}`;
-            const paymentDetail = p.method_detail
-                ? `<div style="font-size:10px;color:#64748b;margin-top:3px;">${p.method_detail}</div>`
-                : "";
+            const paymentDetail = p.method_detail ? `<div style="font-size:10px;color:#64748b;margin-top:3px;">${p.method_detail}</div>` : "";
  
             html += `
                 <tr>
@@ -985,45 +800,26 @@ async function loadPaymentHistory() {
         });
  
         html += `</tbody></table></div>`;
- 
         const paid  = payments.filter(p => p.status === "paid");
         const total = paid.reduce((a, p) => a + (p.amount || 0), 0);
         html += `
-            <div style="
-                padding:14px 20px;
-                background:#f8fafc;
-                border-top:1px solid #e2e8f0;
-                display:flex; flex-wrap:wrap; gap:16px;
-                align-items:center; font-size:12px;
-            ">
+            <div style="padding:14px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;flex-wrap:wrap;gap:16px;align-items:center;font-size:12px;">
                 <div><span style="color:#64748b;">Total transactions:</span> <b>${payments.length}</b></div>
                 <div><span style="color:#16a34a;">Successful:</span> <b>${paid.length}</b></div>
-                <div style="margin-left:auto;font-size:13px;font-weight:700;color:#0f172a;">
-                    Total Paid: ₹${total.toLocaleString("en-IN")}
-                </div>
+                <div style="margin-left:auto;font-size:13px;font-weight:700;color:#0f172a;">Total Paid: ₹${total.toLocaleString("en-IN")}</div>
             </div>`;
- 
         wrap.innerHTML = html;
- 
     } catch(err) {
-        console.error("loadPaymentHistory:", err);
-        wrap.innerHTML = `
-            <div class="sub-empty">
-                <div class="sub-empty-icon">⚠️</div>
-                <p>Failed to load payment data.</p>
-            </div>`;
+        wrap.innerHTML = `<div class="sub-empty"><div class="sub-empty-icon">⚠️</div><p>Failed to load payment data.</p></div>`;
     }
 }
-/* ══════════════════════════════════════════════════════════
-   BOOT — each function called exactly ONCE
-══════════════════════════════════════════════════════════ */
+
 loadUser();
 loadSubscriptions();
 renderUpcomingHolidays();
 loadPaymentHistory();  
 </script>
 
-<!-- NAVBAR -->
 <script>
 async function renderNavbar() {
     try {
@@ -1065,7 +861,6 @@ function logout() { window.location.href="/logout"; }
 renderNavbar();
 </script>
 
-<!-- UPDATE PROFILE -->
 <script>
 async function updateProfile() {
     const name=document.getElementById("editName").value.trim(), phone=document.getElementById("editPhone").value.trim(), msg=document.getElementById("saveMsg");
@@ -1088,9 +883,6 @@ async function updateProfile() {
     }
 }
 </script>
-
 <script src="/static/session-monitor.js"></script>
-
-
 </body>
 </html>
