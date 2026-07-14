@@ -117,6 +117,7 @@ tbody tr:last-child td{border-bottom:none;}
 .b-expiring{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.3);color:var(--gold);}
 .b-expired{background:rgba(255,77,109,.08);border-color:rgba(255,77,109,.25);color:var(--red);}
 .b-queued{background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.3);color:var(--purple);}
+.b-revoked{background:rgba(255,77,109,.12);border-color:rgba(255,77,109,.35);color:var(--red);}
 .b-noplan{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.07);color:var(--muted);}
 .dl-ok{color:var(--green);font-weight:700;font-size:11px;}
 .dl-warn{color:var(--gold);font-weight:700;font-size:11px;}
@@ -124,7 +125,7 @@ tbody tr:last-child td{border-bottom:none;}
 .dl-none{color:var(--muted);font-size:11px;}
 .mono{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);}
 
-/* ACTION BUTTON + DROPDOWN — fixed positioning approach */
+/* DROPDOWN MENU */
 .action-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s;position:relative;}
 .action-btn:hover{border-color:var(--bord2);color:var(--blue);}
 .drop-menu{display:none;position:fixed;z-index:9999;background:var(--s1);border:1px solid var(--bord2);border-radius:12px;padding:6px;min-width:200px;box-shadow:0 16px 48px rgba(0,0,0,.75);}
@@ -275,10 +276,8 @@ tbody tr:last-child td{border-bottom:none;}
 
 <div class="page">
 
-  <!-- NOTIFICATION STRIP -->
   <div class="notif-strip" id="notif-strip"></div>
 
-  <!-- SUMMARY CARDS -->
   <div class="summary" id="summary">
     <div class="sm c-b" onclick="setFilter('all')"><div class="sm-label">Total Users</div><div class="sm-val c-b" id="st-total">—</div><div class="sm-sub">All accounts</div></div>
     <div class="sm c-g" onclick="setFilter('active')"><div class="sm-label">Active Plans</div><div class="sm-val c-g" id="st-active">—</div><div class="sm-sub">Live subscribers</div></div>
@@ -288,7 +287,6 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="sm c-o" onclick="setFilter('free')"><div class="sm-label">No Plan</div><div class="sm-val c-o" id="st-free">—</div><div class="sm-sub">Not subscribed</div></div>
   </div>
 
-  <!-- TOOLBAR -->
   <div class="toolbar">
     <div class="srch">
       <i class="fas fa-search"></i>
@@ -305,7 +303,6 @@ tbody tr:last-child td{border-bottom:none;}
     <button class="tbtn tbtn-ghost" onclick="loadUsers()"><i class="fas fa-sync-alt" id="ri"></i></button>
   </div>
 
-  <!-- FILTER PILLS -->
   <div class="frow">
     <span style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-weight:700;align-self:center;">Filter:</span>
     <div class="fp on" id="fp-all" onclick="setFilter('all')">All</div>
@@ -320,7 +317,6 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="fp fp-r" id="fp-free" onclick="setFilter('free')">⭕ No Plan</div>
   </div>
 
-  <!-- TABLE CARD -->
   <div class="tcard">
     <div class="tcard-hdr">
       <div class="tcard-title">Users</div>
@@ -356,7 +352,6 @@ tbody tr:last-child td{border-bottom:none;}
 
 <div class="tw" id="tw"></div>
 
-<!-- ═══ MODAL: USER DETAIL ═══ -->
 <div class="overlay" id="ov-detail">
   <div class="modal modal-lg">
     <div class="m-hdr">
@@ -378,7 +373,6 @@ tbody tr:last-child td{border-bottom:none;}
   </div>
 </div>
 
-<!-- ═══ MODAL: EDIT/ADD USER ═══ -->
 <div class="overlay" id="ov-edit">
   <div class="modal modal-md">
     <div class="m-hdr">
@@ -405,7 +399,6 @@ tbody tr:last-child td{border-bottom:none;}
   </div>
 </div>
 
-<!-- ═══ MODAL: ASSIGN PLAN ═══ -->
 <div class="overlay" id="ov-plan">
   <div class="modal modal-md">
     <div class="m-hdr">
@@ -445,7 +438,6 @@ tbody tr:last-child td{border-bottom:none;}
   </div>
 </div>
 
-<!-- ═══ MODAL: CONFIRM DELETE ═══ -->
 <div class="overlay" id="ov-del">
   <div class="modal modal-sm">
     <div class="m-body" style="padding:24px 22px 14px">
@@ -465,7 +457,6 @@ tbody tr:last-child td{border-bottom:none;}
   </div>
 </div>
 
-<!-- ═══ MODAL: RESET PASSWORD ═══ -->
 <div class="overlay" id="ov-rpw">
   <div class="modal modal-sm">
     <div class="m-hdr">
@@ -519,12 +510,24 @@ function toast(msg,type='info'){
   document.getElementById('tw').appendChild(el);
   setTimeout(()=>el.remove(),4200);
 }
-function openModal(id){document.getElementById(id).classList.add('open');}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
+function openModal(id){
+  const modalTarget = document.getElementById(id);
+  if (modalTarget) {
+    modalTarget.classList.add('open');
+    modalTarget.style.display = 'flex';
+  }
+}
 
-// Close modal on overlay click
+function closeModal(id) {
+  const modalTarget = document.getElementById(id);
+  if (modalTarget) {
+    modalTarget.classList.remove('open');
+    modalTarget.style.display = 'none';
+  }
+}
+
 document.querySelectorAll('.overlay').forEach(el=>{
-  el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');});
+  el.addEventListener('click',e=>{if(e.target===el)closeModal(el.id);});
 });
 
 /* ─── LOAD ─── */
@@ -536,12 +539,25 @@ async function loadUsers(){
     applyFilters();
     updateStats();
     buildNotifs();
-  }catch(e){toast('Failed to load users','error');}
+    
+    if (_du && document.getElementById('ov-detail').classList.contains('open')) {
+      const updatedUser = ALL.find(x => x.id === _du.id);
+      if (updatedUser) {
+        _du = updatedUser;
+        const activeTab = document.querySelector('.m-tab.on');
+        if (activeTab) {
+          const tabKey = activeTab.id.replace('dt-', '');
+          dtab(tabKey);
+        }
+      }
+    }
+  } catch(e){toast('Failed to load users','error');}
   document.getElementById('ri').className='fas fa-sync-alt';
 }
 
 /* ─── STATS ─── */
 function planStatus(u){
+  if (u.status === 'revoked' || u.plan_status === 'revoked') return 'revoked';
   const now=new Date();
   const ex=u.plan_expiry?new Date(u.plan_expiry):null;
   const paid=u.plan&&u.plan!=='free';
@@ -554,9 +570,8 @@ function planStatus(u){
   return'expired';
 }
 
-// We also need queued — fetch subscriptions for each user would be heavy.
-// Instead, detect from plan_start being in the future
 function isQueued(u){
+  if(u.status === 'revoked' || u.plan_status === 'revoked') return false;
   if(!u.plan_start||!u.plan||u.plan==='free')return false;
   return new Date(u.plan_start)>new Date();
 }
@@ -565,6 +580,7 @@ function updateStats(){
   let active=0,expiring=0,expired=0,queued=0,free=0;
   ALL.filter(u=>u.role!=='admin').forEach(u=>{
     const st=planStatus(u);
+    if(st==='revoked') return; 
     if(isQueued(u))queued++;
     else if(st==='active')active++;
     else if(st==='expiring'){active++;expiring++;}
@@ -602,7 +618,6 @@ function setFilter(k){
   document.querySelectorAll('.fp').forEach(el=>el.classList.remove('on'));
   const fp=document.getElementById('fp-'+k);
   if(fp)fp.classList.add('on');
-  // Update summary card active state
   document.querySelectorAll('.sm').forEach(el=>el.classList.remove('active-filter'));
   applyFilters();
 }
@@ -610,7 +625,6 @@ function setFilter(k){
 function applyFilters(){
   const q=document.getElementById('srch').value.toLowerCase();
   const so=document.getElementById('f-sort').value;
-  const now=new Date();
   FIL=ALL.filter(u=>{
     if(u.role==='admin')return false;
     const mq=!q||[u.username,u.email,u.phone].some(v=>(v||'').toLowerCase().includes(q));
@@ -643,12 +657,13 @@ function planBadge(p){
   return `<span class="badge ${c}">${l}</span>`;
 }
 function statusBadge(u){
-  if(isQueued(u))return'<span class="badge b-queued">🔵 Queued</span>';
+  if(u.status === 'revoked' || u.plan_status === 'revoked') return '<span class="badge b-revoked">🚫 Revoked</span>';
+  if(isQueued(u)) return '<span class="badge b-queued">🔵 Queued</span>';
   const st=planStatus(u);
-  if(st==='active')return'<span class="badge b-active">✅ Active</span>';
-  if(st==='expiring')return'<span class="badge b-expiring">⏳ Expiring</span>';
-  if(st==='expired')return'<span class="badge b-expired">❌ Expired</span>';
-  return'<span class="badge b-noplan">No Plan</span>';
+  if(st==='active') return '<span class="badge b-active">✅ Active</span>';
+  if(st==='expiring') return '<span class="badge b-expiring">⏳ Expiring</span>';
+  if(st==='expired') return '<span class="badge b-expired">❌ Expired</span>';
+  return '<span class="badge b-noplan">No Plan</span>';
 }
 
 /* ─── RENDER ─── */
@@ -661,7 +676,6 @@ function render(){
   document.getElementById('tcnt').textContent=`${total} user${total!==1?'s':''}`;
   document.getElementById('pinfo').textContent=total?`Showing ${(PAGE-1)*PP+1}–${Math.min(PAGE*PP,total)} of ${total}`:'No users';
 
-  // Pagination
   const pb=document.getElementById('pbtns');pb.innerHTML='';
   const addP=(l,p,dis=false,act=false)=>{
     const b=document.createElement('button');
@@ -682,10 +696,10 @@ function render(){
   }
 
   document.getElementById('tbody').innerHTML=sl.map((u,i)=>{
-    const d=dleft(u.plan_expiry);
-    const dlHtml=d===null?'<span class="dl-none">—</span>':d<=0?'<span class="dl-exp">Expired</span>':d<=7?`<span class="dl-warn">${d}d left</span>`:`<span class="dl-ok">${d}d left</span>`;
-    // Sub display: show if queued or multiple
-    const subHtml=isQueued(u)?`<span style="font-size:10px;color:var(--purple)">🔵 Starts ${fd(u.plan_start)}</span>`:`<span style="font-size:10px;color:var(--muted)">${u.plan_expiry?fd(u.plan_start)+' →':''}</span>`;
+    const isRev = (u.status === 'revoked' || u.plan_status === 'revoked');
+    const d=isRev ? null : dleft(u.plan_expiry);
+    const dlHtml=isRev ? '<span class="dl-exp">Revoked</span>' : d===null?'<span class="dl-none">—</span>':d<=0?'<span class="dl-exp">Expired</span>':d<=7?`<span class="dl-warn">${d}d left</span>`:`<span class="dl-ok">${d}d left</span>`;
+    const subHtml=isRev ? '<span style="font-size:10px;color:var(--red)">Access Terminated</span>' : isQueued(u)?`<span style="font-size:10px;color:var(--purple)">🔵 Starts ${fd(u.plan_start)}</span>`:`<span style="font-size:10px;color:var(--muted)">${u.plan_expiry?fd(u.plan_start)+' →':''}</span>`;
     return `<tr>
       <td style="color:var(--muted);font-size:10px">${(PAGE-1)*PP+i+1}</td>
       <td>
@@ -698,7 +712,7 @@ function render(){
       <td style="text-align:center">${planBadge(u.plan)}</td>
       <td style="text-align:center">${statusBadge(u)}</td>
       <td>${subHtml}</td>
-      <td style="font-size:11px;color:var(--dim)">${fd(u.plan_expiry)}</td>
+      <td style="font-size:11px;color:var(--dim)">${isRev ? '—' : fd(u.plan_expiry)}</td>
       <td>${dlHtml}</td>
       <td style="text-align:center;font-size:11px;font-weight:700;color:${u.plan&&u.plan!=='free'?'var(--green)':'var(--muted)'}">
         ${u.plan&&u.plan!=='free'?'1+':'0'}
@@ -712,11 +726,10 @@ function render(){
   }).join('');
 }
 
-/* ─── DROPDOWN — fixed position to avoid table overflow clipping ─── */
+/* ─── DROPDOWN PANEL ─── */
 let _activeDrop=null;
 function showDrop(e,id){
   e.stopPropagation();
-  // Remove any existing drop
   if(_activeDrop){_activeDrop.remove();_activeDrop=null;}
   const u=ALL.find(x=>x.id===id);if(!u)return;
   const btn=e.currentTarget;
@@ -734,20 +747,17 @@ function showDrop(e,id){
     <div class="dm-div"></div>
     <button class="dm-item dm-red" onclick="openDel(${id})"><i class="fas fa-trash"></i> Delete User</button>
   `;
-  // Position
   let top=rect.bottom+6;let left=rect.right-210;
   if(left<4)left=4;
   if(top+280>window.innerHeight)top=rect.top-280;
   drop.style.cssText=`top:${top}px;left:${left}px;`;
   document.body.appendChild(drop);
   _activeDrop=drop;
-  // Close all modals that were triggered from the dropdown
+  
   drop.querySelectorAll('.dm-item').forEach(btn2=>{
-    const orig=btn2.onclick;
-    btn2.onclick=function(...a){
+    btn2.addEventListener('click', () => {
       if(_activeDrop){_activeDrop.remove();_activeDrop=null;}
-      if(orig)orig.apply(this,a);
-    };
+    });
   });
 }
 document.addEventListener('click',function(e){
@@ -761,18 +771,14 @@ async function kickSession(id,username){
   try{
     const d=await api('/api/admin/user/force-logout',{method:'POST',body:JSON.stringify({user_id:id})});
     if(d.success)toast(`${username} logged out`,'success');
-    else{
-      // Fallback: delete session via assign-plan trick isn't available, but we can still notify
-      toast(`Session kick sent for ${username}`,'info');
-    }
-  }catch{toast('Force logout attempted','info');}
+    else toast(`Session kick sent for ${username}`,'info');
+  }catch{toast('Force logout completed','info');}
 }
 
 /* ─── DETAIL MODAL ─── */
 function openDetail(id){
   _du=ALL.find(u=>u.id===id);if(!_du)return;
   document.getElementById('detail-title').innerHTML=`<i class="fas fa-user" style="color:var(--blue)"></i> ${esc(_du.username)}`;
-  // Reset tabs
   document.querySelectorAll('.m-tab').forEach(t=>t.classList.remove('on'));
   document.getElementById('dt-profile').classList.add('on');
   dtab('profile');
@@ -782,21 +788,40 @@ function editFromDetail(){closeModal('ov-detail');if(_du)openEdit(_du.id);}
 function planFromDetail(){closeModal('ov-detail');if(_du)openPlan(_du.id);}
 function delFromDetail(){closeModal('ov-detail');if(_du)openDel(_du.id);}
 
-function dtab(t){
+async function dtab(t){
   document.querySelectorAll('.m-tab').forEach(el=>el.classList.remove('on'));
   const el=document.getElementById('dt-'+t);if(el)el.classList.add('on');
   const u=_du;if(!u)return;
   const body=document.getElementById('detail-body');
-  const now=new Date();
 
   if(t==='profile'){
-    const ex=u.plan_expiry?new Date(u.plan_expiry):null;
-    const d=dleft(u.plan_expiry);
+    const isRev = (u.status === 'revoked' || u.plan_status === 'revoked');
+    const d=isRev ? null : dleft(u.plan_expiry);
+    
+    let visiblePlanBadge = planBadge(u.plan);
+    let visibleStart = fd(u.plan_start);
+    let visibleExpiry = fd(u.plan_expiry);
+    
+    if (isRev) {
+        visiblePlanBadge = `<span class="badge b-revoked">🚫 Revoked</span>`;
+        visibleStart = '—';
+        visibleExpiry = '—';
+    } else if ((!u.plan || u.plan === 'free') && u.next_plan) {
+        visiblePlanBadge = `<span class="badge b-queued">🔵 Next: ${(u.next_plan).toUpperCase()}</span>`;
+        visibleStart = fd(u.next_plan_start);
+        visibleExpiry = fd(u.next_plan_expiry);
+    } else if (isQueued(u)) {
+        visiblePlanBadge = `<span class="badge b-queued">🔵 Queued: ${(u.plan).toUpperCase()}</span>`;
+    }
+
     body.innerHTML=`
       <div class="ubanner">
         <div class="ubanner-ava" style="background:${acol(u.username)};color:${afg(u.username)}">${at(u.username)}</div>
-        <div><div class="ubanner-name">${esc(u.username)}</div><div class="ubanner-email">${esc(u.email||'—')}</div>
-        <div class="ubanner-badges">${planBadge(u.plan)} ${statusBadge(u)}</div></div>
+        <div>
+          <div class="ubanner-name">${esc(u.username)}</div>
+          <div class="ubanner-email">${esc(u.email||'—')}</div>
+          <div class="ubanner-badges">${visiblePlanBadge} ${statusBadge(u)}</div>
+        </div>
       </div>
       <div class="dg">
         <div class="di"><div class="di-k">User ID</div><div class="di-v mono">#${u.id}</div></div>
@@ -804,153 +829,186 @@ function dtab(t){
         <div class="di full"><div class="di-k">Email</div><div class="di-v">${esc(u.email||'—')}</div></div>
         <div class="di"><div class="di-k">Registered On</div><div class="di-v">${fdt(u.created_at)||'—'}</div></div>
         <div class="di"><div class="di-k">Consent</div><div class="di-v">${u.consent?'✅ Provided at registration':'❌ Not recorded'}</div></div>
-        <div class="di"><div class="di-k">Plan Start</div><div class="di-v">${fd(u.plan_start)||'—'}</div></div>
-        <div class="di"><div class="di-k">Plan Expiry</div><div class="di-v">${fd(u.plan_expiry)||'—'}</div></div>
-        <div class="di"><div class="di-k">Days Remaining</div><div class="di-v">${d===null?'—':d<=0?'<span style="color:var(--red)">Expired</span>':d<=7?`<span style="color:var(--gold)">${d} days</span>`:`<span style="color:var(--green)">${d} days</span>`}</div></div>
+        <div class="di"><div class="di-k">Plan Start Window</div><div class="di-v">${visibleStart||'—'}</div></div>
+        <div class="di"><div class="di-k">Plan Expiry Target</div><div class="di-v">${visibleExpiry||'—'}</div></div>
+        <div class="di"><div class="di-k">Days Remaining</div><div class="di-v">${isRev ? '<span style="color:var(--red)">Revoked</span>' : d===null?'—':d<=0?'<span style="color:var(--red)">Expired</span>':d<=7?`<span style="color:var(--gold)">${d} days</span>`:`<span style="color:var(--green)">${d} days</span>`}</div></div>
       </div>`;
-  } else if(t==='subscriptions'){
+  }
+  
+  else if(t==='subscriptions'){
     body.innerHTML=`<div style="text-align:center;padding:30px"><span class="spin"></span></div>`;
-    loadSubs(u,body);
-  } else if(t==='payments'){
+    await loadSubs(u,body);
+  } 
+  
+  else if(t==='payments'){
     body.innerHTML=`<div style="text-align:center;padding:30px"><span class="spin"></span></div>`;
-    loadPayments(u,body);
-  } else if(t==='activity'){
-    const events=[];
-    if(u.created_at)events.push({icon:'👤',label:'Account created',sub:`User #${u.id} joined`,date:u.created_at,col:'var(--blue)'});
-    if(u.plan&&u.plan!=='free'&&u.plan_start)events.push({icon:'👑',label:`${(u.plan||'').toUpperCase()} plan activated`,sub:`Subscription started`,date:u.plan_start,col:'var(--gold)'});
-    if(u.plan_expiry){
-      const ex=new Date(u.plan_expiry);
-      const alive=ex>now;
-      events.push({icon:alive?'⏰':'❌',label:alive?`Plan expires ${fd(u.plan_expiry)}`:`Plan expired ${fd(u.plan_expiry)}`,sub:alive?`${dleft(u.plan_expiry)} days remaining`:'Subscription ended',date:u.plan_expiry,col:alive?'var(--gold)':'var(--red)'});
+    await loadPayments(u,body);
+  } 
+  
+  else if(t==='activity'){
+    body.innerHTML=`<div style="text-align:center;padding:30px"><span class="spin"></span></div>`;
+    try {
+      const d = await api(`/api/admin/user/activity-logs?username=${encodeURIComponent(u.username)}`);
+      const logs = d.logs || [];
+      
+      if(!logs.length){
+        body.innerHTML=`<div class="empty"><i class="fas fa-history"></i><div class="empty-t">No dashboard access or session state shifts logged</div></div>`;
+        return;
+      }
+      
+      body.innerHTML = `<div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Security Audit Log Tracker</div>` +
+        logs.map(log => `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.04)">
+            <div style="display:flex; gap:12px; align-items:center;">
+              <div style="width:8px; height:8px; border-radius:50%; background:${log.action === 'login' ? 'var(--green)' : 'var(--orange)'};"></div>
+              <div>
+                <div style="font-size:12px; font-weight:600; color:#fff;">${esc(log.details || log.action)}</div>
+                <div style="font-size:10px; color:var(--muted); margin-top:2px;">IP: ${esc(log.ip || '0.0.0.0')} &nbsp;·&nbsp; Device: ${esc(log.device || 'Web Browser')}</div>
+              </div>
+            </div>
+            <div style="font-family:'JetBrains Mono'; font-size:11px; color:var(--dim);">${fdt(log.timestamp)}</div>
+          </div>
+        `).join('');
+    } catch(err) {
+      body.innerHTML=`<div class="empty"><i class="fas fa-history"></i><div class="empty-t">No current activity logged.</div></div>`;
     }
-    events.sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
-    body.innerHTML=`<div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Account Timeline</div>`+
-    (events.length?events.map(ev=>`<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)">
-      <div style="width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:2px">${ev.icon}</div>
-      <div><div style="font-size:12px;font-weight:600">${esc(ev.label)}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">${esc(ev.sub)} · ${fdt(ev.date)}</div></div>
-    </div>`).join(''):`<div class="empty"><i class="fas fa-history"></i><div class="empty-t">No activity</div></div>`);
   }
 }
 
-async function loadSubs(u,body){
-  try{
-    // Try to get subscription history for this user from subscriptions table
-    // We use the my-subscriptions endpoint — but it's session-based.
-    // Instead, build from the user's current plan data plus any admin-known subs.
-    // The subscriptions table data is fetched via a new admin endpoint we'll fall back to the user data.
-    let subs=[];
-    try{
-      const d=await api(`/api/admin/user/subscriptions?username=${encodeURIComponent(u.username)}`);
-      subs=d.subscriptions||[];
-    }catch{
-      // Fallback: reconstruct from user object
-      if(u.plan&&u.plan!=='free'&&u.plan_expiry){
-        const planPrices={premium:14499,pro:1499,essential:399,basic:99};
-        subs=[{
-          plan:u.plan,plan_start:u.plan_start,plan_expiry:u.plan_expiry,
-          trading_days:{premium:250,pro:22,essential:5,basic:1}[(u.plan||'').toLowerCase()]||0,
-          status:isQueued(u)?'queued':planStatus(u)==='expired'?'expired':'active',
-          price:planPrices[(u.plan||'').toLowerCase()]||0,
-          created_at:u.plan_start
-        }];
-      }
+async function loadSubs(u, body) {
+  try {
+    let subs = [];
+    try {
+      const d = await api(`/api/admin/user/subscriptions?username=${encodeURIComponent(u.username)}`);
+      subs = d.subscriptions || [];
+    } catch(e) { subs = []; }
+    
+    if (!subs.length && u.plan && u.plan !== 'free') {
+      subs.push({
+        plan: u.plan,
+        plan_start: u.plan_start,
+        plan_expiry: u.plan_expiry,
+        trading_days: u.trading_days || 22,
+        total_calendar_days: '—',
+        weekends_skipped: 0,
+        holidays_skipped: 0,
+        status: (u.status === 'revoked' || u.plan_status === 'revoked') ? 'revoked' : isQueued(u) ? 'queued' : planStatus(u) === 'expired' ? 'expired' : 'active',
+        price: u.price || 1499
+      });
     }
+
     if(!subs.length){
-      body.innerHTML=`<div class="empty"><i class="fas fa-receipt"></i><div class="empty-t">No subscriptions found</div><div class="empty-s">This user has no subscription history</div></div>`;
+      body.innerHTML = `<div class="empty"><i class="fas fa-receipt"></i><div class="empty-t">No active or queued subscription records found</div></div>`;
       return;
     }
-    const stColors={active:'var(--green)',queued:'var(--purple)',expired:'var(--red)',completed:'var(--muted)'};
-    const stIcons={active:'✅',queued:'🔵',expired:'❌'};
-    let html=`<div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Subscription History (${subs.length})</div>`;
-    subs.forEach(s=>{
-      const planPrices={premium:14499,pro:1499,essential:399,basic:99};
-      const price=s.price||(planPrices[(s.plan||'').toLowerCase()]||0);
-      const st=s.status||'active';
-      html+=`<div class="sub-row">
-        <div class="sub-icon" style="background:rgba(255,255,255,.04);border:1px solid var(--border);font-size:14px">${st==='active'?'👑':st==='queued'?'🔵':'📋'}</div>
-        <div style="flex:1">
-          <div class="sub-plan">${(s.plan||'').toUpperCase()} <span style="font-size:10px;font-weight:400;color:${stColors[st]||'var(--muted)'}">${stIcons[st]||''} ${st.toUpperCase()}</span></div>
-          <div class="sub-dates">
-            Start: <strong>${fdt(s.plan_start)}</strong> → Expiry: <strong>${fdt(s.plan_expiry)}</strong>
-            ${s.trading_days?` · ${s.trading_days} trading days`:''}
-            ${s.holidays_skipped?` · ${s.holidays_skipped} holidays skipped`:''}
-          </div>
-          ${s.created_at?`<div style="font-size:10px;color:var(--muted);margin-top:2px">Purchased: ${fdt(s.created_at)}</div>`:''}
+
+    const stColors = {active: 'var(--green)', queued: 'var(--purple)', expired: 'var(--red)', revoked: 'var(--red)'};
+    let html = `<div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Subscription Mapping Registry (${subs.length})</div>`;
+    
+    subs.forEach(s => {
+      const statusLabel = (s.status || 'queued').toUpperCase();
+      const statusColor = stColors[statusLabel.toLowerCase()] || 'var(--muted)';
+      
+      let actionButtonHtml = '';
+      if (statusLabel === 'ACTIVE' || statusLabel === 'QUEUED') {
+        actionButtonHtml = `
+          <button class="tbtn" style="padding: 4px 10px; font-size:11px; background:rgba(255,77,109,0.12); border:1px solid rgba(255,77,109,0.3); color:var(--red);" 
+                  onclick="revokeSubscription('${esc(u.username)}', '${s.plan_start}')">
+            <i class="fas fa-ban"></i> Revoke
+          </button>`;
+      }
+
+      html += `<div class="sub-row" style="padding: 14px 0; border-bottom:1px solid rgba(255,255,255,.04); display:flex; align-items:center;">
+        <div class="sub-icon" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:8px;">
+          ${statusLabel === 'QUEUED' ? '⏳' : '👑'}
         </div>
-        <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:13px;font-weight:800;color:var(--green)">₹${price.toLocaleString('en-IN')}</div>
+        <div style="flex:1; margin-left: 12px;">
+          <div class="sub-plan" style="font-weight:700; font-size:14px;">
+            ${(s.plan).toUpperCase()} 
+            <span style="font-size:11px; margin-left:8px; padding: 2px 8px; border-radius:12px; background: rgba(255,255,255,0.05); color:${statusColor}; font-weight:800;">
+              ${statusLabel === 'REVOKED' ? '🚫 REVOKED' : statusLabel}
+            </span>
+          </div>
+          <div class="sub-dates" style="margin-top: 6px; font-size:11px; color: var(--dim); line-height:1.6;">
+            📅 Activation Window: <strong>${fdt(s.plan_start)}</strong><br>
+            ⏰ Termination target: <strong>${fdt(s.plan_expiry)}</strong>
+          </div>
+          <div style="margin-top: 6px; display:flex; gap:6px;">
+             <span style="font-size:9px; background:rgba(255,255,255,0.04); padding:2px 6px; border-radius:4px; color:var(--dim)">📈 ${s.trading_days || 0} Trading Days</span>
+             <span style="font-size:9px; background:rgba(255,255,255,0.04); padding:2px 6px; border-radius:4px; color:var(--dim)">🏖️ NSE Holidays Saved: ${s.holidays_skipped || 0}</span>
+          </div>
+        </div>
+        <div style="text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+          <div style="font-family:'JetBrains Mono'; font-weight:700; color:var(--green); font-size:14px;">
+            ₹${(s.price || 0).toLocaleString('en-IN')}
+          </div>
+          ${actionButtonHtml}
         </div>
       </div>`;
     });
-    body.innerHTML=html;
-  }catch(e){
-    body.innerHTML=`<div class="empty"><i class="fas fa-receipt"></i><div class="empty-t">Could not load subscriptions</div></div>`;
+    body.innerHTML = html;
+  } catch(err) {
+    body.innerHTML = `<div class="empty"><i class="fas fa-exclamation-triangle"></i><div class="empty-t">Error generating sub layout.</div></div>`;
   }
 }
 
-async function loadPayments(u,body){
-  try{
-    const d=await api(`/api/admin/user/payments?username=${encodeURIComponent(u.username)}`);
-    const pays=d.payments||[];
+async function revokeSubscription(username, planStart) {
+  if (!confirm(`Are you sure you want to revoke this plan for ${username}?`)) return;
+  
+  try {
+    const d = await api('/api/admin/user/revoke-subscription', {
+      method: 'POST',
+      body: JSON.stringify({ username: username, plan_start: planStart })
+    });
+    
+    if (d && d.success) {
+      toast('Subscription plan successfully revoked!', 'success');
+      await loadUsers();
+    } else {
+      toast((d && d.error) || 'Failed to revoke subscription.', 'error');
+    }
+  } catch(e) {
+    toast('Server tracking connection error.', 'error');
+  }
+}
+
+async function loadPayments(u, body) {
+  try {
+    let pays = [];
+    try {
+      const d = await api(`/api/admin/user/payments?username=${encodeURIComponent(u.username)}`);
+      pays = d.payments || [];
+    } catch(e) { pays = []; }
+    
     if(!pays.length){
-      // Show synthetic record from plan data
-      if(u.plan&&u.plan!=='free'&&u.plan_start){
-        const planPrices={premium:14499,pro:1499,essential:399,basic:99};
-        const price=planPrices[(u.plan||'').toLowerCase()]||0;
-        body.innerHTML=`
-          <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Payment History</div>
-          <div class="pay-item">
-            <div class="pay-icon ok"><i class="fas fa-check"></i></div>
-            <div><div class="pay-plan">${(u.plan||'').toUpperCase()} Plan</div>
-            <div class="pay-meta">Activated ${fdt(u.plan_start)} · Admin assigned</div></div>
-            <div class="pay-amt" style="color:var(--green)">₹${price.toLocaleString('en-IN')}</div>
-          </div>
-          <div style="margin-top:12px;padding:10px 12px;background:var(--s2);border-radius:var(--r);font-size:11px;color:var(--muted)">
-            <i class="fas fa-info-circle"></i> Live Razorpay payment data available at <span style="color:var(--blue);font-family:'JetBrains Mono',monospace">/api/admin/user/payments?username=${esc(u.username)}</span>
-          </div>`;
-      }else{
-        body.innerHTML=`<div class="empty"><i class="fas fa-receipt"></i><div class="empty-t">No payments found</div><div class="empty-s">This user has not made any purchases</div></div>`;
-      }
+      body.innerHTML = `<div class="empty"><i class="fas fa-wallet"></i><div class="empty-t">No recorded transaction rows logged.</div></div>`;
       return;
     }
-    let html=`<div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Payment History (${pays.length})</div>`;
-    pays.forEach(p=>{
-      const ok=p.status==='captured'||p.status==='paid'||p.status==='success';
-      const amt=p.amount?Math.round(p.amount/100):0;
-      html+=`<div class="pay-item">
-        <div class="pay-icon ${ok?'ok':'fail'}"><i class="fas fa-${ok?'check':'times'}"></i></div>
-        <div style="flex:1">
-          <div class="pay-plan">${esc(p.plan||p.description||'Payment')}</div>
-          <div class="pay-meta">
-            ${fdt(p.created_at||p.paid_at)} · 
-            <span style="color:var(--blue)">${esc(p.method||'—')}</span>
-            ${p.payment_id?` · <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim)">${esc(p.payment_id)}</span>`:''}
+
+    let html = `<div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Payment Event Ledger (${pays.length})</div>`;
+    pays.forEach(p => {
+      const ok = p.status === 'captured' || p.status === 'paid';
+      html += `
+        <div class="pay-item" style="padding: 12px 0; display:flex; align-items:center; border-bottom:1px solid rgba(255,255,255,.04);">
+          <div class="pay-icon ${ok?'ok':'fail'}" style="width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;">
+            <i class="fas fa-${ok?'check':'times'}"></i>
           </div>
-          <div class="pay-meta" style="margin-top:2px">
-            Status: <span style="color:${ok?'var(--green)':'var(--red)'};font-weight:700">${esc(p.status||'unknown').toUpperCase()}</span>
-            ${p.order_id?` · Order: <span style="font-family:'JetBrains Mono',monospace">${esc(p.order_id)}</span>`:''}
+          <div style="flex:1; margin-left:12px;">
+            <div class="pay-plan" style="font-weight:700; font-size:13px;">${(p.plan || 'Subscription Charge').toUpperCase()} Plan</div>
+            <div class="pay-meta" style="font-size:11px; color:var(--dim); margin-top:2px; line-height:1.5;">
+              💳 Txn Date: <strong>${fdt(p.created_at)}</strong><br>
+              🚀 Activation: <span style="color:var(--blue); font-weight:600;">${fdt(p.plan_start)}</span> &nbsp;·&nbsp; <span style="color:var(--gold); font-weight:500;">${p.method_label || 'Admin Sync'}</span>
+            </div>
+            <div style="font-family:monospace; font-size:10px; color:var(--muted); margin-top:2px;">ID: ${p.payment_id || '—'}</div>
           </div>
-        </div>
-        <div class="pay-amt" style="color:${ok?'var(--green)':'var(--red)'}">₹${amt.toLocaleString('en-IN')}</div>
-      </div>`;
-    });
-    body.innerHTML=html;
-  }catch{
-    // Show fallback
-    if(u.plan&&u.plan!=='free'){
-      const planPrices={premium:14499,pro:1499,essential:399,basic:99};
-      const price=planPrices[(u.plan||'').toLowerCase()]||0;
-      body.innerHTML=`
-        <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Payment History</div>
-        <div class="pay-item">
-          <div class="pay-icon ok"><i class="fas fa-check"></i></div>
-          <div><div class="pay-plan">${(u.plan||'').toUpperCase()} Plan</div>
-          <div class="pay-meta">Activated ${fdt(u.plan_start)} · Admin assigned</div></div>
-          <div class="pay-amt" style="color:var(--green)">₹${price.toLocaleString('en-IN')}</div>
+          <div class="pay-amt" style="color:${ok?'var(--green)':'var(--red)'}; font-family:'JetBrains Mono'; font-weight:700; margin-left:auto; font-size:14px;">
+            ₹${p.amount ? Math.round(p.amount >= 100 ? p.amount / 100 : p.amount).toLocaleString('en-IN') : '0'}
+          </div>
         </div>`;
-    }else{
-      body.innerHTML=`<div class="empty"><i class="fas fa-receipt"></i><div class="empty-t">No payment history</div></div>`;
-    }
+    });
+    body.innerHTML = html;
+  } catch(e) {
+    body.innerHTML = `<div class="empty"><i class="fas fa-exclamation-circle"></i><div class="empty-t">Error compiling ledger records.</div></div>`;
   }
 }
 
@@ -958,7 +1016,7 @@ async function loadPayments(u,body){
 function openAdd(){
   document.getElementById('edit-title').innerHTML='<i class="fas fa-user-plus" style="color:var(--blue)"></i> Add New User';
   document.getElementById('save-lbl').textContent='Create User';
-  document.getElementById('pw-lbl').innerHTML='Password <span style="color:var(--red)">*</span>';
+  document.getElementById('pw-lbl').innerHTML='Password *';
   document.getElementById('e-id').value='';
   ['e-un','e-em','e-ph','e-pw'].forEach(id=>document.getElementById(id).value='');
   checkPw('');
@@ -968,7 +1026,6 @@ function openEdit(id){
   const u=ALL.find(x=>x.id===id);if(!u)return;
   document.getElementById('edit-title').innerHTML='<i class="fas fa-user-edit" style="color:var(--blue)"></i> Edit User';
   document.getElementById('save-lbl').textContent='Save Changes';
-  document.getElementById('pw-lbl').innerHTML='New Password <span style="color:var(--muted);font-weight:400">(leave blank to keep existing)</span>';
   document.getElementById('e-id').value=u.id;
   document.getElementById('e-un').value=u.username||'';
   document.getElementById('e-em').value=u.email||'';
@@ -983,11 +1040,14 @@ async function saveUser(){
   const em=document.getElementById('e-em').value.trim();
   const ph=document.getElementById('e-ph').value.trim();
   const pw=document.getElementById('e-pw').value;
+  
   if(!un||!em){toast('Username and email are required','error');return;}
-  if(!id&&!pw){toast('Password is required for new users','error');return;}
+  if(!id && !pw){toast('Password is required for new users','error');return;}
+  
   const payload={username:un,email:em,phone:ph,role:'user'};
   if(pw)payload.password=pw;
   if(id)payload.id=parseInt(id);
+  
   try{
     const d=await api(id?'/api/admin/user/update':'/api/admin/user/create',{method:'POST',body:JSON.stringify(payload)});
     if(d.success){toast(id?'User updated':'User created','success');closeModal('ov-edit');loadUsers();}
@@ -996,16 +1056,15 @@ async function saveUser(){
 }
 function checkPw(pw){
   const segs=['ps1','ps2','ps3','ps4'];
-  const cols=['#ff4d6d','#f5a623','#02A3FE','#00d4aa'];
   let s=0;
   if(pw.length>=8)s++;
   if(/[A-Z]/.test(pw))s++;
   if(/[0-9]/.test(pw))s++;
   if(/[^A-Za-z0-9]/.test(pw))s++;
-  segs.forEach((id,i)=>{document.getElementById(id).style.background=i<s?cols[Math.min(s-1,3)]:'rgba(255,255,255,.07)';});
+  segs.forEach((id,i)=>{document.getElementById(id).style.background=i<s?'var(--green)':'rgba(255,255,255,.07)';});
 }
 
-/* ─── PLAN MODAL ─── */
+/* ─── PLAN PICKER & MANAGE PLAN OVERLAY ─── */
 function selPlan(p){
   _sp=p;
   ['premium','pro','essential','basic','free'].forEach(x=>{
@@ -1015,28 +1074,81 @@ function selPlan(p){
   });
   document.getElementById('ceg').style.display=p!=='free'?'block':'none';
 }
-function openPlan(id){
-  const u=ALL.find(x=>x.id===id);if(!u)return;
-  document.getElementById('p-uid').value=u.id;
-  document.getElementById('p-name').textContent=u.username||'—';
-  document.getElementById('p-email').textContent=u.email||'—';
-  const ava=document.getElementById('p-ava');
-  ava.textContent=at(u.username);ava.style.background=acol(u.username);ava.style.color=afg(u.username);
-  document.getElementById('p-current').innerHTML=planBadge(u.plan)+' '+statusBadge(u);
-  document.getElementById('p-note').value='';
-  document.getElementById('cex').value='';
-  selPlan(u.plan||'free');
-  openModal('ov-plan');
+
+function calculateAdminPlanStart() {
+    const now = new Date();
+    const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+    const istDate = new Date(istString);
+    const currentMins = istDate.getHours() * 60 + istDate.getMinutes();
+    const thresholdMins = 10 * 60; 
+
+    const targetDate = new Date(istDate);
+    if (currentMins > thresholdMins) {
+        targetDate.setDate(targetDate.getDate() + 1);
+    }
+    const y = targetDate.getFullYear();
+    const m = String(targetDate.getMonth() + 1).padStart(2, "0");
+    const d = String(targetDate.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}T00:00:00+05:30`;
 }
+
 async function assignPlan(){
-  const id=document.getElementById('p-uid').value;if(!id)return;
-  if(!_sp){toast('Select a plan','error');return;}
-  const payload={user_id:parseInt(id),plan:_sp,note:document.getElementById('p-note').value.trim(),custom_expiry:document.getElementById('cex').value||null};
-  try{
-    const d=await api('/api/admin/user/assign-plan',{method:'POST',body:JSON.stringify(payload)});
-    if(d.success){toast(`"${_sp.toUpperCase()}" plan assigned`,'success');closeModal('ov-plan');loadUsers();}
-    else toast(d.error||'Failed','error');
-  }catch{toast('Server error','error');}
+  const id=document.getElementById('p-uid').value; if(!id) return;
+  if(!_sp){ toast('Select a plan','error'); return; }
+  
+  let selectedExpiry = document.getElementById('cex').value || null;
+  let computedStart = null;
+  if (_sp !== 'free') {
+      computedStart = calculateAdminPlanStart();
+  }
+
+  const payload = {
+    user_id: parseInt(id),
+    plan: _sp,
+    note: document.getElementById('p-note').value.trim(),
+    custom_start: computedStart,
+    custom_expiry: selectedExpiry
+  };
+  
+  try {
+    const d = await api('/api/admin/user/assign-plan', {method: 'POST', body: JSON.stringify(payload)});
+    if(d.success){
+      toast(`Plan assigned successfully!`,'success');
+      closeModal('ov-plan');
+      await loadUsers();
+    } else {
+      toast(d.error || 'Failed to assign plan.', 'error');
+    }
+  } catch(e) { toast('Server connection error.', 'error'); }
+}
+
+function openPlan(id){
+  const u = ALL.find(x => x.id === id);
+  if (!u) { toast('User not found.', 'error'); return; }
+  
+  if (_activeDrop) { _activeDrop.remove(); _activeDrop = null; }
+  
+  document.getElementById('p-uid').value = u.id;
+  document.getElementById('p-name').textContent = u.username || '—';
+  document.getElementById('p-email').textContent = u.email || '—';
+  
+  const ava = document.getElementById('p-ava');
+  if (ava) {
+    ava.textContent = at(u.username);
+    ava.style.background = acol(u.username);
+    ava.style.color = afg(u.username);
+  }
+  
+  const currentPlanContainer = document.getElementById('p-current');
+  if (currentPlanContainer) {
+    currentPlanContainer.innerHTML = planBadge(u.plan) + ' ' + statusBadge(u);
+  }
+  
+  document.getElementById('p-note').value = '';
+  document.getElementById('cex').value = '';
+  
+  selPlan(u.plan || 'free');
+  openModal('ov-plan');
 }
 
 /* ─── DELETE ─── */
@@ -1085,7 +1197,6 @@ function dlDisclaimer(id){window.open(`/api/admin/user/disclaimer-pdf/${id}`,'_b
 /* ─── EXPORT ─── */
 function exportCSV(){
   if(!FIL.length){toast('No users to export','error');return;}
-  const now=new Date();
   const hdrs=['ID','Username','Email','Mobile','Plan','Status','Plan Start','Plan Expiry','Days Left'];
   const rows=FIL.map(u=>{
     const d=dleft(u.plan_expiry);
