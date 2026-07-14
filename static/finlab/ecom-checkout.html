@@ -120,6 +120,20 @@
         </div>
 
         <div class="container mt-5 mb-5">
+            <!-- Cutoff Information Banner -->
+            <div class="alert alert-info border-0 shadow-sm mb-4" style="background: linear-gradient(145deg, #1e1b4b, #0f172a); border-radius: 16px; padding: 18px 24px;">
+                <div class="d-flex gap-3 align-items-center">
+                    <div style="font-size: 24px;">⏰</div>
+                    <div>
+                        <h6 class="text-white fw-bold mb-1" style="letter-spacing: 0.5px; margin: 0;">Important Activation Cutoff Rules</h6>
+                        <p class="mb-0" style="color: #cbd5e1; font-size: 12px; line-height: 1.6; margin-top: 4px;">
+                            • Purchase <b>at or before 10:00 AM IST</b> on a trading day to get immediate access to <b>today's</b> active session.<br>
+                            • Purchase <b>at 10:01 AM IST or later</b> and your activation window resets to <b>12:00 AM midnight of the next trading day</b>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <div class="row g-4">
 
                 <!-- ── LEFT ─────────────────────────────────────────── -->
@@ -382,11 +396,17 @@ function fmt(iso) {
     if (!iso) return "—";
     try {
         return new Date(iso).toLocaleString("en-IN", {
-            timeZone:"Asia/Kolkata",
-            day:"2-digit", month:"2-digit", year:"numeric",
-            hour:"2-digit", minute:"2-digit", hour12:true
+            timeZone: "Asia/Kolkata",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
         });
-    } catch { return "—"; }
+    } catch (e) {
+        return "—";
+    }
 }
  
 /** Convert any Date to IST wall-clock (avoids timezone bugs in India) */
@@ -414,66 +434,48 @@ function getHolidayName(d){ return _holidays[dateKey(d)] || null; }
  * • Any other time → NEXT trading day 08:30
  */
 function computeStartDate(latestExpiryIso) {
-    // If there's an existing future expiry, queue AFTER it
+    // If there's an existing future expiry, queue AFTER it at 12:00 AM midnight
     if (latestExpiryIso) {
         const exp = new Date(latestExpiryIso);
         if (exp > new Date()) {
-            // Next trading day after expiry at 08:30
             let n = new Date(exp);
             n.setDate(n.getDate() + 1);
-            // Set to 08:30 IST — use explicit IST midnight + hours
-            const istN = toIST(n);
-            istN.setHours(8, 30, 0, 0);
-            // Convert back to UTC-based Date using offset trick
-            const nFixed = new Date(n);
-            nFixed.setHours(n.getHours() - (n.getTimezoneOffset() / 60) - 5, 30 - 30, 0, 0);
-            // Simpler: just store as IST ISO string and compare
             while (!isTradingDay(n)) {
                 n.setDate(n.getDate() + 1);
             }
-            // Return with time set to 08:30 IST expressed in local
-            return setTime830IST(n);
+            return setMidnightIST(n);
         }
     }
- 
-    // Fresh purchase
+
+    // Fresh purchase cutoff calculation
     const now = new Date();
     const ist = toIST(now);
     const currentMins = ist.getHours() * 60 + ist.getMinutes();
-    const marketOpenMins  = 9 * 60 + 16;   // 9:16 AM
-    const marketCloseMins = 12 * 60 + 0;   // 12:00 PM
- 
+    const cutoffMins = 10 * 60; // 10:00 AM IST Cutoff
+
     const todayIsTradingDay = isTradingDay(now);
-    const duringMarket = todayIsTradingDay &&
-                         currentMins >= marketOpenMins &&
-                         currentMins <= marketCloseMins;
- 
-    if (duringMarket) {
-        // Start today at 08:30 IST
-        return setTime830IST(now);
+
+    if (todayIsTradingDay && currentMins <= cutoffMins) {
+        // Subscribed at or before 10:00 AM on a trading day -> Activates TODAY at 12:00 AM midnight
+        return setMidnightIST(now);
     } else {
-        // Next trading day at 08:30 IST
+        // Subscribed after 10:00 AM -> Activates NEXT trading day at 12:00 AM midnight
         let n = new Date(now);
         n.setDate(n.getDate() + 1);
         while (!isTradingDay(n)) {
             n.setDate(n.getDate() + 1);
         }
-        return setTime830IST(n);
+        return setMidnightIST(n);
     }
 }
- 
-/**
- * Returns a new Date object representing 08:30 IST on the same
- * calendar day as `d` (in IST). Works correctly regardless of
- * the browser's local timezone.
- */
-function setTime830IST(d) {
+
+/** Helper to set calendar date explicitly to 00:00:00 IST midnight */
+function setMidnightIST(d) {
     const ist = toIST(d);
-    // Build ISO string "YYYY-MM-DDT08:30:00+05:30"
     const y  = ist.getFullYear();
     const mo = String(ist.getMonth()+1).padStart(2,"0");
     const dy = String(ist.getDate()).padStart(2,"0");
-    return new Date(`${y}-${mo}-${dy}T08:30:00+05:30`);
+    return new Date(`${y}-${mo}-${dy}T00:00:00+05:30`);
 }
  
 /** Add n trading days to startDate, returns { expiry, stats } */
@@ -539,11 +541,15 @@ function getLatestFutureExpiry() {
 function computePreview(planKey) {
     const cfg = PLAN_DATA[planKey];
     if (!cfg) return null;
- 
+
     const latestExpiry = getLatestFutureExpiry();
     const startDate    = computeStartDate(latestExpiry);
     const result       = addTradingDays(startDate, cfg.tradingDays);
- 
+
+    // Dynamic queue state assessment: If the plan starts in the future relative to the user's local clock
+    const now = new Date();
+    const isQueued = startDate > now;
+
     return {
         plan:         planKey,
         tradingDays:  cfg.tradingDays,
@@ -554,7 +560,7 @@ function computePreview(planKey) {
         weekends:     result.weekendsSkipped,
         holidays:     result.holidaysSkipped,
         holidayList:  result.holidayList,
-        isQueued:     startDate > new Date(),
+        isQueued:     isQueued
     };
 }
  
@@ -643,8 +649,8 @@ function renderNewPlan(p) {
         : `<br><span style="color:#16a34a;font-size:11px;">✅ No NSE holidays in this window</span>`;
  
     const statusNote = p.isQueued
-        ? `<br><span style="color:#2563eb;font-weight:700;">📌 Queued — activates after your current plan ends on ${fmt(getLatestFutureExpiry())}</span>`
-        : `<br><span style="color:#16a34a;font-weight:700;">✅ Activates immediately on payment</span>`;
+        ? `<br><span style="color:#2563eb;font-weight:700;">📌 Queued — activates automatically on ${fmt(p.planStart)}</span>`
+        : `<br><span style="color:#16a34a;font-weight:700;">✅ Activates immediately (credited for today's session from 12:00 AM midnight)</span>`;
  
     document.getElementById("planBreakdown").innerHTML =
         `<b>${p.tradingDays}</b> Trading Days &nbsp;•&nbsp;` +
