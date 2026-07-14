@@ -3483,52 +3483,57 @@ font-weight:600;
        AUTH CHECK
     ══════════════════════════════════════════════════════════ */
     async function checkDashboardAccess() {
+  try {
+    const res = await fetch("/api/dashboard-access", { credentials: "include" });
+    const data = await res.json();
 
-      try {
+    // NOT LOGGED IN
+    if (data.reason === "not_logged_in") {
+      window.location.replace("/user-login");
+      return false;
+    }
 
-        const res = await fetch("/api/dashboard-access", {
-          credentials: "include"
+    // NO PLAN
+    if (data.reason === "no_plan") {
+      window.location.replace("/trading-plan");
+      return false;
+    }
+
+    // EXPIRED
+    if (data.reason === "plan_expired") {
+      window.location.replace("/trading-plan?expired=1");
+      return false;
+    }
+
+    // HANDLE INCOMING FUTURE ACTIVATION (POST-10:00 AM QUEUE LOGIC)
+    if (data.plan_start) {
+      const startMs = new Date(data.plan_start).getTime();
+      if (startMs > Date.now()) {
+        const formattedStart = new Date(data.plan_start).toLocaleString("en-IN", {
+          day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true
         });
-
-        const data = await res.json();
-
-        // On weekends/holidays, clear stale zero rows from live_running.json display
-        if (data.is_weekend || data.is_holiday) {
-          updateMarketClosedBanner(data);
-        }
-
-        // NOT LOGGED IN
-        if (data.reason === "not_logged_in") {
-
-          window.location.replace("/user-login");
-          return false;
-        }
-
-        // NO PLAN
-        if (data.reason === "no_plan") {
-
-          window.location.replace("/trading-plan");
-          return false;
-        }
-
-        // EXPIRED
-        if (data.reason === "plan_expired") {
-
-          window.location.replace("/trading-plan?expired=1");
-          return false;
-        }
-
-        // ADMIN OR ACTIVE USER
-        return true;
-
-      } catch (err) {
-
-        console.error(err);
-
-        return true; // IMPORTANT
+        
+        showFullscreenClosed(
+          "⏳",
+          "Subscription Window Pending",
+          `Your subscription was securely processed after our 10:00 AM IST cutoff threshold.<br><br>As a result, your secure structural data dashboard view window will activate explicitly at midnight:<br><strong style="color:var(--primary); font-size:15px;">${formattedStart}</strong>`,
+          `<div style="margin-top:24px;"><a href="/account" style="color:#aaa; text-decoration:underline; font-size:12px;">Go to My Account</a></div>`
+        );
+        return false;
       }
     }
 
+    // On weekends/holidays, clear stale zero rows from display
+    if (data.is_weekend || data.is_holiday) {
+      updateMarketClosedBanner(data);
+    }
+
+    return true;
+  } catch (err) {
+    console.error(err);
+    return true;
+  }
+}
     function updateMarketClosedBanner(accessData) {
       const grid = document.getElementById("rows-grid");
       if (!grid) return;
