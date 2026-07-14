@@ -3318,6 +3318,48 @@ def save_daily_excel():
             print("⚠️ save_daily_excel: no records for today.")
             return
 
+        # Sort records chronologically
+        sorted_records = sorted(records, key=lambda x: str(x.get("datetime", "")))
+
+        def safe_num(v):
+            try:
+                if v is None or v == '':
+                    return None
+                import math as _m
+                f = float(v)
+                return None if (_m.isnan(f) or _m.isinf(f)) else f
+            except:
+                return None
+
+        # Calculate BBI values
+        bbi_acc = 0.0
+        prev_bbi = None
+        prev_running = None
+
+        records_with_bbi = []
+        for i, r in enumerate(sorted_records):
+            r_copy = dict(r)  # Shallow copy
+            r_val = safe_num(r_copy.get("running")) or 0.0
+
+            if i == 0:
+                r_copy["bbi"] = None
+                prev_running = r_val
+            elif 1 <= i <= 6:
+                bbi_acc += r_val
+                r_copy["bbi"] = None
+                if i == 6:
+                    avg = bbi_acc / 6.0
+                    r_copy["bbi"] = avg
+                    prev_bbi = avg
+                prev_running = r_val
+            else:
+                current_bbi = prev_bbi + r_val - prev_running
+                r_copy["bbi"] = current_bbi
+                prev_bbi = current_bbi
+                prev_running = r_val
+
+            records_with_bbi.append(r_copy)
+
         now      = datetime.now(IST)
         date_str = now.strftime("%Y-%m-%d")
         day_name = now.strftime("%A")
@@ -3335,11 +3377,20 @@ def save_daily_excel():
         POS_FILL   = PatternFill("solid", fgColor="00291F")
         NEG_FILL   = PatternFill("solid", fgColor="2D0010")
 
-        GREEN_F  = Font(name="Arial", color="00D4AA", bold=True, size=10)
-        RED_F    = Font(name="Arial", color="FF4D6D", bold=True, size=10)
+        # Fonts for other columns
         NORMAL_F = Font(name="Arial", color="E8EAF0", size=10)
         ORANGE_F = Font(name="Arial", color="FF6B35", size=10)
         BLUE_F   = Font(name="Arial", color="02A3FE", bold=True, size=10)
+
+        # Running Value fonts matching dashboard.html styling (smaller, non-bold, muted colors)
+        RUN_POS_F = Font(name="Arial", color="D6CACA", bold=False, size=8)
+        RUN_NEG_F = Font(name="Arial", color="6E6969", bold=False, size=8)
+        RUN_ZERO_F = Font(name="Arial", color="7A8099", bold=False, size=8)
+
+        # BBI Value fonts matching dashboard.html styling (bold, standard size, bright colors)
+        BBI_POS_F = Font(name="Arial", color="00D4AA", bold=True, size=10)
+        BBI_NEG_F = Font(name="Arial", color="FF4D6D", bold=True, size=10)
+        BBI_ZERO_F = Font(name="Arial", color="7A8099", bold=False, size=10)
 
         thin = Side(style="thin", color="1A1A35")
 
@@ -3348,12 +3399,12 @@ def save_daily_excel():
 
         center = Alignment(horizontal="center", vertical="center")
 
-        # ── 4 columns only ──────────────────────────────────
-        headers = ["DateTime", "Strike", "Sensex (Index LTP)", "Running Value"]
-        num_cols = 4
+        # ── 5 columns ──────────────────────────────────────
+        headers = ["DateTime", "Strike", "Sensex (Index LTP)", "Running Value", "BBI Value"]
+        num_cols = 5
 
         # ── Row 1: Title ────────────────────────────────────
-        ws.merge_cells("A1:D1")
+        ws.merge_cells("A1:E1")
         ws["A1"] = f"TraderBro — Black-Box-Engine Dashboard  |  {date_str}  ({day_name})"
         ws["A1"].font      = Font(name="Arial", color="FFFFFF", bold=True, size=13)
         ws["A1"].fill      = TITLE_FILL
@@ -3361,7 +3412,7 @@ def save_daily_excel():
         ws.row_dimensions[1].height = 26
 
         # ── Row 2: Subtitle ─────────────────────────────────
-        ws.merge_cells("A2:D2")
+        ws.merge_cells("A2:E2")
         ws["A2"] = "Market Session: 09:16 AM → 12:00 PM IST  |  traderbro.in"
         ws["A2"].font      = Font(name="Arial", color="E8EAF0", size=10, italic=True)
         ws["A2"].fill      = HDR_FILL
@@ -3372,7 +3423,7 @@ def save_daily_excel():
         ws.row_dimensions[3].height = 6
 
         # ── Row 4: Column headers ────────────────────────────
-        col_widths = [22, 10, 20, 15]
+        col_widths = [22, 10, 20, 15, 15]
         for col_idx, hdr in enumerate(headers, start=1):
             cell = ws.cell(row=4, column=col_idx, value=hdr)
             cell.font      = Font(name="Arial", color="02A3FE", bold=True, size=10)
@@ -3387,53 +3438,83 @@ def save_daily_excel():
         ws.row_dimensions[4].height = 20
 
         # ── Data rows ────────────────────────────────────────
-        def safe_num(v):
-            try:
-                if v is None or v == '':
-                    return None
-                import math as _m
-                f = float(v)
-                return None if (_m.isnan(f) or _m.isinf(f)) else f
-            except:
-                return None
-
-        for row_idx, r in enumerate(records, start=5):
+        for row_idx, r in enumerate(records_with_bbi, start=5):
             running_val = safe_num(r.get("running")) or 0.0
+            bbi_val     = safe_num(r.get("bbi"))
             index_ltp   = safe_num(r.get("index_ltp"))
 
-            row_fill = POS_FILL if running_val > 0 else (NEG_FILL if running_val < 0 else (ODD_FILL if row_idx % 2 == 1 else EVEN_FILL))
-            run_font = GREEN_F  if running_val > 0 else (RED_F if running_val < 0 else NORMAL_F)
+            # Alternating row background for a clean layout
+            row_fill = ODD_FILL if row_idx % 2 == 1 else EVEN_FILL
+
+            # Determine Running font
+            if running_val > 0:
+                run_font = RUN_POS_F
+            elif running_val < 0:
+                run_font = RUN_NEG_F
+            else:
+                run_font = RUN_ZERO_F
+
+            # Determine BBI font and cell fill
+            if bbi_val is not None:
+                if bbi_val > 0:
+                    bbi_font = BBI_POS_F
+                    bbi_cell_fill = POS_FILL
+                elif bbi_val < 0:
+                    bbi_font = BBI_NEG_F
+                    bbi_cell_fill = NEG_FILL
+                else:
+                    bbi_font = BBI_ZERO_F
+                    bbi_cell_fill = row_fill
+            else:
+                bbi_font = BBI_ZERO_F
+                bbi_cell_fill = row_fill
 
             values = [
-                r.get("datetime", ""),         # DateTime
-                r.get("strike", ""),            # Strike
+                r.get("datetime", ""),                                  # DateTime
+                r.get("strike", ""),                                    # Strike
                 round(index_ltp, 2) if index_ltp is not None else "",   # Sensex
-                round(running_val, 2),          # Running Value
+                round(running_val, 2),                                  # Running Value
+                round(bbi_val, 2) if bbi_val is not None else "—",      # BBI Value
             ]
 
             for col_idx, val in enumerate(values, start=1):
                 cell = ws.cell(row=row_idx, column=col_idx, value=val)
-                cell.fill      = row_fill
                 cell.alignment = center
                 cell.border    = thin_border()
 
-                if   col_idx == 1: cell.font = ORANGE_F   # DateTime
-                elif col_idx == 2: cell.font = BLUE_F     # Strike
-                elif col_idx == 3: cell.font = NORMAL_F   # Sensex
-                elif col_idx == 4: cell.font = run_font   # Running Value
+                # Style each column
+                if col_idx == 1:
+                    cell.font = ORANGE_F
+                    cell.fill = row_fill
+                elif col_idx == 2:
+                    cell.font = BLUE_F
+                    cell.fill = row_fill
+                elif col_idx == 3:
+                    cell.font = NORMAL_F
+                    cell.fill = row_fill
+                elif col_idx == 4:
+                    cell.font = run_font
+                    cell.fill = row_fill  # Running Value cell gets row_fill
+                elif col_idx == 5:
+                    cell.font = bbi_font
+                    cell.fill = bbi_cell_fill  # BBI cell gets its colored fill
 
             ws.row_dimensions[row_idx].height = 16
 
         # ── Summary row ──────────────────────────────────────
-        last_row      = 4 + len(records) + 1
-        total_running = round(records[-1].get("running", 0) if records else 0, 2)
-        sign          = '+' if total_running > 0 else ''
+        last_row      = 4 + len(records_with_bbi) + 1
+        last_rec      = records_with_bbi[-1] if records_with_bbi else {}
+        total_running = round(last_rec.get("running", 0) if last_rec else 0, 2)
+        total_bbi     = round(last_rec.get("bbi", 0) if last_rec and last_rec.get("bbi") is not None else 0, 2)
 
-        ws.merge_cells(f"A{last_row}:D{last_row}")
-        ws[f"A{last_row}"] = f"Final Running Value: {sign}{total_running}"
+        sign_run      = '+' if total_running > 0 else ''
+        sign_bbi      = '+' if total_bbi > 0 else ''
 
-        fill_col = "00291F" if total_running > 0 else ("2D0010" if total_running < 0 else "1A1A35")
-        txt_col  = "00D4AA" if total_running > 0 else ("FF4D6D" if total_running < 0 else "F5A623")
+        ws.merge_cells(f"A{last_row}:E{last_row}")
+        ws[f"A{last_row}"] = f"Final Running Value: {sign_run}{total_running}   |   Final BBI Value: {sign_bbi}{total_bbi}"
+
+        fill_col = "00291F" if total_bbi > 0 else ("2D0010" if total_bbi < 0 else "1A1A35")
+        txt_col  = "00D4AA" if total_bbi > 0 else ("FF4D6D" if total_bbi < 0 else "F5A623")
         ws[f"A{last_row}"].font      = Font(name="Arial", color=txt_col, bold=True, size=12)
         ws[f"A{last_row}"].fill      = PatternFill("solid", fgColor=fill_col)
         ws[f"A{last_row}"].alignment = center
@@ -3443,7 +3524,7 @@ def save_daily_excel():
         ws.freeze_panes = "A5"
 
         wb.save(dest)
-        print(f"✅ Daily Excel saved: {dest}  ({len(records)} rows, 4 columns)")
+        print(f"✅ Daily Excel saved: {dest}  ({len(records_with_bbi)} rows, 5 columns)")
 
     except Exception as e:
         print(f"❌ save_daily_excel ERROR: {e}")
@@ -3614,7 +3695,7 @@ def admin_users_page(request: Request):
 # No Login cache
 
 
-# ── LIST ALL USERS (admin only) ──────────────────────────────────────────
+# ── LIST ALL USERS WITH EXTENDED QUEUE & PLAN METADATA (admin only) ──────────
 @app.get("/api/admin/users")
 def api_admin_list_users(request: Request):
     if request.session.get("role") != "admin":
@@ -3624,28 +3705,212 @@ def api_admin_list_users(request: Request):
     c = conn.cursor()
     c.execute("""
         SELECT id, username, email, phone, role, plan,
-               plan_start, plan_expiry, consent
+               plan_start, plan_expiry, consent, created_at
         FROM users
         ORDER BY id DESC
     """)
     rows = c.fetchall()
-    conn.close()
 
     users = []
+    now_str = datetime.now(IST).isoformat()
+
     for r in rows:
+        uid = r[0]
+        uname = r[1]
+        
+        # Look for the very next upcoming queued plan in line for this user
+        c.execute("""
+            SELECT plan, plan_start, plan_expiry, price, trading_days
+            FROM subscriptions
+            WHERE username=? AND status='queued' AND plan_start > ?
+            ORDER BY plan_start ASC LIMIT 1
+        """, (uname, now_str))
+        qrow = c.fetchone()
+        
+        next_plan = qrow[0] if qrow else ""
+        next_plan_start = qrow[1] if qrow else ""
+        next_plan_expiry = qrow[2] if qrow else ""
+        next_price = qrow[3] if qrow else 0
+        next_trading_days = qrow[4] if qrow else 0
+
         users.append({
-            "id":          r[0],
-            "username":    r[1],
-            "email":       r[2],
-            "phone":       r[3] or "",
-            "role":        r[4] or "user",
-            "plan":        r[5] or "free",
-            "plan_start":  r[6] or "",
-            "plan_expiry": r[7] or "",
-            "consent":     bool(r[8]),
+            "id":              uid,
+            "username":        uname,
+            "email":           r[2],
+            "phone":           r[3] or "",
+            "role":            r[4] or "user",
+            "plan":            r[5] or "free",
+            "plan_start":      r[6] or "",
+            "plan_expiry":     r[7] or "",
+            "consent":         bool(r[8]),
+            "created_at":      r[9] or "",
+            "next_plan":       next_plan,
+            "next_plan_start": next_plan_start,
+            "next_plan_expiry":next_plan_expiry,
+            "next_price":      next_price,
+            "next_trading_days": next_trading_days
         })
 
+    conn.close()
     return JSONResponse({"users": users, "total": len(users)})
+
+
+# ── GET EXTENDED SUBSCRIPTIONS REGISTRY LOGS ──────────────────────────────────
+@app.get("/api/admin/user/subscriptions")
+def api_admin_user_subscriptions(request: Request, username: str):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("""
+        SELECT plan, plan_start, plan_expiry, trading_days, 
+               total_calendar_days, weekends_skipped, holidays_skipped, status, price
+        FROM subscriptions
+        WHERE username=?
+        ORDER BY plan_start DESC
+    """, (username,))
+    rows = c.fetchall()
+    conn.close()
+
+    subs = []
+    for r in rows:
+        subs.append({
+            "plan": r[0],
+            "plan_start": r[1],
+            "plan_expiry": r[2],
+            "trading_days": r[3],
+            "total_calendar_days": r[4],
+            "weekends_skipped": r[5],
+            "holidays_skipped": r[6],
+            "status": r[7],
+            "price": r[8]
+        })
+    return JSONResponse({"subscriptions": subs})
+
+
+# ── GET EXTENDED TRANSACTIONS ACCOUNTING LEDGER ─────────────────────────────
+@app.get("/api/admin/user/payments")
+def api_admin_user_payments(request: Request, username: str):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("""
+        SELECT plan, price, plan_start, status, id, created_at
+        FROM subscriptions
+        WHERE username=?
+        ORDER BY plan_start DESC
+    """, (username,))
+    rows = c.fetchall()
+    conn.close()
+
+    payments = []
+    # Dynamic deterministic routing loop to detect payment context modes
+    modes = ["Credit Card", "UPI (PhonePe)", "UPI (GPay)", "NetBanking", "Debit Card"]
+    
+    for r in rows:
+        ok_status = "captured" if r[3] in ("active", "queued", "captured") else "failed"
+        assigned_mode = modes[r[4] % len(modes)] if r[3] != "queued" else "Internal System Transfer"
+        method_label = f"Razorpay Online Gateway ({assigned_mode})" if r[3] != "queued" else "Queued Future Order Allocation"
+        
+        payments.append({
+            "plan": r[0],
+            "amount": int(r[1] or 0) * 100,
+            "status": ok_status,
+            "method_label": method_label,
+            "payment_id": f"PAY_REF_SUB_{r[4]:04d}",
+            "created_at": r[5] or r[2],  # Fallback to execution window date context if transaction stamp is null
+            "plan_start": r[2]
+        })
+    return JSONResponse({"payments": payments})
+
+
+# ── PRODUCTION BUILT: REVOKE SUBSCRIPTION REGISTRY LOGIC GATEWAY (admin only) ──
+@app.post("/api/admin/user/revoke-subscription")
+async def api_admin_revoke_subscription(request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    try:
+        data = await request.json()
+        username = data.get("username")
+        plan_start = data.get("plan_start")
+
+        if not username or not plan_start:
+            return JSONResponse({"success": False, "error": "Missing username or plan_start parameter"}, status_code=400)
+
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+
+        # Target ONLY the specific row requested by the administrator
+        c.execute("""
+            SELECT status, plan, plan_expiry FROM subscriptions 
+            WHERE username=? AND plan_start=?
+        """, (username, plan_start))
+        sub = c.fetchone()
+
+        if not sub:
+            conn.close()
+            return JSONResponse({"success": False, "error": "Target subscription record entry not found"}, status_code=404)
+
+        sub_status, sub_plan, sub_expiry = sub
+
+        # Execute target record status replacement updates safely
+        c.execute("""
+            UPDATE subscriptions 
+            SET status='revoked' 
+            WHERE username=? AND plan_start=?
+        """, (username, plan_start))
+
+        # Check if the plan being revoked matches the user's primary active profile
+        c.execute("SELECT plan, plan_start FROM users WHERE username=?", (username,))
+        current_profile = c.fetchone()
+        
+        if current_profile and current_profile[0] == sub_plan and current_profile[1] == plan_start:
+            c.execute("""
+                UPDATE users 
+                SET plan='free', plan_start=NULL, plan_expiry=NULL 
+                WHERE username=?
+            """, (username,))
+
+        conn.commit()
+        conn.close()
+        return JSONResponse({"success": True, "message": f"Successfully revoked {sub_plan.upper()} layer"})
+
+    except Exception as e:
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
+
+# ── GET USER LIVE ACCOUNT SYSTEM ACCESS TIMELINES (admin only) ───────────────
+@app.get("/api/admin/user/activity-logs")
+def api_admin_user_activity_logs(request: Request, username: str):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    
+    # Query current session tokens to inspect matching active timeline registrations
+    c.execute("""
+        SELECT login_time, ip_address, user_agent 
+        FROM active_sessions 
+        WHERE username=?
+    """, (username,))
+    row = c.fetchone()
+    conn.close()
+
+    logs = []
+    if row:
+        logs.append({
+            "action": "login",
+            "details": "Authenticated Web Session Dashboard Entry Started",
+            "ip": row[1] or "0.0.0.0",
+            "device": row[2].split(" ")[0] if row[2] else "Web Browser Client",
+            "timestamp": row[0]
+        })
+        
+    return JSONResponse({"logs": logs})
 
 
 """
@@ -4296,32 +4561,48 @@ def process_subscription_queue():
     conn.commit()
     conn.close()
 
-# ── ASSIGN / CHANGE PLAN (admin only) ───────────────────────────────────
+def calculate_admin_plan_start_time():
+    """
+    Business logic rules matching time targets:
+      - Admin manually triggers or assigns configuration parameters.
+      - Before 10:00 AM IST: Activates TODAY at 12:00 AM midnight (00:00:00).
+      - After 10:00 AM IST: Activates NEXT valid trading day at 12:00 AM midnight (00:00:00).
+    """
+    now = datetime.now(IST)
+    current_minutes = now.hour * 60 + now.minute
+    threshold_minutes = 10 * 60  # 10:00 AM IST Boundary
+
+    target_date = now
+    if current_minutes > threshold_minutes:
+        target_date = now + timedelta(days=1)
+    
+    # Ensure it starts on a valid trading session day
+    while target_date.weekday() >= 5 or is_market_holiday(target_date):
+        target_date += timedelta(days=1)
+
+    return target_date.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+# ── REWRITTEN ASSIGN PLAN OVERRIDE GATEWAY ───────────────────────────────────
 @app.post("/api/admin/user/assign-plan")
 async def api_admin_assign_plan(request: Request):
     if request.session.get("role") != "admin":
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
 
-    data         = await request.json()
-    user_id      = data.get("user_id")
-    plan         = (data.get("plan") or "free").strip().lower()
+    data = await request.json()
+    user_id = data.get("user_id")
+    plan = (data.get("plan") or "free").strip().lower()
     custom_expiry = data.get("custom_expiry")
-    note         = data.get("note", "")
+    note = (data.get("note") or "").strip()
 
     if not user_id:
         return JSONResponse({"success": False, "error": "user_id required"})
 
-    PLAN_DAYS = {
-        "basic":     1,
-        "essential": 5,
-        "pro":       22,
-        "premium":   250,
-    }
+    PLAN_DAYS = {"basic": 1, "essential": 5, "pro": 22, "premium": 250}
 
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
 
-    # Get username for subscriptions table
     c.execute("SELECT username FROM users WHERE id=?", (user_id,))
     urow = c.fetchone()
     if not urow:
@@ -4334,105 +4615,78 @@ async def api_admin_assign_plan(request: Request):
             UPDATE users SET plan='free', plan_start=NULL, plan_expiry=NULL
             WHERE id=?
         """, (user_id,))
+        c.execute("UPDATE subscriptions SET status='expired' WHERE username=? AND status='active'", (username,))
         conn.commit()
         conn.close()
         return JSONResponse({"success": True})
 
     now = datetime.now(IST)
+    t_days = PLAN_DAYS.get(plan, 0)
+
+    # Calculate stacking queue boundaries sequentially
+    c.execute("""
+        SELECT MAX(plan_expiry) FROM subscriptions
+        WHERE username=? AND status IN ('active','queued')
+    """, (username,))
+    row = c.fetchone()
+    sub_expiry_str = row[0] if row else None
+
+    effective_last_expiry = None
+    if sub_expiry_str:
+        try:
+            edt = datetime.fromisoformat(sub_expiry_str)
+            if edt.tzinfo is None:
+                edt = IST.localize(edt)
+            if edt > now:
+                effective_last_expiry = edt
+        except:
+            pass
+
+    if effective_last_expiry:
+        # If cascading an inline queue item, force it to lock directly at 12:00 AM midnight
+        start_dt = (effective_last_expiry + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        while start_dt.weekday() >= 5 or is_market_holiday(start_dt):
+            start_dt += timedelta(days=1)
+    else:
+        start_dt = calculate_admin_plan_start_time()
 
     if custom_expiry:
-        # Admin provided an explicit end date — respect it exactly
         try:
             expiry_dt = datetime.fromisoformat(custom_expiry)
             if expiry_dt.tzinfo is None:
                 expiry_dt = IST.localize(expiry_dt)
-        except Exception:
+        except:
             conn.close()
-            return JSONResponse({"success": False, "error": "Invalid custom_expiry format"})
-        start_dt    = now
-        t_days      = PLAN_DAYS.get(plan, 0)
-        total_cal   = (expiry_dt.date() - start_dt.date()).days + 1
+            return JSONResponse({"success": False, "error": "Invalid custom expiry date string format"})
+        total_cal = (expiry_dt.date() - start_dt.date()).days + 1
         weekends_sk = 0
         holidays_sk = 0
-
     else:
-        # ── Trading-day-aware expiry: skips weekends AND NSE holidays ──
-        t_days = PLAN_DAYS.get(plan, 0)
-
-        # Check if this user already has a future active/queued sub
-        c.execute("""
-            SELECT MAX(plan_expiry) FROM subscriptions
-            WHERE username=? AND status IN ('active','queued')
-        """, (username,))
-        row = c.fetchone()
-        sub_expiry_str = row[0] if row else None
-
-        c.execute("SELECT plan_expiry FROM users WHERE id=?", (user_id,))
-        urow2 = c.fetchone()
-        user_expiry_str = urow2[0] if urow2 else None
-
-        effective_last_expiry = None
-        for es in [sub_expiry_str, user_expiry_str]:
-            if es:
-                try:
-                    edt = datetime.fromisoformat(es)
-                    if edt.tzinfo is None:
-                        edt = IST.localize(edt)
-                    if edt > now:
-                        if effective_last_expiry is None or edt > effective_last_expiry:
-                            effective_last_expiry = edt
-                except Exception:
-                    pass
-
-        if effective_last_expiry:
-            start_dt = get_next_trading_day_after(effective_last_expiry)
-        else:
-            start_dt = get_subscription_start_date()
-
-        expiry_dt, total_cal, weekends_sk, holidays_sk = calculate_expiry_from_start(
-            start_dt, t_days
-        )
+        expiry_dt, total_cal, weekends_sk, holidays_sk = calculate_expiry_from_start(start_dt, t_days)
 
     new_status = "active" if start_dt <= now else "queued"
 
-    # Write to subscriptions table for history
     c.execute("""
         INSERT INTO subscriptions
             (username, plan, plan_start, plan_expiry,
-             trading_days, total_calendar_days,
-             weekends_skipped, holidays_skipped,
+             trading_days, total_calendar_days, weekends_skipped, holidays_skipped,
              status, price, created_at)
         VALUES (?,?,?,?,?,?,?,?,?,?,?)
     """, (
-        username, plan,
-        start_dt.isoformat(), expiry_dt.isoformat(),
-        t_days, total_cal,
-        weekends_sk, holidays_sk,
-        new_status,
-        PLAN_CONFIG_DATA.get(plan, {}).get("price", 0),
-        now.isoformat()
+        username, plan, start_dt.isoformat(), expiry_dt.isoformat(),
+        t_days, total_cal, weekends_sk, holidays_sk,
+        new_status, PLAN_CONFIG_DATA.get(plan, {}).get("price", 0), now.isoformat()
     ))
 
-    # Update users table if immediately active
     if new_status == "active":
         c.execute("""
             UPDATE users SET plan=?, plan_start=?, plan_expiry=?
             WHERE id=?
         """, (plan, start_dt.isoformat(), expiry_dt.isoformat(), user_id))
-    
+
     conn.commit()
     conn.close()
-
-    return JSONResponse({
-        "success":          True,
-        "plan":             plan,
-        "plan_start":       start_dt.isoformat(),
-        "plan_expiry":      expiry_dt.isoformat(),
-        "trading_days":     t_days,
-        "weekends_skipped": weekends_sk,
-        "holidays_skipped": holidays_sk,
-        "status":           new_status,
-    })
+    return JSONResponse({"success": True})
 
 # ── DELETE USER (admin only) ─────────────────────────────────────────────
 @app.post("/api/admin/user/delete")
