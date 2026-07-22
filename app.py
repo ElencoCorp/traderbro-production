@@ -155,47 +155,38 @@ PLAN_CONFIG_DATA = {
 
 def calculate_expiry_from_start(start_dt, trading_days):
     """
-    Returns (expiry_dt, total_calendar_days, weekends_skipped, holidays_skipped).
-    start_dt counts as trading day #1 (must be a valid trading day).
-    Expiry is set to 12:00 PM (market close) of the last trading day.
+    Dashboard stays visible through the ENTIRE last trading day.
+    Expiry timestamp = midnight (00:00) of the day AFTER the last trading day,
+    so access cuts off exactly at 12 AM the next day.
     """
-    days_to_add = trading_days - 1   # start day is already day 1
-    expiry = start_dt.replace(second=0, microsecond=0)  # preserve 08:30 start
-    added    = 0
-    weekends = 0
-    holidays = 0
- 
+    days_to_add = trading_days - 1
+    last_day = start_dt.replace(second=0, microsecond=0)
+    added = weekends = holidays = 0
+
     while added < days_to_add:
-        expiry = expiry + timedelta(days=1)
-        dow = expiry.weekday()
+        last_day = last_day + timedelta(days=1)
+        dow = last_day.weekday()
         if dow >= 5:
             weekends += 1
             continue
-        if is_market_holiday(expiry):
+        if is_market_holiday(last_day):
             holidays += 1
             continue
         added += 1
- 
-    # Expiry = 12:00 PM of last trading day
-    expiry = expiry.replace(
-        hour=MARKET_CLOSE_HOUR,
-        minute=MARKET_CLOSE_MIN,
-        second=0,
-        microsecond=0
-    )
-    total_cal = (expiry.date() - start_dt.date()).days + 1
+
+    total_cal = (last_day.date() - start_dt.date()).days + 1
+
+    expiry = last_day.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+
     return expiry, total_cal, weekends, holidays
  
- 
 def get_next_trading_day_after(dt):
-    """Returns the next valid trading day at 08:30 AM after dt."""
-    nxt = dt + timedelta(days=1)
-    nxt = nxt.replace(
-        hour=DASHBOARD_OPEN_HOUR,
-        minute=DASHBOARD_OPEN_MIN,
-        second=0,
-        microsecond=0
-    )
+    """
+    dt is already midnight of the day the previous plan deactivates.
+    If that day is a trading day, the new plan starts exactly then;
+    otherwise roll forward to the next trading day at midnight.
+    """
+    nxt = dt.replace(hour=0, minute=0, second=0, microsecond=0)
     while nxt.weekday() >= 5 or is_market_holiday(nxt):
         nxt += timedelta(days=1)
     return nxt
@@ -907,7 +898,7 @@ async def download_disclaimer_pdf(user_id: int, request: Request):
 
 
 @app.get("/api/dashboard-access")
-def api_dashboard_access(request):
+def api_dashboard_access(request: Request):
     from fastapi.responses import JSONResponse
  
     username = request.session.get("user") or request.session.get("admin")
@@ -1667,7 +1658,7 @@ def checkout_page(request: Request):
 
 
 @app.post("/activate-plan")
-async def activate_plan(request):
+async def activate_plan(request: Request):
     """Called by razorpay_integration after successful payment verification."""
     from fastapi.responses import JSONResponse
  
@@ -2905,52 +2896,24 @@ async def save_running(request: Request):
 # AFTER
 def get_subscription_start_date():
     """
-    Returns the correct start datetime for a new subscription.
- 
-    Rules:
-      • Purchased during active session (9:16 AM – 12:00 PM IST)
-          → Starts TODAY at 08:30 AM (user gets current day's session)
-      • Purchased after 12:00 PM, or before 9:16 AM, or on weekend/holiday
-          → Starts NEXT valid trading day at 08:30 AM
-      • Weekends and NSE holidays are always skipped.
+    • Purchased at/before 10:00 AM IST on a trading day → starts TODAY at 12:00 AM midnight
+    • Purchased after 10:00 AM IST (or on non-trading day) → starts NEXT trading day at 12:00 AM midnight
     """
     now = datetime.now(IST)
     current_minutes = now.hour * 60 + now.minute
- 
-    market_open_minutes  = MARKET_OPEN_HOUR  * 60 + MARKET_OPEN_MIN   # 556
-    market_close_minutes = MARKET_CLOSE_HOUR * 60 + MARKET_CLOSE_MIN  # 720
- 
-    # Is it a valid trading day right now?
+    cutoff_minutes = 10 * 60  # 10:00 AM
+
     today_is_trading = (now.weekday() < 5) and (not is_market_holiday(now))
- 
-    during_market = (
-        today_is_trading and
-        market_open_minutes <= current_minutes <= market_close_minutes
-    )
- 
-    if during_market:
-        # Start today — user gets this session
-        start_date = now.replace(
-            hour=DASHBOARD_OPEN_HOUR,
-            minute=DASHBOARD_OPEN_MIN,
-            second=0,
-            microsecond=0
-        )
+
+    if today_is_trading and current_minutes <= cutoff_minutes:
+        start_date = now
     else:
-        # Push to next valid trading day
         start_date = now + timedelta(days=1)
-        start_date = start_date.replace(
-            hour=DASHBOARD_OPEN_HOUR,
-            minute=DASHBOARD_OPEN_MIN,
-            second=0,
-            microsecond=0
-        )
-        # Skip weekends and holidays
         while start_date.weekday() >= 5 or is_market_holiday(start_date):
             start_date += timedelta(days=1)
- 
-    return start_date
- 
+
+    return start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+
 
 @app.get("/api/get-running")
 def get_running():
@@ -4643,8 +4606,7 @@ async def api_admin_assign_plan(request: Request):
             pass
 
     if effective_last_expiry:
-        # If cascading an inline queue item, force it to lock directly at 12:00 AM midnight
-        start_dt = (effective_last_expiry + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        start_dt = effective_last_expiry.replace(hour=0, minute=0, second=0, microsecond=0)
         while start_dt.weekday() >= 5 or is_market_holiday(start_dt):
             start_dt += timedelta(days=1)
     else:
