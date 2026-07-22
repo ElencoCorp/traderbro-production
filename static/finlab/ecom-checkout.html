@@ -438,12 +438,11 @@ function computeStartDate(latestExpiryIso) {
     if (latestExpiryIso) {
         const exp = new Date(latestExpiryIso);
         if (exp > new Date()) {
-            let n = new Date(exp);
-            n.setDate(n.getDate() + 1);
+            let n = setMidnightIST(exp);
             while (!isTradingDay(n)) {
                 n.setDate(n.getDate() + 1);
             }
-            return setMidnightIST(n);
+            return n;
         }
     }
 
@@ -501,15 +500,19 @@ function addTradingDays(startDate, nDays) {
     }
  
     // Expiry = 12:00 PM IST of last trading day
+    // last trading day = d
     const ist = toIST(d);
     const y   = ist.getFullYear();
     const mo  = String(ist.getMonth()+1).padStart(2,"0");
     const dy  = String(ist.getDate()).padStart(2,"0");
-    const expiry = new Date(`${y}-${mo}-${dy}T12:00:00+05:30`);
- 
+    const lastDayMidnight = new Date(`${y}-${mo}-${dy}T00:00:00+05:30`);
+
     const totalCalendar = Math.ceil(
-        (expiry.getTime() - startDate.getTime()) / 86400000
+        (lastDayMidnight.getTime() - startDate.getTime()) / 86400000
     ) + 1;
+
+    // Visible whole day of last trading day, cuts off at 12 AM next day
+    const expiry = new Date(lastDayMidnight.getTime() + 86400000);
  
     return {
         expiry,
