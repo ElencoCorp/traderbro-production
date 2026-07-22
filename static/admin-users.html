@@ -1075,38 +1075,16 @@ function selPlan(p){
   document.getElementById('ceg').style.display=p!=='free'?'block':'none';
 }
 
-function calculateAdminPlanStart() {
-    const now = new Date();
-    const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-    const istDate = new Date(istString);
-    const currentMins = istDate.getHours() * 60 + istDate.getMinutes();
-    const thresholdMins = 10 * 60; 
-
-    const targetDate = new Date(istDate);
-    if (currentMins > thresholdMins) {
-        targetDate.setDate(targetDate.getDate() + 1);
-    }
-    const y = targetDate.getFullYear();
-    const m = String(targetDate.getMonth() + 1).padStart(2, "0");
-    const d = String(targetDate.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}T00:00:00+05:30`;
-}
-
 async function assignPlan(){
   const id=document.getElementById('p-uid').value; if(!id) return;
   if(!_sp){ toast('Select a plan','error'); return; }
   
   let selectedExpiry = document.getElementById('cex').value || null;
-  let computedStart = null;
-  if (_sp !== 'free') {
-      computedStart = calculateAdminPlanStart();
-  }
 
   const payload = {
     user_id: parseInt(id),
     plan: _sp,
     note: document.getElementById('p-note').value.trim(),
-    custom_start: computedStart,
     custom_expiry: selectedExpiry
   };
   
