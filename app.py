@@ -4524,28 +4524,6 @@ def process_subscription_queue():
     conn.commit()
     conn.close()
 
-def calculate_admin_plan_start_time():
-    """
-    Business logic rules matching time targets:
-      - Admin manually triggers or assigns configuration parameters.
-      - Before 10:00 AM IST: Activates TODAY at 12:00 AM midnight (00:00:00).
-      - After 10:00 AM IST: Activates NEXT valid trading day at 12:00 AM midnight (00:00:00).
-    """
-    now = datetime.now(IST)
-    current_minutes = now.hour * 60 + now.minute
-    threshold_minutes = 10 * 60  # 10:00 AM IST Boundary
-
-    target_date = now
-    if current_minutes > threshold_minutes:
-        target_date = now + timedelta(days=1)
-    
-    # Ensure it starts on a valid trading session day
-    while target_date.weekday() >= 5 or is_market_holiday(target_date):
-        target_date += timedelta(days=1)
-
-    return target_date.replace(hour=0, minute=0, second=0, microsecond=0)
-
-
 # ── REWRITTEN ASSIGN PLAN OVERRIDE GATEWAY ───────────────────────────────────
 @app.post("/api/admin/user/assign-plan")
 async def api_admin_assign_plan(request: Request):
@@ -4606,11 +4584,9 @@ async def api_admin_assign_plan(request: Request):
             pass
 
     if effective_last_expiry:
-        start_dt = effective_last_expiry.replace(hour=0, minute=0, second=0, microsecond=0)
-        while start_dt.weekday() >= 5 or is_market_holiday(start_dt):
-            start_dt += timedelta(days=1)
+        start_dt = get_next_trading_day_after(effective_last_expiry)
     else:
-        start_dt = calculate_admin_plan_start_time()
+        start_dt = get_subscription_start_date()
 
     if custom_expiry:
         try:
