@@ -251,41 +251,36 @@ def calculate_expiry_from_start(
     trading_days: int
 ) -> Tuple[object, int, int, int]:
     """
-    Given a start datetime and a number of TRADING DAYS, returns:
-        (expiry_datetime, total_calendar_days, weekends_skipped, holidays_skipped)
-
-    - start_dt counts as day #1 (first trading day)
-    - Weekends and NSE holidays are automatically skipped
-    - Expiry is set to 12:00 PM IST of the last trading day
+    start_dt must be midnight (00:00) of the first trading day.
+    Dashboard stays visible through the ENTIRE last trading day.
+    Expiry = midnight (00:00) of the day AFTER the last trading day,
+    so access cuts off exactly at 12 AM the next day.
     """
-    # Normalise to datetime
     if not hasattr(start_dt, "hour"):
         from datetime import datetime as _dt
         start_dt = _dt.combine(start_dt, _dt.min.time())
 
-    expiry    = start_dt.replace(hour=9, minute=16, second=0, microsecond=0)
-    added     = 0            # trading days counted
+    last_day  = start_dt.replace(second=0, microsecond=0)
+    added     = 0
     weekends  = 0
     holidays  = 0
     days_to_add = trading_days - 1   # start day is day #1
 
     while added < days_to_add:
-        expiry = expiry + timedelta(days=1)
-        dow    = expiry.weekday()
-        if dow >= 5:                          # Saturday / Sunday
+        last_day = last_day + timedelta(days=1)
+        dow = last_day.weekday()
+        if dow >= 5:
             weekends += 1
             continue
-        if is_market_holiday(expiry):
+        if is_market_holiday(last_day):
             holidays += 1
             continue
         added += 1
 
-    # Set expiry to 12:00 PM (market analysis close)
-    expiry = expiry.replace(hour=12, minute=0, second=0, microsecond=0)
+    total_calendar = (last_day.date() - start_dt.date()).days + 1
+    expiry = last_day.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
 
-    total_calendar = (expiry.date() - start_dt.date()).days + 1
     return expiry, total_calendar, weekends, holidays
-
 
 def get_holidays_in_subscription(start_dt, end_dt) -> List[dict]:
     """
@@ -318,11 +313,14 @@ def count_holidays_between(start_dt, end_dt) -> int:
 # NEXT TRADING DAY
 # ────────────────────────────────────────────────────────────────────────────
 def get_next_trading_day_after(dt) -> object:
-    """Returns the next valid trading day (Mon–Fri, non-holiday) at 09:16 after dt."""
+    """
+    dt is expected to already be midnight of the day a previous plan deactivates.
+    If that day is a trading day, the new plan starts exactly then;
+    otherwise roll forward to the next trading day at midnight.
+    """
     from datetime import datetime as _dt
     nxt = (dt if hasattr(dt, "hour") else _dt.combine(dt, _dt.min.time()))
-    nxt = nxt + timedelta(days=1)
-    nxt = nxt.replace(hour=9, minute=16, second=0, microsecond=0)
+    nxt = nxt.replace(hour=0, minute=0, second=0, microsecond=0)
     while nxt.weekday() >= 5 or is_market_holiday(nxt):
         nxt += timedelta(days=1)
     return nxt
