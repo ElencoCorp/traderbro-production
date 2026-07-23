@@ -2372,7 +2372,7 @@
           </div>
         </div>
         <div class="market-note" id="market-note" style="display:none;">
-          <i class="fas fa-clock"></i>Values generated 9:16 AM – 12 PM IST · Visible till next trading session
+          <i class="fas fa-clock"></i>Values generated 9:15 AM – 12 PM IST · Visible till next trading session
         </div>
       </div>
       <div class="rows-scroll">
@@ -2382,7 +2382,7 @@
             <div class="market-title">Market Insight Window Closed</div>
             <div class="market-desc">Live Black-Box-Engine values are generated during active market analysis hours.
             </div>
-            <div class="market-time">9:16 AM → 12 PM</div>
+            <div class="market-time">9:15 AM → 12 PM</div>
             <div class="market-sub">Previous values remain visible till next trading day 8:30 AM</div>
           </div>
         </div>
@@ -2603,7 +2603,7 @@ font-weight:600;
         id: 'sys-market-soon',
         fromMins: 9 * 60,          // 9:00 AM
         toMins: 9 * 60 + 15,     // 9:15 AM (show for 15 mins)
-        text: '🔔 Market Opening Soon — Session starts at 9:16 AM IST'
+        text: '🔔 Market Opening Soon — Session starts at 9:15 AM IST'
       },
       {
         id: 'sys-closing-soon',
@@ -2958,27 +2958,27 @@ font-weight:600;
         icon = "📅";
         title = "Market Closed — Saturday";
         desc = "NSE is closed on weekends. No live values are generated today.";
-        time = "Next session: <b>Monday at 9:16 AM IST</b>";
+        time = "Next session: <b>Monday at 9:15 AM IST</b>";
       } else if (day === 0) {
         icon = "📅";
         title = "Market Closed — Sunday";
         desc = "NSE is closed on weekends. No live values are generated today.";
-        time = "Next session: <b>Monday at 9:16 AM IST</b>";
+        time = "Next session: <b>Monday at 9:15 AM IST</b>";
       } else if (mins < marketOpen) {
         icon = "⏰";
         title = "Pre-Market — Session Not Started";
         desc = "Live Black-Box-Engine values are generated during active market analysis hours.";
-        time = "Session opens at <b>9:16 AM IST</b>";
+        time = "Session opens at <b>9:15 AM IST</b>";
       } else if (mins > marketClose) {
         icon = "🔔";
         title = "Market Session Ended for Today";
         desc = "Today's session has closed. Data will be available again next trading day.";
-        time = "Next session: <b>Tomorrow at 9:16 AM IST</b>";
+        time = "Next session: <b>Tomorrow at 9:15 AM IST</b>";
       } else {
         icon = "⏰";
         title = "Market Insight Window Closed";
         desc = "Live Black-Box-Engine values are generated during active market hours.";
-        time = "9:16 AM → 12:00 PM IST";
+        time = "9:15 AM → 12:00 PM IST";
       }
 
       return `
@@ -3483,57 +3483,57 @@ font-weight:600;
        AUTH CHECK
     ══════════════════════════════════════════════════════════ */
     async function checkDashboardAccess() {
-  try {
-    const res = await fetch("/api/dashboard-access", { credentials: "include" });
-    const data = await res.json();
+      try {
+        const res = await fetch("/api/dashboard-access", { credentials: "include" });
+        const data = await res.json();
 
-    // NOT LOGGED IN
-    if (data.reason === "not_logged_in") {
-      window.location.replace("/user-login");
-      return false;
-    }
+        // NOT LOGGED IN
+        if (data.reason === "not_logged_in") {
+          window.location.replace("/user-login");
+          return false;
+        }
 
-    // NO PLAN
-    if (data.reason === "no_plan") {
-      window.location.replace("/trading-plan");
-      return false;
-    }
+        // NO PLAN
+        if (data.reason === "no_plan") {
+          window.location.replace("/trading-plan");
+          return false;
+        }
 
-    // EXPIRED
-    if (data.reason === "plan_expired") {
-      window.location.replace("/trading-plan?expired=1");
-      return false;
-    }
+        // EXPIRED
+        if (data.reason === "plan_expired") {
+          window.location.replace("/trading-plan?expired=1");
+          return false;
+        }
 
-    // HANDLE INCOMING FUTURE ACTIVATION (POST-10:00 AM QUEUE LOGIC)
-    if (data.plan_start) {
-      const startMs = new Date(data.plan_start).getTime();
-      if (startMs > Date.now()) {
-        const formattedStart = new Date(data.plan_start).toLocaleString("en-IN", {
-          day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true
-        });
-        
-        showFullscreenClosed(
-          "⏳",
-          "Subscription Window Pending",
-          `Your subscription was securely processed after our 10:00 AM IST cutoff threshold.<br><br>As a result, your secure structural data dashboard view window will activate explicitly at midnight:<br><strong style="color:var(--primary); font-size:15px;">${formattedStart}</strong>`,
-          `<div style="margin-top:24px;"><a href="/account" style="color:#aaa; text-decoration:underline; font-size:12px;">Go to My Account</a></div>`
-        );
-        return false;
+        // HANDLE INCOMING FUTURE ACTIVATION (POST-10:00 AM QUEUE LOGIC)
+        if (data.plan_start) {
+          const startMs = new Date(data.plan_start).getTime();
+          if (startMs > Date.now()) {
+            const formattedStart = new Date(data.plan_start).toLocaleString("en-IN", {
+              day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true
+            });
+
+            showFullscreenClosed(
+              "⏳",
+              "Subscription Window Pending",
+              `Your subscription was securely processed after our 10:00 AM IST cutoff threshold.<br><br>As a result, your secure structural data dashboard view window will activate explicitly at midnight:<br><strong style="color:var(--primary); font-size:15px;">${formattedStart}</strong>`,
+              `<div style="margin-top:24px;"><a href="/account" style="color:#aaa; text-decoration:underline; font-size:12px;">Go to My Account</a></div>`
+            );
+            return false;
+          }
+        }
+
+        // On weekends/holidays, clear stale zero rows from display
+        if (data.is_weekend || data.is_holiday) {
+          updateMarketClosedBanner(data);
+        }
+
+        return true;
+      } catch (err) {
+        console.error(err);
+        return true;
       }
     }
-
-    // On weekends/holidays, clear stale zero rows from display
-    if (data.is_weekend || data.is_holiday) {
-      updateMarketClosedBanner(data);
-    }
-
-    return true;
-  } catch (err) {
-    console.error(err);
-    return true;
-  }
-}
     function updateMarketClosedBanner(accessData) {
       const grid = document.getElementById("rows-grid");
       if (!grid) return;
@@ -3560,19 +3560,19 @@ font-weight:600;
         const now = new Date();
         const ist = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
         const mins = ist.getHours() * 60 + ist.getMinutes();
-        if (mins < 9 * 60 + 16) {
+        if (mins < 9 * 60 + 15) {
           _closedReason = {
             icon: "⏰",
             title: "Pre-Market — Session Not Started",
             desc: "Live Black-Box-Engine values are generated during active market analysis hours.",
-            time: "Session opens at <b>9:16 AM IST</b>",
+            time: "Session opens at <b>9:15 AM IST</b>",
           };
         } else if (mins > 12 * 60) {
           _closedReason = {
             icon: "🔔",
             title: "Market Session Ended for Today",
             desc: "Today's session has closed. Data will be available again next trading day.",
-            time: `Next session: <b>${accessData.next_trading_day}</b> at <b>9:16 AM IST</b>`,
+            time: `Next session: <b>${accessData.next_trading_day}</b> at <b>9:15 AM IST</b>`,
           };
         }
       }
