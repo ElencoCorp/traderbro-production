@@ -1,4708 +1,3974 @@
-from fastapi import FastAPI, Request, UploadFile, File, Form
-from fastapi.responses import (
-    HTMLResponse,
-    FileResponse,
-    JSONResponse,
-    RedirectResponse
-)
-from fastapi.staticfiles import StaticFiles
-from apscheduler.schedulers.background import BackgroundScheduler
-import requests
-import pandas as pd
-from datetime import datetime, timedelta, timezone
-import csv, os, shutil, glob, json
-from starlette.middleware.sessions import SessionMiddleware
-import math
-import sqlite3
-import secrets
-import pytz
-IST = pytz.timezone("Asia/Kolkata")
-from passlib.context import CryptContext
-from dotenv import load_dotenv
-from fastapi import HTTPException
-from dhan_token_manager import init_token_manager, router as token_router
-from password_manager import router as pw_router
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, HRFlowable, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
-from reportlab.lib.units import mm
-from io import BytesIO
-from fastapi.responses import StreamingResponse
-from fastapi.responses import Response
-load_dotenv()
+<!DOCTYPE html>
+<html lang="en">
 
-# ── Time Configuration ─────────────────────────────
-IST = pytz.timezone("Asia/Kolkata")
-
-MARKET_OPEN_HOUR = 9
-MARKET_OPEN_MIN = 16
-
-MARKET_CLOSE_HOUR = 12
-MARKET_CLOSE_MIN = 0
-
-DASHBOARD_OPEN_HOUR = 8
-DASHBOARD_OPEN_MIN = 30
-
-CONFIG_FILE = "config.json"
-
-def get_interval():
-
-    try:
-
-        with open(CONFIG_FILE, "r") as f:
-
-            data = json.load(f)
-
-            return int(data.get("interval", 15))
-
-    except:
-
-        return 15
-
-
-def set_interval(val):
-
-    with open(CONFIG_FILE, "w") as f:
-
-        json.dump({
-            "interval": val
-        }, f)
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def hash_password(password):
-    return pwd_context.hash(password)
-
-def verify_password(plain, hashed):
-    return pwd_context.verify(plain, hashed)
-
-def create_user_session(request, username):
-
-    session_token = secrets.token_hex(32)
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    c.execute("""
-        INSERT OR REPLACE INTO active_sessions
-        (
-            username,
-            session_token,
-            login_time,
-            ip_address,
-            user_agent
-        )
-        VALUES (?, ?, datetime('now'), ?, ?)
-    """, (
-        username,
-        session_token,
-        request.client.host if request.client else "",
-        request.headers.get("user-agent", "")
-    ))
-
-    conn.commit()
-    conn.close()
-
-    request.session.clear()
-    request.session["user"] = username
-    request.session["role"] = "user"
-    request.session["session_token"] = session_token
-
-
-def validate_user_session(request):
-
-    username = request.session.get("user")
-    token = request.session.get("session_token")
-
-    if not username or not token:
-        return False
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    c.execute("""
-        SELECT session_token
-        FROM active_sessions
-        WHERE username=?
-    """, (username,))
-
-    row = c.fetchone()
-
-    conn.close()
-
-    if not row:
-        return False
-
-    return row[0] == token
-
-DB_FILE = "traderbro.db"
-
-
-from market_holidays import (
-    MARKET_HOLIDAYS, is_market_holiday, get_holiday_reason,
-    get_upcoming_holidays, get_today_holiday, get_all_holidays_list,
-    refresh_holidays, get_holidays_for_year
-    )
- 
-PLAN_CONFIG_DATA = {
-    "basic":     {"trading_days": 1,   "price": 99},
-    "essential": {"trading_days": 5,   "price": 399},
-    "pro":       {"trading_days": 22,  "price": 1499},
-    "premium":   {"trading_days": 250, "price": 14499},
-}
-
-def calculate_expiry_from_start(start_dt, trading_days):
-    """
-    Returns (expiry_dt, total_calendar_days, weekends_skipped, holidays_skipped).
-    start_dt counts as trading day #1 (must be a valid trading day).
-    Expiry is set to 12:00 PM (market close) of the last trading day.
-    """
-    days_to_add = trading_days - 1   # start day is already day 1
-    expiry = start_dt.replace(second=0, microsecond=0)  # preserve 08:30 start
-    added    = 0
-    weekends = 0
-    holidays = 0
- 
-    while added < days_to_add:
-        expiry = expiry + timedelta(days=1)
-        dow = expiry.weekday()
-        if dow >= 5:
-            weekends += 1
-            continue
-        if is_market_holiday(expiry):
-            holidays += 1
-            continue
-        added += 1
- 
-    # Expiry = 12:00 PM of last trading day
-    expiry = expiry.replace(
-        hour=MARKET_CLOSE_HOUR,
-        minute=MARKET_CLOSE_MIN,
-        second=0,
-        microsecond=0
-    )
-    total_cal = (expiry.date() - start_dt.date()).days + 1
-    return expiry, total_cal, weekends, holidays
- 
- 
-def get_next_trading_day_after(dt):
-    """Returns the next valid trading day at 08:30 AM after dt."""
-    nxt = dt + timedelta(days=1)
-    nxt = nxt.replace(
-        hour=DASHBOARD_OPEN_HOUR,
-        minute=DASHBOARD_OPEN_MIN,
-        second=0,
-        microsecond=0
-    )
-    while nxt.weekday() >= 5 or is_market_holiday(nxt):
-        nxt += timedelta(days=1)
-    return nxt
-
-
-def init_db():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        email TEXT UNIQUE,
-        password TEXT,
-        phone TEXT,
-        role TEXT DEFAULT 'user',
-        consent BOOLEAN,
-        plan TEXT DEFAULT 'free',
-        plan_start TEXT,
-        plan_expiry TEXT
-    )
-    """)
-
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS active_sessions (
-        username TEXT PRIMARY KEY,
-        session_token TEXT,
-        login_time TEXT,
-        ip_address TEXT,
-        user_agent TEXT
-    )
-    """)
-
-    """
-    c.execute(\"\"\"
-    CREATE TABLE IF NOT EXISTS broadcasts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        message TEXT NOT NULL,
-        sender TEXT DEFAULT 'admin',
-        timestamp TEXT NOT NULL,
-        pinned INTEGER DEFAULT 0
-    )
-    \"\"\")
-    """
-
-    # Create default admin if not exists
-    c.execute("SELECT * FROM users WHERE username='admin'")
-    if not c.fetchone():
-        admin_password = hash_password("admin123")
-        c.execute("""
-        INSERT INTO users (username, email, password, role, consent, plan)
-        VALUES (?, ?, ?, ?, ?, ?)
-        """, ("admin", "admin@example.com", admin_password, "admin", True, "pro"))
-
-    conn.commit()
-    conn.close()
-init_db()
-
-def migrate_db():
-    """Add columns that may be missing from older DB versions."""
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    # Add created_at to users if missing
-    try:
-        c.execute("ALTER TABLE users ADD COLUMN created_at TEXT")
-        # Backfill existing rows with a placeholder date
-        c.execute("UPDATE users SET created_at = datetime('now') WHERE created_at IS NULL")
-        conn.commit()
-        print("✅ DB migrated: added created_at to users")
-    except:
-        pass  # Column already exists
-    conn.close()
-
-migrate_db()
-
-def init_subscriptions_table():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS subscriptions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT NOT NULL,
-        plan TEXT NOT NULL,
-        plan_start TEXT NOT NULL,
-        plan_expiry TEXT NOT NULL,
-        trading_days INTEGER DEFAULT 0,
-        total_calendar_days INTEGER DEFAULT 0,
-        weekends_skipped INTEGER DEFAULT 0,
-        holidays_skipped INTEGER DEFAULT 0,
-        status TEXT DEFAULT 'queued',
-        price INTEGER DEFAULT 0,
-        created_at TEXT
-    )
-    """)
-    conn.commit()
-    conn.close()
- 
-init_subscriptions_table()
-
-# Webinar tables
-def init_webinars_table():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS webinars (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        description TEXT,
-        host TEXT DEFAULT 'TraderBro Team',
-        scheduled_at TEXT NOT NULL,
-        duration_minutes INTEGER DEFAULT 60,
-        topics TEXT,
-        meeting_link TEXT,
-        registration_link TEXT,
-        cover_color TEXT DEFAULT 'orange',
-        status TEXT DEFAULT 'upcoming',
-        max_seats INTEGER DEFAULT 0,
-        is_free INTEGER DEFAULT 1,
-        recording_link TEXT,
-        created_at TEXT,
-        updated_at TEXT
-    )
-    """)
-
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS webinar_registrations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        webinar_id INTEGER NOT NULL,
-        username TEXT NOT NULL,
-        registered_at TEXT NOT NULL,
-        UNIQUE(webinar_id, username)
-    )
-    """)
-
-    conn.commit()
-    conn.close()
-
-init_webinars_table()
-
-def create_admin():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    c.execute("SELECT * FROM users WHERE role='admin'")
-    admin = c.fetchone()
-
-    if not admin:
-        hashed_pw = hash_password("admin123")
-
-        c.execute("""
-        INSERT INTO users (username, email, password, role)
-        VALUES (?, ?, ?, ?)
-        """, ("admin", "admin@traderbro.in", hashed_pw, "admin"))
-
-        conn.commit()
-
-    conn.close()
-
-create_admin()
-
-# GLOBALs
-LAST_DATA = {
-    "time": None,
-    "data": None,
-    "DASH_HISTORY": {
-        "last_diff": 0,
-        "running": 0,
-        "rows": []
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TraderBro — Black-Box-Engine Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Roboto+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --primary: #02A3FE;
+      --primary-dark: #0082cc;
+      --bg-dark: #0a0a18;
+      --bg-card: #0f0f22;
+      --bg-card2: #13132a;
+      --bg-card3: #191932;
+      --border: rgba(2, 163, 254, 0.15);
+      --border-bright: rgba(2, 163, 254, 0.4);
+      --text: #e8eaf0;
+      --text-dim: #7a8099;
+      --text-muted: #4a5068;
+      --green: #00d4aa;
+      --green-bg: rgba(0, 212, 170, 0.1);
+      --red: #ff4d6d;
+      --red-bg: rgba(255, 77, 109, 0.1);
+      --gold: #f5a623;
+      --gold-bg: rgba(245, 166, 35, 0.1);
+      --orange: #EB4201;
+      --header-h: 70px;
+      --radius: 12px;
+      --radius-lg: 18px;
     }
-}
-LAST_FETCH_TIME = None
-LIVE_RUNNING_RECORDS = []
-RUNNING_FILE = "live_running.json"
-LOGIN_ATTEMPTS = {}
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: "Poppins", sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      background-image: radial-gradient(ellipse at 20% 50%, rgba(2, 163, 254, .04) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(235, 66, 1, .04) 0%, transparent 60%);
+    }
+
+    .welcome-bar {
+      background: linear-gradient(90deg, var(--orange), #ff6b35);
+      text-align: center;
+      padding: 8px 20px;
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .header {
+      height: var(--header-h);
+      background: rgba(9, 9, 21, .95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 20px;
+      position: relative;
+      z-index: 100;
+    }
+
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary), var(--orange), var(--primary), transparent);
+      opacity: .5;
+    }
+
+    .logo-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background-image: url(static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png);
+      background-size: contain;
+      background-repeat: no-repeat;
+    }
+
+    .logo-text-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .logo-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: white;
+      line-height: 1;
+    }
+
+    .logo-title span {
+      color: var(--primary);
+    }
+
+    .logo-sub {
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 2.5px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .header-divider {
+      width: 1px;
+      height: 36px;
+      background: var(--border);
+      margin: 0 4px;
+    }
+
+    .header-indices {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+    }
+
+    .idx-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .idx-label {
+      font-size: 10px;
+      color: #fff;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .idx-val {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ff6b35;
+      margin-top: 1px;
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .chat-toggle-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(2, 163, 254, .1);
+      border: 1px solid rgba(2, 163, 254, .3);
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      cursor: pointer;
+      transition: all .2s;
+      letter-spacing: .5px;
+      text-decoration: none;
+    }
+
+    .chat-toggle-btn:hover {
+      background: rgba(2, 163, 254, .18);
+      border-color: var(--primary);
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--green-bg);
+      border: 1px solid rgba(0, 212, 170, .3);
+      padding: 5px 14px;
+      border-radius: 30px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.5s ease-in-out infinite;
+      box-shadow: 0 0 8px var(--green);
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+
+      50% {
+        opacity: .4;
+        transform: scale(.8)
+      }
+    }
+
+    .ts-block {
+      text-align: right;
+    }
+
+    .ts-label {
+      font-size: 10px;
+      color: #fff;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .ts-val {
+      font-size: 13px;
+      font-weight: 600;
+      color: #ff6b35;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      height: calc(100vh - var(--header-h) - 36px);
+    }
+
+    .left-panel {
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .left-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--orange));
+    }
+
+    .panel-header {
+      padding: 16px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(2, 163, 254, .03);
+      flex-shrink: 0;
+    }
+
+    .panel-header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title::before {
+      content: '';
+      width: 3px;
+      height: 14px;
+      background: linear-gradient(180deg, var(--primary), var(--orange));
+      border-radius: 2px;
+    }
+
+    .atm-hero {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .atm-dt-box {
+      flex: 1;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .atm-dt-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, var(--primary), transparent);
+      opacity: .5;
+    }
+
+    .atm-dt-label {
+      font-size: 10px;
+      color: #ff6b35;
+      letter-spacing: 2px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .atm-dt-val {
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+      line-height: 1.7;
+    }
+
+    .atm-dt-val .strike-highlight {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .atm-run-box {
+      min-width: 110px;
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .atm-run-box .run-label {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      opacity: .7;
+    }
+
+    .atm-run-box .run-val {
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .atm-run-pos {
+      background: linear-gradient(135deg, rgba(0, 212, 170, .15), rgba(0, 212, 170, .05));
+      border: 1px solid rgba(0, 212, 170, .4);
+      color: var(--green);
+    }
+
+    .atm-run-pos .run-label {
+      color: var(--green);
+    }
+
+    .atm-run-neg {
+      background: linear-gradient(135deg, rgba(255, 77, 109, .15), rgba(255, 77, 109, .05));
+      border: 1px solid rgba(255, 77, 109, .4);
+      color: var(--red);
+    }
+
+    .atm-run-neg .run-label {
+      color: var(--red);
+    }
+
+    .atm-run-zero {
+      background: linear-gradient(135deg, rgba(245, 166, 35, .15), rgba(245, 166, 35, .05));
+      border: 1px solid rgba(245, 166, 35, .4);
+      color: var(--gold);
+    }
+
+    .atm-run-zero .run-label {
+      color: var(--gold);
+    }
+
+    .market-note {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--gold);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--gold-bg);
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(245, 166, 35, .2);
+    }
+
+    .rows-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+    }
+
+    .rows-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .rows-scroll::-webkit-scrollbar-thumb {
+      background: rgba(2, 163, 254, .2);
+      border-radius: 2px;
+    }
+
+    .rows-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-bottom: 20px;
+    }
+
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      transition: all .2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .data-row::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      border-radius: 0 2px 2px 0;
+    }
+
+    .data-row.row-neg::before {
+      background: var(--red);
+    }
+
+    .data-row.row-pos::before {
+      background: var(--green);
+    }
+
+    .data-row.row-zero::before {
+      background: var(--gold);
+    }
+
+    .data-row:hover {
+      border-color: var(--border-bright);
+      background: var(--bg-card3);
+      transform: translateX(2px);
+    }
+
+    .row-dt {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .row-time {
+      font-size: 13px;
+      font-family: "Roboto Mono", monospace;
+      font-weight: 600;
+      color: #ff6b35;
+    }
+
+    .row-sensex {
+      font-size: 12px;
+      color: #e8eaf0;
+    }
+
+    .val-pill {
+      min-width: 80px;
+      text-align: center;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .val-pos {
+      /* background: var(--green-bg);
+      color: var(--green); */
+      /* background: var(--green-bg); */
+      color: #d6cacaa4;
+      border: 1px solid rgba(0, 212, 170, .25);
+      font-size: 10px;
+      font-weight: 300;
+    }
+
+    .val-neg {
+      /* background: var(--red-bg);
+      color: var(--red); */
+      /* background: var(--red-bg); */
+      color: #6e6969a6;
+      border: 1px solid rgba(255, 77, 109, .25);
+      font-size: 10px;
+      font-weight: 300;
+    }
+
+    .val-zero {
+      background: var(--gold-bg);
+      color: var(--gold);
+      border: 1px solid rgba(245, 166, 35, .25);
+    }
+
+    .market-closed-box {
+      margin: 20px auto;
+      background: linear-gradient(135deg, rgba(245, 166, 35, .08), rgba(235, 66, 1, .04));
+      border: 1px solid rgba(245, 166, 35, .2);
+      border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      text-align: center;
+      animation: fadeInUp .5s ease;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .market-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+
+    .market-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .market-desc {
+      font-size: 12px;
+      color: red;
+      margin-bottom: 18px;
+      line-height: 1.6;
+    }
+
+    .market-time {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--gold), var(--orange));
+      color: white;
+      padding: 8px 24px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .market-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .right-panel {
+      background: var(--bg-dark);
+      display: grid;
+      grid-template-rows: 48% 52%;
+      overflow: hidden;
+      position: relative;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .gauge-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .gauge-card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .gauge-card-title::before,
+    .gauge-card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border));
+    }
+
+    .gauge-card-title::after {
+      background: linear-gradient(90deg, var(--border), transparent);
+    }
+
+    .gauge-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+
+    canvas#gauge {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .gauge-value-display {
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 24px;
+      font-weight: 900;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .sentiment-text {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    .sentiment-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 14px;
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .download-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .dl-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .plan-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      border: 1px solid;
+      flex-shrink: 0;
+    }
+
+    .plan-strip.plan-pro {
+      background: rgba(2, 163, 254, .08);
+      border-color: rgba(2, 163, 254, .3);
+    }
+
+    .plan-strip.plan-admin {
+      background: rgba(245, 166, 35, .08);
+      border-color: rgba(245, 166, 35, .3);
+    }
+
+    .plan-strip.plan-admin .plan-strip-label {
+      color: var(--gold);
+    }
+
+    .plan-strip.plan-admin .plan-strip-status {
+      color: var(--green);
+    }
+
+    .plan-strip.plan-premium {
+      background: rgba(245, 166, 35, .08);
+      border-color: rgba(245, 166, 35, .3);
+    }
+
+    .plan-strip.plan-basic,
+    .plan-strip.plan-essential,
+    .plan-strip.plan-free {
+      background: rgba(255, 77, 109, .06);
+      border-color: rgba(255, 77, 109, .2);
+    }
+
+    .plan-strip-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .plan-strip.plan-pro .plan-strip-label {
+      color: var(--primary);
+    }
+
+    .plan-strip.plan-premium .plan-strip-label {
+      color: var(--gold);
+    }
+
+    .plan-strip.plan-basic .plan-strip-label,
+    .plan-strip.plan-essential .plan-strip-label,
+    .plan-strip.plan-free .plan-strip-label {
+      color: var(--red);
+    }
+
+    .plan-strip-status {
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .plan-strip.plan-pro .plan-strip-status,
+    .plan-strip.plan-premium .plan-strip-status {
+      color: var(--green);
+    }
+
+    .plan-strip.plan-basic .plan-strip-status,
+    .plan-strip.plan-essential .plan-strip-status,
+    .plan-strip.plan-free .plan-strip-status {
+      color: var(--red);
+    }
+
+    .dl-scroll {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+      padding-right: 4px;
+    }
+
+    .dl-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .dl-scroll::-webkit-scrollbar-thumb {
+      background: rgba(2, 163, 254, .25);
+      border-radius: 10px;
+    }
+
+    .dl-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 6px;
+      background: var(--bg-card2);
+      transition: all .2s;
+    }
+
+    .dl-item:hover {
+      border-color: var(--border-bright);
+      background: var(--bg-card3);
+    }
+
+    .dl-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dl-item-icon {
+      font-size: 18px;
+    }
+
+    .dl-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .dl-date {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .dl-btn {
+      padding: 6px 14px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .2s;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .dl-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(2, 163, 254, .4);
+    }
+
+    .dl-upgrade-btn {
+      padding: 6px 12px;
+      background: linear-gradient(135deg, #ff6b35, var(--orange));
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .dl-upgrade-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(235, 66, 1, .4);
+    }
+
+    .no-files {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .no-files i {
+      font-size: 22px;
+      color: var(--border-bright);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .top-combined-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .gauge-card {
+      margin: 0;
+      height: 100%;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+    }
+
+    .upgrade-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .7);
+      backdrop-filter: blur(6px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .upgrade-overlay.active {
+      display: flex;
+    }
+
+    .upgrade-modal {
+      background: var(--bg-card);
+      border: 1px solid rgba(245, 166, 35, .3);
+      border-radius: 20px;
+      padding: 36px 32px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      animation: fadeInUp .3s ease;
+      position: relative;
+    }
+
+    .upgrade-modal-close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .upgrade-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .upgrade-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .upgrade-desc {
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    .upgrade-plans {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .upgrade-plan-card {
+      flex: 1;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid;
+      text-align: center;
+    }
+
+    .upgrade-plan-card.plan-pro {
+      border-color: rgba(2, 163, 254, .4);
+      background: rgba(2, 163, 254, .06);
+    }
+
+    .upgrade-plan-card.plan-premium {
+      border-color: rgba(245, 166, 35, .4);
+      background: rgba(245, 166, 35, .06);
+    }
+
+    .upgrade-plan-name {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .upgrade-plan-card.plan-pro .upgrade-plan-name {
+      color: var(--primary);
+    }
+
+    .upgrade-plan-card.plan-premium .upgrade-plan-name {
+      color: var(--gold);
+    }
+
+    .upgrade-plan-feature {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    .upgrade-cta {
+      display: inline-block;
+      padding: 12px 32px;
+      background: linear-gradient(135deg, var(--gold), var(--orange));
+      color: white;
+      border: none;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .2s;
+    }
+
+    .upgrade-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(245, 166, 35, .35);
+    }
+
+    /* ═══════════════════════════════════════════
+       BROADCAST CHAT — WhatsApp Admin Style
+    ═══════════════════════════════════════════ */
+    .bc-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: 100%;
+      min-height: 0;
+      position: relative;
+    }
+
+    .bc-wrap::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--orange), var(--primary), var(--orange));
+      opacity: .6;
+    }
+
+    /* Header */
+    .bc-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(2, 163, 254, .1);
+      background: rgba(9, 9, 21, .6);
+      flex-shrink: 0;
+    }
+
+    .bc-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #eb4201, #ff6b35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .bc-avatar::after {
+      content: '';
+      position: absolute;
+      bottom: 1px;
+      right: 1px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+      border: 2px solid var(--bg-card);
+    }
+
+    .bc-header-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .bc-header-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+    }
+
+    .bc-header-sub {
+      font-size: 10px;
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
+    .bc-online-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
+    }
+
+    .bc-header-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+    }
+
+    .bc-tab {
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 9px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid;
+      transition: all .2s;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    .bc-tab.active {
+      border-color: #02a3fe;
+      color: #02a3fe;
+      background: rgba(2, 163, 254, .15);
+    }
+
+    .bc-tab:not(.active) {
+      border-color: rgba(255, 255, 255, .1);
+      color: #3a4060;
+      background: transparent;
+    }
+
+    .bc-msg-count {
+      font-size: 9px;
+      color: #3a4060;
+    }
+
+    /* Pinned banner */
+    .bc-pinned {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      background: rgba(2, 163, 254, .06);
+      border-bottom: 1px solid rgba(2, 163, 254, .12);
+      border-left: 3px solid #02a3fe;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background .2s;
+    }
+
+    .bc-pinned:hover {
+      background: rgba(2, 163, 254, .1);
+    }
+
+    .bc-pinned.show {
+      display: flex;
+    }
+
+    .bc-pinned-icon {
+      font-size: 10px;
+      color: #02a3fe;
+      flex-shrink: 0;
+    }
+
+    .bc-pinned-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: #02a3fe;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .bc-pinned-text {
+      font-size: 10px;
+      color: #8090b8;
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    /* Messages area */
+    .bc-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 14px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-height: 0;
+      background: var(--bg-dark);
+      background-image: radial-gradient(ellipse at 50% 100%, rgba(2, 163, 254, .03) 0%, transparent 70%);
+    }
+
+    .bc-messages::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .bc-messages::-webkit-scrollbar-thumb {
+      background: rgba(2, 163, 254, .15);
+      border-radius: 2px;
+    }
+
+    /* Date separator */
+    .bc-date-sep {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 9px;
+      color: #2a3050;
+      letter-spacing: .5px;
+      margin: 8px 0 6px;
+    }
+
+    .bc-date-sep::before,
+    .bc-date-sep::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, .04);
+    }
+
+    .bc-date-sep span {
+      background: rgba(2, 163, 254, .06);
+      padding: 2px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(2, 163, 254, .08);
+      color: #3a4060;
+      white-space: nowrap;
+    }
+
+    /* Individual message */
+    .bc-msg {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 6px;
+      animation: bcMsgIn .25s cubic-bezier(.34, 1.56, .64, 1);
+    }
+
+    @keyframes bcMsgIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(.97)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1)
+      }
+    }
+
+    .bc-msg-meta {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 4px;
+      margin-bottom: 4px;
+    }
+
+    .bc-msg-sender {
+      font-size: 10px;
+      font-weight: 700;
+      color: #eb4201;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .bc-msg-time {
+      font-size: 9px;
+      color: #2a3050;
+    }
+
+    .bc-msg-pin-tag {
+      font-size: 8px;
+      color: #02a3fe;
+      background: rgba(2, 163, 254, .08);
+      padding: 1px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(2, 163, 254, .18);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .bc-msg-body-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      width: 100%;
+      max-width: 90%;
+    }
+
+    .bc-bubble {
+      background: #161628;
+      border: 1px solid rgba(2, 163, 254, .1);
+      border-radius: 3px 14px 14px 14px;
+      padding: 9px 14px 8px;
+      font-size: 12px;
+      color: var(--gold);
+      line-height: 1.65;
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      word-break: break-word;
+      transition: border-color .2s;
+    }
+
+    .bc-bubble::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #eb4201, transparent);
+      opacity: .2;
+      border-radius: 3px 14px 0 0;
+    }
+
+    .bc-bubble.is-pinned {
+      background: rgba(2, 163, 254, .07);
+      border-color: rgba(2, 163, 254, .22);
+    }
+
+    .bc-bubble.is-pinned::before {
+      background: linear-gradient(90deg, #02a3fe, transparent);
+      opacity: .3;
+    }
+
+    .bc-bubble-footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 5px;
+      margin-top: 5px;
+    }
+
+    .bc-bubble-ts {
+      font-size: 9px;
+      color: var(--green);
+    }
+
+    .bc-ticks {
+      font-size: 10px;
+      color: #02a3fe;
+      opacity: .6;
+    }
+
+    /* Admin action buttons — appear on hover */
+    .bc-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity .15s;
+      flex-shrink: 0;
+    }
+
+    .bc-msg-body-row:hover .bc-actions {
+      opacity: 1;
+    }
+
+    .bc-act-btn {
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-size: 9px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid;
+      white-space: nowrap;
+      line-height: 1.6;
+      transition: all .15s;
+      background: var(--bg-card2);
+    }
+
+    .bc-act-btn.pin {
+      color: #02a3fe;
+      border-color: rgba(2, 163, 254, .3);
+    }
+
+    .bc-act-btn.pin:hover {
+      background: rgba(2, 163, 254, .15);
+    }
+
+    .bc-act-btn.del {
+      color: #ff4d6d;
+      border-color: rgba(255, 77, 109, .3);
+    }
+
+    .bc-act-btn.del:hover {
+      background: rgba(255, 77, 109, .15);
+    }
+
+    /* Empty state */
+    .bc-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #2a3050;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .bc-empty-icon {
+      font-size: 36px;
+      opacity: .3;
+    }
+
+    .bc-empty-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #3a4060;
+    }
+
+    .bc-empty-sub {
+      font-size: 11px;
+      color: #2a3050;
+      line-height: 1.5;
+    }
+
+    /* Compose area */
+    .bc-compose {
+      border-top: 1px solid rgba(2, 163, 254, .1);
+      padding: 10px 12px;
+      background: rgba(9, 9, 21, .5);
+      flex-shrink: 0;
+    }
+
+    .bc-compose-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .bc-textarea {
+      flex: 1;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid rgba(2, 163, 254, .18);
+      border-radius: 22px;
+      color: #e8eaf0;
+      font-family: 'Poppins', sans-serif;
+      font-size: 11px;
+      padding: 9px 16px;
+      resize: none;
+      height: 38px;
+      max-height: 100px;
+      outline: none;
+      line-height: 1.5;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .bc-textarea:focus {
+      border-color: rgba(2, 163, 254, .45);
+      box-shadow: 0 0 0 3px rgba(2, 163, 254, .07);
+    }
+
+    .bc-textarea::placeholder {
+      color: #2a3050;
+    }
+
+    .bc-send-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #02a3fe, #0082cc);
+      border: none;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+      transition: all .2s;
+      box-shadow: 0 4px 14px rgba(2, 163, 254, .35);
+    }
+
+    .bc-send-btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 20px rgba(2, 163, 254, .5);
+    }
+
+    .bc-send-btn:active {
+      transform: scale(.95);
+    }
+
+    .bc-send-btn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .bc-compose-hint {
+      font-size: 9px;
+      color: #2a3050;
+      text-align: center;
+      margin-top: 6px;
+    }
+
+    /* User read-only bar */
+    .bc-readonly {
+      border-top: 1px solid rgba(0, 212, 170, .08);
+      padding: 9px 14px;
+      background: rgba(0, 212, 170, .03);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 10px;
+      color: #2a5048;
+      flex-shrink: 0;
+    }
+
+    .bc-readonly-icon {
+      font-size: 12px;
+    }
+
+    /* New message notification badge */
+    .bc-new-badge {
+      display: none;
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #02a3fe, #0082cc);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(2, 163, 254, .4);
+      animation: bcBadgePop .3s ease;
+      z-index: 10;
+      white-space: nowrap;
+    }
+
+    .bc-new-badge.show {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    @keyframes bcBadgePop {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0)
+      }
+    }
+
+    @media(max-width:768px) {
+
+      html,
+      body {
+        overflow-y: auto;
+        height: auto;
+      }
+
+      .main-grid {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+      }
+
+      .left-panel,
+      .right-panel {
+        overflow: visible;
+        width: 100%;
+      }
+
+      .right-panel {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        padding: 10px;
+      }
+
+      .top-combined-box {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+      }
+
+      .gauge-card,
+      .download-card,
+      .bc-wrap {
+        width: 100%;
+        height: auto;
+        min-height: auto;
+      }
+
+      .gauge-wrapper {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      canvas#gauge {
+        width: 100% !important;
+        max-width: 280px;
+        height: auto !important;
+      }
+
+      .gauge-value-display {
+        font-size: 20px;
+        bottom: -7px;
+      }
+
+      .rows-scroll {
+        max-height: 55vh;
+      }
+
+      .bc-wrap {
+        min-height: 400px;
+      }
+    }
+
+    .quick-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(235, 66, 1, .12);
+      border: 1px solid rgba(235, 66, 1, .3);
+      color: #eb4201;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      transition: all .2s;
+      position: absolute;
+      right: 60px;
+      bottom: 32px;
+    }
+
+    .quick-btn:hover {
+      background: rgba(235, 66, 1, .22);
+      border-color: #eb4201;
+      transform: scale(1.05);
+    }
+
+    .quick-btn.open {
+      background: rgba(235, 66, 1, .22);
+      border-color: #eb4201;
+      transform: rotate(45deg);
+    }
+
+    .quick-menu {
+      position: absolute;
+      bottom: 50px;
+      left: 0;
+      right: 50px;
+      background: #0f0f22;
+      border: 1px solid rgba(2, 163, 254, .2);
+      border-radius: 12px;
+      overflow: hidden;
+      z-index: 100;
+      box-shadow: 0 -8px 32px rgba(0, 0, 0, .5);
+      display: none;
+    }
+
+    .quick-menu.show {
+      display: block;
+      animation: qmUp .2s ease;
+    }
+
+    @keyframes qmUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .quick-menu-header {
+      padding: 8px 14px 6px;
+      border-bottom: 1px solid rgba(2, 163, 254, .1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .quick-menu-title {
+      font-size: 9px;
+      font-weight: 700;
+      color: #02a3fe;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .quick-menu-title::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #eb4201;
+    }
+
+    .quick-menu-close {
+      background: none;
+      border: none;
+      color: #2a3050;
+      cursor: pointer;
+      font-size: 14px;
+      transition: color .15s;
+    }
+
+    .quick-menu-close:hover {
+      color: #e8eaf0;
+    }
+
+    .quick-menu-list {
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .quick-menu-list::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .quick-menu-list::-webkit-scrollbar-thumb {
+      background: rgba(2, 163, 254, .2);
+      border-radius: 2px;
+    }
+
+    .quick-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      cursor: pointer;
+      transition: background .15s;
+      border-bottom: 1px solid rgba(255, 255, 255, .03);
+    }
+
+    .quick-item:last-child {
+      border-bottom: none;
+    }
+
+    .quick-item:hover {
+      background: rgba(2, 163, 254, .07);
+    }
+
+    .quick-item:hover .qi-text {
+      color: #fff;
+    }
+
+    .qi-num {
+      min-width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(2, 163, 254, .1);
+      border: 1px solid rgba(2, 163, 254, .2);
+      font-size: 9px;
+      font-weight: 700;
+      color: #02a3fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .qi-text {
+      font-size: 11px;
+      color: var(--gold);
+      line-height: 1.4;
+      transition: color .15s;
+      flex: 1;
+    }
+
+    .qi-arrow {
+      font-size: 10px;
+      color: #2a3050;
+      flex-shrink: 0;
+      transition: color .15s;
+    }
+
+    .quick-item:hover .qi-arrow {
+      color: #02a3fe;
+    }
 
 
-app = FastAPI()
-app.add_middleware(
-    SessionMiddleware,
-    secret_key="TraderBro@2026#Secure$FastAPI",
-    https_only=False,  
-    same_site="lax"
-)
-app.include_router(pw_router)
-@app.get("/forgot-password", response_class=HTMLResponse)
-def forgot_password_page():
-    import os
-    path = os.path.join(STATIC_DIR, "finlab", "forgot-password.html")
-    with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
+    /* ── Active Users Widget ── */
+    .active-users-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(0, 212, 170, .08);
+      border: 1px solid rgba(0, 212, 170, .25);
+      padding: 5px 13px;
+      border-radius: 30px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--green);
+      letter-spacing: .5px;
+      cursor: default;
+      transition: border-color .3s;
+    }
 
-# ── Serve static files (dashboard.html lives in ./static/) ──────────────
-STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
-os.makedirs(STATIC_DIR, exist_ok=True)
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    .active-users-pill .au-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      flex-shrink: 0;
+      animation: pulse 2s infinite;
+    }
 
-# ── Upload storage folder ────────────────────────────────────────────────
-UPLOADS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploaded_csvs")
-EXCEL_DIR = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    "excel_exports"
-)
-os.makedirs(UPLOADS_DIR, exist_ok=True)
-os.makedirs(EXCEL_DIR, exist_ok=True)
+    .active-users-pill .au-count {
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--green);
+      min-width: 18px;
+      text-align: center;
+    }
 
-# CLIENT_ID  = "1100585975"
-# ACCESS_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzc4NTIwMjExLCJpYXQiOjE3Nzg0MzM4MTEsInRva2VuQ29uc3VtZXJUeXBlIjoiU0VMRiIsIndlYmhvb2tVcmwiOiIiLCJkaGFuQ2xpZW50SWQiOiIxMTAwNTg1OTc1In0.B3PZw1MYo0V33yv2O_nQMaOu6_ISoggjscSpYjhJcgfUPrs1vYt26uI8S3XZxlRG1BswvBKjZzNfjzNnJ74Jwg"
-ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
-CLIENT_ID  = os.getenv("CLIENT_ID")
-BASE_URL   = "https://api.dhan.co/v2"
-HEADERS    = {
-    "Content-Type": "application/json",
-    "access-token": ACCESS_TOKEN,
-    "client-id":    CLIENT_ID,
-}
+    /* Active users pill — responsive */
+    @media (max-width: 768px) {
 
-CSV_FILE = "sensex_atm_history.csv"
-CSV_COLUMNS = [
-    "DateTime", "Expiry", "Strike",
-    "CE_LTP", "CE_Delta", "CE_Gamma", "CE_Theta", "CE_Vega",
-    "PE_LTP", "PE_Delta", "PE_Gamma", "PE_Theta", "PE_Vega",
-    "Delta_Ratio", "Index_LTP",
-    "Reference", "Stretched", "Difference"
-]
+      .header .active-users-pill {
+        display: none !important;
+      }
 
-# ── Recorder state ───────────────────────────────────────────────────────
-recorder_state = {
-    "running": False, "interval": 20,
-    "expiry": None, "start_time": None,
-    "stop_time": None, "records_saved": 0,
-}
-scheduler = BackgroundScheduler()
-scheduler.start()
+      .active-users-pill {
+        padding: 4px 10px;
+        font-size: 9px;
+        gap: 5px;
+      }
 
-# VPS AUTO RECORDER
-AUTO_RUNNING = False
+      .active-users-pill .au-count {
+        font-size: 11px;
+      }
 
-# Remove these two globals (no longer needed):
-# LAST_FETCH_TIME = None   ← delete this line at the top
+      .active-users-pill span:last-child {
+        display: none;
+        /* hide "on dashboard" text on mobile, keep count */
+      }
+    }
 
-def auto_market_recorder():
-    global AUTO_RUNNING
+    /* ── System / Timed Messages ── */
+    .bc-msg.system-msg .bc-msg-sender {
+      color: var(--gold);
+    }
 
-    now = datetime.now(IST)
+    .bc-bubble.system-bubble {
+      background: rgba(245, 166, 35, .06);
+      border-color: rgba(245, 166, 35, .2);
+    }
 
-    # ── HARD BLOCK: weekends and holidays never record ──────────────────
-    if now.weekday() >= 5:          # Saturday=5, Sunday=6
-        if AUTO_RUNNING:
-            print("⛔ WEEKEND — recorder idle")
-            AUTO_RUNNING = False
-        return
+    .bc-bubble.system-bubble::before {
+      background: linear-gradient(90deg, #f5a623, transparent);
+      opacity: .3;
+    }
 
-    if is_market_holiday(now):
-        if AUTO_RUNNING:
-            print(f"⛔ HOLIDAY ({get_holiday_reason(now)}) — recorder idle")
-            AUTO_RUNNING = False
-        return
+    /* ── DASHBOARD USER DROPDOWN ── */
+    .dash-user-wrap {
+      position: relative;
+    }
 
-    # if True:  # keep your market hours check here if needed
-    if is_market_open():
-        if not AUTO_RUNNING:
-            print("🚀 MARKET RECORDER STARTED")
-            AUTO_RUNNING = True
+    .dash-user-btn {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 30px;
+      padding: 5px 12px 5px 5px;
+      cursor: pointer;
+      transition: all .2s;
+      color: var(--text);
+      font-family: inherit;
+    }
 
-        try:
-            expiry_list = get_expiries()
-            if not expiry_list:
-                return
+    .dash-user-btn:hover {
+      background: rgba(255, 255, 255, .1);
+      border-color: rgba(2, 163, 254, .4);
+    }
 
-            expiry = expiry_list[0]
-            ltp, df, atm = get_live_chain(expiry, force_live=True)  # ← force_live=True
+    .dash-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--orange));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: white;
+      flex-shrink: 0;
+    }
 
-            if df.empty or atm is None:
-                return
+    .dash-user-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1px;
+    }
 
-            atm_row = df[df["Strike"] == atm]
-            if atm_row.empty:
-                return
+    .dash-username {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+      max-width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
-            r = atm_row.iloc[0]
+    .dash-plan {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--gold);
+      line-height: 1;
+    }
 
-            global LIVE_RUNNING_RECORDS
+    .dash-plan.plan-pro {
+      color: var(--primary);
+    }
 
-            current_diff = r["Difference"]
-            if current_diff is None:
-                current_diff = 0
+    .dash-plan.plan-premium {
+      color: var(--gold);
+    }
 
-            row = {
-                "datetime":   str(r["DateTime"]),
-                "expiry":     str(r["Expiry"]),
-                "ce_ltp":     r["CE_LTP"],
-                "ce_delta":   r["CE_Delta"],
-                "ce_gamma":   r["CE_Gamma"],
-                "ce_theta":   r["CE_Theta"],
-                "ce_vega":    r["CE_Vega"],
-                "strike":     int(r["Strike"]),
-                "pe_ltp":     r["PE_LTP"],
-                "pe_delta":   r["PE_Delta"],
-                "pe_gamma":   r["PE_Gamma"],
-                "pe_theta":   r["PE_Theta"],
-                "pe_vega":    r["PE_Vega"],
-                "delta_ratio": r["Delta_Ratio"],
-                "index_ltp":  ltp,
-                "reference":  r["Reference"],
-                "stretched":  r["Stretched"],
-                "difference": current_diff,
-                "diff_prev":  0,
-                "running":    0,
-            }
+    .dash-plan.plan-admin {
+      color: var(--green);
+    }
 
-            if len(LIVE_RUNNING_RECORDS) > 0:
-                prev = LIVE_RUNNING_RECORDS[-1]
-                diff_change = current_diff - prev["difference"]
-                row["diff_prev"] = round(diff_change, 2)
-                row["running"]   = round(prev.get("running", 0) + diff_change, 2)
-            # First record: running stays 0 (baseline)
+    .dash-plan.plan-free,
+    .dash-plan.plan-basic,
+    .dash-plan.plan-essential {
+      color: var(--text-dim);
+    }
 
-            # DUPLICATE TIMESTAMP PROTECTION
-            if len(LIVE_RUNNING_RECORDS) > 0:
-                last = LIVE_RUNNING_RECORDS[-1]
-                if (last["datetime"] == row["datetime"] and
-                        last["difference"] == row["difference"]):
-                    print("⚠️ DUPLICATE ROW SKIPPED")
-                    return
+    .dash-chevron {
+      font-size: 9px;
+      color: var(--text-muted);
+      transition: transform .2s;
+      flex-shrink: 0;
+    }
 
-            LIVE_RUNNING_RECORDS.append(row)
-            LIVE_RUNNING_RECORDS = LIVE_RUNNING_RECORDS[-2000:]
+    .dash-chevron.open {
+      transform: rotate(180deg);
+    }
 
-            with open(RUNNING_FILE, "w") as f:
-                json.dump(LIVE_RUNNING_RECORDS, f)
+    /* Dropdown panel */
+    .dash-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      width: 260px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-bright);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, .6);
+      z-index: 9999;
+      overflow: hidden;
+      animation: ddIn .2s cubic-bezier(.34, 1.56, .64, 1);
+    }
 
-            print("✅ SAVED:", row["datetime"])
+    @keyframes ddIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px) scale(.97);
+      }
 
-        except Exception as e:
-            print("AUTO RECORDER ERROR:", e)
-    else:
-        if AUTO_RUNNING:
-            print("⛔ MARKET RECORDER STOPPED")
-        AUTO_RUNNING = False
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
 
-# login
+    .dash-dropdown.open {
+      display: block;
+    }
 
-def load_login_template(role="admin", error=False):
-    path = os.path.join(STATIC_DIR, "finlab", "login.html")
+    /* User info block inside dropdown */
+    .dd-user-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px 12px;
+      background: rgba(2, 163, 254, .04);
+      border-bottom: 1px solid var(--border);
+    }
 
-    with open(path, "r", encoding="utf-8") as f:
-        html = f.read()
+    .dd-avatar-lg {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--orange));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 800;
+      color: white;
+      flex-shrink: 0;
+    }
 
-    # Asset paths
-    html = html.replace('href="vendor/', 'href="/static/finlab/vendor/')
-    html = html.replace('src="vendor/', 'src="/static/finlab/vendor/')
-    html = html.replace('href="css/', 'href="/static/finlab/css/')
-    html = html.replace('src="js/', 'src="/static/finlab/js/')
-    html = html.replace('href="images/', 'href="/static/finlab/images/')
-    html = html.replace('src="images/', 'src="/static/finlab/images/')
-    html = html.replace('url(images/', 'url(/static/finlab/images/')
+    .dd-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+    }
 
-    if role == "admin":
-        html = html.replace("Welcome Back", "Admin Login")
-        html = html.replace("Sign Me In", "Login as Admin")
-        html = html.replace(
-            "Log in to your admin dashboard with your credentials",
-            "Secure admin access to TraderBro control panel"
-        )
-        html = html.replace(
-            "The Evolution of <span>Finlab</span>",
-            "Welcome to <span>TraderBro</span>"
-        )
-        action = "/admin-login"
-    else:
-        action = "/user-login"
+    .dd-email {
+      font-size: 10px;
+      color: var(--text-dim);
+      margin-top: 2px;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
-    html = html.replace(
-        '<form method="POST" action="/user-login">',
-        f'<form method="POST" action="{action}">'
-    )
+    /* Plan strip */
+    .dd-plan-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0, 0, 0, .2);
+      color: var(--text-dim);
+    }
 
-    html = html.replace(
-        'name="identifier"',
-        'name="username"'
-    )
+    .dd-plan-status {
+      color: var(--green);
+    }
 
-    html = html.replace(
-        'type="email" class="form-control" value="hello@example.com"',
-        'type="text" name="username" class="form-control" placeholder="Enter Username"'
-    )
+    /* Menu items */
+    .dd-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
 
-    html = html.replace(
-        'id="dlab-password" class="form-control" value="123456"',
-        'name="password" id="dlab-password" class="form-control" placeholder="Enter Password"'
-    )
+    .dd-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      text-decoration: none;
+      transition: background .15s;
+      cursor: pointer;
+    }
 
-    if error:
-        html = html.replace(
-            '<form method="post"',
-            '''
-            <div style="background:#ffdddd;color:red;padding:10px;margin-bottom:15px;border-radius:8px">
-            Invalid Login Credentials
+    .dd-item:hover {
+      background: rgba(2, 163, 254, .07);
+      color: #fff;
+    }
+
+    .dd-item:hover .dd-arrow {
+      opacity: 1;
+    }
+
+    .dd-icon {
+      font-size: 14px;
+      width: 16px;
+      text-align: center;
+      color: var(--text-dim);
+      flex-shrink: 0;
+    }
+
+    .dd-arrow {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-left: auto;
+      opacity: 0;
+      transition: opacity .15s;
+    }
+
+    /* Expiry strip */
+    .dd-expiry {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 16px;
+      font-size: 10px;
+      color: var(--text-dim);
+      background: rgba(245, 166, 35, .04);
+      border-top: 1px solid rgba(245, 166, 35, .1);
+    }
+
+    /* Logout */
+    .dd-logout {
+      color: var(--red) !important;
+    }
+
+    .dd-logout:hover {
+      background: rgba(255, 77, 109, .08) !important;
+    }
+
+    .dd-logout .dd-icon {
+      color: var(--red) !important;
+    }
+
+    /* BBI Grayscale Theme matching the Running Index style */
+    .val-pill.bbi-pos {
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid rgba(232, 234, 240, 0.25);
+      font-weight: 700;
+    }
+
+    .val-pill.bbi-neg {
+      background: var(--red-bg);
+      color: var(--red);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-weight: 700;
+    }
+
+    .val-pill.bbi-zero {
+      background: rgba(40, 40, 50, 0.5);
+      color: #7a8099;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="welcome-bar">Welcome to the Black-Box-Engine Developed by TraderBro.in</div>
+
+  <div id="holiday-banner" style="
+  display:none;
+  background: linear-gradient(135deg,#1a0a00,#2d1500);
+  border-bottom: 2px solid #f5a623;
+  padding: 10px 28px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  animation: fadeInDown 0.4s ease;
+">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:24px;">🏖️</span>
+      <div>
+        <div style="font-size:13px;font-weight:800;color:#f5a623;letter-spacing:0.5px;">
+          MARKET HOLIDAY TODAY
+        </div>
+        <div style="font-size:12px;color:#e0a060;" id="holiday-reason-text">
+          Market is closed today
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <div id="upcoming-holiday-chips" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      <button onclick="document.getElementById('holiday-banner').style.display='none'" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+             color:#aaa;font-size:12px;padding:4px 10px;border-radius:8px;cursor:pointer;">
+        ✕
+      </button>
+    </div>
+  </div>
+
+  <div id="upcoming-holiday-strip" style="display:none;"></div>
+
+  <header class="header">
+    <div class="logo-block">
+      <a href="/">
+        <div class="logo-icon"></div>
+      </a>
+      <div class="logo-text-wrap">
+        <div class="logo-title">Trader<span>Bro.in</span></div>
+        <div class="logo-sub">Black-Box-Engine Dashboard</div>
+      </div>
+    </div>
+    <div class="header-divider"></div>
+    <div class="header-indices">
+      <div class="idx-item">
+        <div class="idx-label">Sensex</div>
+        <div class="idx-val" id="h-ltp">—</div>
+      </div>
+      <div class="idx-item">
+        <div class="idx-label">Expiry</div>
+        <div class="idx-val" id="h-expiry" style="font-size:11px">—</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="active-users-pill" id="active-users-pill" style="display:none;" title="Users currently on dashboard">
+        <span class="au-dot"></span>
+        <span class="au-count" id="au-count">—</span>
+        <span>on dashboard</span>
+      </div>
+      <a href="/" class="chat-toggle-btn"><i class="fa-solid fa-house"></i><span>HOME</span></a>
+      <div class="live-badge"><span class="live-dot"></span>Live</div>
+      <div class="ts-block">
+        <div class="ts-label">Last Updated</div>
+        <div class="ts-val" id="h-ts">—</div>
+      </div>
+
+      <div class="dash-user-wrap" id="dash-user-wrap" style="display:none; position:relative;">
+        <button class="dash-user-btn" id="dash-user-btn" onclick="dashToggle()" title="My Account">
+          <div class="dash-avatar" id="dash-avatar">?</div>
+          <div class="dash-user-info">
+            <div class="dash-username" id="dash-username">Loading…</div>
+            <div class="dash-plan" id="dash-plan">—</div>
+          </div>
+          <i class="fas fa-chevron-down dash-chevron" id="dash-chevron"></i>
+        </button>
+
+        <div class="dash-dropdown" id="dash-dropdown">
+          <div class="dd-user-block">
+            <div class="dd-avatar-lg" id="dd-avatar-lg">?</div>
+            <div>
+              <div class="dd-name" id="dd-name">—</div>
+              <div class="dd-email" id="dd-email">—</div>
             </div>
-            <form method="post"
-            '''
-        )
+          </div>
 
-    return html
+          <div class="dd-plan-strip" id="dd-plan-strip">
+            <span id="dd-plan-label">—</span>
+            <span class="dd-plan-status" id="dd-plan-status">—</span>
+          </div>
 
-# @app.get("/api/me")
-# def get_current_user(request: Request):
+          <div class="dd-divider"></div>
 
-#     if "user" not in request.session:
-#         return {"username": None}
+          <a href="/account" class="dd-item">
+            <i class="fas fa-user-circle dd-icon"></i>
+            <span>My Account</span>
+            <i class="fas fa-chevron-right dd-arrow"></i>
+          </a>
+          <a href="/trading-plan" class="dd-item">
+            <i class="fas fa-crown dd-icon" style="color:var(--gold)"></i>
+            <span>Upgrade Plan</span>
+            <i class="fas fa-chevron-right dd-arrow"></i>
+          </a>
+          <a href="/webinars" class="dd-item">
+            <i class="fas fa-video dd-icon" style="color:var(--primary)"></i>
+            <span>Webinars</span>
+            <i class="fas fa-chevron-right dd-arrow"></i>
+          </a>
 
-#     conn = sqlite3.connect(DB_FILE)
-#     c = conn.cursor()
+          <div id="dd-admin-section" style="display:none;">
+            <div class="dd-divider"></div>
+            <a href="/admin/users" class="dd-item">
+              <i class="fas fa-users-cog dd-icon" style="color:var(--orange)"></i>
+              <span>User Management</span>
+              <i class="fas fa-chevron-right dd-arrow"></i>
+            </a>
+            <a href="/admin/webinars" class="dd-item">
+              <i class="fas fa-calendar-alt dd-icon" style="color:var(--orange)"></i>
+              <span>Manage Webinars</span>
+              <i class="fas fa-chevron-right dd-arrow"></i>
+            </a>
+            <a href="/admin" class="dd-item">
+              <i class="fas fa-chart-line dd-icon" style="color:var(--orange)"></i>
+              <span>Admin Panel</span>
+              <i class="fas fa-chevron-right dd-arrow"></i>
+            </a>
+          </div>
 
-#     c.execute("""
-#         SELECT username, email, phone, plan, plan_start, plan_expiry
-#         FROM users
-#         WHERE username=?
-#     """, (request.session["user"],))
+          <div class="dd-divider"></div>
 
-#     user = c.fetchone()
+          <div class="dd-expiry" id="dd-expiry" style="display:none;">
+            <i class="fas fa-clock" style="color:var(--gold);font-size:11px;"></i>
+            <span id="dd-expiry-text">—</span>
+          </div>
 
-#     conn.close()
+          <a href="/logout" class="dd-item dd-logout">
+            <i class="fas fa-sign-out-alt dd-icon"></i>
+            <span>Logout</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
 
-#     if user:
-#         return {
-#             "username": user[0],
-#             "email": user[1],
-#             "phone": user[2],
-#             "plan": user[3],
-#             "plan_start": user[4],
-#             "plan_expiry": user[5]
-#         }
+  <div class="main-grid">
 
-#     return {"username": None}
+    <div class="left-panel">
+      <div class="panel-header">
+        <div class="panel-header-top">
+          <div class="panel-title">Black-Box-Engine</div>
+        </div>
+        <div class="atm-hero">
+          <div class="atm-dt-box">
+            <div class="atm-dt-label">ATM Strike &amp; Timestamp</div>
+            <div class="atm-dt-val" id="atm-dt">Waiting for market session...</div>
+          </div>
+          <div class="atm-run-box atm-run-zero" id="atm-run-box">
+            <span class="run-label">Running</span>
+            <span class="run-val" id="atm-run-val">—</span>
+          </div>
+        </div>
+        <div class="market-note" id="market-note" style="display:none;">
+          <i class="fas fa-clock"></i>Values generated 9:16 AM – 12 PM IST · Visible till next trading session
+        </div>
+      </div>
+      <div class="rows-scroll">
+        <div class="rows-grid" id="rows-grid">
+          <div class="market-closed-box">
+            <div class="market-icon">⏰</div>
+            <div class="market-title">Market Insight Window Closed</div>
+            <div class="market-desc">Live Black-Box-Engine values are generated during active market analysis hours.
+            </div>
+            <div class="market-time">9:16 AM → 12 PM</div>
+            <div class="market-sub">Previous values remain visible till next trading day 8:30 AM</div>
+          </div>
+        </div>
+      </div>
+      <div
+        style="padding:8px 14px;background:rgba(235,66,1,.06);border-top:1px solid rgba(235,66,1,.12);font-size:11px;color:yellow;text-align:center;flex-shrink:0;">
+        ⚠️ Traderbro.in is an educational platform. Not SEBI registered as RA or IA. No investment advice provided.
+      </div>
+    </div>
 
+    <div class="right-panel">
 
-SITE_URL = "https://traderbro.in"
+      <div class="top-combined-box">
+        <div class="gauge-card">
+          <div class="gauge-card-title">Sentimental Dial Gauge</div>
+          <div class="gauge-wrapper">
+            <canvas id="gauge" width="600" height="370"></canvas>
+            <div class="gauge-value-display" id="gauge-val" style="color:var(--gold)">0</div>
+          </div>
+          <div class="sentiment-text" id="sentiment-text">
+            <span class="sentiment-badge"
+              style="background:rgba(245,166,35,.1);color:var(--gold);border:1px solid rgba(245,166,35,.3);">◆
+              Neutral</span>
+          </div>
+        </div>
 
-@app.get("/robots.txt")
-def robots_txt():
-    content = """User-agent: *
-Allow: /
-Disallow: /admin
-Disallow: /admin-login
-Disallow: /admin/
-Disallow: /api/
-Disallow: /dashboard
-Disallow: /account
-Disallow: /checkout
-Disallow: /simple
-Disallow: /forgot-password
+        <div class="download-card">
+          <div class="dl-title"><i class="fas fa-download"></i>Historical Data Downloads</div>
+          <div class="plan-strip plan-free" id="plan-strip">
+            <span class="plan-strip-label" id="plan-strip-label">⭕ Free Plan</span>
+            <span class="plan-strip-status" id="plan-strip-status">⛔ Downloads Locked</span>
+          </div>
 
-Sitemap: https://traderbro.in/sitemap.xml
-"""
-    return Response(content=content, media_type="text/plain")
+          <div id="dl-date-filter" style="display:none; margin-bottom:8px; flex-shrink:0;">
+            <div style="display:flex; gap:6px; align-items:flex-end; flex-wrap:wrap;">
+              <div style="display:flex; flex-direction:column; flex:1; min-width:90px;">
+                <label
+                  style="font-size:9px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">From</label>
+                <input type="date" id="dl-from-date"
+                  style="background:var(--bg-card2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:10px; padding:5px 8px; outline:none; width:100%; color-scheme:dark;">
+              </div>
+              <div style="display:flex; flex-direction:column; flex:1; min-width:90px;">
+                <label
+                  style="font-size:9px; color:var(--text-muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:3px;">To</label>
+                <input type="date" id="dl-to-date"
+                  style="background:var(--bg-card2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:10px; padding:5px 8px; outline:none; width:100%; color-scheme:dark;">
+              </div>
+              <button onclick="applyDateFilter()"
+                style="background:linear-gradient(135deg,var(--primary),var(--primary-dark)); border:none; border-radius:8px; color:white; font-size:10px; font-weight:700; padding:5px 12px; cursor:pointer; white-space:nowrap; height:29px;">Filter</button>
+              <button onclick="clearDateFilter()"
+                style="background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:8px; color:var(--text-dim); font-size:10px; font-weight:700; padding:5px 10px; cursor:pointer; height:29px;">✕</button>
+            </div>
+            <div id="dl-limit-note"
+              style="font-size:9px; color:var(--text-muted); margin-top:5px; padding:4px 8px; background:var(--bg-card2); border-radius:6px; border:1px solid var(--border);">
+            </div>
+          </div>
 
+          <div class="dl-scroll" id="dl-list">
+            <div class="no-files"><i class="fas fa-circle-notch fa-spin"></i>Loading files…</div>
+          </div>
+        </div>
+      </div>
 
-@app.get("/sitemap.xml")
-def sitemap():
-    pages = [
-        {"loc": "/",                     "priority": "1.0", "changefreq": "daily"},
-        {"loc": "/about-us",             "priority": "0.8", "changefreq": "monthly"},
-        {"loc": "/trading-plan",         "priority": "0.9", "changefreq": "weekly"},
-        {"loc": "/webinars",             "priority": "0.7", "changefreq": "weekly"},
-        {"loc": "/contact-us",           "priority": "0.5", "changefreq": "yearly"},
-        {"loc": "/privacy-policy",       "priority": "0.3", "changefreq": "yearly"},
-        {"loc": "/terms-and-conditions", "priority": "0.3", "changefreq": "yearly"},
-        {"loc": "/disclaimer",           "priority": "0.3", "changefreq": "yearly"},
-        {"loc": "/refund-policy",        "priority": "0.3", "changefreq": "yearly"},
-    ]
-    xml = ['<?xml version="1.0" encoding="UTF-8"?>',
-           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-    for p in pages:
-        xml.append(
-            f"<url><loc>{SITE_URL}{p['loc']}</loc>"
-            f"<changefreq>{p['changefreq']}</changefreq>"
-            f"<priority>{p['priority']}</priority></url>"
-        )
-    xml.append("</urlset>")
-    return Response(content="\n".join(xml), media_type="application/xml")
+      <div class="bc-wrap" id="bc-wrap">
 
-@app.get("/api/me")
-def get_current_user(request: Request):
-    if "user" in request.session:
+        <div class="bc-header">
+          <div class="bc-avatar">📢</div>
+          <div class="bc-header-info">
+            <div class="bc-header-name">TraderBro Admin</div>
+            <div class="bc-header-sub"><span class="bc-online-dot"></span><span id="bc-status-text">Broadcast
+                Channel</span></div>
+          </div>
+          <div class="bc-header-right">
+            <span class="bc-msg-count" id="bc-msg-count"></span>
+            <span class="bc-tab active" id="tab-all" onclick="setMsgTab('all')">All</span>
+            <span class="bc-tab" id="tab-pinned" onclick="setMsgTab('pinned')">📌 Pinned</span>
+          </div>
+        </div>
 
-        if not validate_user_session(request):
+        <div class="bc-pinned" id="bc-pinned" onclick="setMsgTab('pinned')">
+          <span class="bc-pinned-icon"><i class="fas fa-thumbtack"></i></span>
+          <span class="bc-pinned-label">Pinned</span>
+          <span class="bc-pinned-text" id="bc-pinned-text"></span>
+        </div>
 
-            request.session.clear()
+        <div class="bc-new-badge" id="bc-new-badge" onclick="scrollToLatest()">
+          <i class="fas fa-arrow-down"></i><span id="bc-new-badge-text">New message</span>
+        </div>
 
-            return {
-                "username": None,
-                "role": None,
-                "is_admin": False
+        <div class="bc-messages" id="bc-messages">
+          <div class="bc-empty">
+            <div class="bc-empty-icon">📢</div>
+            <div class="bc-empty-title">No broadcasts yet</div>
+            <div class="bc-empty-sub">Admin messages will appear here instantly</div>
+          </div>
+        </div>
+
+        <div class="bc-compose" id="bc-compose" style="display:none;">
+          <div class="bc-compose-row">
+            <textarea id="bc-input" class="bc-textarea" placeholder="Type a broadcast message…" maxlength="500"
+              onkeydown="bcKeydown(event)" oninput="bcAutoResize(this)">
+            </textarea>
+            <button class="quick-btn" id="quickBtn" onclick="bcToggleQuick()" title="Quick messages">＋</button>
+            <button class="bc-send-btn" id="bc-send-btn" onclick="bcSend()" title="Send (Ctrl+Enter)">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+            <div class="quick-menu" id="quickMenu">
+              <div class="quick-menu-header">
+                <span class="quick-menu-title">Quick broadcasts</span>
+                <button class="quick-menu-close" onclick="bcToggleQuick()">✕</button>
+              </div>
+              <div class="quick-menu-list" id="quickMenuList"></div>
+            </div>
+          </div>
+          <div class="bc-compose-hint">Ctrl+Enter to send &nbsp;·&nbsp; <span id="bc-char-count"
+              style="color:#3a4060;">0/500</span></div>
+        </div>
+
+        <div class="bc-readonly" id="bc-readonly" style="display:none;">
+          <span class="bc-readonly-icon">🔒</span>
+          <span>Read-only &nbsp;·&nbsp; Only admin can broadcast</span>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <div class="upgrade-overlay" id="upgrade-overlay">
+    <div class="upgrade-modal">
+      <button class="upgrade-modal-close" onclick="closeUpgradeModal()"><i class="fas fa-times"></i></button>
+      <div class="upgrade-icon">🔒</div>
+      <div class="upgrade-title">Upgrade to Download</div>
+      <div class="upgrade-desc">Historical data files are available exclusively to <strong
+          style="color:var(--primary)">Pro</strong> and <strong style="color:var(--gold)">Premium</strong> members.
+      </div>
+      <div class="upgrade-plans">
+        <div class="upgrade-plan-card plan-pro">
+          <div class="upgrade-plan-name">Pro</div>
+          <div class="upgrade-plan-feature">22 trading days<br>Full data access</div>
+        </div>
+        <div class="upgrade-plan-card plan-premium">
+          <div class="upgrade-plan-name">Premium</div>
+          <div class="upgrade-plan-feature">250 trading days<br>Full data access</div>
+        </div>
+      </div>
+      <a href="/trading-plan" class="upgrade-cta"><i class="fas fa-arrow-up"></i> &nbsp;Upgrade My Plan</a>
+    </div>
+  </div>
+
+  <div id="session-kick-overlay" style="
+display:none;
+position:fixed;
+inset:0;
+background:rgba(5,8,20,.96);
+backdrop-filter:blur(12px);
+z-index:999999;
+align-items:center;
+justify-content:center;
+">
+
+    <div style="
+width:420px;
+max-width:90%;
+background:#111827;
+border:1px solid rgba(2,163,254,.35);
+border-radius:20px;
+padding:40px 30px;
+text-align:center;
+box-shadow:0 0 50px rgba(2,163,254,.2);
+">
+
+      <div style="
+font-size:60px;
+margin-bottom:15px;
+">
+        🔒
+      </div>
+
+      <h2 style="
+color:#02A3FE;
+margin-bottom:10px;
+font-size:24px;
+font-weight:800;
+">
+        Session Ended
+      </h2>
+
+      <p style="
+color:#cbd5e1;
+line-height:1.7;
+font-size:14px;
+margin-bottom:20px;
+">
+        Your TraderBro account has been signed in from another device.
+
+        For security reasons this session has been terminated.
+      </p>
+
+      <div style="
+color:#f59e0b;
+font-size:13px;
+font-weight:600;
+">
+        Redirecting to login...
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+
+    /* ══════════════════════════════════════════════════════════
+   TIMED SYSTEM MESSAGES
+══════════════════════════════════════════════════════════ */
+    const TIMED_MESSAGES = [
+      {
+        id: 'sys-market-soon',
+        fromMins: 9 * 60,          // 9:00 AM
+        toMins: 9 * 60 + 15,     // 9:15 AM (show for 15 mins)
+        text: '🔔 Market Opening Soon — Session starts at 9:16 AM IST'
+      },
+      {
+        id: 'sys-closing-soon',
+        fromMins: 11 * 60 + 45,    // 11:45 AM
+        toMins: 12 * 60,         // 12:00 PM
+        text: '⏳ TraderBro.in session will be closing at 12:00 PM IST'
+      },
+      {
+        id: 'sys-download-ready',
+        fromMins: 12 * 60 + 1,     // 12:01 PM
+        toMins: 14 * 60,         // show till 2 PM
+        text: '📥 You can now download today\'s data — Available with Pro & Premium Plans only'
+      }
+    ];
+
+    let _shownSystemMsgs = new Set();  // track which ones we've injected this session
+    /* ══════════════════════════════════════════════════════════
+       GLOBALS
+    ══════════════════════════════════════════════════════════ */
+    let _refreshTimer = null;
+    let _dashboardRows = [];
+    let _userPlan = "free";
+    let _marketCloseTriggered = false;
+
+    /* ══════════════════════════════════════════════════════════
+       BROADCAST STATE
+    ══════════════════════════════════════════════════════════ */
+    let _bcIsAdmin = false;
+    let _bcMessages = [];        // full list from server
+    let _bcTab = 'all';
+    let _bcPollTimer = null;
+    let _bcLastId = 0;         // highest message id seen
+    let _bcAtBottom = true;      // is user scrolled to bottom?
+    let _bcNewCount = 0;         // unseen messages while scrolled up
+
+    /* ══════════════════════════════════════════════════════════
+       MARKET HELPERS
+    ══════════════════════════════════════════════════════════ */
+    function getIST() {
+      const now = new Date();
+      return new Date(now.getTime() + now.getTimezoneOffset() * 60000 + 5.5 * 60 * 60 * 1000);
+    }
+    function isMarketOpen() {
+      const ist = getIST(); const mins = ist.getHours() * 60 + ist.getMinutes();
+      return mins >= 9 * 60 + 16 && mins <= 12 * 60 + 30;
+    }
+    // REPLACE WITH:
+    function isJustAfterMarketClose() {
+      const ist = getIST(); const mins = ist.getHours() * 60 + ist.getMinutes();
+      return mins >= 12 * 60 + 0 && mins <= 12 * 60 + 30;   // 12:00 PM – 12:30 PM IST
+    }
+
+    async function checkMarketCloseAutoSave() {
+      if (_marketCloseTriggered) return;
+      if (!isJustAfterMarketClose()) return;
+      _marketCloseTriggered = true;
+      try {
+        const res = await fetch('/api/trigger-eod-save', { method: 'POST', credentials: 'include' });
+        if (res.ok) {
+          console.log('✅ EOD Excel saved at market close');
+          setTimeout(loadDownloads, 3000);
+          setTimeout(loadDownloads, 8000);
+        }
+      } catch (e) { console.error('EOD save error:', e); }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       BROADCAST — CORE
+    ══════════════════════════════════════════════════════════ */
+    function escH(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function scrollToLatest() {
+      const el = document.getElementById('bc-messages');
+      if (el) el.scrollTop = el.scrollHeight;
+      hideBadge();
+    }
+
+    function hideBadge() {
+      _bcNewCount = 0;
+      const b = document.getElementById('bc-new-badge');
+      if (b) b.classList.remove('show');
+    }
+
+    function setMsgTab(tab) {
+      _bcTab = tab;
+      document.getElementById('tab-all').className = 'bc-tab' + (tab === 'all' ? ' active' : '');
+      document.getElementById('tab-pinned').className = 'bc-tab' + (tab === 'pinned' ? ' active' : '');
+      renderBroadcasts();
+      if (tab !== 'pinned') scrollToLatest();
+    }
+
+    function renderBroadcasts() {
+      const container = document.getElementById('bc-messages');
+      const pinnedEl = document.getElementById('bc-pinned');
+      const pinnedText = document.getElementById('bc-pinned-text');
+      const countEl = document.getElementById('bc-msg-count');
+      if (!container) return;
+
+      // Update pinned banner
+      const pinnedMsg = _bcMessages.find(m => m.pinned);
+      if (pinnedMsg) {
+        pinnedText.textContent = pinnedMsg.message;
+        pinnedEl.classList.add('show');
+      } else {
+        pinnedEl.classList.remove('show');
+      }
+
+      // Filter & sort
+      let shown = _bcTab === 'pinned'
+        ? _bcMessages.filter(m => m.pinned)
+        : [..._bcMessages];
+      shown.sort((a, b) => a.id - b.id);
+
+      if (countEl) countEl.textContent = shown.length ? shown.length + (shown.length === 1 ? ' msg' : ' msgs') : '';
+
+      // Empty state
+      if (!shown.length) {
+        container.innerHTML = `
+      <div class="bc-empty">
+        <div class="bc-empty-icon">📢</div>
+        <div class="bc-empty-title">${_bcTab === 'pinned' ? 'No pinned messages' : 'No broadcasts yet'}</div>
+        <div class="bc-empty-sub">${_bcTab === 'pinned' ? 'Pin a message to highlight it' : 'Admin messages will appear here instantly'}</div>
+      </div>`;
+        return;
+      }
+
+      let html = '';
+      let lastDate = '';
+
+      shown.forEach(msg => {
+        const rawDate = (msg.timestamp || '').split(' ')[0] || '';
+        const timeStr = (msg.timestamp || '').split(' ')[1] || '';
+        const todayStr = getIST().toISOString().slice(0, 10);
+        const dispDate = rawDate === todayStr ? 'Today' : rawDate;
+
+        if (dispDate !== lastDate) {
+          html += `<div class="bc-date-sep"><span>${dispDate}</span></div>`;
+          lastDate = dispDate;
+        }
+
+        const adminBtns = _bcIsAdmin ? `
+      <div class="bc-actions">
+        <button class="bc-act-btn pin" onclick="bcPin(${msg.id},${msg.pinned ? 0 : 1})">
+          <i class="fas fa-thumbtack"></i> ${msg.pinned ? 'Unpin' : 'Pin'}
+        </button>
+        <button class="bc-act-btn del" onclick="bcDel(${msg.id})">
+          <i class="fas fa-trash"></i> Delete
+        </button>
+      </div>` : '';
+
+        html += `
+      <div class="bc-msg" id="bcm-${msg.id}">
+        <div class="bc-msg-meta">
+          <span class="bc-msg-sender">🛡️ TraderBro Admin</span>
+          <span class="bc-msg-time">${timeStr}</span>
+          ${msg.pinned ? '<span class="bc-msg-pin-tag"><i class="fas fa-thumbtack"></i> Pinned</span>' : ''}
+        </div>
+        <div class="bc-msg-body-row">
+          <div class="bc-bubble${msg.pinned ? ' is-pinned' : ''}">
+            ${escH(msg.message)}
+            <div class="bc-bubble-footer">
+              <span class="bc-bubble-ts">${timeStr}</span>
+              <span class="bc-ticks">✓✓</span>
+            </div>
+          </div>
+          ${adminBtns}
+        </div>
+      </div>`;
+      });
+
+      const wasAtBottom = _bcAtBottom;
+      container.innerHTML = html;
+      if (wasAtBottom) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+
+    /* ── Load from server ── */
+    async function loadBroadcasts(silent) {
+      try {
+        const res = await fetch('/api/broadcast', { credentials: 'include' });
+        if (res.status === 401) return;
+        const data = await res.json();
+
+        _bcIsAdmin = data.is_admin || false;
+        const msgs = data.messages || [];
+
+        // Sort by id ascending
+        msgs.sort((a, b) => a.id - b.id);
+
+        // Detect new messages
+        const maxId = msgs.length ? Math.max(...msgs.map(m => m.id)) : 0;
+        const hasNew = maxId > _bcLastId && _bcLastId > 0;
+        _bcLastId = maxId;
+
+        _bcMessages = msgs;
+
+        // Show/hide compose vs readonly
+        const compose = document.getElementById('bc-compose');
+        const readonly = document.getElementById('bc-readonly');
+        const statusEl = document.getElementById('bc-status-text');
+        if (_bcIsAdmin) {
+          if (compose) compose.style.display = 'block';
+          if (readonly) readonly.style.display = 'none';
+          if (statusEl) statusEl.textContent = 'Admin · Broadcast Channel';
+        } else {
+          if (compose) compose.style.display = 'none';
+          if (readonly) readonly.style.display = 'flex';
+          if (statusEl) statusEl.textContent = 'Read-only · Broadcast Channel';
+        }
+
+        // New message badge for users who scrolled up
+        if (hasNew && !_bcAtBottom && !_bcIsAdmin) {
+          _bcNewCount++;
+          const badge = document.getElementById('bc-new-badge');
+          const badgeText = document.getElementById('bc-new-badge-text');
+          if (badge) {
+            badgeText.textContent = _bcNewCount === 1 ? 'New message ↓' : `${_bcNewCount} new messages ↓`;
+            badge.classList.add('show');
+          }
+        }
+
+        renderBroadcasts();
+
+        // Auto-scroll if at bottom
+        if (_bcAtBottom) scrollToLatest();
+
+      } catch (e) { console.error('loadBroadcasts:', e); }
+    }
+
+    /* ── Track scroll position ── */
+    (function () {
+      document.addEventListener('DOMContentLoaded', () => {
+        const el = document.getElementById('bc-messages');
+        if (!el) return;
+        el.addEventListener('scroll', () => {
+          _bcAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+          if (_bcAtBottom) hideBadge();
+        });
+      });
+    })();
+
+    /* ── Send message (admin) ── */
+    async function bcSend() {
+      const inp = document.getElementById('bc-input');
+      const btn = document.getElementById('bc-send-btn');
+      const text = inp ? inp.value.trim() : '';
+      if (!text) return;
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+
+      try {
+        const res = await fetch('/api/admin/broadcast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ message: text, pinned: 0 })
+        });
+        const data = await res.json();
+        if (data.success) {
+          inp.value = '';
+          bcUpdateCharCount('');
+          inp.style.height = '38px';
+          _bcAtBottom = true;
+          await loadBroadcasts();
+        }
+      } catch (e) { console.error('bcSend:', e); }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+      inp.focus();
+    }
+
+    /* ── Delete ── */
+    async function bcDel(id) {
+      if (!confirm('Delete this broadcast message?')) return;
+      try {
+        await fetch(`/api/admin/broadcast/${id}`, { method: 'DELETE', credentials: 'include' });
+        await loadBroadcasts();
+      } catch (e) { }
+    }
+
+    /* ── Pin / Unpin ── */
+    async function bcPin(id, val) {
+      try {
+        await fetch(`/api/admin/broadcast/${id}/pin`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ pinned: val })
+        });
+        await loadBroadcasts();
+      } catch (e) { }
+    }
+
+    /* ── Compose helpers ── */
+    function bcKeydown(e) {
+      if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); bcSend(); }
+    }
+    function bcAutoResize(el) {
+      el.style.height = '38px';
+      el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+      bcUpdateCharCount(el.value);
+    }
+    function bcUpdateCharCount(val) {
+      const el = document.getElementById('bc-char-count');
+      if (!el) return;
+      const n = val.length;
+      el.textContent = n + '/500';
+      el.style.color = n > 450 ? '#f5a623' : n > 490 ? '#ff4d6d' : '#2a3050';
+    }
+
+    /* ── Start polling ──
+       Admin: every 8s (they don't need instant feedback, they send)
+       User:  every 4s (near-instant delivery)
+    ─────────────────────────────────────────── */
+    function startBcPoll() {
+      loadBroadcasts();
+      if (_bcPollTimer) clearInterval(_bcPollTimer);
+      // Start at 4s; after first load we know if admin and can adjust
+      _bcPollTimer = setInterval(() => loadBroadcasts(true), 4000);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       LIVE DATA
+    ══════════════════════════════════════════════════════════ */
+
+    /* ══════════════════════════════════════════════════════════
+           CLOSED BOX STATE — set by checkDashboardAccess
+        ══════════════════════════════════════════════════════════ */
+    let _closedReason = null;   // null = unknown, object = { icon, title, desc, time }
+
+    function buildClosedBox() {
+      const ist = getIST();
+      const day = ist.getDay();   // 0=Sun, 6=Sat
+      const mins = ist.getHours() * 60 + ist.getMinutes();
+      const marketOpen = 9 * 60 + 16;
+      const marketClose = 12 * 60;
+
+      let icon, title, desc, time;
+
+      if (_closedReason) {
+        // API told us exactly why
+        icon = _closedReason.icon;
+        title = _closedReason.title;
+        desc = _closedReason.desc;
+        time = _closedReason.time;
+      } else if (day === 6) {
+        icon = "📅";
+        title = "Market Closed — Saturday";
+        desc = "NSE is closed on weekends. No live values are generated today.";
+        time = "Next session: <b>Monday at 9:16 AM IST</b>";
+      } else if (day === 0) {
+        icon = "📅";
+        title = "Market Closed — Sunday";
+        desc = "NSE is closed on weekends. No live values are generated today.";
+        time = "Next session: <b>Monday at 9:16 AM IST</b>";
+      } else if (mins < marketOpen) {
+        icon = "⏰";
+        title = "Pre-Market — Session Not Started";
+        desc = "Live Black-Box-Engine values are generated during active market analysis hours.";
+        time = "Session opens at <b>9:16 AM IST</b>";
+      } else if (mins > marketClose) {
+        icon = "🔔";
+        title = "Market Session Ended for Today";
+        desc = "Today's session has closed. Data will be available again next trading day.";
+        time = "Next session: <b>Tomorrow at 9:16 AM IST</b>";
+      } else {
+        icon = "⏰";
+        title = "Market Insight Window Closed";
+        desc = "Live Black-Box-Engine values are generated during active market hours.";
+        time = "9:16 AM → 12:00 PM IST";
+      }
+
+      return `
+        <div class="market-closed-box">
+          <div class="market-icon">${icon}</div>
+          <div class="market-title">${title}</div>
+          <div class="market-desc">${desc}</div>
+          <div class="market-time">${time}</div>
+          <div class="market-sub" style="margin-top:10px;">
+            Previous session values remain visible till next trading day 8:30 AM
+          </div>
+        </div>`;
+    }
+
+    function loadData() {
+      fetch("/api/get-running")
+        .then(r => r.json())
+        .then(d => {
+          let rows = (d.rows || []).sort(
+            (a, b) => new Date(a.datetime) - new Date(b.datetime)
+          );
+
+          const grid = document.getElementById("rows-grid");
+
+          // If no rows exist at all (e.g. pre-market or non-trading day)
+          if (!rows || rows.length === 0) {
+            _dashboardRows = [];
+            grid.innerHTML = buildClosedBox();
+            return;
+          }
+
+          const displayableRows = rows;
+
+          // --- BLACK BOX INDEX (BBI) LOGIC ---
+          let bbiAcc = 0;
+          let prevBbi = null;
+          let prevRunning = null;
+
+          for (let i = 0; i < displayableRows.length; i++) {
+            let rVal = parseFloat(displayableRows[i].running || 0);
+
+            if (i === 0) {
+              displayableRows[i].bbi = null;
+              prevRunning = rVal;
+            } else if (i >= 1 && i <= 6) {
+              bbiAcc += rVal;
+              displayableRows[i].bbi = null;
+              if (i === 6) {
+                let avg = bbiAcc / 6;
+                displayableRows[i].bbi = avg;
+                prevBbi = avg;
+              }
+              prevRunning = rVal;
+            } else {
+              let currentBbi = prevBbi + rVal - prevRunning;
+              displayableRows[i].bbi = currentBbi;
+              prevBbi = currentBbi;
+              prevRunning = rVal;
+            }
+          }
+
+          const heroRow = displayableRows[displayableRows.length - 1];
+          const heroBbiRaw = heroRow.bbi;
+          const heroBbi = (heroBbiRaw !== null && heroBbiRaw !== undefined) ? parseFloat(heroBbiRaw) : null;
+
+          _dashboardRows = displayableRows.map(r => ({
+            datetime: r.datetime || "",
+            strike: r.strike || "",
+            index_ltp: r.index_ltp || "",
+            running: r.running || 0,
+            bbi: r.bbi
+          }));
+
+          // Update header top bar
+          document.getElementById("h-ltp").textContent = heroRow.index_ltp ? parseFloat(heroRow.index_ltp).toFixed(2) : "—";
+          document.getElementById("h-expiry").textContent = heroRow.expiry || "Sensex";
+          document.getElementById("h-ts").textContent = heroRow.datetime || "—";
+
+          // Update ATM Hero Card
+          const parts = (heroRow.datetime || "").split(" ");
+          document.getElementById("atm-dt").innerHTML = `
+                <span style="color:#fff">${parts[0] || ""}</span>
+                <span style="color:#fff;margin:0 6px">|</span>
+                <span style="color:#fff">${parts[1] || heroRow.datetime}</span><br>
+                <span style="color:#ff6b35">Strike: </span>
+                <span class="strike-highlight">${heroRow.strike}</span>
+                <span style="color:var(--text-muted);margin:0 8px">·</span>
+                <span style="color:#ff6b35">Sensex: </span>
+                <span style="color:var(--primary)">
+                    ${parseFloat(heroRow.index_ltp || 0).toFixed(2)}
+                </span>`;
+
+          const box = document.getElementById("atm-run-box");
+
+          if (heroBbi !== null) {
+            document.getElementById("atm-run-val").textContent = heroBbi.toFixed(2);
+            if (heroBbi > 0) {
+              box.className = "atm-run-box atm-run-pos";
+              box.querySelector(".run-label").textContent = "▲ Bullish";
+            } else if (heroBbi < 0) {
+              box.className = "atm-run-box atm-run-neg";
+              box.querySelector(".run-label").textContent = "▼ Bearish";
+            } else {
+              box.className = "atm-run-box atm-run-zero";
+              box.querySelector(".run-label").textContent = "◆ Neutral";
+            }
+          } else {
+            // Fallback for earlier ticks before BBI accumulates
+            const runVal = parseFloat(heroRow.running || 0);
+            document.getElementById("atm-run-val").textContent = runVal.toFixed(2);
+            box.className = runVal > 0 ? "atm-run-box atm-run-pos" : runVal < 0 ? "atm-run-box atm-run-neg" : "atm-run-box atm-run-zero";
+            box.querySelector(".run-label").textContent = runVal > 0 ? "▲ Bullish" : runVal < 0 ? "▼ Bearish" : "◆ Neutral";
+          }
+
+          const displayRows = [...displayableRows].reverse();
+
+          let html = `
+                <div style="display: flex; justify-content: space-between; padding: 0 14px 8px; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
+                    <span>Time & Sensex</span>
+                    <div style="display: flex; gap: 6px; text-align: center;">
+                        <span style="width: 80px;">Running</span>
+                        <span style="width: 80px; color: var(--primary);">BBI</span>
+                    </div>
+                </div>
+            `;
+
+          displayRows.forEach(r => {
+            const val = parseFloat(r.running || 0);
+            const cls = val > 0 ? "val-pos" : val < 0 ? "val-neg" : "val-zero";
+            const rcls = val > 0 ? "row-pos" : val < 0 ? "row-neg" : "row-zero";
+            const dt = (r.datetime || "").split(" ");
+
+            let bbiStr = "—";
+            let bbiCls = "bbi-zero";
+
+            if (r.bbi !== null && r.bbi !== undefined) {
+              const bbiVal = parseFloat(r.bbi);
+              bbiStr = (bbiVal > 0 ? "+" : "") + bbiVal.toFixed(2);
+              bbiCls = bbiVal > 0 ? "bbi-pos" : bbiVal < 0 ? "bbi-neg" : "bbi-zero";
             }
 
-    username = None
-    role = "user"
+            html += `
+				    <div class="data-row ${rcls}">
+				        <div class="row-dt">
+				            <span class="row-time">${dt[1] || r.datetime}</span>
+				            <span class="row-sensex">Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)}</span>
+				        </div>
+				        <div style="display: flex; gap: 6px;">
+				            <div class="val-pill ${cls}" title="Running Value">
+				                ${val > 0 ? "+" : ""}${val.toFixed(2)}
+				            </div>
+				            <div class="val-pill ${bbiCls}" title="Black Box Index">
+				                ${bbiStr}
+				            </div>
+				        </div>
+   					 </div>`;
+          });
 
-    # USER SESSION
-    if "user" in request.session:
-        username = request.session["user"]
-        role = request.session.get("role", "user")
+          grid.innerHTML = html;
 
-    # ADMIN SESSION
-    elif "admin" in request.session:
-        username = request.session["admin"]
-        role = "admin"
-
-    # NO SESSION
-    else:
-        return {
-            "username": None,
-            "role": None,
-            "is_admin": False
-        }
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    c.execute("""
-        SELECT username, email, phone, plan, plan_start, plan_expiry
-        FROM users
-        WHERE username=?
-    """, (username,))
-
-    user = c.fetchone()
-
-    conn.close()
-
-    if user:
-        subscription_active = False
-
-        try:
-            if user[5]:
-                expiry = datetime.fromisoformat(user[5])
-
-                if expiry.tzinfo is None:
-                    expiry = IST.localize(expiry)
-
-                subscription_active = expiry > datetime.now(IST)
-
-        except Exception:
-            pass
-
-        return {
-            "username": user[0],
-            "email": user[1],
-            "phone": user[2],
-            "plan": user[3],
-            "plan_start": user[4],
-            "plan_expiry": user[5],
-
-            "subscription_active": subscription_active,
-
-            "role": role,
-            "is_admin": role == "admin"
-        }
-
-
-@app.get("/api/admin/user/disclaimer-pdf/{user_id}")
-async def download_disclaimer_pdf(user_id: int, request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-
-    conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = sqlite3.Row
-    user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-    conn.close()
-
-    if not user:
-        return JSONResponse({"error": "User not found"}, status_code=404)
-
-    # Get join date — use created_at if exists, else fallback
-    user_dict = dict(user)
-    join_raw = user_dict.get("created_at") or ""
-    try:
-        d = datetime.fromisoformat(str(join_raw))
-        join_fmt = f"{d.day}/{d.month}/{d.year}"
-    except:
-        join_fmt = datetime.now(IST).strftime("%d/%m/%Y")
-
-    buf = BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4,
-                            rightMargin=20*mm, leftMargin=20*mm,
-                            topMargin=20*mm, bottomMargin=20*mm)
-
-    styles = getSampleStyleSheet()
-    h1   = ParagraphStyle('h1',   parent=styles['Heading1'], fontSize=14, spaceAfter=4,  alignment=1)
-    h2   = ParagraphStyle('h2',   parent=styles['Heading2'], fontSize=11, spaceAfter=4,  spaceBefore=10)
-    body = ParagraphStyle('body', parent=styles['Normal'],   fontSize=9,  spaceAfter=4,  leading=14)
-    small= ParagraphStyle('small',parent=styles['Normal'],   fontSize=8,  textColor=colors.grey, spaceAfter=3)
-
-    story = []
-
-    story.append(Paragraph("TRADERBRO.IN", h1))
-    story.append(Paragraph("DISCLAIMER: USER AGREEMENT &amp; EDUCATIONAL SERVICES", h1))
-    story.append(Spacer(1, 4*mm))
-    story.append(Paragraph(
-        "(This document is electronically generated in connection with the TraderBro Education Services "
-        "subscription availed via TraderBro.in. It incorporates data furnished by the user at the time of "
-        "registration and is valid without a handwritten or digital signature.)", small))
-    story.append(Spacer(1, 4*mm))
-
-    # User info table — exactly matching the registration form fields
-    info = [
-        ["Name",                       user_dict.get("username") or ""],
-        ["Contact No.",                (user_dict.get("phone") or "") + "  (Verified)"],
-        ["Email ID",                   user_dict.get("email") or ""],
-        ["Date of Joining TraderBro",  join_fmt],
-    ]
-    t = Table(info, colWidths=[55*mm, 110*mm])
-    t.setStyle(TableStyle([
-        ('FONTSIZE',       (0, 0), (-1, -1), 9),
-        ('FONTNAME',       (0, 0), (0, -1),  'Helvetica-Bold'),
-        ('BOTTOMPADDING',  (0, 0), (-1, -1), 5),
-        ('TOPPADDING',     (0, 0), (-1, -1), 5),
-        ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.HexColor('#f0f0f0'), colors.white]),
-        ('BOX',            (0, 0), (-1, -1), 0.5, colors.grey),
-        ('INNERGRID',      (0, 0), (-1, -1), 0.25, colors.lightgrey),
-    ]))
-    story.append(t)
-    story.append(Spacer(1, 5*mm))
-    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.grey))
-
-    sections = [
-        ("Disclaimer",
-         "The information available on this website (\"TraderBro.in\") is provided strictly for general "
-         "informational and educational purposes only. This Website displays market-related data, calculations, "
-         "Option Chain mathematical interrelation, and also mathematical/statistical interpretations (including "
-         "but not limited to option chain analytics, option Greeks, probability models, and data for learning "
-         "through back-testing, learning videos etc). Such content is not intended as investment advice, trading "
-         "advice, legal advice, tax advice, or financial planning advice. The Website and its owners are not "
-         "registered with SEBI as a Research Analyst (RA), Investment Adviser (IA), Portfolio Manager, Stock "
-         "Broker, or any other SEBI-registered intermediary."),
-        ("No Recommendation / No Advice",
-         "Nothing on this Website shall be construed as a recommendation to buy, sell, or hold any security or "
-         "derivative instrument, a solicitation or offer to trade, or a guarantee of profit or assurance of returns. "
-         "Users are advised to consult with a SEBI-registered investment adviser or qualified professional before "
-         "making any investment or trading decision."),
-        ("Market Risk Warning",
-         "Trading and investing in futures and options involves substantial risk, including the risk of losing the "
-         "entire capital. Past performance, back-tested performance, and simulated results do not guarantee future performance."),
-        ("Accuracy of Data",
-         "Although reasonable efforts are made to ensure accuracy, the Website does not guarantee the completeness, "
-         "correctness, timeliness, or reliability of any data displayed. Market data may be delayed, incomplete, or "
-         "sourced from third-party providers. The Website shall not be responsible for any errors, omissions, or interruptions."),
-        ("Third-Party Data and Links",
-         "This Website may use third-party data feeds and may contain links to third-party websites. "
-         "The Website does not control or endorse such third-party content and is not responsible for their accuracy, "
-         "availability, or policies."),
-        ("Limitation of Liability",
-         "Under no circumstances shall the Website, its owners, developers, employees, or affiliates be liable for "
-         "any direct or indirect loss, including loss of profits, loss of capital, trading losses, or any other "
-         "damages arising from the use of or reliance on any content available on this Website. "
-         "By using this Website, you acknowledge that you have read, understood, and agreed to this Disclaimer."),
-        ("Data Usage Policy",
-         "Users may access and use the Website content solely for personal and educational viewing, non-commercial "
-         "research, and general informational reference. Users agree not to copy, scrape, harvest, or extract data "
-         "using automated tools, redistribute or commercially exploit the data, or use the Website for any unlawful purpose. "
-         "All proprietary analytics, mathematical models, visualizations, design elements, and platform logic are the "
-         "intellectual property of TraderBro.in and are protected under applicable intellectual property laws."),
-    ]
-
-    for title, text in sections:
-        story.append(Paragraph(title, h2))
-        story.append(Paragraph(text, body))
-
-    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.grey))
-    story.append(Spacer(1, 4*mm))
-    story.append(Paragraph("Agreement", h2))
-    story.append(Paragraph(
-        f"I, <b>{user_dict.get('username', '')}</b>, "
-        f"Contact No: <b>{user_dict.get('phone', '') or ''}</b>, "
-        "have read and agree to the terms and conditions of this disclaimer. "
-        "I solely and unconditionally accept all terms and conditions herein.", body))
-    story.append(Spacer(1, 3*mm))
-    story.append(Paragraph(
-        "(This document is electronically generated in connection with the TraderBro Education Services "
-        "subscription availed via TraderBro.in. It incorporates data furnished by the user at the time of "
-        "registration and is valid without a handwritten or digital signature.)", small))
-
-    story.append(Spacer(1, 5*mm))
-    consent_val = user_dict.get("consent") or 0
-    if consent_val:
-        consent_text = "Consent Provided — User scrolled and ticked the disclaimer checkbox at registration."
-        consent_color = colors.HexColor('#1a7a1a')
-    else:
-        consent_text = "Consent NOT recorded — User may have been added manually by admin."
-        consent_color = colors.HexColor('#cc0000')
-    ct = ParagraphStyle('ct', parent=styles['Normal'], fontSize=9,
-                        textColor=consent_color, fontName='Helvetica-Bold')
-    story.append(Paragraph(consent_text, ct))
-
-    doc.build(story)
-    buf.seek(0)
-
-    safe_name = (user_dict.get("username") or f"user_{user_id}").replace(" ", "_")
-    phone_part = user_dict.get("phone") or str(user_id)
-    filename = f"disclaimer_{safe_name}_{phone_part}.pdf"
-
-    return StreamingResponse(
-        buf,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
-    )
-
-
-@app.get("/api/dashboard-access")
-def api_dashboard_access(request):
-    from fastapi.responses import JSONResponse
- 
-    username = request.session.get("user") or request.session.get("admin")
-    is_admin = request.session.get("role") == "admin"
- 
-    if not username:
-        return JSONResponse({"allowed": False, "reason": "not_logged_in"})
- 
-    now = datetime.now(IST)
- 
-    # ── Market status ──
-    dow         = now.weekday()  # 0=Mon … 6=Sun
-    is_weekend  = dow >= 5
-    weekday_name = now.strftime("%A")
-    holiday_reason = None
- 
-    if not is_weekend:
-        holiday_reason = get_holiday_reason(now.strftime("%Y-%m-%d"))
- 
-    is_holiday   = holiday_reason is not None
-    is_market_day = (not is_weekend) and (not is_holiday)
- 
-    current_mins = now.hour * 60 + now.minute
-    market_open   = (
-        is_market_day and
-        current_mins >= MARKET_OPEN_HOUR * 60 + MARKET_OPEN_MIN and
-        current_mins <= MARKET_CLOSE_HOUR * 60 + MARKET_CLOSE_MIN
-    )
- 
-    # Find next trading day
-    nxt = now + timedelta(days=1)
-    nxt = nxt.replace(hour=DASHBOARD_OPEN_HOUR, minute=DASHBOARD_OPEN_MIN, second=0, microsecond=0)
-    while nxt.weekday() >= 5 or is_market_holiday(nxt):
-        nxt += timedelta(days=1)
- 
-    # ── Subscription check ──
-    if is_admin:
-        return JSONResponse({
-            "allowed":         True,
-            "reason":          "admin",
-            "market_open":     market_open,
-            "is_holiday":      is_holiday,
-            "holiday_reason":  holiday_reason,
-            "is_weekend":      is_weekend,
-            "weekday_name":    weekday_name,
-            "next_trading_day": nxt.strftime("%d %b %Y, %A"),
-        })
- 
-    conn = sqlite3.connect(DB_FILE)
-    c    = conn.cursor()
-    c.execute("SELECT plan, plan_start, plan_expiry FROM users WHERE username=?", (username,))
-    row  = c.fetchone()
-    conn.close()
- 
-    if not row or not row[0] or row[0] == "free":
-        return JSONResponse({"allowed": False, "reason": "no_plan"})
- 
-    plan, plan_start, plan_expiry = row
- 
-    if not plan_expiry:
-        return JSONResponse({"allowed": False, "reason": "no_plan"})
- 
-    try:
-        edt = datetime.fromisoformat(plan_expiry)
-        if edt.tzinfo is None:
-            edt = IST.localize(edt)
-        if now > edt:
-            return JSONResponse({"allowed": False, "reason": "plan_expired"})
-    except Exception as e:
-        print(f"api_dashboard_access expiry parse error for {username}: {e}")
-        return JSONResponse({"allowed": False, "reason": "plan_expired"})
-
-    # plan_start check — only block if plan hasn't started yet
-    # NULL plan_start means admin assigned it without a start date → treat as started
-    if plan_start:
-        try:
-            sdt = datetime.fromisoformat(plan_start)
-            if sdt.tzinfo is None:
-                sdt = IST.localize(sdt)
-            if now < sdt:
-                return JSONResponse({
-                    "allowed": False,
-                    "reason":  "plan_queued",
-                    "plan_start": sdt.isoformat(),
-                })
-        except Exception as e:
-            print(f"api_dashboard_access plan_start parse error for {username}: {e}")
-            # Don't block on parse error — let them through
-            pass
- 
-    # Plan is active — return full status
-    return JSONResponse({
-        "allowed":          True,
-        "reason":           "active",
-        "plan":             plan,
-        "plan_expiry":      plan_expiry,
-        "market_open":      market_open,
-        "is_holiday":       is_holiday,
-        "holiday_reason":   holiday_reason,
-        "is_weekend":       is_weekend,
-        "weekday_name":     weekday_name,
-        "next_trading_day": nxt.strftime("%d %b %Y, %A"),
-    })
-
-
-@app.get("/debug-sessions")
-def debug_sessions():
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    c.execute("SELECT * FROM active_sessions")
-
-    rows = c.fetchall()
-
-    conn.close()
-
-    return rows
-
-@app.get("/api/my-subscriptions")
-def api_my_subscriptions(request: Request):
-    username = request.session.get("user") or request.session.get("admin")
-    if not username:
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
- 
-    conn = sqlite3.connect(DB_FILE)
-    c    = conn.cursor()
- 
-    # Ensure table exists (safe guard)
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS subscriptions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT NOT NULL,
-        plan TEXT NOT NULL,
-        plan_start TEXT NOT NULL,
-        plan_expiry TEXT NOT NULL,
-        trading_days INTEGER DEFAULT 0,
-        total_calendar_days INTEGER DEFAULT 0,
-        weekends_skipped INTEGER DEFAULT 0,
-        holidays_skipped INTEGER DEFAULT 0,
-        status TEXT DEFAULT 'queued',
-        price INTEGER DEFAULT 0,
-        created_at TEXT
-    )
-    """)
- 
-    c.execute("""
-        SELECT id, plan, plan_start, plan_expiry,
-               trading_days, total_calendar_days, weekends_skipped, holidays_skipped,
-               status, price, created_at
-        FROM subscriptions
-        WHERE username=?
-        ORDER BY plan_start ASC
-    """, (username,))
-    rows = c.fetchall()
-    conn.close()
- 
-    now  = datetime.now(timezone.utc)
-    subs = []
- 
-    for r in rows:
-        try:
-            sdt = datetime.fromisoformat(r[2])
-            edt = datetime.fromisoformat(r[3])
-            if sdt.tzinfo is None: sdt = sdt.replace(tzinfo=timezone.utc)
-            if edt.tzinfo is None: edt = edt.replace(tzinfo=timezone.utc)
-            if   now > edt:  status = "expired"
-            elif now >= sdt: status = "active"
-            else:            status = "queued"
-        except Exception:
-            status = r[8] or "unknown"
- 
-        subs.append({
-            "id":                 r[0],
-            "plan":               r[1],
-            "plan_start":         r[2],
-            "plan_expiry":        r[3],
-            "trading_days":       r[4],
-            "total_calendar_days": r[5],
-            "weekends_skipped":   r[6],
-            "holidays_skipped":   r[7],
-            "status":             status,
-            "price":              r[9],
-            "created_at":         r[10],
-        })
- 
-    return JSONResponse({"subscriptions": subs})
-
-@app.post("/api/trigger-eod-save")
-def trigger_eod_save(request: Request):
-    username = request.session.get("user") or request.session.get("admin")
-    if not username:
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-    # Allow any logged-in user to trigger — saves only once (idempotent by date)
-    try:
-        save_daily_excel()
-        return JSONResponse({"success": True})
-    except Exception as e:
-        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
-
-
-@app.post("/api/trigger-eod-save")
-def trigger_eod_save(request: Request):
-    """
-    Any logged-in user can call this right after market close (3:30 PM IST).
-    Saves today's Excel and makes it available in the downloads list.
-    Safe to call multiple times — openpyxl overwrites the same dated file.
-    """
-    username = request.session.get("user") or request.session.get("admin")
-    if not username:
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-    try:
-        save_daily_excel()
-        return JSONResponse({
-            "success": True,
-            "message": "EOD Excel saved.",
-            "time": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
-        })
-    except Exception as e:
-        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
-
-# ── GET broadcast messages (all logged-in users can read) ───────────────
-@app.get("/api/broadcast")
-def get_broadcasts(request: Request):
-    username = request.session.get("user") or request.session.get("admin")
-    if not username:
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
- 
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    
-    # Create table if it doesn't exist yet
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS broadcasts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        message TEXT NOT NULL,
-        sender TEXT DEFAULT 'admin',
-        timestamp TEXT NOT NULL,
-        pinned INTEGER DEFAULT 0
-    )
-    """)
-    
-    c.execute("""
-        SELECT id, message, sender, timestamp, pinned
-        FROM broadcasts
-        ORDER BY pinned DESC, id DESC
-        LIMIT 50
-    """)
-    rows = c.fetchall()
-    conn.close()
- 
-    return JSONResponse({
-        "messages": [
-            {
-                "id": r[0],
-                "message": r[1],
-                "sender": r[2],
-                "timestamp": r[3],
-                "pinned": bool(r[4])
+          // Update gauge
+          const last6 = displayableRows.slice(-6);
+          if (last6.length) {
+            const bbiVals = last6.map(r => r.bbi).filter(v => v !== null && v !== undefined);
+            if (bbiVals.length > 0) {
+              updateGauge(bbiVals.reduce((s, v) => s + parseFloat(v), 0) / bbiVals.length);
+            } else {
+              updateGauge(last6[last6.length - 1].running || 0);
             }
-            for r in rows
-        ],
-        "is_admin": request.session.get("role") == "admin"
-    })
- 
- 
-# ── POST broadcast message (admin only) ────────────────────────────────
-@app.post("/api/admin/broadcast")
-async def post_broadcast(request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
- 
-    data = await request.json()
-    message = data.get("message", "").strip()
-    pinned = int(data.get("pinned", 0))
- 
-    if not message:
-        return JSONResponse({"error": "Message cannot be empty"}, status_code=400)
- 
-    timestamp = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
- 
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
- 
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS broadcasts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        message TEXT NOT NULL,
-        sender TEXT DEFAULT 'admin',
-        timestamp TEXT NOT NULL,
-        pinned INTEGER DEFAULT 0
-    )
-    """)
- 
-    c.execute("""
-        INSERT INTO broadcasts (message, sender, timestamp, pinned)
-        VALUES (?, ?, ?, ?)
-    """, (message, "admin", timestamp, pinned))
- 
-    conn.commit()
-    new_id = c.lastrowid
-    conn.close()
- 
-    return JSONResponse({
-        "success": True,
-        "id": new_id,
-        "timestamp": timestamp
-    })
- 
- 
-# ── DELETE broadcast message (admin only) ──────────────────────────────
-@app.delete("/api/admin/broadcast/{msg_id}")
-def delete_broadcast(msg_id: int, request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
- 
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("DELETE FROM broadcasts WHERE id=?", (msg_id,))
-    conn.commit()
-    conn.close()
- 
-    return JSONResponse({"success": True})
- 
- 
-# ── PIN/UNPIN broadcast message (admin only) ───────────────────────────
-@app.patch("/api/admin/broadcast/{msg_id}/pin")
-async def pin_broadcast(msg_id: int, request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
- 
-    data = await request.json()
-    pinned = int(data.get("pinned", 1))
- 
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("UPDATE broadcasts SET pinned=? WHERE id=?", (pinned, msg_id))
-    conn.commit()
-    conn.close()
- 
-    return JSONResponse({"success": True})
-
-
-
-@app.post("/update-profile")
-async def update_profile(request: Request):
-
-    if "user" not in request.session:
-        return JSONResponse({
-            "success": False,
-            "message": "Unauthorized"
+          }
         })
-
-    data = await request.json()
-
-    username = data.get("username")
-    phone = data.get("phone")
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    c.execute("""
-        UPDATE users
-        SET username=?,
-            phone=?
-        WHERE username=?
-    """, (
-        username,
-        phone,
-        request.session["user"]
-    ))
-
-    conn.commit()
-    conn.close()
-
-    # UPDATE SESSION
-    request.session["user"] = username
-
-    return JSONResponse({
-        "success": True
-    })
-
-@app.get("/logout")
-def logout(request: Request):
-
-    username = request.session.get("user")
-
-    if username:
-
-        conn = sqlite3.connect(DB_FILE)
-        c = conn.cursor()
-
-        c.execute("""
-            DELETE FROM active_sessions
-            WHERE username=?
-        """, (username,))
-
-        conn.commit()
-        conn.close()
-
-    request.session.clear()
-
-    return RedirectResponse("/")
-
-@app.get("/admin-login", response_class=HTMLResponse)
-def admin_login_page():
-    return HTMLResponse(load_login_template("admin"))
-
-@app.post("/admin-login")
-async def admin_login(
-    request: Request,
-    username: str = Form(...),
-    password: str = Form(...)
-):
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    c.execute("SELECT * FROM users WHERE username=? AND role='admin'", (username,))
-    admin = c.fetchone()
-
-    conn.close()
-
-    if admin and verify_password(password, admin[3]):
-
-        conn = sqlite3.connect(DB_FILE)
-        c = conn.cursor()
-
-        c.execute("""
-            DELETE FROM active_sessions
-            WHERE username=?
-        """, (username,))
-
-        conn.commit()
-        conn.close()
-
-        request.session.clear()
-        request.session["admin"] = username
-        request.session["role"] = "admin"
-
-        return RedirectResponse(url="/", status_code=303)
-
-    return HTMLResponse(load_login_template("admin", True))
-
-@app.get("/admin", response_class=HTMLResponse)
-def admin_panel(request: Request):
-
-    if request.session.get("role") != "admin":
-        return RedirectResponse("/admin-login", status_code=302)
-
-    path = os.path.join(STATIC_DIR, "admin.html")
-
-    with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
-
-# USER LOGIN PAGE
-@app.get("/user-login", response_class=HTMLResponse)
-def login_page():
-    try:
-        path = os.path.join(
-            STATIC_DIR,
-            "finlab",
-            "login.html"   # or login.html if that’s your file
-        )
-
-        with open(path, "r", encoding="utf-8") as f:
-            return HTMLResponse(f.read())
-
-    except Exception as e:
-        return HTMLResponse(f"LOGIN PAGE ERROR: {str(e)}", status_code=500)
-
-@app.post("/user-login")
-async def login(request: Request):
-
-    form = await request.form()
-
-    identifier = (
-        form.get("identifier")
-        or form.get("username")
-    )
-    password = form.get("password")
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    c.execute(
-        """
-        SELECT username, password
-        FROM users
-        WHERE username=? OR email=?
-        """,
-        (identifier, identifier)
-    )
-
-    user = c.fetchone()
-
-    conn.close()
-
-    # INVALID LOGIN
-    if not user:
-        return RedirectResponse(
-            url="/user-login?error=invalid",
-            status_code=303
-        )
-
-    # PASSWORD CHECK
-    if not verify_password(password, user[1]):
-
-        return RedirectResponse(
-            url="/user-login?error=invalid",
-            status_code=303
-        )
-
-    # SUCCESS LOGIN
-    create_user_session(
-        request,
-        user[0]
-    )
-
-    return RedirectResponse(
-        url="/",
-        status_code=303
-    )
-
-@app.post("/register-user")
-async def register_user(
-    request: Request,
-    username: str = Form(...),
-    email: str = Form(...),
-    password: str = Form(...),
-    phone: str = Form(...),
-    consent: str = Form(...)
-):
-    try:
-        conn = sqlite3.connect(DB_FILE)
-        c = conn.cursor()
-
-        # ✅ FIX HERE (INSIDE FUNCTION BODY)
-        consent_value = True if consent == "1" else False
-
-        # EMAIL CHECK
-        c.execute("SELECT * FROM users WHERE email=?", (email,))
-        if c.fetchone():
-            return RedirectResponse("/register?error=email", status_code=303)
-
-        # USERNAME CHECK
-        c.execute("SELECT * FROM users WHERE username=?", (username,))
-        if c.fetchone():
-            return RedirectResponse("/register?error=username", status_code=303)
-
-        # PASSWORD VALIDATION
-        if len(password) < 8 or not any(c.isupper() for c in password) or not any(c.isdigit() for c in password):
-            return RedirectResponse("/register?error=password", status_code=303)
-
-        hashed_pw = hash_password(password)
-
-        now_ist = datetime.now(IST).isoformat()
-        c.execute("""
-        INSERT INTO users (username, email, password, phone, consent, created_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-        """, (username, email, hashed_pw, phone, consent_value, now_ist))
-
-        conn.commit()
-        conn.close()
-
-        # ✅ AUTO LOGIN (SESSION CREATE)
-        create_user_session(
-            request,
-            username
-        )
-
-        return RedirectResponse("/", status_code=303)
-
-    except Exception as e:
-        print("REGISTER ERROR:", e)
-        return HTMLResponse("Internal Server Error", status_code=500)
+        .catch(e => console.error("loadData:", e));
+    }
     
+    
+    function startAutoRefresh(ms) { if (_refreshTimer) clearTimeout(_refreshTimer); doRefresh(ms); }
+    function doRefresh(ms) { loadData(); _refreshTimer = setTimeout(() => doRefresh(ms), ms); }
 
-# Working one loggedin device
-# @app.get("/api/session-check")
-# def session_check(request: Request):
+    /* ══════════════════════════════════════════════════════════
+       GAUGE
+    ══════════════════════════════════════════════════════════ */
+    function drawGauge() {
+      const cv = document.getElementById("gauge"), ctx = cv.getContext("2d"), w = cv.width, h = cv.height;
+      ctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h * .82, r = w * .36, arcW = 30;
+      ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = arcW + 4; ctx.arc(cx, cy, r, Math.PI, 0); ctx.stroke();
+      const rg = ctx.createLinearGradient(cx - r, cy, cx - r * .3, cy);
+      rg.addColorStop(0, '#ff2d55'); rg.addColorStop(1, '#ff6b35');
+      ctx.beginPath(); ctx.strokeStyle = rg; ctx.lineWidth = arcW; ctx.arc(cx, cy, r, Math.PI, Math.PI * (1 + 2 / 6)); ctx.stroke();
+      ctx.beginPath(); ctx.strokeStyle = '#f5a623'; ctx.lineWidth = arcW; ctx.arc(cx, cy, r, Math.PI * (1 + 2 / 6), Math.PI * (1 + 4 / 6)); ctx.stroke();
+      const gg = ctx.createLinearGradient(cx + r * .3, cy, cx + r, cy);
+      gg.addColorStop(0, '#00c9a7'); gg.addColorStop(1, '#00d4aa');
+      ctx.beginPath(); ctx.strokeStyle = gg; ctx.lineWidth = arcW; ctx.arc(cx, cy, r, Math.PI * (1 + 4 / 6), 0); ctx.stroke();
+      ctx.beginPath(); ctx.strokeStyle = 'rgba(2,163,254,0.07)'; ctx.lineWidth = 2; ctx.arc(cx, cy, r + arcW / 2 + 10, Math.PI, 0); ctx.stroke();
+      [-180, -120, -60, 0, 60, 120, 180].forEach(lv => {
+        const frac = (lv + 180) / 360, angle = Math.PI + frac * Math.PI, c = Math.cos(angle), s = Math.sin(angle);
+        ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 2;
+        ctx.moveTo(cx + (r - arcW / 2 - 4) * c, cy + (r - arcW / 2 - 4) * s); ctx.lineTo(cx + (r + arcW / 2 + 4) * c, cy + (r + arcW / 2 + 4) * s); ctx.stroke();
+        const lr = r + arcW / 2 + 22;
+        ctx.font = 'bold 16px "Roboto Mono",monospace'; ctx.fillStyle = 'rgba(150,160,185,0.85)';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(lv === 0 ? '0' : (lv > 0 ? '+' + lv : '' + lv), cx + lr * c, cy + lr * s);
+      });
+      for (let i = 1; i <= 11; i += 2) {
+        const angle = Math.PI + (i / 12) * Math.PI, c = Math.cos(angle), s = Math.sin(angle);
+        ctx.beginPath(); ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
+        ctx.moveTo(cx + (r - arcW / 2 - 1) * c, cy + (r - arcW / 2 - 1) * s); ctx.lineTo(cx + (r + arcW / 2 + 2) * c, cy + (r + arcW / 2 + 2) * s); ctx.stroke();
+      }
+    }
 
-#     if "user" not in request.session:
-#         return {"valid": False}
+    function updateGauge(val) {
+      val = Math.max(-180, Math.min(180, parseFloat(val) || 0));
+      drawGauge();
+      const cv = document.getElementById("gauge"), ctx = cv.getContext("2d"), w = cv.width, h = cv.height;
+      const cx = w / 2, cy = h * .82, nr = w * .30, frac = (val + 180) / 360, angle = Math.PI + frac * Math.PI;
+      const nc = val > 0 ? '#00d4aa' : val < 0 ? '#ff4d6d' : '#f5a623';
+      ctx.shadowBlur = 14; ctx.shadowColor = nc;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + nr * Math.cos(angle), cy + nr * Math.sin(angle));
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.stroke(); ctx.shadowBlur = 0;
+      ctx.beginPath(); ctx.arc(cx, cy, 13, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fillStyle = nc; ctx.fill();
+      const gv = document.getElementById("gauge-val");
+      gv.textContent = (val > 0 ? '+' : '') + Math.round(val); gv.style.color = val > 0 ? 'var(--green)' : val < 0 ? 'var(--red)' : 'var(--gold)';
+      let label, bg, border, color;
+      if (val > 60) { label = '▲ Strong Bullish'; bg = 'rgba(0,212,170,0.1)'; border = 'rgba(0,212,170,0.3)'; color = 'var(--green)'; }
+      else if (val > 0) { label = '▲ Mildly Bullish'; bg = 'rgba(0,212,170,0.08)'; border = 'rgba(0,212,170,0.2)'; color = 'var(--green)'; }
+      else if (val < -60) { label = '▼ Strong Bearish'; bg = 'rgba(255,77,109,0.1)'; border = 'rgba(255,77,109,0.3)'; color = 'var(--red)'; }
+      else if (val < 0) { label = '▼ Mildly Bearish'; bg = 'rgba(255,77,109,0.08)'; border = 'rgba(255,77,109,0.2)'; color = 'var(--red)'; }
+      else { label = '◆ Neutral'; bg = 'rgba(245,166,35,0.1)'; border = 'rgba(245,166,35,0.3)'; color = 'var(--gold)'; }
+      document.getElementById("sentiment-text").innerHTML = `<span class="sentiment-badge" style="background:${bg};color:${color};border:1px solid ${border}">${label}</span>`;
+    }
 
-#     return {
-#         "valid": validate_user_session(request)
-#     }
+    /* ══════════════════════════════════════════════════════════
+       DOWNLOADS
+    ══════════════════════════════════════════════════════════ */
+    let _allDlFiles = [];
+    const PLAN_DL_DAYS = { pro: 7, premium: 30 };
 
-@app.get("/api/session-check")
-def session_check(request: Request):
+    function loadDownloads() {
+      fetch('/api/downloads', { credentials: 'include' })
+        .then(res => {
+          if (res.status === 401) { window.location.href = '/user-login'; return null; }
+          return res.json();
+        })
+        .then(data => {
+          if (!data) return;
+          const plan = (data.plan || "free").toLowerCase();
+          const files = data.files || [];
+          const canDl = (plan === "pro" || plan === "premium" || plan === "admin");
+          _userPlan = plan;
+          _allDlFiles = files;
 
-    # ADMIN
-    if "admin" in request.session:
-        return {
-            "valid": True,
-            "logged_in": True,
-            "role": "admin"
-        }
+          // Plan strip
+          document.getElementById("plan-strip").className = `plan-strip plan-${plan}`;
+          const labels = { admin: '🔑 Admin Access', pro: '⚡ Pro Plan', premium: '👑 Premium Plan', essential: '🟡 Essential Plan', basic: '🔵 Basic Plan', free: '⭕ Free Plan' };
+          document.getElementById("plan-strip-label").innerHTML = labels[plan] || ('Plan: ' + plan);
+          const maxDays = PLAN_DL_DAYS[plan] || 0;
+          document.getElementById("plan-strip-status").textContent =
+            plan === "admin" ? '✅ All files unlocked' :
+              canDl ? `✅ Last ${maxDays} days unlocked` : '⛔ Downloads Locked';
 
-    # USER
-    if "user" in request.session:
+          // Show/hide date filter
+          const filterEl = document.getElementById('dl-date-filter');
+          if (filterEl) filterEl.style.display = canDl ? 'block' : 'none';
 
-        valid = validate_user_session(request)
+          if (canDl) {
+            const today = new Date();
+            const noteEl = document.getElementById('dl-limit-note');
+            const fromInp = document.getElementById('dl-from-date');
+            const toInp = document.getElementById('dl-to-date');
+            const todayStr = today.toISOString().slice(0, 10);
 
-        if not valid:
-
-            request.session.clear()
-
-            return {
-                "valid": False,
-                "logged_in": False
+            if (plan === 'admin') {
+              // Admin: no cutoff — show all files, set date range to cover everything
+              if (noteEl) noteEl.textContent = 'All historical files unlocked — no date restriction';
+              if (fromInp && !fromInp.value) {
+                fromInp.value = '2025-01-01';   // far enough back to cover all data
+                fromInp.min = '2024-01-01';
+                fromInp.max = todayStr;
+                toInp.value = todayStr;
+                toInp.min = '2024-01-01';
+                toInp.max = todayStr;
+              }
+            } else {
+              const cutoff = new Date();
+              cutoff.setDate(today.getDate() - maxDays);
+              const cutoffStr = cutoff.toISOString().slice(0, 10);
+              if (noteEl) {
+                noteEl.textContent = `Files available from last ${maxDays} days (from ${cutoff.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })})`;
+              }
+              if (fromInp && !fromInp.value) {
+                fromInp.value = cutoffStr;
+                fromInp.min = cutoffStr;
+                fromInp.max = todayStr;
+                toInp.value = todayStr;
+                toInp.min = cutoffStr;
+                toInp.max = todayStr;
+              }
             }
+          }
+          renderDlList(plan, canDl);
+        })
+        .catch(() => {
+          document.getElementById("dl-list").innerHTML = `<div class="no-files"><i class="fas fa-exclamation-triangle"></i>Error loading files.</div>`;
+        });
+    }
 
-        return {
-            "valid": True,
-            "logged_in": True,
-            "role": "user"
+    function renderDlList(plan, canDl) {
+      const container = document.getElementById("dl-list");
+      let files = [..._allDlFiles];
+
+      if (!files.length) {
+        container.innerHTML = `<div class="no-files"><i class="fas fa-folder-open"></i>No historical files yet.<br><span style="font-size:10px;margin-top:4px;display:block">Files are auto-saved after each market session</span></div>`;
+        return;
+      }
+
+      // Apply plan-based day limit
+      const maxDays = PLAN_DL_DAYS[plan] || 0;
+      if (canDl && maxDays && plan !== 'admin') {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - maxDays);
+        cutoff.setHours(0, 0, 0, 0);
+        files = files.filter(f => {
+          try { return new Date(f.name.replace('.xlsx', '')) >= cutoff; } catch (e) { return true; }
+        });
+      }
+
+      // Apply user date filter
+      const fromVal = document.getElementById('dl-from-date') ? document.getElementById('dl-from-date').value : '';
+      const toVal = document.getElementById('dl-to-date') ? document.getElementById('dl-to-date').value : '';
+      if (fromVal) {
+        const from = new Date(fromVal + 'T00:00:00');
+        files = files.filter(f => { try { return new Date(f.name.replace('.xlsx', '') + 'T00:00:00') >= from; } catch (e) { return true; } });
+      }
+      if (toVal) {
+        const to = new Date(toVal + 'T23:59:59');
+        files = files.filter(f => { try { return new Date(f.name.replace('.xlsx', '') + 'T00:00:00') <= to; } catch (e) { return true; } });
+      }
+
+      if (!files.length) {
+        container.innerHTML = `<div class="no-files"><i class="fas fa-calendar-times"></i>No files in selected date range.<br><span style="font-size:10px;margin-top:4px;display:block">Try adjusting the date filter.</span></div>`;
+        return;
+      }
+
+      container.innerHTML = files.map(f => {
+        if (canDl) {
+          return `<div class="dl-item">
+            <div class="dl-item-left">
+              <span class="dl-item-icon">📊</span>
+              <div><div class="dl-name">${f.display_date}</div><div class="dl-date">${f.name}</div></div>
+            </div>
+            <a href="${f.url}" class="dl-btn"><i class="fas fa-file-excel"></i> Download</a>
+          </div>`;
+        } else {
+          return `<div class="dl-item">
+            <div class="dl-item-left">
+              <span class="dl-item-icon">🔒</span>
+              <div><div class="dl-name">${f.display_date}</div><div class="dl-date">${f.name}</div></div>
+            </div>
+            <button class="dl-upgrade-btn" onclick="showUpgradeModal()"><i class="fas fa-lock"></i> Upgrade</button>
+          </div>`;
+        }
+      }).join('');
+    }
+
+    function applyDateFilter() {
+      const plan = _userPlan.toLowerCase();
+      renderDlList(plan, plan === "pro" || plan === "premium" || plan === "admin");
+    }
+
+    function clearDateFilter() {
+      const plan = _userPlan.toLowerCase();
+      const canDl = plan === "pro" || plan === "premium" || plan === "admin";
+      const today = new Date();
+      const todayStr = today.toISOString().slice(0, 10);
+      const fromInp = document.getElementById('dl-from-date');
+      const toInp = document.getElementById('dl-to-date');
+
+      if (plan === 'admin') {
+        if (fromInp) { fromInp.value = '2025-01-01'; fromInp.min = '2024-01-01'; }
+        if (toInp) { toInp.value = todayStr; toInp.min = '2024-01-01'; }
+      } else {
+        const maxDays = PLAN_DL_DAYS[plan] || 0;
+        if (canDl && maxDays) {
+          const cutoff = new Date();
+          cutoff.setDate(today.getDate() - maxDays);
+          if (fromInp) fromInp.value = cutoff.toISOString().slice(0, 10);
+          if (toInp) toInp.value = todayStr;
+        }
+      }
+      renderDlList(plan, canDl);
+    }
+    /* ══════════════════════════════════════════════════════════
+       UPGRADE MODAL
+    ══════════════════════════════════════════════════════════ */
+    function showUpgradeModal() { document.getElementById("upgrade-overlay").classList.add("active"); }
+    function closeUpgradeModal() { document.getElementById("upgrade-overlay").classList.remove("active"); }
+    document.getElementById("upgrade-overlay").addEventListener("click", function (e) { if (e.target === this) closeUpgradeModal(); });
+
+    /* ══════════════════════════════════════════════════════════
+       MARKET NOTE
+    ══════════════════════════════════════════════════════════ */
+    function updateMarketMessage() {
+      const note = document.getElementById("market-note"), ist = getIST(), h = ist.getHours(), m = ist.getMinutes();
+      note.style.display = ((h > 9 || (h === 9 && m >= 16)) && (h < 15 || (h === 12 && m <= 0))) ? "none" : "flex";
+    }
+
+    /* ══════════════════════════════════════════════════════════
+  TIMED SYSTEM MESSAGES — inject into chat at the right time
+══════════════════════════════════════════════════════════ */
+    function checkTimedMessages() {
+      const ist = getIST();
+      const nowMins = ist.getHours() * 60 + ist.getMinutes();
+
+      TIMED_MESSAGES.forEach(msg => {
+        const isActive = nowMins >= msg.fromMins && nowMins < msg.toMins;
+        const alreadyShown = _shownSystemMsgs.has(msg.id);
+        const existingEl = document.getElementById('sys-' + msg.id);
+
+        // Remove if time window passed
+        if (!isActive && existingEl) {
+          existingEl.remove();
+          _shownSystemMsgs.delete(msg.id);
+          return;
         }
 
-    return {
-        "valid": False,
-        "logged_in": False
+        // Inject if time window active and not yet shown
+        if (isActive && !alreadyShown) {
+          _shownSystemMsgs.add(msg.id);
+          injectSystemMessage(msg);
+        }
+      });
     }
 
-# @app.middleware("http")
-# async def enforce_single_login(request, call_next):
-
-#     protected_paths = [
-#         "/dashboard",
-#         "/account",
-#         "/checkout",
-#         "/simple"
-#     ]
-
-#     if request.url.path in protected_paths:
-
-#         if request.session.get("user"):
-
-#             if not validate_user_session(request):
-
-#                 request.session.clear()
-
-#                 return RedirectResponse("/user-login")
-
-#     return await call_next(request)
-
-
-# Dashboard
-@app.get("/dashboard", response_class=HTMLResponse)
-def dashboard_page(request: Request):
-
-    # ADMIN ALWAYS ALLOWED — no plan check needed
-    if "admin" in request.session:
-        path = os.path.join(STATIC_DIR, "dashboard.html")
-        with open(path, "r", encoding="utf-8") as f:
-            return HTMLResponse(f.read())
-
-    # USER LOGIN CHECK
-    if "user" not in request.session:
-        return RedirectResponse("/user-login")
-
-    if not validate_user_session(request):
-        request.session.clear()
-        return RedirectResponse("/user-login")
-
-    username = request.session["user"]
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("""
-        SELECT plan, plan_start, plan_expiry
-        FROM users
-        WHERE username=?
-    """, (username,))
-    row = c.fetchone()
-    conn.close()
-
-    if not row:
-        return RedirectResponse("/trading-plan")
-
-    plan, plan_start, plan_expiry = row
-
-    # No plan at all
-    if not plan or plan == "free":
-        return RedirectResponse("/trading-plan")
-
-    # No expiry set
-    if not plan_expiry:
-        return RedirectResponse("/trading-plan")
-
-    # Check expiry — use IST, handle timezone-naive stored values
-    try:
-        now = datetime.now(IST)
-        expiry = datetime.fromisoformat(plan_expiry)
-        if expiry.tzinfo is None:
-            expiry = IST.localize(expiry)
-        if now > expiry:
-            return RedirectResponse("/trading-plan?expired=1")
-    except Exception as e:
-        print(f"dashboard_page expiry parse error for {username}: {e}")
-        # Don't block on parse error — let them in and let /api/dashboard-access handle it
-        pass
-
-    # Check plan_start — if plan hasn't started yet, still allow dashboard
-    # (the JS checkDashboardAccess() will show the "plan not started" overlay)
-    # DO NOT redirect here — let the frontend handle it gracefully
-
-    path = os.path.join(STATIC_DIR, "dashboard.html")
-    with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
-
-
-@app.get("/api/debug-user")
-def debug_user(request: Request):
-    username = request.session.get("user") or request.session.get("admin")
-    if not username:
-        return JSONResponse({"error": "not logged in"})
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("SELECT username, plan, plan_start, plan_expiry, role FROM users WHERE username=?", (username,))
-    row = c.fetchone()
-    conn.close()
-    if not row:
-        return JSONResponse({"error": "user not found"})
-    return JSONResponse({
-        "username": row[0],
-        "plan": row[1],
-        "plan_start": row[2],
-        "plan_expiry": row[3],
-        "role": row[4],
-        "session_keys": list(request.session.keys())
-    })
-
-# My Account
-@app.get("/account", response_class=HTMLResponse)
-def account_page(request: Request):
-    # ✅ Check login
-    if "user" not in request.session and "admin" not in request.session:
-        return RedirectResponse("/user-login", status_code=302)
-
-    path = os.path.join(STATIC_DIR, "finlab", "user.html")
-
-    with open(path, "r", encoding="utf-8") as f:
-        return f.read()
-
-#Checkout
-@app.get("/checkout", response_class=HTMLResponse)
-def checkout_page(request: Request):
-
-    if "user" not in request.session:
-        return RedirectResponse("/user-login")
-
-    path = os.path.join(STATIC_DIR, "finlab", "ecom-checkout.html")
-
-    with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
-
-
-@app.post("/activate-plan")
-async def activate_plan(request):
-    """Called by razorpay_integration after successful payment verification."""
-    from fastapi.responses import JSONResponse
- 
-    if "user" not in request.session:
-        return JSONResponse({"success": False, "error": "Not logged in"})
- 
-    data = await request.json()
-    plan = (data.get("plan") or "").lower().strip()
- 
-    if plan not in PLAN_CONFIG_DATA:
-        return JSONResponse({"success": False, "error": "Invalid plan"})
- 
-    username = request.session["user"]
-    cfg      = PLAN_CONFIG_DATA[plan]
-    t_days   = cfg["trading_days"]
-    price    = cfg["price"]
-    now      = datetime.now(IST)
- 
-    conn = sqlite3.connect(DB_FILE)
-    c    = conn.cursor()
- 
-    # ── Find latest future expiry (subscriptions + users table) ──
-    c.execute("""
-        SELECT MAX(plan_expiry) FROM subscriptions
-        WHERE username=? AND status IN ('active','queued')
-    """, (username,))
-    row = c.fetchone()
-    sub_expiry_str = row[0] if row else None
- 
-    c.execute("SELECT plan_expiry FROM users WHERE username=?", (username,))
-    urow = c.fetchone()
-    user_expiry_str = urow[0] if urow else None
- 
-    effective_last_expiry = None
-    for es in [sub_expiry_str, user_expiry_str]:
-        if es:
-            try:
-                edt = datetime.fromisoformat(es)
-                if edt.tzinfo is None:
-                    edt = IST.localize(edt)
-                if edt > now:
-                    if effective_last_expiry is None or edt > effective_last_expiry:
-                        effective_last_expiry = edt
-            except Exception:
-                pass
- 
-    # ── Determine start date ──
-    if effective_last_expiry:
-        # Queue after existing plan ends
-        start_dt = get_next_trading_day_after(effective_last_expiry)
-    else:
-        # Fresh purchase — use time-of-purchase logic
-        start_dt = get_subscription_start_date()
- 
-    # ── Calculate expiry ──
-    expiry_dt, total_cal, weekends, holidays = calculate_expiry_from_start(start_dt, t_days)
- 
-    # ── Status: active if start is now or past, else queued ──
-    new_status = "active" if start_dt <= now else "queued"
- 
-    # ── Write to subscriptions table ──
-    c.execute("""
-        INSERT INTO subscriptions
-            (username, plan, plan_start, plan_expiry,
-             trading_days, total_calendar_days,
-             weekends_skipped, holidays_skipped,
-             status, price, created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?)
-    """, (
-        username, plan,
-        start_dt.isoformat(), expiry_dt.isoformat(),
-        t_days, total_cal, weekends, holidays,
-        new_status, price, now.isoformat()
-    ))
- 
-    # ── Update users table only if immediately active ──
-    if new_status == "active":
-        c.execute("""
-            UPDATE users SET plan=?, plan_start=?, plan_expiry=?
-            WHERE username=?
-        """, (plan, start_dt.isoformat(), expiry_dt.isoformat(), username))
- 
-    conn.commit()
-    conn.close()
- 
-    return JSONResponse({
-        "success":    True,
-        "plan":       plan,
-        "plan_start": start_dt.isoformat(),
-        "plan_expiry": expiry_dt.isoformat(),
-        "status":     new_status,
-    })
- 
-# ═══════════════════════════════════════════════════════════════════════
-# CORE DATA FUNCTIONS
-# ═══════════════════════════════════════════════════════════════════════
-
-def get_expiries():
-    try:
-        res  = requests.post(BASE_URL + "/optionchain/expirylist", headers=HEADERS,
-                             json={"UnderlyingScrip": 51, "UnderlyingSeg": "IDX_I"})
-        data = res.json()
-        return sorted(data.get("data", [])) if data.get("status") == "success" else []
-    except:
-        return []
-
-
-def fetch_live_option_chain(expiry):
-    res  = requests.post(BASE_URL + "/optionchain", headers=HEADERS,
-                         json={"UnderlyingScrip": 51, "UnderlyingSeg": "IDX_I", "Expiry": expiry})
-    data = res.json()
-    if data.get("status") != "success":
-        raise ValueError(f"API error: {data}")
-    d = data["data"]
-    return float(d.get("last_price", 0)), d.get("oc", {})
-
-# Workign Build_df_from_oc
-# def build_df_from_oc(ltp, oc, expiry, dt_label):
-#     rows = []
-#     for strike, val in oc.items():
-#         ce   = val.get("ce", {});  pe   = val.get("pe", {})
-#         ce_g = ce.get("greeks") or {}; pe_g = pe.get("greeks") or {}
-#         try:
-#             ratio = round((float(pe_g["delta"]) / float(ce_g["delta"])) * -1, 5)
-#         except:
-#             ratio = None
-#         rows.append({
-#             "DateTime": dt_label, "Expiry": expiry, "Strike": float(strike),
-#             "CE_LTP":    ce.get("last_price", "-"), "CE_Delta": ce_g.get("delta", "-"),
-#             "CE_Gamma":  ce_g.get("gamma", "-"),    "CE_Theta": ce_g.get("theta", "-"),
-#             "CE_Vega":   ce_g.get("vega", "-"),
-#             "PE_LTP":    pe.get("last_price", "-"), "PE_Delta": pe_g.get("delta", "-"),
-#             "PE_Gamma":  pe_g.get("gamma", "-"),    "PE_Theta": pe_g.get("theta", "-"),
-#             "PE_Vega":   pe_g.get("vega", "-"),
-#             "Delta_Ratio": ratio,
-#         })
-
-#     df = pd.DataFrame(rows).sort_values("Strike").reset_index(drop=True)
-#     if df.empty:
-#         return df, None
-
-#     df["diff"] = abs(df["Strike"] - ltp)
-#     atm_idx    = df["diff"].idxmin()
-#     atm_strike = df.loc[atm_idx, "Strike"]
-
-#     df = df.iloc[max(atm_idx - 10, 0): atm_idx + 11].reset_index(drop=True)
-#     df["diff"] = abs(df["Strike"] - ltp)
-#     atm_idx    = df["diff"].idxmin()
-
-#     # =========================
-#     # REFERENCE (ROW-WISE FIX)
-#     # =========================
-#     df["Reference"] = None
-
-#     for i in range(len(df)):
-#         try:
-#             if i == 0 or i == len(df) - 1:
-#                 continue
-
-#             prev_val = df.loc[i - 1, "Delta_Ratio"]
-#             next_val = df.loc[i + 1, "Delta_Ratio"]
-
-#             if isinstance(prev_val, float) and isinstance(next_val, float):
-#                 ref = ((prev_val + next_val) / 2) - 0.06
-#                 df.loc[i, "Reference"] = round(ref, 5)
-
-#         except:
-#             continue
-
-#     # =========================
-#     # STRETCHED (ROW-WISE FIX)
-#     # =========================
-#     df["Stretched"] = None
-
-#     for i in range(len(df)):
-#         try:
-#             curr_dr = df.loc[i, "Delta_Ratio"]
-#             curr_ref = df.loc[i, "Reference"]
-
-#             if curr_ref == "0.00000" or curr_ref is None:
-#                 continue
-
-#             curr_ref = float(curr_ref)
-
-#             if i < 2:
-#                 continue
-
-#             prev1 = df.loc[i - 1, "Delta_Ratio"]
-#             prev2 = df.loc[i - 2, "Delta_Ratio"]
-
-#             try:
-#                 curr_dr = float(curr_dr)
-#                 prev1 = float(prev1)
-#                 prev2 = float(prev2)
-#             except:
-#                 continue
-
-#             denom = (prev1 - prev2) / 100
-
-#             if denom == 0:
-#                 continue
-
-#             stretched_val = df.loc[i, "Strike"] - ((curr_dr - curr_ref) / denom)
-#             df.loc[i, "Stretched"] = f"{stretched_val:.5f}"
-
-#         except:
-#             continue
-
-#     df["Stretched"] = df["Stretched"].fillna("")
-
-#     def calc_diff(s):
-#         try:
-#             if s == "" or s is None:
-#                 return ""
-#             return round(float(s) - ltp, 2)
-#         except:
-#             return ""
-
-#     df["Difference"] = df["Stretched"].apply(calc_diff)
-
-#     return df, atm_strike
-
-def build_df_from_oc(ltp, oc, expiry, dt_label):
-    rows = []
-    for strike, val in oc.items():
-        ce  = val.get("ce", {})
-        pe  = val.get("pe", {})
-        ce_g = ce.get("greeks") or {}
-        pe_g = pe.get("greeks") or {}
-
-        def to_float(v):
-            try:
-                f = float(v)
-                if math.isnan(f) or math.isinf(f):
-                    return None
-                return f
-            except:
-                return None
-
-        ce_delta = to_float(ce_g.get("delta"))
-        pe_delta = to_float(pe_g.get("delta"))
-
-        # Delta ratio — only compute if both deltas are valid and non-zero
-        try:
-            # if ce_delta and pe_delta and ce_delta != 0:
-            if ce_delta is not None and pe_delta is not None and ce_delta != 0:
-                ratio = round((pe_delta / ce_delta) * -1, 5)
-                if math.isnan(ratio) or math.isinf(ratio):
-                    ratio = None
-            else:
-                ratio = None
-        except:
-            ratio = None
-
-        rows.append({
-            "DateTime":    dt_label,
-            "Expiry":      expiry,
-            "Strike":      float(strike),
-            "CE_LTP":      to_float(ce.get("last_price")) or 0,
-            "CE_Delta":    ce_delta,
-            "CE_Gamma":    to_float(ce_g.get("gamma")),
-            "CE_Theta":    to_float(ce_g.get("theta")),
-            "CE_Vega":     to_float(ce_g.get("vega")),
-            "PE_LTP":      to_float(pe.get("last_price")) or 0,
-            "PE_Delta":    pe_delta,
-            "PE_Gamma":    to_float(pe_g.get("gamma")),
-            "PE_Theta":    to_float(pe_g.get("theta")),
-            "PE_Vega":     to_float(pe_g.get("vega")),
-            "Delta_Ratio": ratio,
-        })
-
-    df = pd.DataFrame(rows).sort_values("Strike").reset_index(drop=True)
-    if df.empty:
-        return df, None
-
-    df["diff"] = abs(df["Strike"] - ltp)
-    atm_idx    = df["diff"].idxmin()
-    atm_strike = df.loc[atm_idx, "Strike"]
-
-    df = df.iloc[max(atm_idx - 10, 0): atm_idx + 11].reset_index(drop=True)
-    df["diff"] = abs(df["Strike"] - ltp)
-    atm_idx    = df["diff"].idxmin()
-
-    # ── REFERENCE ──────────────────────────────────────────────────────
-    df["Reference"] = None
-    for i in range(1, len(df) - 1):
-        try:
-            prev_val = df.loc[i - 1, "Delta_Ratio"]
-            next_val = df.loc[i + 1, "Delta_Ratio"]
-            if prev_val is not None and next_val is not None:
-                ref = ((float(prev_val) + float(next_val)) / 2) - 0.06
-                if not math.isnan(ref) and not math.isinf(ref):
-                    df.loc[i, "Reference"] = round(ref, 5)
-        except:
-            continue
-
-    # ── STRETCHED ──────────────────────────────────────────────────────
-    df["Stretched"] = None
-    for i in range(2, len(df)):
-        try:
-            curr_dr  = df.loc[i,     "Delta_Ratio"]
-            curr_ref = df.loc[i,     "Reference"]
-            prev1    = df.loc[i - 1, "Delta_Ratio"]
-            prev2    = df.loc[i - 2, "Delta_Ratio"]
-
-            # Skip if any required value is missing
-            if any(v is None for v in [curr_dr, curr_ref, prev1, prev2]):
-                continue
-
-            curr_dr  = float(curr_dr)
-            curr_ref = float(curr_ref)
-            prev1    = float(prev1)
-            prev2    = float(prev2)
-
-            denom = (prev1 - prev2) / 100
-            if denom == 0:
-                continue
-
-            stretched_val = df.loc[i, "Strike"] - ((curr_dr - curr_ref) / denom)
-
-            if math.isnan(stretched_val) or math.isinf(stretched_val):
-                continue
-
-            df.loc[i, "Stretched"] = round(stretched_val, 5)
-        except:
-            continue
-
-    # ── DIFFERENCE ─────────────────────────────────────────────────────
-    def calc_diff(s):
-        try:
-            if s is None:
-                return None
-            f = float(s)
-            if math.isnan(f) or math.isinf(f):
-                return None
-            return round(f - ltp, 2)
-        except:
-            return None
-
-    df["Difference"] = df["Stretched"].apply(calc_diff)
-
-    return df, atm_strike
-
-# CACHE_SECONDS = 15
-
-# def is_market_open():
-
-#     now = datetime.now()
-
-#     current_minutes = (
-#         now.hour * 60
-#     ) + now.minute
-
-#     start_minutes = (9 * 60) + 16
-#     end_minutes   = (15 * 60) + 30
-
-#     return (
-#         current_minutes >= start_minutes
-#         and
-#         current_minutes <= end_minutes
-#     )
-
-# def is_market_open():
-#     return True
-
-def is_market_open():
-    now = datetime.now(IST)
-
-    # Never open on weekends or holidays
-    if now.weekday() >= 5:
-        return False
-    if is_market_holiday(now):
-        return False
-
-    current_seconds = (now.hour * 3600) + (now.minute * 60) + now.second
-    start_seconds   = (9 * 3600) + (16 * 60) + 0
-    end_seconds     = (12 * 3600) + (0 * 60) + 0
-
-    return start_seconds <= current_seconds <= end_seconds
-
-
-def get_live_chain(expiry, force_live=False):
-
-    global LAST_DATA
-
-    now = datetime.now(IST)
-
-    current_interval = get_interval()
-
-    cached = LAST_DATA.get("data")
-    cached_time = LAST_DATA.get("time")
-
-    # USE CACHE
-    if (
-        cached is not None
-        and cached_time is not None
-        and not force_live
-    ):
-
-        elapsed = (
-            now - cached_time
-        ).total_seconds()
-
-        if elapsed < current_interval:
-
-            print("⚡ USING CACHED DATA")
-
-            return cached
-
-    try:
-
-        print("🔥 FETCHING NEW DATA FROM API")
-
-        ltp, oc = fetch_live_option_chain(expiry)
-
-        dt_label = now.strftime("%Y-%m-%d %H:%M:%S")
-
-        df, atm = build_df_from_oc(
-            ltp,
-            oc,
-            expiry,
-            dt_label
-        )
-
-        LAST_DATA["time"] = now
-        LAST_DATA["data"] = (ltp, df, atm)
-
-        return (ltp, df, atm)
-
-    except Exception as e:
-
-        print("🔥 FULL ERROR:", str(e))
-
-        if cached:
-
-            print("⚠️ RETURNING OLD CACHE")
-
-            return cached
-
-        return (0, pd.DataFrame(), None)
-
-
-def get_historical_snapshot(expiry, target_dt_str):
-    if not os.path.exists(CSV_FILE) or os.path.getsize(CSV_FILE) == 0:
-        return None, None
-    try:
-        df = pd.read_csv(CSV_FILE)
-        df = df[df["Expiry"].astype(str).str.strip() == expiry.strip()]
-        if df.empty:
-            return None, None
-
-        def parse_dt(s):
-            for fmt in ("%Y-%m-%d %H:%M:%S", "%d-%m-%Y %H:%M:%S", "%d-%m-%Y %H:%M"):
-                try: return datetime.strptime(str(s).strip(), fmt)
-                except: pass
-            return None
-
-        df["_dt"] = df["DateTime"].apply(parse_dt)
-        df = df.dropna(subset=["_dt"])
-        if df.empty:
-            return None, None
-
-        target_dt = None
-        for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%d-%m-%Y %H:%M:%S"):
-            try: target_dt = datetime.strptime(target_dt_str.strip(), fmt); break
-            except: pass
-        if target_dt is None:
-            return None, None
-
-        df["_diff"] = abs(df["_dt"] - target_dt).apply(lambda x: x.total_seconds())
-        closest    = df.loc[df["_diff"].idxmin()]
-        return str(closest.get("Index_LTP", "-")), closest.to_dict()
-    except Exception as e:
-        print("get_historical_snapshot error:", e)
-        return None, None
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# SCHEDULER / RECORDER
-# ═══════════════════════════════════════════════════════════════════════
-
-def save_atm_to_csv(expiry):
-    try:
-        ltp, df, atm_strike = get_live_chain(expiry)
-        if df.empty or atm_strike is None:
-            return
-        r   = df[df["Strike"] == atm_strike].iloc[0]
-        hdr = not os.path.exists(CSV_FILE) or os.path.getsize(CSV_FILE) == 0
-        with open(CSV_FILE, "a", newline="") as f:
-            w = csv.writer(f)
-            if hdr: w.writerow(CSV_COLUMNS)
-            w.writerow([
-                r["DateTime"], r["Expiry"], int(r["Strike"]),
-                r["CE_LTP"],  r["CE_Delta"],  r["CE_Gamma"],  r["CE_Theta"],  r["CE_Vega"],
-                r["PE_LTP"],  r["PE_Delta"],  r["PE_Gamma"],  r["PE_Theta"],  r["PE_Vega"],
-                r["Delta_Ratio"], ltp,
-                r["Reference"], r["Stretched"], r["Difference"],
-                
-            ])
-        recorder_state["records_saved"] += 1
-        print(f"[{datetime.now():%H:%M:%S}] Saved ATM Strike={int(atm_strike)} LTP={ltp}")
-    except Exception as e:
-        print("save_atm_to_csv error:", e)
-
-
-def scheduled_job():
-    now = datetime.now()
-    st  = recorder_state.get("stop_time")
-    if st and now >= st:
-        _stop_recording(); return
-    if recorder_state["running"] and recorder_state["expiry"]:
-        save_atm_to_csv(recorder_state["expiry"])
-
-
-def _stop_recording():
-    recorder_state["running"] = False
-    if scheduler.get_job("atm_rec"): scheduler.remove_job("atm_rec")
-    print(f"[{datetime.now():%H:%M:%S}] Recording STOPPED.")
-
-
-def _reschedule(secs):
-    if scheduler.get_job("atm_rec"): scheduler.remove_job("atm_rec")
-    scheduler.add_job(scheduled_job, "interval", seconds=secs,
-                      id="atm_rec", replace_existing=True)
-
-
-def restart_market_job():
-    try:
-        scheduler.remove_job("market_auto_job")
-    except:
-        pass
-
-    interval = get_interval()
-
-    scheduler.add_job(
-        auto_market_recorder,
-        "interval",
-        seconds=interval,
-        id="market_auto_job",
-        replace_existing=True,
-        max_instances=1,        # ← ADD THIS: prevents overlapping runs
-        coalesce=True           # ← ADD THIS: skip queued-up missed runs
-    )
-    print(f"✅ VPS MARKET WORKER STARTED ({interval}s interval)")
-
-
-restart_market_job() 
-
-def promote_queued_subscriptions():
-    """
-    Runs every 5 minutes.
-    • Promotes queued → active when start_dt has arrived.
-    • Marks active → expired when expiry_dt has passed.
-    • Resets users.plan to 'free' when no active/queued sub exists.
-    """
-    now  = datetime.now(IST)
-    conn = sqlite3.connect(DB_FILE)
-    c    = conn.cursor()
- 
-    # ── 1. Promote queued → active ──
-    c.execute("""
-        SELECT id, username, plan, plan_start, plan_expiry
-        FROM subscriptions WHERE status='queued'
-    """)
-    for r in c.fetchall():
-        try:
-            sdt = datetime.fromisoformat(r[3])
-            if sdt.tzinfo is None:
-                sdt = IST.localize(sdt)
-            if now >= sdt:
-                c.execute("UPDATE subscriptions SET status='active' WHERE id=?", (r[0],))
-                c.execute("""
-                    UPDATE users SET plan=?, plan_start=?, plan_expiry=?
-                    WHERE username=?
-                """, (r[2], r[3], r[4], r[1]))
-                print(f"✅ Promoted {r[1]} → {r[2]} active")
-        except Exception as e:
-            print(f"promote_queued error: {e}")
- 
-    # ── 2. Mark active → expired ──
-    c.execute("""
-        SELECT id, username, plan_expiry
-        FROM subscriptions WHERE status='active'
-    """)
-    for r in c.fetchall():
-        try:
-            edt = datetime.fromisoformat(r[2])
-            if edt.tzinfo is None:
-                edt = IST.localize(edt)
-            if now > edt:
-                c.execute("UPDATE subscriptions SET status='expired' WHERE id=?", (r[0],))
-                # Check if this user still has any active/queued subs
-                c.execute("""
-                    SELECT COUNT(*) FROM subscriptions
-                    WHERE username=? AND status IN ('active','queued')
-                """, (r[1],))
-                remaining = c.fetchone()[0]
-                if remaining == 0:
-                    c.execute("""
-                        UPDATE users
-                        SET plan='free', plan_start=NULL, plan_expiry=NULL
-                        WHERE username=?
-                    """, (r[1],))
-                    print(f"⛔ {r[1]} plan expired → reset to free")
-        except Exception as e:
-            print(f"expire_active error: {e}")
- 
-    conn.commit()
-    conn.close()
-
-scheduler.add_job(
-    promote_queued_subscriptions,
-    "interval",
-    minutes=5,
-    id="promote_subscriptions",
-    replace_existing=True,
-    max_instances=1,
-    coalesce=True
-)
-"""
-scheduler.add_job(
-    promote_queued_subscriptions,
-    "interval",
-    minutes=5,
-    id="promote_subscriptions",
-    replace_existing=True,
-    max_instances=1,
-    coalesce=True
-)
-print("✅ SUBSCRIPTION PROMOTER SCHEDULED every 5 min")
- 
-# ── Daily holiday refresh from NSE (6 AM IST) ────────────────────────────────
-def daily_holiday_refresh():
-    from market_holidays import refresh_holidays
-    refresh_holidays()
-    print("✅ Market holidays refreshed")
- 
-scheduler.add_job(
-    daily_holiday_refresh,
-    "cron",
-    hour=6,
-    minute=0,
-    timezone=IST,
-    id="holiday_refresh_job",
-    replace_existing=True,
-    max_instances=1,
-    coalesce=True,
-)
-print("✅ HOLIDAY REFRESH SCHEDULED at 6:00 AM IST daily")
-"""
-print("✅ SUBSCRIPTION PROMOTER SCHEDULED every 5 min")
-
-app.include_router(token_router)
-from razorpay_integration import (
-    router as rzp_router,
-    init_razorpay_table
-)
-init_razorpay_table()
-app.include_router(rzp_router)
-# from razorpay_integration import router as rzp_router
-# app.include_router(rzp_router)
-init_token_manager(app, scheduler, HEADERS)
-
-def daily_cleanup():
-    """Runs every day at 8:30 AM IST — clears live running data before market opens."""
-    global LIVE_RUNNING_RECORDS
-    
-    now = datetime.now(IST)
-    print(f"🧹 DAILY CLEANUP TRIGGERED at {now.strftime('%Y-%m-%d %H:%M:%S')} IST")
-    
-    LIVE_RUNNING_RECORDS = []
-    
-    if os.path.exists(RUNNING_FILE):
-        os.remove(RUNNING_FILE)
-        print("✅ live_running.json cleared for new session")
-
-
-# ── RELOAD EXISTING DATA ON STARTUP ─────────────────────────────────────
-# Add this right after the LIVE_RUNNING_RECORDS = [] global declaration at the top
-
-def load_existing_records():
-    global LIVE_RUNNING_RECORDS
-    if os.path.exists(RUNNING_FILE):
-        try:
-            with open(RUNNING_FILE, "r") as f:
-                LIVE_RUNNING_RECORDS = json.load(f)
-            print(f"✅ Reloaded {len(LIVE_RUNNING_RECORDS)} records from {RUNNING_FILE}")
-        except Exception as e:
-            print(f"⚠️ Could not reload records: {e}")
-            LIVE_RUNNING_RECORDS = []
-
-load_existing_records()  # Call this once at startup
-
-# On startup: if it's a weekend or holiday, wipe stale zero data
-_startup_now = datetime.now(IST)
-if _startup_now.weekday() >= 5 or is_market_holiday(_startup_now):
-    LIVE_RUNNING_RECORDS = []
-    if os.path.exists(RUNNING_FILE):
-        os.remove(RUNNING_FILE)
-        print(f"🧹 STARTUP: Cleared stale data (weekend/holiday: {_startup_now.strftime('%A')})")
-
-
-def daily_cleanup():
-    """
-    Runs at 8:30 AM IST daily.
-    Safety check: only clears if time is between 8:00 AM and 9:00 AM IST.
-    This prevents accidental wipes during market hours.
-    """
-    global LIVE_RUNNING_RECORDS
-
-    now = datetime.now(IST)
-    hour = now.hour
-    minute = now.minute
-
-    # SAFETY GUARD: only allow cleanup between 8:00 AM and 9:10 AM IST
-    if not (8 <= hour < 9 or (hour == 9 and minute < 10)):
-        print(f"⛔ CLEANUP BLOCKED — unsafe time: {now.strftime('%H:%M:%S')} IST")
-        return
-
-    print(f"🧹 DAILY CLEANUP at {now.strftime('%Y-%m-%d %H:%M:%S')} IST")
-
-    LIVE_RUNNING_RECORDS = []
-
-    if os.path.exists(RUNNING_FILE):
-        os.remove(RUNNING_FILE)
-        print("✅ live_running.json cleared for new session")
-    else:
-        print("ℹ️ No file to clear")
-
-
-def schedule_daily_cleanup():
-    try:
-        scheduler.remove_job("daily_cleanup_job")
-    except:
-        pass
-
-    scheduler.add_job(
-        daily_cleanup,
-        "cron",
-        hour=8,
-        minute=30,
-        second=0,
-        timezone=IST,
-        id="daily_cleanup_job",
-        replace_existing=True,
-        max_instances=1,
-        coalesce=True
-    )
-    print("✅ DAILY CLEANUP SCHEDULED at 8:30 AM IST")
-
-
-schedule_daily_cleanup()
-
-@app.post("/api/set-interval")
-async def api_set_interval(request: Request):
-
-    # ADMIN ONLY
-    if "admin" not in request.session:
-
-        return JSONResponse({
-            "error": "Unauthorized"
-        }, status_code=401)
-
-    data = await request.json()
-
-    interval = int(data.get("interval", 15))
-
-    # SAFETY
-    if interval < 1:
-        interval = 1
-
-    set_interval(interval)
-    restart_market_job()
-
-    return {
-        "success": True,
-        "interval": interval
+    function injectSystemMessage(msg) {
+      const container = document.getElementById('bc-messages');
+      if (!container) return;
+
+      // Don't inject into the empty state — wait for it to be replaced
+      if (container.querySelector('.bc-empty')) {
+        // Retry after broadcasts load
+        setTimeout(() => injectSystemMessage(msg), 1000);
+        return;
+      }
+
+      // Don't double-inject
+      if (document.getElementById('sys-' + msg.id)) return;
+
+      const ist = getIST();
+      const timeStr = ist.toTimeString().slice(0, 5);
+
+      const div = document.createElement('div');
+      div.className = 'bc-msg system-msg';
+      div.id = 'sys-' + msg.id;
+      div.innerHTML = `
+        <div class="bc-msg-meta">
+          <span class="bc-msg-sender">🤖 TraderBro System</span>
+          <span class="bc-msg-time">${timeStr}</span>
+        </div>
+        <div class="bc-msg-body-row">
+          <div class="bc-bubble system-bubble">
+            ${msg.text}
+            <div class="bc-bubble-footer">
+              <span class="bc-bubble-ts">${timeStr}</span>
+            </div>
+          </div>
+        </div>`;
+
+      // Insert before the first real admin message, or append at bottom
+      const firstMsg = container.querySelector('.bc-msg:not(.system-msg)');
+      if (firstMsg) {
+        container.insertBefore(div, firstMsg);
+      } else {
+        container.appendChild(div);
+      }
+
+      // Scroll to bottom if user is already there
+      if (_bcAtBottom) container.scrollTop = container.scrollHeight;
     }
 
-@app.get("/admin/token-manager", response_class=HTMLResponse)
-def token_manager_page(request: Request):
-    if request.session.get("role") != "admin":
-        return RedirectResponse("/admin-login", status_code=302)
-    path = os.path.join(STATIC_DIR, "token_manager.html")
-    with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
+    /* ══════════════════════════════════════════════════════════
+       AUTH CHECK
+    ══════════════════════════════════════════════════════════ */
+    async function checkDashboardAccess() {
+  try {
+    const res = await fetch("/api/dashboard-access", { credentials: "include" });
+    const data = await res.json();
 
-# ═══════════════════════════════════════════════════════════════════════
-# ACTIVE USER TRACKING (heartbeat-based, in-memory)
-# ═══════════════════════════════════════════════════════════════════════
-import time as _time
-
-ACTIVE_USERS: dict = {}   # { session_key: {"username": str, "page": str, "ts": float} }
-ACTIVE_TIMEOUT = 35       # seconds — if no heartbeat in 35s, user is gone
-
-
-@app.post("/api/heartbeat")
-async def heartbeat(request: Request):
-    """
-    Called every 20 s by every open dashboard/simple page.
-    Identifies the session and records the active page.
-    """
-    username = request.session.get("user") or request.session.get("admin")
-    if not username:
-        return JSONResponse({"ok": False}, status_code=401)
-
-    data = await request.json()
-    page = data.get("page", "unknown")   # e.g. "dashboard", "simple", "admin"
-
-    # Use a stable key: username + page so the same user on two tabs counts once per page
-    session_key = f"{username}::{page}"
-
-    ACTIVE_USERS[session_key] = {
-        "username": username,
-        "page": page,
-        "ts": _time.time(),
-        "is_admin": request.session.get("role") == "admin",
+    // NOT LOGGED IN
+    if (data.reason === "not_logged_in") {
+      window.location.replace("/user-login");
+      return false;
     }
 
-    return JSONResponse({"ok": True})
-
-
-@app.get("/api/active-users")
-def active_users(request: Request):
-    """
-    Returns the count (and list for admin) of currently active users.
-    Any logged-in user can call this.
-    """
-    username = request.session.get("user") or request.session.get("admin")
-    if not username:
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-
-    now = _time.time()
-    # Purge stale entries
-    stale = [k for k, v in ACTIVE_USERS.items() if now - v["ts"] > ACTIVE_TIMEOUT]
-    for k in stale:
-        del ACTIVE_USERS[k]
-
-    is_admin = request.session.get("role") == "admin"
-
-    # Count unique users on dashboard page only (non-admin)
-    dashboard_users = {
-        v["username"] for k, v in ACTIVE_USERS.items()
-        if v["page"] == "dashboard" and not v["is_admin"]
+    // NO PLAN
+    if (data.reason === "no_plan") {
+      window.location.replace("/trading-plan");
+      return false;
     }
-    total = len(dashboard_users)
 
-    # For admin: also return the full breakdown
-    detail = None
-    if is_admin:
-        detail = {}
-        for v in ACTIVE_USERS.values():
-            u = v["username"]
-            if u not in detail:
-                detail[u] = {"username": u, "pages": [], "is_admin": v["is_admin"]}
-            if v["page"] not in detail[u]["pages"]:
-                detail[u]["pages"].append(v["page"])
-        detail = list(detail.values())
+    // EXPIRED
+    if (data.reason === "plan_expired") {
+      window.location.replace("/trading-plan?expired=1");
+      return false;
+    }
 
-    return JSONResponse({
-        "total": total,          # unique non-admin users on /dashboard
-        "detail": detail,        # None for non-admins
-        "is_admin": is_admin,
-    })
+    // HANDLE INCOMING FUTURE ACTIVATION (POST-10:00 AM QUEUE LOGIC)
+    if (data.plan_start) {
+      const startMs = new Date(data.plan_start).getTime();
+      if (startMs > Date.now()) {
+        const formattedStart = new Date(data.plan_start).toLocaleString("en-IN", {
+          day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true
+        });
+        
+        showFullscreenClosed(
+          "⏳",
+          "Subscription Window Pending",
+          `Your subscription was securely processed after our 10:00 AM IST cutoff threshold.<br><br>As a result, your secure structural data dashboard view window will activate explicitly at midnight:<br><strong style="color:var(--primary); font-size:15px;">${formattedStart}</strong>`,
+          `<div style="margin-top:24px;"><a href="/account" style="color:#aaa; text-decoration:underline; font-size:12px;">Go to My Account</a></div>`
+        );
+        return false;
+      }
+    }
 
+    // On weekends/holidays, clear stale zero rows from display
+    if (data.is_weekend || data.is_holiday) {
+      updateMarketClosedBanner(data);
+    }
 
-# ═══════════════════════════════════════════════════════════════════════
-# API — RECORDER
-# ═══════════════════════════════════════════════════════════════════════
+    return true;
+  } catch (err) {
+    console.error(err);
+    return true;
+  }
+}
+    function updateMarketClosedBanner(accessData) {
+      const grid = document.getElementById("rows-grid");
+      if (!grid) return;
 
-@app.post("/recorder/start")
-async def start_recorder(req: Request):
-    b        = await req.json()
-    expiry   = b.get("expiry")
-    interval = int(b.get("interval", 20))
-    stop_str = b.get("stop_time", "")
-    if not expiry:
-        return JSONResponse({"status": "error", "message": "Expiry required"})
-    recorder_state.update({
-        "running": True, "expiry": expiry, "interval": interval,
-        "start_time": datetime.now(), "records_saved": 0, "stop_time": None,
-    })
-    if stop_str:
-        try:
-            fmt = "%Y-%m-%d %H:%M:%S" if stop_str.count(":") == 2 else "%Y-%m-%d %H:%M"
-            recorder_state["stop_time"] = datetime.strptime(
-                f"{datetime.now().date()} {stop_str}", fmt)
-        except: pass
-    _reschedule(interval)
-    save_atm_to_csv(expiry)
-    return JSONResponse({"status": "started", "interval": interval, "expiry": expiry})
+      // Set internal reason metadata
+      if (accessData.is_weekend) {
+        const dayName = accessData.weekday_name || "Weekend";
+        _closedReason = {
+          icon: "📅",
+          title: `Market Closed — ${dayName}`,
+          desc: "NSE is closed on weekends. No live values are generated today.",
+          time: `Next session: <b>${accessData.next_trading_day || "Monday"}</b>`,
+        };
+      } else if (accessData.is_holiday) {
+        _closedReason = {
+          icon: "🏖️",
+          title: `Market Holiday — ${accessData.holiday_reason}`,
+          desc: `NSE is closed today for <b>${accessData.holiday_reason}</b>. No live values are generated.`,
+          time: `Next session: <b>${accessData.next_trading_day}</b>`,
+        };
+      } else {
+        const now = new Date();
+        const ist = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+        const mins = ist.getHours() * 60 + ist.getMinutes();
+        if (mins < 9 * 60 + 16) {
+          _closedReason = {
+            icon: "⏰",
+            title: "Pre-Market — Session Not Started",
+            desc: "Live Black-Box-Engine values are generated during active market analysis hours.",
+            time: "Session opens at <b>9:16 AM IST</b>",
+          };
+        } else if (mins > 12 * 60) {
+          _closedReason = {
+            icon: "🔔",
+            title: "Market Session Ended for Today",
+            desc: "Today's session has closed. Values remain visible till next trading session.",
+            time: `Next session: <b>${accessData.next_trading_day}</b> at <b>9:16 AM IST</b>`,
+          };
+        }
+      }
 
-
-@app.post("/recorder/stop")
-def stop_recorder():
-    _stop_recording()
-    return JSONResponse({"status": "stopped", "records_saved": recorder_state["records_saved"]})
-
-
-@app.get("/recorder/status")
-def recorder_status():
-    return JSONResponse({
-        "running":       recorder_state["running"],
-        "expiry":        recorder_state["expiry"],
-        "interval":      recorder_state["interval"],
-        "records_saved": recorder_state["records_saved"],
-        "start_time":    recorder_state["start_time"].strftime("%d-%m-%Y %H:%M:%S") if recorder_state["start_time"] else None,
-        "stop_time":     recorder_state["stop_time"].strftime("%H:%M:%S") if recorder_state["stop_time"] else None,
-    })
-
-
-# @app.get("/download/csv")
-# def download_csv():
-#     if os.path.exists(CSV_FILE):
-#         return FileResponse(CSV_FILE, media_type="text/csv", filename="sensex_atm_history.csv")
-#     return JSONResponse({"error": "No CSV yet."})
-
-# @app.get("/api/downloads")
-# def api_downloads():
-#     files = sorted(glob.glob(os.path.join(UPLOADS_DIR, "*.csv")), reverse=True)
-
-#     result = []
-#     for f in files:
-#         name = os.path.basename(f)
-
-#         result.append({
-#             "name": name,
-#             "url": f"/user/download-csv/{name}",
-#             "date": name.replace(".csv", "")
-#         })
-
-    return JSONResponse(result)
-
-
-@app.post("/recorder/clear")
-def clear_csv():
-    if os.path.exists(CSV_FILE): os.remove(CSV_FILE)
-    recorder_state["records_saved"] = 0
-    return JSONResponse({"status": "cleared"})
-
-
-@app.get("/simple", response_class=HTMLResponse)
-def simple_page(request: Request):
-
-    # 🔐 Allow BOTH user and admin
-    if "user" not in request.session and "admin" not in request.session:
-        return RedirectResponse("/user-login", status_code=302)
-
-    path = os.path.join(STATIC_DIR, "simple.html")
-
-    with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
+      // ONLY set buildClosedBox if NO data rows exist in the grid
+      if (!grid.querySelector(".data-row") && (!_dashboardRows || _dashboardRows.length === 0)) {
+        grid.innerHTML = buildClosedBox();
+      }
+    }
     
-# @app.get("/dashboard", response_class=HTMLResponse)
-# def dashboard_page():
-#     path = os.path.join(STATIC_DIR, "dashboard.html")
-#     with open(path, "r", encoding="utf-8") as f:
-#         return HTMLResponse(f.read())
+    /* ── Full-screen overlay for queued plan ── */
+    function showFullscreenClosed(icon, title, body, extra) {
+      // Remove any existing overlay
+      const existing = document.getElementById("_accessOverlay");
+      if (existing) existing.remove();
+
+      const div = document.createElement("div");
+      div.id = "_accessOverlay";
+      div.style.cssText = `
+        position:fixed; inset:0; z-index:99999;
+        background:rgba(5,8,20,0.97);
+        display:flex; align-items:center; justify-content:center;
+        font-family:'Poppins',sans-serif;
+    `;
+      div.innerHTML = `
+        <div style="
+            max-width:420px; width:90%;
+            background:#111827;
+            border:1px solid rgba(2,163,254,0.3);
+            border-radius:20px;
+            padding:40px 28px;
+            text-align:center;
+            box-shadow:0 0 60px rgba(2,163,254,0.15);
+        ">
+            <div style="font-size:56px;margin-bottom:16px;">${icon}</div>
+            <h2 style="color:#02A3FE;font-size:22px;font-weight:800;margin-bottom:12px;">${title}</h2>
+            <p style="color:#cbd5e1;font-size:14px;line-height:1.7;margin-bottom:0;">${body}</p>
+            ${extra || ""}
+        </div>`;
+      document.body.appendChild(div);
+    }
 
 
-#Html file frontend finlab
+    /* ══════════════════════════════════════════════════════════
+           INIT
+        ══════════════════════════════════════════════════════════ */
+    drawGauge();
+    updateGauge(0);
+    checkDashboardAccess();
+    loadDownloads();
+    startAutoRefresh(15000);
+    setInterval(loadDownloads, 30000);
+    updateMarketMessage();
+    setInterval(updateMarketMessage, 60000);
+    setInterval(checkMarketCloseAutoSave, 60000);
+    checkTimedMessages();
+    setInterval(checkTimedMessages, 30000);  // check every 30 seconds
 
-# ═══════════════════════════════════════════════════════════════════════
-# API — LIVE DATA
-# ═══════════════════════════════════════════════════════════════════════
+    // Broadcast — start after DOM ready to ensure scroll tracking works
+    document.addEventListener('DOMContentLoaded', () => {
+      const msgEl = document.getElementById('bc-messages');
+      if (msgEl) {
+        msgEl.addEventListener('scroll', () => {
+          _bcAtBottom = msgEl.scrollHeight - msgEl.scrollTop - msgEl.clientHeight < 40;
+          if (_bcAtBottom) hideBadge();
+        });
+      }
+      startBcPoll();
+    });
+    // Fallback if DOMContentLoaded already fired
+    if (document.readyState !== 'loading') {
+      const msgEl = document.getElementById('bc-messages');
+      if (msgEl && !msgEl._scrollBound) {
+        msgEl._scrollBound = true;
+        msgEl.addEventListener('scroll', () => {
+          _bcAtBottom = msgEl.scrollHeight - msgEl.scrollTop - msgEl.clientHeight < 40;
+          if (_bcAtBottom) hideBadge();
+        });
+      }
+      startBcPoll();
+    }
 
-@app.get("/api/expiries")
-def api_expiries():
-    return JSONResponse(get_expiries())
+    const BC_QUICK_MSGS = [
+      "Anticipating Bullish Movement",
+      "Anticipating Bearish Movement",
+      "TraderBro.in anticipating liquidity sweep at break-down of 3min candle",
+      "TraderBro.in anticipating liquidity sweep at break-out of 3min candle",
+      "TraderBro.in is done with the day",
+      "Site is facing technical failure, Sorry for inconvenience.",
+    ];
+
+    (function bcBuildQuickMenu() {
+      const list = document.getElementById('quickMenuList');
+      if (!list) return;
+      BC_QUICK_MSGS.forEach((msg, i) => {
+        const el = document.createElement('div');
+        el.className = 'quick-item';
+        el.innerHTML = `<span class="qi-num">${i + 1}</span><span class="qi-text">${msg}</span><span class="qi-arrow">→</span>`;
+        el.onclick = () => bcInsertQuick(msg);
+        list.appendChild(el);
+      });
+    })();
+
+    function bcToggleQuick() {
+      const menu = document.getElementById('quickMenu');
+      const btn = document.getElementById('quickBtn');
+      const open = menu.classList.toggle('show');
+      btn.classList.toggle('open', open);
+    }
+
+    function bcInsertQuick(text) {
+      const inp = document.getElementById('bc-input');
+      inp.value = text;
+      bcUpdateCharCount(text);
+      inp.style.height = '38px';
+      inp.style.height = Math.min(inp.scrollHeight, 100) + 'px';
+      inp.focus();
+      document.getElementById('quickMenu').classList.remove('show');
+      document.getElementById('quickBtn').classList.remove('open');
+    }
+
+    // Close quick menu on outside click
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.bc-compose')) {
+        const menu = document.getElementById('quickMenu');
+        const btn = document.getElementById('quickBtn');
+        if (menu) menu.classList.remove('show');
+        if (btn) btn.classList.remove('open');
+      }
+    });
+
+    /* ══════════════════════════════════════════════════════════
+       ACTIVE USERS — heartbeat + counter
+    ══════════════════════════════════════════════════════════ */
+    (function () {
+      // Send heartbeat every 20 seconds
+      async function sendHeartbeat() {
+        try {
+          await fetch('/api/heartbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ page: 'dashboard' })
+          });
+        } catch (e) { }
+      }
+
+      // Fetch and display active user count
+      async function fetchActiveUsers() {
+        try {
+          const res = await fetch('/api/active-users', { credentials: 'include' });
+          if (!res.ok) return;
+          const data = await res.json();
+
+          // Only show for admin
+          const isAdmin = _dashUser
+            ? _dashUser.role === 'admin'
+            : false;
+
+          if (!isAdmin) return;
+
+          const count = data.total ?? '0';
+
+          // ── Desktop pill (in header) ──
+          const pill = document.getElementById('active-users-pill');
+          const countEl = document.getElementById('au-count');
+          if (countEl) countEl.textContent = count;
+          if (pill) pill.style.display = 'flex';
+
+          // ── Mobile pill (below holiday strip) ──
+          const isMobile = window.innerWidth <= 768;
+          const mobileStrip = document.getElementById('mobile-au-strip');
+          const mobilePill = document.getElementById('active-users-pill-mobile');
+          const mobileCount = document.getElementById('au-count-mobile');
+          if (mobileCount) mobileCount.textContent = count;
+          if (mobilePill) mobilePill.style.display = 'flex';
+          if (mobileStrip) mobileStrip.style.display = isMobile ? 'flex' : 'none';
+
+        } catch (e) { }
+      }
+
+      sendHeartbeat();
+      setTimeout(fetchActiveUsers, 1500);   // ← small delay, _dashUser is loaded by then
+      setInterval(sendHeartbeat, 20000);
+      setInterval(fetchActiveUsers, 20000);
+    })();
 
 
-@app.get("/api/live-data")
-def live_data():
+    /* ══════════════════════════════════════════════════════════
+   DASHBOARD USER DROPDOWN
+══════════════════════════════════════════════════════════ */
+    let _dashUser = null;
 
-    try:
+    async function loadDashUser() {
+      try {
+        const res = await fetch('/api/me', { credentials: 'include' });
+        const data = await res.json();
+        if (!data.username) return;
+        _dashUser = data;
 
-        if os.path.exists(RUNNING_FILE):
+        const plan = (data.plan || 'free').toLowerCase();
+        const isAdmin = data.role === 'admin';
+        const initial = (data.username || '?').charAt(0).toUpperCase();
 
-            with open(RUNNING_FILE, "r") as f:
+        // Avatar
+        document.getElementById('dash-avatar').textContent = initial;
+        document.getElementById('dd-avatar-lg').textContent = initial;
+        document.getElementById('dash-username').textContent = data.username;
+        document.getElementById('dd-name').textContent = data.username;
+        document.getElementById('dd-email').textContent = data.email || '—';
 
-                rows = json.load(f)
+        // Plan label in button
+        const planLabels = { admin: 'Admin', premium: '👑 Premium', pro: '⚡ Pro', essential: 'Essential', basic: 'Basic', free: 'Free' };
+        const planEl = document.getElementById('dash-plan');
+        planEl.textContent = planLabels[isAdmin ? 'admin' : plan] || plan.toUpperCase();
+        planEl.className = `dash-plan plan-${isAdmin ? 'admin' : plan}`;
 
-                return {
-                    "rows": rows[-2000:]
-                }
+        // Plan strip inside dropdown
+        const stripLabels = { admin: '🔑 Admin Access', premium: '👑 Premium Plan', pro: '⚡ Pro Plan', essential: 'Essential Plan', basic: 'Basic Plan', free: 'Free Plan' };
+        document.getElementById('dd-plan-label').textContent = stripLabels[isAdmin ? 'admin' : plan] || plan;
 
-        return {
-            "rows": []
+        // Plan status
+        const statusEl = document.getElementById('dd-plan-status');
+        if (isAdmin) {
+          statusEl.textContent = '✅ Full Access';
+          statusEl.style.color = 'var(--green)';
+        } else if (data.plan_expiry) {
+          const diff = new Date(data.plan_expiry) - Date.now();
+          if (diff > 0) {
+            const d = Math.floor(diff / 86400000);
+            statusEl.textContent = `✅ ${d}d left`;
+            statusEl.style.color = d <= 3 ? 'var(--gold)' : 'var(--green)';
+          } else {
+            statusEl.textContent = '❌ Expired';
+            statusEl.style.color = 'var(--red)';
+          }
+        } else {
+          statusEl.textContent = plan === 'free' ? '⛔ No plan' : '—';
+          statusEl.style.color = 'var(--text-dim)';
         }
 
-    except Exception as e:
-
-        return {
-            "rows": [],
-            "error": str(e)
+        // Expiry countdown mini bar
+        if (!isAdmin && data.plan_expiry) {
+          const diff = new Date(data.plan_expiry) - Date.now();
+          if (diff > 0 && diff < 7 * 86400000) {
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            document.getElementById('dd-expiry').style.display = 'flex';
+            document.getElementById('dd-expiry-text').textContent = `Plan expires in ${d}d ${h}h`;
+          }
         }
 
-# ═══════════════════════════════════════════════════════════════════════
-# API — FULL CHAIN (all columns, all rows) — used by admin AJAX refresh
-# ═══════════════════════════════════════════════════════════════════════
-
-@app.get("/api/full-chain")
-def api_full_chain(request: Request, expiry: str = ""):
-        # MARKET CLOSED
-    # if not is_market_open():
-
-    #     return JSONResponse({
-    #         "market_closed": True,
-    #         "message": "Values are visible only during market hours (9:16 AM to 12:00 PM)"
-    #     })
-    """Return all 21 rows with every column for the admin table AJAX refresh."""
-    if not expiry:
-        expiries = get_expiries()
-        expiry   = expiries[0] if expiries else ""
-    if not expiry:
-        return JSONResponse({"error": "No expiry available"})
-
-
-    force_live = request.query_params.get("live") == "1"
-    ltp, df, atm = get_live_chain(
-        expiry,
-        force_live=force_live
-    )
-    if df.empty:
-        return JSONResponse({"error": "No data", "ltp": ltp})
-
-    def safe(val):
-        """Convert NaN/inf/None to None for JSON safety."""
-        try:
-            if val is None:
-                return None
-            f = float(val)
-            if math.isnan(f) or math.isinf(f):
-                return None
-            return f
-        except:
-            return str(val) if val not in [None, "", "-"] else None
-
-    # ✅ rows loop is NOW outside safe() — correct indentation
-    rows = []
-    for _, r in df.iterrows():
-        rows.append({
-            "datetime":    str(r["DateTime"]),
-            "expiry":      str(r["Expiry"]),
-            "strike":      int(r["Strike"]),
-            "ce_ltp":      safe(r["CE_LTP"]),
-            "ce_delta":    safe(r["CE_Delta"]),
-            "ce_gamma":    safe(r["CE_Gamma"]),
-            "ce_theta":    safe(r["CE_Theta"]),
-            "ce_vega":     safe(r["CE_Vega"]),
-            "pe_ltp":      safe(r["PE_LTP"]),
-            "pe_delta":    safe(r["PE_Delta"]),
-            "pe_gamma":    safe(r["PE_Gamma"]),
-            "pe_theta":    safe(r["PE_Theta"]),
-            "pe_vega":     safe(r["PE_Vega"]),
-            "delta_ratio": safe(r["Delta_Ratio"]),
-            "index_ltp":   safe(ltp),
-            "reference":   safe(r["Reference"]),
-            "stretched":   str(r["Stretched"]) if r["Stretched"] not in [None, ""] else None,
-            "difference":  safe(r["Difference"]),
-            "is_atm":      bool(r["Strike"] == atm),
-        })
-
-    return JSONResponse({
-        "ltp":       ltp,
-        "atm":       int(atm) if atm is not None else None,
-        "expiry":    expiry,
-        "timestamp": datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
-        "rows":      rows,
-    })
-
-
-
-@app.get("/api/simple-data")
-def api_simple_data(expiry: str = ""):
-
-    try:
-
-        # if not is_market_open():
-
-        #     return JSONResponse({
-        #         "error": "Market closed"
-        #     })
-
-        expiries = get_expiries()
-
-        if not expiry:
-            expiry = expiries[0] if expiries else ""
-
-        if not expiry:
-            return JSONResponse({
-                "error": "No expiry"
-            })
-
-        ltp, df, atm = get_live_chain(expiry)
-
-        if df.empty or atm is None:
-            return JSONResponse({
-                "error": "No live data"
-            })
-
-        atm_row = df[df["Strike"] == atm]
-
-        if atm_row.empty:
-            return JSONResponse({
-                "error": "ATM not found"
-            })
-
-        r = atm_row.iloc[0]
-        last_dt = LAST_DATA.get("last_sent_dt")
-
-        if last_dt == str(r["DateTime"]):
-            return JSONResponse({
-                "cached": True
-            })
-
-        LAST_DATA["last_sent_dt"] = str(r["DateTime"])
-
-        return JSONResponse({
-
-            "datetime": str(r["DateTime"]),
-            "expiry": str(r["Expiry"]),
-
-            "ce_ltp": r["CE_LTP"],
-            "ce_delta": r["CE_Delta"],
-            "ce_gamma": r["CE_Gamma"],
-            "ce_theta": r["CE_Theta"],
-            "ce_vega": r["CE_Vega"],
-
-            "strike": int(r["Strike"]),
-
-            "pe_ltp": r["PE_LTP"],
-            "pe_delta": r["PE_Delta"],
-            "pe_gamma": r["PE_Gamma"],
-            "pe_theta": r["PE_Theta"],
-            "pe_vega": r["PE_Vega"],
-
-            "delta_ratio": r["Delta_Ratio"],
-            "index_ltp": ltp,
-
-            "reference": r["Reference"],
-            "stretched": r["Stretched"],
-
-            "difference": r["Difference"]
-
-        })
-
-    except Exception as e:
-
-        print("ERROR:", e)
-
-        return JSONResponse({
-            "error": str(e)
-        })
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# API — CSV UPLOAD / DOWNLOAD
-# ═══════════════════════════════════════════════════════════════════════
-
-# @app.post("/admin/upload-csv")
-# async def upload_csv(file: UploadFile = File(...), label: str = Form("")):
-#     safe = label.replace("/", "-").replace(" ", "_") or datetime.now().strftime("%Y-%m-%d")
-#     dest = os.path.join(UPLOADS_DIR, f"{safe}.csv")
-#     with open(dest, "wb") as f:
-#         shutil.copyfileobj(file.file, f)
-#     return JSONResponse({"status": "uploaded", "file": f"{safe}.csv"})
-
-
-# @app.delete("/admin/delete-csv/{filename}")
-# def delete_uploaded(filename: str):
-#     p = os.path.join(UPLOADS_DIR, filename)
-#     if os.path.exists(p):
-#         os.remove(p)
-#         return JSONResponse({"status": "deleted"})
-#     return JSONResponse({"status": "not_found"}, status_code=404)
-
-
-# @app.get("/admin/list-csvs")
-# def list_csvs():
-#     files = sorted(glob.glob(os.path.join(UPLOADS_DIR, "*.csv")), reverse=True)
-#     return JSONResponse([
-#         {"name": os.path.basename(f), "size": os.path.getsize(f)}
-#         for f in files
-#     ])
-
-
-@app.post("/api/save-running")
-async def save_running(request: Request):
-
-    try:
-
-        data = await request.json()
-
-        rows = []
-
-        if os.path.exists(RUNNING_FILE):
-
-            with open(RUNNING_FILE, "r") as f:
-
-                rows = json.load(f)
-
-        # PREVENT DUPLICATE TIMESTAMP
-        if len(rows) > 0:
-
-            last = rows[-1]
-
-            if (
-                last["datetime"] == data["datetime"]
-                and
-                last["difference"] == data["difference"]
-            ):
-                return {"success": True}
-
-        rows.append(data)
-
-        # LIMIT
-        rows = rows[-2000:]
-
-        with open(RUNNING_FILE, "w") as f:
-
-            json.dump(rows, f)
-
-        return {
-            "success": True
+        // Admin section
+        if (isAdmin) {
+          document.getElementById('dd-admin-section').style.display = 'block';
         }
 
-    except Exception as e:
+        // Show the whole wrapper
+        document.getElementById('dash-user-wrap').style.display = 'block';
 
-        return JSONResponse({
-            "success": False,
-            "error": str(e)
-        }, status_code=500)
-
-# AFTER
-def get_subscription_start_date():
-    """
-    Returns the correct start datetime for a new subscription.
- 
-    Rules:
-      • Purchased during active session (9:16 AM – 12:00 PM IST)
-          → Starts TODAY at 08:30 AM (user gets current day's session)
-      • Purchased after 12:00 PM, or before 9:16 AM, or on weekend/holiday
-          → Starts NEXT valid trading day at 08:30 AM
-      • Weekends and NSE holidays are always skipped.
-    """
-    now = datetime.now(IST)
-    current_minutes = now.hour * 60 + now.minute
- 
-    market_open_minutes  = MARKET_OPEN_HOUR  * 60 + MARKET_OPEN_MIN   # 556
-    market_close_minutes = MARKET_CLOSE_HOUR * 60 + MARKET_CLOSE_MIN  # 720
- 
-    # Is it a valid trading day right now?
-    today_is_trading = (now.weekday() < 5) and (not is_market_holiday(now))
- 
-    during_market = (
-        today_is_trading and
-        market_open_minutes <= current_minutes <= market_close_minutes
-    )
- 
-    if during_market:
-        # Start today — user gets this session
-        start_date = now.replace(
-            hour=DASHBOARD_OPEN_HOUR,
-            minute=DASHBOARD_OPEN_MIN,
-            second=0,
-            microsecond=0
-        )
-    else:
-        # Push to next valid trading day
-        start_date = now + timedelta(days=1)
-        start_date = start_date.replace(
-            hour=DASHBOARD_OPEN_HOUR,
-            minute=DASHBOARD_OPEN_MIN,
-            second=0,
-            microsecond=0
-        )
-        # Skip weekends and holidays
-        while start_date.weekday() >= 5 or is_market_holiday(start_date):
-            start_date += timedelta(days=1)
- 
-    return start_date
- 
-
-@app.get("/api/get-running")
-def get_running():
-
-    try:
-
-        if os.path.exists(RUNNING_FILE):
-
-            with open(RUNNING_FILE, "r") as f:
-
-                rows = json.load(f)
-
-                return {
-                    "rows": rows[-2000:]
-                }
-
-        return {
-            "rows": []
-        }
-
-    except Exception as e:
-
-        return {
-            "rows": [],
-            "error": str(e)
-        }
-
-@app.get("/api/test-market")
-def test_market():
-
-    now = datetime.now(IST)
-
-    return {
-        "time": now.strftime("%H:%M:%S"),
-        "market_open": is_market_open(),
-        "interval": get_interval()
+      } catch (e) { console.error('loadDashUser:', e); }
     }
 
-
-@app.post("/api/clear-running")
-def clear_running():
-    global LIVE_RUNNING_RECORDS
-
-    LIVE_RUNNING_RECORDS = []
-
-    if os.path.exists(RUNNING_FILE):
-        os.remove(RUNNING_FILE)
-
-    return JSONResponse({"status": "cleared"})
-# ═══════════════════════════════════════════════════════════════════════
-# PAGES
-# ═══════════════════════════════════════════════════════════════════════
-
-@app.get("/api/market-holidays")
-def api_market_holidays(year: int = 0):
-    """
-    Returns all NSE market holidays (with reason/name).
-    Optional ?year=2026 filter.
-    Also returns today's holiday status and upcoming holidays.
-    """
-    from market_holidays import (
-        get_all_holidays_list, get_upcoming_holidays,
-        get_today_holiday, get_holidays_for_year
-    )
- 
-    if year:
-        holidays = [{"date": k, "reason": v}
-                    for k, v in sorted(get_holidays_for_year(year).items())]
-    else:
-        holidays = get_all_holidays_list()
- 
-    today_holiday = get_today_holiday()
-    upcoming = get_upcoming_holidays(days_ahead=30)
- 
-    return JSONResponse({
-        "holidays": holidays,
-        "today_is_holiday": today_holiday is not None,
-        "today_reason": today_holiday,
-        "upcoming": upcoming,          # next 30 days
-        "total": len(holidays),
-    })
-
-@app.post("/api/admin/refresh-holidays")
-def api_refresh_holidays(request: Request):
-    """Admin: force-refresh holidays from NSE API."""
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-    from market_holidays import refresh_holidays, get_all_holidays_list
-    refresh_holidays()
-    holidays = get_all_holidays_list()
-    return JSONResponse({
-        "success": True,
-        "total": len(holidays),
-        "message": "Holidays refreshed from NSE API",
-        "time": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
-    })
- 
- 
-@app.get("/api/is-market-holiday")
-def api_is_market_holiday(date: str = ""):
-    """
-    Check if a specific date (YYYY-MM-DD) is a market holiday.
-    Defaults to today.
-    """
-    from market_holidays import get_holiday_reason
-    from datetime import date as _date
-    if not date:
-        date = _date.today().isoformat()
-    reason = get_holiday_reason(date)
-    return JSONResponse({
-        "date": date,
-        "is_holiday": reason is not None,
-        "reason": reason
-    })
-
-@app.get("/user", response_class=HTMLResponse)
-def user_dashboard():
-    path = os.path.join(STATIC_DIR, "simple.html")
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as f:
-            return HTMLResponse(content=f.read())
-    return HTMLResponse(
-        "<h3 style='color:red;font-family:sans-serif;padding:20px'>"
-        "simple.html not found.<br>Place it in the <b>static/</b> folder next to app.py.</h3>",
-        status_code=404,
-    )
-
-
-@app.get("/", response_class=HTMLResponse)
-def home_page():
-    try:
-        path = os.path.join(
-            STATIC_DIR,
-            "finlab",
-            "Frontend",
-            "xhtml",
-            "index.html"
-        )
-
-        with open(path, "r", encoding="utf-8") as f:
-            return HTMLResponse(f.read())
-
-    except Exception as e:
-        return HTMLResponse(f"ERROR: {str(e)}", status_code=500)
-
-
-# About us page
-@app.get("/about-us", response_class=HTMLResponse)
-def about_page():
-    path = os.path.join(STATIC_DIR, "finlab", "Frontend", "xhtml", "about-us.html")
-
-    with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
-    
-# Trading plan page
-@app.get("/trading-plan", response_class=HTMLResponse)
-def trading_plan_page(request: Request):
-    path = os.path.join(STATIC_DIR, "finlab", "Frontend", "xhtml", "trading-plan.html")
-
-    with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
-
-        # Contact Us page
-@app.get("/contact-us", response_class=HTMLResponse)
-def contact_page():
-
-    path = os.path.join(
-        STATIC_DIR,
-        "finlab",
-        "Frontend",
-        "xhtml",
-        "contact-us.html"
-    )
-
-    with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
-
-# Page-Register Page
-@app.get("/register", response_class=HTMLResponse)
-def register_page():
-    path = os.path.join(STATIC_DIR, "finlab", "page-register.html")
-
-    with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
-
-@app.get("/terms-and-conditions")
-async def terms_page():
-    return FileResponse(
-        "static/finlab/Frontend/xhtml/terms-and-conditions.html"
-    )
-
-@app.get("/privacy-policy")
-async def privacy_page():
-    return FileResponse(
-        "static/finlab/Frontend/xhtml/privacy-policy.html"
-    )
-
-@app.get("/disclaimer")
-async def privacy_page():
-    return FileResponse(
-        "static/finlab/Frontend/xhtml/disclaimer.html"
-    )
-@app.get("/refund-policy")
-async def privacy_page():
-    return FileResponse(
-        "static/finlab/Frontend/xhtml/refund-policy.html"
-    )
-
-@app.post("/api/trigger-cleanup")
-def trigger_cleanup(request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-    
-    global LIVE_RUNNING_RECORDS
-    LIVE_RUNNING_RECORDS = []
-    
-    if os.path.exists(RUNNING_FILE):
-        os.remove(RUNNING_FILE)
-    
-    return JSONResponse({
-        "status": "cleared",
-        "message": "Data cleared manually by admin",
-        "time": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
-    })
-
-@app.post("/api/trigger-eod-save")
-def trigger_eod_save(request: Request):
-    username = request.session.get("user") or request.session.get("admin")
-    if not username:
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-    try:
-        save_daily_excel()
-        return JSONResponse({
-            "success": True,
-            "time": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
-        })
-    except Exception as e:
-        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# TABLE HELPERS
-# ══════════════════════════════════
-
-def _build_live_table_rows(df, atm, ltp):
-    html = ""
-    for _, r in df.iterrows():
-        is_atm = r["Strike"] == atm
-        rs = "background:yellow;color:black;font-weight:bold;" if is_atm else ""
-    
-        html += f"""<tr style="{rs}">
-          <td>{r['DateTime']}</td><td>{r['Expiry']}</td>
-          <td>{r['CE_LTP']}</td><td>{r['CE_Delta']}</td><td>{r['CE_Gamma']}</td>
-          <td>{r['CE_Theta']}</td><td>{r['CE_Vega']}</td>
-          <td><b>{int(r['Strike'])}</b></td>
-          <td>{r['PE_LTP']}</td><td>{r['PE_Delta']}</td><td>{r['PE_Gamma']}</td>
-          <td>{r['PE_Theta']}</td><td>{r['PE_Vega']}</td>
-          <td>{r['Delta_Ratio']}</td><td>{ltp}</td>
-          <td>{r['Reference']}</td><td>{r['Stretched']}</td><td>{r['Difference']}</td>
-          
-        </tr>"""
-    return html
-
-
-def _single_csv_row_html(r, ltp_disp):
-    def g(k): return r.get(k, "-")
-    return f"""<tr style="background:yellow;color:black;font-weight:bold;">
-      <td>{g('DateTime')}</td><td>{g('Expiry')}</td>
-      <td>{g('CE_LTP')}</td><td>{g('CE_Delta')}</td><td>{g('CE_Gamma')}</td>
-      <td>{g('CE_Theta')}</td><td>{g('CE_Vega')}</td>
-      <td><b>{g('Strike')}</b></td>
-      <td>{g('PE_LTP')}</td><td>{g('PE_Delta')}</td><td>{g('PE_Gamma')}</td>
-      <td>{g('PE_Theta')}</td><td>{g('PE_Vega')}</td>
-      <td>{g('Delta_Ratio')}</td><td>{ltp_disp}</td>
-      <td>{g('Reference')}</td><td>{g('Stretched')}</td><td>{g('Difference')}</td>
-     
-    </tr>"""
-
-
-    # ═══════════════════════════════════════════════════════════════════════
-# ADD THESE IMPORTS at the top of your existing app.py
-# ═══════════════════════════════════════════════════════════════════════
-# from openpyxl import Workbook
-# from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, GradientFill
-# from openpyxl.utils import get_column_letter
-# import glob
-
-# ═══════════════════════════════════════════════════════════════════════
-# ADD THIS DIRECTORY CONSTANT (alongside your existing UPLOADS_DIR)
-# ═══════════════════════════════════════════════════════════════════════
-# EXCEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "excel_exports")
-# os.makedirs(EXCEL_DIR, exist_ok=True)
-
-# ═══════════════════════════════════════════════════════════════════════
-# PASTE ALL CODE BELOW INTO app.py
-# ═══════════════════════════════════════════════════════════════════════
-
-from openpyxl import Workbook
-from openpyxl.styles import (
-    Font, PatternFill, Alignment, Border, Side, GradientFill
-)
-from openpyxl.utils import get_column_letter
-import glob
-
-EXCEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "excel_exports")
-os.makedirs(EXCEL_DIR, exist_ok=True)
-
-
-# ── HELPER: get user plan from DB ───────────────────────────────────────
-def get_user_plan(username: str):
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute(
-        "SELECT plan, plan_expiry FROM users WHERE username=?",
-        (username,)
-    )
-    row = c.fetchone()
-    conn.close()
-    if not row:
-        return None, None
-    return row[0], row[1]
-
-
-def is_plan_active(plan: str, expiry_str: str) -> bool:
-    """Return True if the plan is pro/premium and not expired."""
-    if not plan or plan not in ("pro", "premium"):
-        return False
-    if expiry_str:
-        expiry = datetime.fromisoformat(expiry_str)
-        if expiry.tzinfo is None:
-            expiry = expiry.replace(tzinfo=timezone.utc)
-        if datetime.now(timezone.utc) > expiry:
-            return False
-    return True
-
-
-# ── SAVE DAILY EXCEL ────────────────────────────────────────────────────
-def save_daily_excel():
-    """
-    Save today's dashboard data to a simple 4-column .xlsx:
-    DateTime | Strike | Sensex (Index LTP) | Running Value
-    This matches exactly what is visible on the dashboard.
-    """
-    global LIVE_RUNNING_RECORDS
-
-    # ── GUARD: never save on weekends or NSE holidays ──────────────
-    _now = datetime.now(IST)
-    if _now.weekday() >= 5:
-        print(f"⛔ save_daily_excel: skipped — {_now.strftime('%A')} is a weekend")
-        return
-    if is_market_holiday(_now):
-        print(f"⛔ save_daily_excel: skipped — {get_holiday_reason(_now)} (holiday)")
-        return
-    # ───────────────────────────────────────────────────────────────
-
-    try:
-        # Filter to TODAY's date only
-        date_str_today = datetime.now(IST).strftime("%Y-%m-%d")
-        records = [
-            r for r in LIVE_RUNNING_RECORDS
-            if str(r.get("datetime", "")).startswith(date_str_today)
-        ]
-
-        if not records:
-            print("⚠️ save_daily_excel: no records for today.")
-            return
-
-        now      = datetime.now(IST)
-        date_str = now.strftime("%Y-%m-%d")
-        day_name = now.strftime("%A")
-        dest     = os.path.join(EXCEL_DIR, f"{date_str}.xlsx")
-
-        wb = Workbook()
-        ws = wb.active
-        ws.title = date_str
-
-        # ── Colour palette ──────────────────────────────────
-        TITLE_FILL = PatternFill("solid", fgColor="EB4201")
-        HDR_FILL   = PatternFill("solid", fgColor="090915")
-        ODD_FILL   = PatternFill("solid", fgColor="0A0A18")
-        EVEN_FILL  = PatternFill("solid", fgColor="13132A")
-        POS_FILL   = PatternFill("solid", fgColor="00291F")
-        NEG_FILL   = PatternFill("solid", fgColor="2D0010")
-
-        GREEN_F  = Font(name="Arial", color="00D4AA", bold=True, size=10)
-        RED_F    = Font(name="Arial", color="FF4D6D", bold=True, size=10)
-        NORMAL_F = Font(name="Arial", color="E8EAF0", size=10)
-        ORANGE_F = Font(name="Arial", color="FF6B35", size=10)
-        BLUE_F   = Font(name="Arial", color="02A3FE", bold=True, size=10)
-
-        thin = Side(style="thin", color="1A1A35")
-
-        def thin_border():
-            return Border(left=thin, right=thin, top=thin, bottom=thin)
-
-        center = Alignment(horizontal="center", vertical="center")
-
-        # ── 4 columns only ──────────────────────────────────
-        headers = ["DateTime", "Strike", "Sensex (Index LTP)", "Running Value"]
-        num_cols = 4
-
-        # ── Row 1: Title ────────────────────────────────────
-        ws.merge_cells("A1:D1")
-        ws["A1"] = f"TraderBro — Black-Box-Engine Dashboard  |  {date_str}  ({day_name})"
-        ws["A1"].font      = Font(name="Arial", color="FFFFFF", bold=True, size=13)
-        ws["A1"].fill      = TITLE_FILL
-        ws["A1"].alignment = center
-        ws.row_dimensions[1].height = 26
-
-        # ── Row 2: Subtitle ─────────────────────────────────
-        ws.merge_cells("A2:D2")
-        ws["A2"] = "Market Session: 09:16 AM → 12:00 PM IST  |  traderbro.in"
-        ws["A2"].font      = Font(name="Arial", color="E8EAF0", size=10, italic=True)
-        ws["A2"].fill      = HDR_FILL
-        ws["A2"].alignment = center
-        ws.row_dimensions[2].height = 16
-
-        # ── Row 3: blank gap ────────────────────────────────
-        ws.row_dimensions[3].height = 6
-
-        # ── Row 4: Column headers ────────────────────────────
-        col_widths = [22, 10, 20, 15]
-        for col_idx, hdr in enumerate(headers, start=1):
-            cell = ws.cell(row=4, column=col_idx, value=hdr)
-            cell.font      = Font(name="Arial", color="02A3FE", bold=True, size=10)
-            cell.fill      = HDR_FILL
-            cell.alignment = center
-            cell.border    = Border(
-                left=thin, right=thin,
-                top=Side(style="medium", color="02A3FE"),
-                bottom=Side(style="medium", color="02A3FE")
-            )
-            ws.column_dimensions[get_column_letter(col_idx)].width = col_widths[col_idx - 1]
-        ws.row_dimensions[4].height = 20
-
-        # ── Data rows ────────────────────────────────────────
-        def safe_num(v):
-            try:
-                if v is None or v == '':
-                    return None
-                import math as _m
-                f = float(v)
-                return None if (_m.isnan(f) or _m.isinf(f)) else f
-            except:
-                return None
-
-        for row_idx, r in enumerate(records, start=5):
-            running_val = safe_num(r.get("running")) or 0.0
-            index_ltp   = safe_num(r.get("index_ltp"))
-
-            row_fill = POS_FILL if running_val > 0 else (NEG_FILL if running_val < 0 else (ODD_FILL if row_idx % 2 == 1 else EVEN_FILL))
-            run_font = GREEN_F  if running_val > 0 else (RED_F if running_val < 0 else NORMAL_F)
-
-            values = [
-                r.get("datetime", ""),         # DateTime
-                r.get("strike", ""),            # Strike
-                round(index_ltp, 2) if index_ltp is not None else "",   # Sensex
-                round(running_val, 2),          # Running Value
-            ]
-
-            for col_idx, val in enumerate(values, start=1):
-                cell = ws.cell(row=row_idx, column=col_idx, value=val)
-                cell.fill      = row_fill
-                cell.alignment = center
-                cell.border    = thin_border()
-
-                if   col_idx == 1: cell.font = ORANGE_F   # DateTime
-                elif col_idx == 2: cell.font = BLUE_F     # Strike
-                elif col_idx == 3: cell.font = NORMAL_F   # Sensex
-                elif col_idx == 4: cell.font = run_font   # Running Value
-
-            ws.row_dimensions[row_idx].height = 16
-
-        # ── Summary row ──────────────────────────────────────
-        last_row      = 4 + len(records) + 1
-        total_running = round(records[-1].get("running", 0) if records else 0, 2)
-        sign          = '+' if total_running > 0 else ''
-
-        ws.merge_cells(f"A{last_row}:D{last_row}")
-        ws[f"A{last_row}"] = f"Final Running Value: {sign}{total_running}"
-
-        fill_col = "00291F" if total_running > 0 else ("2D0010" if total_running < 0 else "1A1A35")
-        txt_col  = "00D4AA" if total_running > 0 else ("FF4D6D" if total_running < 0 else "F5A623")
-        ws[f"A{last_row}"].font      = Font(name="Arial", color=txt_col, bold=True, size=12)
-        ws[f"A{last_row}"].fill      = PatternFill("solid", fgColor=fill_col)
-        ws[f"A{last_row}"].alignment = center
-        ws.row_dimensions[last_row].height = 22
-
-        # ── Freeze panes ─────────────────────────────────────
-        ws.freeze_panes = "A5"
-
-        wb.save(dest)
-        print(f"✅ Daily Excel saved: {dest}  ({len(records)} rows, 4 columns)")
-
-    except Exception as e:
-        print(f"❌ save_daily_excel ERROR: {e}")
-        import traceback
-        traceback.print_exc()
-# ── SCHEDULE DAILY EXCEL SAVE ────────────────────────────────────────────
-def schedule_daily_excel_save():
-    try:
-        scheduler.remove_job("daily_excel_save")
-    except Exception:
-        pass
-
-    scheduler.add_job(
-        save_daily_excel,
-        "cron",
-        hour=12,
-        minute=1,
-        second=0,
-        timezone=IST,
-        id="daily_excel_save",
-        replace_existing=True,
-        max_instances=1,
-        coalesce=True,
-    )
-    print("✅ DAILY EXCEL EXPORT SCHEDULED at 3:31 PM IST")
-
-
-schedule_daily_excel_save()
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# API — LIST AVAILABLE EXCEL FILES (visible to ALL logged-in users)
-# ═══════════════════════════════════════════════════════════════════════
-@app.get("/api/downloads")
-def api_downloads(request: Request):
-
-    username = request.session.get("user") or request.session.get("admin")
-
-    if not username:
-        return JSONResponse({
-            "error": "Unauthorized"
-        }, status_code=401)
-
-    is_admin = request.session.get("role") == "admin"
-
-    plan, expiry = get_user_plan(username)
-    can_dl = is_admin or is_plan_active(plan, expiry)
-
-    files = sorted(
-        glob.glob(os.path.join(EXCEL_DIR, "*.xlsx")),
-        reverse=True
-    )
-
-    result = []
-
-    for f in files:
-
-        name = os.path.basename(f)
-        date_part = name.replace(".xlsx", "")
-
-        try:
-            dt = datetime.strptime(date_part, "%Y-%m-%d")
-            display = dt.strftime("%d %b %Y — %A")
-        except:
-            display = date_part
-
-        result.append({
-            "name": name,
-            "display_date": display,
-            "url": f"/api/download-excel/{name}",
-            "can_download": can_dl,
-            "plan": "admin" if is_admin else (plan or "free")
-        })
-
-    return JSONResponse({
-        "plan": "admin" if is_admin else (plan or "free"),
-        "files": result
-    })
-
-# ═══════════════════════════════════════════════════════════════════════
-# API — SECURE EXCEL DOWNLOAD (pro/premium only, server-side check)
-# ═══════════════════════════════════════════════════════════════════════
-@app.get("/api/download-excel/{filename}")
-def download_excel(filename: str, request: Request):
-    """
-    Serves the .xlsx file ONLY if:
-      1. User is logged in
-      2. User has an active pro or premium plan
-    Otherwise returns 403.
-    """
-    # ── Auth ──
-    username = request.session.get("user") or request.session.get("admin")
-    if not username:
-        raise HTTPException(status_code=401, detail="Please login first.")
-
-    # ── Plan check ──
-    plan, expiry = get_user_plan(username)
-
-    # Admin bypass
-    if request.session.get("role") == "admin":
-        pass  # admin can always download
-    elif not is_plan_active(plan, expiry):
-        raise HTTPException(
-            status_code=403,
-            detail="Upgrade to Pro or Premium plan to download historical data."
-        )
-
-    # ── Sanitise filename (no path traversal) ──
-    safe_name = os.path.basename(filename)
-    if not safe_name.endswith(".xlsx") or "/" in safe_name or "\\" in safe_name:
-        raise HTTPException(status_code=400, detail="Invalid filename.")
-
-    filepath = os.path.join(EXCEL_DIR, safe_name)
-    if not os.path.exists(filepath):
-        raise HTTPException(status_code=404, detail="File not found.")
-
-
-    # Working download date format correct
-    # return FileResponse(
-    #     filepath,
-    #     media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    #     filename=safe_name,
-    # )
-
-    date_part = safe_name.replace(".xlsx", "")
-
-    try:
-        dt = datetime.strptime(date_part, "%Y-%m-%d")
-        download_name = dt.strftime("%Y-%m-%d %A.xlsx")
-    except:
-        download_name = safe_name
-
-    return FileResponse(
-        filepath,
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        filename=download_name,
-    )
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# ADMIN — MANUAL TRIGGER: save today's Excel right now (for testing)
-# ═══════════════════════════════════════════════════════════════════════
-@app.post("/api/admin/trigger-excel-save")
-def admin_trigger_excel(request: Request):
-    if request.session.get("role") != "admin":
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    try:
-        save_daily_excel()
-        return JSONResponse({"success": True, "message": "Excel saved."})
-    except Exception as e:
-        return JSONResponse({"success": False, "error": str(e)}, status_code=500)
-
-# ═══════════════════════════════════════════════════════════════════════
-# USER MANAGEMENT APIs  — paste this block into app.py
-# Add these routes after your existing admin routes
-# ═══════════════════════════════════════════════════════════════════════
-
-# ── SERVE the user management page ──────────────────────────────────────
-@app.get("/admin/users", response_class=HTMLResponse)
-def admin_users_page(request: Request):
-    if request.session.get("role") != "admin":
-        return RedirectResponse("/admin-login", status_code=302)
-    path = os.path.join(STATIC_DIR, "admin-users.html")
-    with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
-
-
-# No Login cache
-
-
-# ── LIST ALL USERS (admin only) ──────────────────────────────────────────
-@app.get("/api/admin/users")
-def api_admin_list_users(request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("""
-        SELECT id, username, email, phone, role, plan,
-               plan_start, plan_expiry, consent
-        FROM users
-        ORDER BY id DESC
-    """)
-    rows = c.fetchall()
-    conn.close()
-
-    users = []
-    for r in rows:
-        users.append({
-            "id":          r[0],
-            "username":    r[1],
-            "email":       r[2],
-            "phone":       r[3] or "",
-            "role":        r[4] or "user",
-            "plan":        r[5] or "free",
-            "plan_start":  r[6] or "",
-            "plan_expiry": r[7] or "",
-            "consent":     bool(r[8]),
-        })
-
-    return JSONResponse({"users": users, "total": len(users)})
-
-
-"""
-================================================================================
-TRADERBRO — WEBINAR MANAGEMENT SYSTEM
-================================================================================
-INSTRUCTIONS: Copy all code below and paste into your app.py
-
-1. The DB init function creates a `webinars` table automatically on startup.
-2. Include all routes below in your existing app.py.
-3. Place webinar.html in static/ folder.
-4. Place admin-webinars.html in static/ folder.
-================================================================================
-"""
-
-# ── ADD THIS TO YOUR EXISTING init_db() or call separately on startup ────────
-
-def init_webinars_table():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS webinars (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        description TEXT,
-        host TEXT DEFAULT 'TraderBro Team',
-        scheduled_at TEXT NOT NULL,
-        duration_minutes INTEGER DEFAULT 60,
-        topics TEXT,
-        meeting_link TEXT,
-        registration_link TEXT,
-        cover_color TEXT DEFAULT 'orange',
-        status TEXT DEFAULT 'upcoming',
-        max_seats INTEGER DEFAULT 0,
-        is_free INTEGER DEFAULT 1,
-        recording_link TEXT,
-        created_at TEXT,
-        updated_at TEXT
-    )
-    """)
-
-    # Webinar registrations (notify users)
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS webinar_registrations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        webinar_id INTEGER NOT NULL,
-        username TEXT NOT NULL,
-        registered_at TEXT NOT NULL,
-        UNIQUE(webinar_id, username)
-    )
-    """)
-
-    conn.commit()
-    conn.close()
-
-init_webinars_table()
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# PUBLIC PAGE — /webinars
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@app.get("/webinars", response_class=HTMLResponse)
-def webinars_page(request: Request):
-    path = os.path.join(STATIC_DIR, "webinar.html")
-    with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# ADMIN WEBINAR PAGE — /admin/webinars
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@app.get("/admin/webinars", response_class=HTMLResponse)
-def admin_webinars_page(request: Request):
-    if request.session.get("role") != "admin":
-        return RedirectResponse("/admin-login", status_code=302)
-    path = os.path.join(STATIC_DIR, "admin-webinars.html")
-    with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# API — LIST ALL WEBINARS (public, no auth required)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@app.get("/api/webinars")
-def api_list_webinars(request: Request, status: str = ""):
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    if status:
-        c.execute("""
-            SELECT id, title, description, host, scheduled_at, duration_minutes,
-                   topics, meeting_link, registration_link, cover_color,
-                   status, max_seats, is_free, recording_link, created_at
-            FROM webinars WHERE status=? ORDER BY scheduled_at ASC
-        """, (status,))
-    else:
-        c.execute("""
-            SELECT id, title, description, host, scheduled_at, duration_minutes,
-                   topics, meeting_link, registration_link, cover_color,
-                   status, max_seats, is_free, recording_link, created_at
-            FROM webinars ORDER BY scheduled_at DESC
-        """)
-
-    rows = c.fetchall()
-
-    # Get registration counts
-    webinar_list = []
-    for r in rows:
-        c.execute("SELECT COUNT(*) FROM webinar_registrations WHERE webinar_id=?", (r[0],))
-        reg_count = c.fetchone()[0]
-
-        # Check if current user is registered
-        username = request.session.get("user") or request.session.get("admin")
-        is_registered = False
-        if username:
-            c.execute(
-                "SELECT id FROM webinar_registrations WHERE webinar_id=? AND username=?",
-                (r[0], username)
-            )
-            is_registered = c.fetchone() is not None
-
-        webinar_list.append({
-            "id":                r[0],
-            "title":             r[1],
-            "description":       r[2] or "",
-            "host":              r[3] or "TraderBro Team",
-            "scheduled_at":      r[4],
-            "duration_minutes":  r[5] or 60,
-            "topics":            json.loads(r[6]) if r[6] else [],
-            "meeting_link":      r[7] or "",
-            "registration_link": r[8] or "",
-            "cover_color":       r[9] or "orange",
-            "status":            r[10],
-            "max_seats":         r[11] or 0,
-            "is_free":           bool(r[12]),
-            "recording_link":    r[13] or "",
-            "created_at":        r[14] or "",
-            "registrations":     reg_count,
-            "is_registered":     is_registered,
-        })
-
-    conn.close()
-    return JSONResponse({"webinars": webinar_list, "total": len(webinar_list)})
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# API — CREATE WEBINAR (admin only)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@app.post("/api/admin/webinar/create")
-async def api_create_webinar(request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-
-    data = await request.json()
-    now  = datetime.now(IST).isoformat()
-
-    title        = (data.get("title") or "").strip()
-    description  = (data.get("description") or "").strip()
-    host         = (data.get("host") or "TraderBro Team").strip()
-    scheduled_at = (data.get("scheduled_at") or "").strip()
-    duration     = int(data.get("duration_minutes") or 60)
-    topics       = data.get("topics") or []          # list of strings
-    meeting_link = (data.get("meeting_link") or "").strip()
-    reg_link     = (data.get("registration_link") or "").strip()
-    cover_color  = (data.get("cover_color") or "orange").strip()
-    status       = (data.get("status") or "upcoming").strip()
-    max_seats    = int(data.get("max_seats") or 0)
-    is_free      = 1 if data.get("is_free", True) else 0
-
-    if not title or not scheduled_at:
-        return JSONResponse({"success": False, "error": "Title and scheduled_at are required"})
-
-    topics_json = json.dumps(topics)
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("""
-        INSERT INTO webinars
-            (title, description, host, scheduled_at, duration_minutes,
-             topics, meeting_link, registration_link, cover_color,
-             status, max_seats, is_free, created_at, updated_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-    """, (title, description, host, scheduled_at, duration,
-          topics_json, meeting_link, reg_link, cover_color,
-          status, max_seats, is_free, now, now))
-    conn.commit()
-    new_id = c.lastrowid
-    conn.close()
-
-    return JSONResponse({"success": True, "id": new_id})
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# API — UPDATE WEBINAR (admin only)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@app.post("/api/admin/webinar/update")
-async def api_update_webinar(request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-
-    data = await request.json()
-    wid  = data.get("id")
-    if not wid:
-        return JSONResponse({"success": False, "error": "id required"})
-
-    now = datetime.now(IST).isoformat()
-    topics_json = json.dumps(data.get("topics") or [])
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("""
-        UPDATE webinars SET
-            title=?, description=?, host=?, scheduled_at=?,
-            duration_minutes=?, topics=?, meeting_link=?,
-            registration_link=?, cover_color=?, status=?,
-            max_seats=?, is_free=?, recording_link=?, updated_at=?
-        WHERE id=?
-    """, (
-        data.get("title", ""),
-        data.get("description", ""),
-        data.get("host", "TraderBro Team"),
-        data.get("scheduled_at", ""),
-        int(data.get("duration_minutes") or 60),
-        topics_json,
-        data.get("meeting_link", ""),
-        data.get("registration_link", ""),
-        data.get("cover_color", "orange"),
-        data.get("status", "upcoming"),
-        int(data.get("max_seats") or 0),
-        1 if data.get("is_free", True) else 0,
-        data.get("recording_link", ""),
-        now,
-        wid
-    ))
-    conn.commit()
-    conn.close()
-
-    return JSONResponse({"success": True})
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# API — DELETE WEBINAR (admin only)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@app.post("/api/admin/webinar/delete")
-async def api_delete_webinar(request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-
-    data = await request.json()
-    wid  = data.get("id")
-    if not wid:
-        return JSONResponse({"success": False, "error": "id required"})
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("DELETE FROM webinars WHERE id=?", (wid,))
-    c.execute("DELETE FROM webinar_registrations WHERE webinar_id=?", (wid,))
-    conn.commit()
-    conn.close()
-
-    return JSONResponse({"success": True})
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# API — REGISTER FOR WEBINAR (logged-in users)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@app.post("/api/webinar/register")
-async def api_webinar_register(request: Request):
-    username = request.session.get("user") or request.session.get("admin")
-    if not username:
-        return JSONResponse({"error": "Login required"}, status_code=401)
-
-    data = await request.json()
-    wid  = data.get("webinar_id")
-    if not wid:
-        return JSONResponse({"success": False, "error": "webinar_id required"})
-
-    now = datetime.now(IST).isoformat()
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    # Check webinar exists and is upcoming
-    c.execute("SELECT status, max_seats FROM webinars WHERE id=?", (wid,))
-    row = c.fetchone()
-    if not row:
-        conn.close()
-        return JSONResponse({"success": False, "error": "Webinar not found"})
-    if row[0] not in ("upcoming", "live"):
-        conn.close()
-        return JSONResponse({"success": False, "error": "Registrations are closed"})
-
-    # Seat limit check
-    if row[1] and row[1] > 0:
-        c.execute("SELECT COUNT(*) FROM webinar_registrations WHERE webinar_id=?", (wid,))
-        count = c.fetchone()[0]
-        if count >= row[1]:
-            conn.close()
-            return JSONResponse({"success": False, "error": "Seats are full"})
-
-    try:
-        c.execute("""
-            INSERT OR IGNORE INTO webinar_registrations (webinar_id, username, registered_at)
-            VALUES (?,?,?)
-        """, (wid, username, now))
-        conn.commit()
-        inserted = c.rowcount > 0
-        conn.close()
-        if inserted:
-            return JSONResponse({"success": True, "message": "Registered successfully!"})
-        else:
-            return JSONResponse({"success": False, "error": "Already registered"})
-    except Exception as e:
-        conn.close()
-        return JSONResponse({"success": False, "error": str(e)})
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# API — UPCOMING WEBINAR NOTIFICATION BANNER (for dashboard/home)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@app.get("/api/webinar/next")
-def api_next_webinar():
-
-    conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = sqlite3.Row
-    c = conn.cursor()
-
-    # LIVE webinar first
-    c.execute("""
-        SELECT *
-        FROM webinars
-        WHERE status='live'
-        ORDER BY id DESC
-        LIMIT 1
-    """)
-
-    webinar = c.fetchone()
-
-    # If no live webinar, show next upcoming webinar
-    if not webinar:
-
-        c.execute("""
-            SELECT *
-            FROM webinars
-            WHERE status='upcoming'
-            ORDER BY scheduled_at ASC
-            LIMIT 1
-        """)
-
-        webinar = c.fetchone()
-
-    conn.close()
-
-    if not webinar:
-        return {"webinar": None}
-
-    return {
-        "webinar": dict(webinar)
+    function dashToggle() {
+      const dd = document.getElementById('dash-dropdown');
+      const ch = document.getElementById('dash-chevron');
+      const open = dd.classList.toggle('open');
+      ch.classList.toggle('open', open);
     }
 
+    // Close on outside click
+    document.addEventListener('click', function (e) {
+      const wrap = document.getElementById('dash-user-wrap');
+      if (wrap && !wrap.contains(e.target)) {
+        document.getElementById('dash-dropdown').classList.remove('open');
+        document.getElementById('dash-chevron').classList.remove('open');
+      }
+    });
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# API — ADMIN: GET REGISTRATIONS FOR A WEBINAR
-# ═══════════════════════════════════════════════════════════════════════════════
+    // Load on init
+    loadDashUser();
 
-@app.get("/api/admin/webinar/{wid}/registrations")
-def api_webinar_registrations(wid: int, request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    // Recheck mobile AU strip visibility on resize/rotate
+    window.addEventListener('resize', () => {
+      const mobileStrip = document.getElementById('mobile-au-strip');
+      const mobilePill = document.getElementById('active-users-pill-mobile');
+      if (!mobileStrip || !mobilePill || mobilePill.style.display === 'none') return;
+      mobileStrip.style.display = window.innerWidth <= 768 ? 'flex' : 'none';
+    });
 
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("""
-        SELECT wr.username, u.email, u.phone, wr.registered_at
-        FROM webinar_registrations wr
-        LEFT JOIN users u ON u.username = wr.username
-        WHERE wr.webinar_id=?
-        ORDER BY wr.registered_at ASC
-    """, (wid,))
-    rows = c.fetchall()
-    conn.close()
+  </script>
 
-    return JSONResponse({
-        "registrations": [
-            {"username": r[0], "email": r[1] or "", "phone": r[2] or "", "registered_at": r[3]}
-            for r in rows
-        ],
-        "total": len(rows)
-    })
+  <script>
+    /* ════════════════════════════════════════════════════════════════════
+       HOLIDAY NOTIFICATION SYSTEM
+       • Shows banner when TODAY is a holiday
+       • Shows strip notification 1–5 days before a holiday
+       • Multiple holidays can be queued in the strip
+    ════════════════════════════════════════════════════════════════════ */
 
-# ── CREATE USER (admin only) ─────────────────────────────────────────────
-@app.post("/api/admin/user/create")
-async def api_admin_create_user(request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    const HOLIDAY_COLORS = {
+      0: { bg: "#1a0a00", border: "#f5a623", text: "#f5a623", badge: "#eb4201" },   // today
+      1: { bg: "rgba(235,66,1,0.10)", border: "rgba(235,66,1,0.4)", text: "#ff6b35", badge: "#eb4201" },
+      2: { bg: "rgba(245,166,35,0.10)", border: "rgba(245,166,35,0.35)", text: "#f5a623", badge: "#c8841a" },
+      3: { bg: "rgba(245,166,35,0.07)", border: "rgba(245,166,35,0.25)", text: "#c8841a", badge: "#a06010" },
+      4: { bg: "rgba(245,166,35,0.05)", border: "rgba(245,166,35,0.18)", text: "#a06010", badge: "#806000" },
+      5: { bg: "rgba(245,166,35,0.04)", border: "rgba(245,166,35,0.14)", text: "#806000", badge: "#606000" },
+    };
 
-    data = await request.json()
-    username = (data.get("username") or "").strip()
-    email    = (data.get("email")    or "").strip()
-    phone    = (data.get("phone")    or "").strip()
-    role     = (data.get("role")     or "user").strip()
-    password = (data.get("password") or "").strip()
-
-    if not username or not email:
-        return JSONResponse({"success": False, "error": "Username and email are required"})
-    if not password:
-        return JSONResponse({"success": False, "error": "Password is required for new users"})
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    # Uniqueness checks
-    c.execute("SELECT id FROM users WHERE username=?", (username,))
-    if c.fetchone():
-        conn.close()
-        return JSONResponse({"success": False, "error": "Username already taken"})
-    c.execute("SELECT id FROM users WHERE email=?", (email,))
-    if c.fetchone():
-        conn.close()
-        return JSONResponse({"success": False, "error": "Email already registered"})
-
-    hashed_pw = hash_password(password)
-    c.execute("""
-        INSERT INTO users (username, email, password, phone, role, consent, plan)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (username, email, hashed_pw, phone, role, True, "free"))
-    conn.commit()
-    new_id = c.lastrowid
-    conn.close()
-
-    return JSONResponse({"success": True, "id": new_id})
-
-
-# ── UPDATE USER (admin only) ─────────────────────────────────────────────
-@app.post("/api/admin/user/update")
-async def api_admin_update_user(request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-
-    data = await request.json()
-    user_id  = data.get("id")
-    username = (data.get("username") or "").strip()
-    email    = (data.get("email")    or "").strip()
-    phone    = (data.get("phone")    or "").strip()
-    role     = (data.get("role")     or "user").strip()
-    password = (data.get("password") or "").strip()
-
-    if not user_id or not username or not email:
-        return JSONResponse({"success": False, "error": "Missing required fields"})
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    # Conflict check (excluding current user)
-    c.execute("SELECT id FROM users WHERE username=? AND id!=?", (username, user_id))
-    if c.fetchone():
-        conn.close()
-        return JSONResponse({"success": False, "error": "Username already taken"})
-    c.execute("SELECT id FROM users WHERE email=? AND id!=?", (email, user_id))
-    if c.fetchone():
-        conn.close()
-        return JSONResponse({"success": False, "error": "Email already registered"})
-
-    if password:
-        hashed_pw = hash_password(password)
-        c.execute("""
-            UPDATE users SET username=?, email=?, phone=?, role=?, password=?
-            WHERE id=?
-        """, (username, email, phone, role, hashed_pw, user_id))
-    else:
-        c.execute("""
-            UPDATE users SET username=?, email=?, phone=?, role=?
-            WHERE id=?
-        """, (username, email, phone, role, user_id))
-
-    conn.commit()
-    conn.close()
-    return JSONResponse({"success": True})
-
-
-# ── NEW: /api/subscription-preview endpoint ─────────────────────────────────
-# Add this route to app.py — used by checkout page to show accurate expiry
-
-@app.get("/api/subscription-preview")
-def api_subscription_preview(request: Request, plan: str = ""):
-    """
-    Returns a preview of what start/expiry/holidays would be for a given plan.
-    Used by checkout page so user sees holiday-aware dates before paying.
-    """
-
-    username = request.session.get("user") or request.session.get("admin")
-
-    if not username:
-        return JSONResponse(
-            {"error": "Unauthorized"},
-            status_code=401
-        )
-
-    plan = plan.lower().strip()
-
-    if plan not in PLAN_CONFIG_DATA:
-        return JSONResponse(
-            {"error": "Invalid plan"},
-            status_code=400
-        )
-
-    from market_holidays import (
-        calculate_expiry_from_start,
-        get_next_trading_day_after,
-        get_holidays_in_subscription
-    )
-
-    cfg = PLAN_CONFIG_DATA[plan]
-    t_days = cfg["trading_days"]
-    now = datetime.now(IST)
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    # Find latest future expiry
-    c.execute("""
-        SELECT MAX(plan_expiry)
-        FROM subscriptions
-        WHERE username=?
-        AND status IN ('active','queued')
-    """, (username,))
-
-    row = c.fetchone()
-    sub_expiry_str = row[0] if row else None
-
-    c.execute(
-        "SELECT plan_expiry FROM users WHERE username=?",
-        (username,)
-    )
-
-    urow = c.fetchone()
-    user_expiry_str = urow[0] if urow else None
-
-    conn.close()
-
-    effective_last_expiry = None
-
-    for es in [sub_expiry_str, user_expiry_str]:
-        if es:
-            try:
-                edt = datetime.fromisoformat(es)
-
-                if edt.tzinfo is None:
-                    edt = IST.localize(edt)
-
-                if (
-                    edt > now and
-                    (
-                        effective_last_expiry is None or
-                        edt > effective_last_expiry
-                    )
-                ):
-                    effective_last_expiry = edt
-
-            except Exception:
-                pass
-
-    if effective_last_expiry:
-        start_dt = get_next_trading_day_after(
-            effective_last_expiry
-        )
-    else:
-        start_dt = get_subscription_start_date()
-
-    expiry_dt, total_cal, weekends, holidays = (
-        calculate_expiry_from_start(
-            start_dt,
-            t_days
-        )
-    )
-
-    holiday_list = get_holidays_in_subscription(
-        start_dt,
-        expiry_dt
-    )
-
-    is_queued = start_dt > now
-
-    return JSONResponse({
-        "plan": plan,
-        "trading_days": t_days,
-        "plan_start": start_dt.isoformat(),
-        "plan_expiry": expiry_dt.isoformat(),
-        "calendar_days": total_cal,
-        "weekends": weekends,
-        "holidays": holidays,
-        "holiday_list": holiday_list,
-        "is_queued": is_queued,
-        "price": cfg["price"]
-    })
-
-def process_subscription_queue():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    now = datetime.now(IST)
-
-    c.execute("""
-        SELECT id, username, plan,
-               plan_start, plan_expiry
-        FROM subscriptions
-        WHERE status='queued'
-        ORDER BY plan_start ASC
-    """)
-
-    rows = c.fetchall()
-
-    for row in rows:
-        sub_id = row[0]
-        username = row[1]
-        plan = row[2]
-
-        start_dt = datetime.fromisoformat(row[3])
-
-        if start_dt <= now:
-
-            c.execute("""
-                UPDATE subscriptions
-                SET status='active'
-                WHERE id=?
-            """, (sub_id,))
-
-            c.execute("""
-                UPDATE users
-                SET plan=?,
-                    plan_start=?,
-                    plan_expiry=?
-                WHERE username=?
-            """, (
-                plan,
-                row[3],
-                row[4],
-                username
-            ))
-
-    conn.commit()
-    conn.close()
-
-# ── ASSIGN / CHANGE PLAN (admin only) ───────────────────────────────────
-@app.post("/api/admin/user/assign-plan")
-async def api_admin_assign_plan(request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-
-    data         = await request.json()
-    user_id      = data.get("user_id")
-    plan         = (data.get("plan") or "free").strip().lower()
-    custom_expiry = data.get("custom_expiry")
-    note         = data.get("note", "")
-
-    if not user_id:
-        return JSONResponse({"success": False, "error": "user_id required"})
-
-    PLAN_DAYS = {
-        "basic":     1,
-        "essential": 5,
-        "pro":       22,
-        "premium":   250,
+    function _dayLabel(daysAway) {
+      if (daysAway === 0) return "TODAY";
+      if (daysAway === 1) return "TOMORROW";
+      return ` HOLIDAY IN ${daysAway} DAYS`;
     }
 
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
+    function _urgencyIcon(daysAway) {
+      if (daysAway === 0) return "🏖️";
+      if (daysAway === 1) return "⚠️";
+      if (daysAway === 2) return "📅";
+      return "🗓️";
+    }
 
-    # Get username for subscriptions table
-    c.execute("SELECT username FROM users WHERE id=?", (user_id,))
-    urow = c.fetchone()
-    if not urow:
-        conn.close()
-        return JSONResponse({"success": False, "error": "User not found"})
-    username = urow[0]
+    function _buildStripItem(h) {
+      const col = HOLIDAY_COLORS[Math.min(h.days_away, 5)];
+      const label = _dayLabel(h.days_away);
+      const icon = _urgencyIcon(h.days_away);
+      const adj = h.is_weekend_adjacent
+        ? `<span style="font-size:9px;background:rgba(255,255,255,0.12);padding:1px 6px;border-radius:6px;margin-left:6px;">🔁 Long Weekend</span>`
+        : "";
 
-    if plan == "free":
-        c.execute("""
-            UPDATE users SET plan='free', plan_start=NULL, plan_expiry=NULL
-            WHERE id=?
-        """, (user_id,))
-        conn.commit()
-        conn.close()
-        return JSONResponse({"success": True})
+      return `
+    <div style="
+      display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      gap:8px; padding:7px 28px;
+      background:${col.bg};
+      border-bottom:1px solid ${col.border};
+      font-size:11px; font-weight:600;
+      animation: fadeInDown 0.3s ease;
+    ">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:14px;">${icon}</span>
+        <span style="color:${col.text};font-weight:800;letter-spacing:0.5px;">${label}:</span>
+        <span style="color:#e8eaf0;">${h.reason}</span>
+        <span style="color:${col.text};font-size:10px;">· ${h.formatted_date} (${h.weekday_name})</span>
+        ${adj}
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="
+          background:${col.badge}; color:white;
+          padding:2px 10px; border-radius:20px;
+          font-size:10px; font-weight:700; letter-spacing:0.5px;
+          @media (max-width: 500px) { display:none; }
+        ">MARKET WILL BE CLOSED · ${h.formatted_date}</span>
+      </div>
+    </div>`;
+    }
 
-    now = datetime.now(IST)
+    async function checkHolidayStatus() {
+      try {
+        const res = await fetch('/api/market-holidays', { credentials: 'include' });
+        const data = await res.json();
 
-    if custom_expiry:
-        # Admin provided an explicit end date — respect it exactly
-        try:
-            expiry_dt = datetime.fromisoformat(custom_expiry)
-            if expiry_dt.tzinfo is None:
-                expiry_dt = IST.localize(expiry_dt)
-        except Exception:
-            conn.close()
-            return JSONResponse({"success": False, "error": "Invalid custom_expiry format"})
-        start_dt    = now
-        t_days      = PLAN_DAYS.get(plan, 0)
-        total_cal   = (expiry_dt.date() - start_dt.date()).days + 1
-        weekends_sk = 0
-        holidays_sk = 0
+        /* ── TODAY IS A HOLIDAY ─────────────────────────────────────── */
+        if (data.today_is_holiday) {
+          const banner = document.getElementById('holiday-banner');
+          const reasonEl = document.getElementById('holiday-reason-text');
+          if (banner) {
+            banner.style.display = 'flex';
+            if (reasonEl) reasonEl.textContent = `${data.today_reason} — NSE is closed`;
+          }
+        }
 
-    else:
-        # ── Trading-day-aware expiry: skips weekends AND NSE holidays ──
-        t_days = PLAN_DAYS.get(plan, 0)
+        /* ── UPCOMING (next 5 days, not today) ──────────────────────── */
+        const upcoming = (data.upcoming || []).filter(h => !h.is_today);
 
-        # Check if this user already has a future active/queued sub
-        c.execute("""
-            SELECT MAX(plan_expiry) FROM subscriptions
-            WHERE username=? AND status IN ('active','queued')
-        """, (username,))
-        row = c.fetchone()
-        sub_expiry_str = row[0] if row else None
+        // Chips inside today's banner
+        const chipsEl = document.getElementById('upcoming-holiday-chips');
+        if (chipsEl && upcoming.length) {
+          chipsEl.innerHTML = upcoming.slice(0, 2).map(h =>
+            `<span style="
+          background:rgba(245,166,35,0.15);
+          border:1px solid rgba(245,166,35,0.3);
+          color:#f5a623; padding:3px 10px;
+          border-radius:20px; font-size:10px; font-weight:700;
+        ">📅 ${h.reason} — ${_dayLabel(h.days_away)}</span>`
+          ).join('');
+        }
 
-        c.execute("SELECT plan_expiry FROM users WHERE id=?", (user_id,))
-        urow2 = c.fetchone()
-        user_expiry_str = urow2[0] if urow2 else None
+        /* ── STRIP: show ALL upcoming holidays within 5 days ────────── */
+        const strip = document.getElementById('upcoming-holiday-strip');
+        if (strip && upcoming.length) {
+          // Sort by proximity
+          const sorted = [...upcoming].sort((a, b) => a.days_away - b.days_away);
+          strip.style.display = 'block';
+          strip.innerHTML = sorted.map(h => _buildStripItem(h)).join('');
+        } else if (strip) {
+          strip.style.display = 'none';
+        }
 
-        effective_last_expiry = None
-        for es in [sub_expiry_str, user_expiry_str]:
-            if es:
-                try:
-                    edt = datetime.fromisoformat(es)
-                    if edt.tzinfo is None:
-                        edt = IST.localize(edt)
-                    if edt > now:
-                        if effective_last_expiry is None or edt > effective_last_expiry:
-                            effective_last_expiry = edt
-                except Exception:
-                    pass
+      } catch (e) {
+        console.error('Holiday check failed:', e);
+      }
+    }
 
-        if effective_last_expiry:
-            start_dt = get_next_trading_day_after(effective_last_expiry)
-        else:
-            start_dt = get_subscription_start_date()
+    // Run on load
+    checkHolidayStatus();
+    // Refresh every hour (holidays don't change mid-day)
+    setInterval(checkHolidayStatus, 60 * 60 * 1000);
 
-        expiry_dt, total_cal, weekends_sk, holidays_sk = calculate_expiry_from_start(
-            start_dt, t_days
-        )
+    function logout() {
+      sessionStorage.setItem("loggedOut", "1");
+      window.location.href = "/logout";
+    }
+  </script>
 
-    new_status = "active" if start_dt <= now else "queued"
+  <script src="/static/session-monitor.js"></script>
 
-    # Write to subscriptions table for history
-    c.execute("""
-        INSERT INTO subscriptions
-            (username, plan, plan_start, plan_expiry,
-             trading_days, total_calendar_days,
-             weekends_skipped, holidays_skipped,
-             status, price, created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?)
-    """, (
-        username, plan,
-        start_dt.isoformat(), expiry_dt.isoformat(),
-        t_days, total_cal,
-        weekends_sk, holidays_sk,
-        new_status,
-        PLAN_CONFIG_DATA.get(plan, {}).get("price", 0),
-        now.isoformat()
-    ))
+</body>
 
-    # Update users table if immediately active
-    if new_status == "active":
-        c.execute("""
-            UPDATE users SET plan=?, plan_start=?, plan_expiry=?
-            WHERE id=?
-        """, (plan, start_dt.isoformat(), expiry_dt.isoformat(), user_id))
-    
-    conn.commit()
-    conn.close()
-
-    return JSONResponse({
-        "success":          True,
-        "plan":             plan,
-        "plan_start":       start_dt.isoformat(),
-        "plan_expiry":      expiry_dt.isoformat(),
-        "trading_days":     t_days,
-        "weekends_skipped": weekends_sk,
-        "holidays_skipped": holidays_sk,
-        "status":           new_status,
-    })
-
-# ── DELETE USER (admin only) ─────────────────────────────────────────────
-@app.post("/api/admin/user/delete")
-async def api_admin_delete_user(request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-
-    data    = await request.json()
-    user_id = data.get("user_id")
-
-    if not user_id:
-        return JSONResponse({"success": False, "error": "user_id required"})
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    # Safety: never delete the last admin
-    c.execute("SELECT role FROM users WHERE id=?", (user_id,))
-    row = c.fetchone()
-    if not row:
-        conn.close()
-        return JSONResponse({"success": False, "error": "User not found"})
-    if row[0] == "admin":
-        c.execute("SELECT COUNT(*) FROM users WHERE role='admin'")
-        count = c.fetchone()[0]
-        if count <= 1:
-            conn.close()
-            return JSONResponse({"success": False, "error": "Cannot delete the last admin account"})
-
-    c.execute("DELETE FROM users WHERE id=?", (user_id,))
-    conn.commit()
-    conn.close()
-    return JSONResponse({"success": True})
-
-
-@app.get("/webinars", response_class=HTMLResponse)
-def webinars_page(request: Request):
-    path = os.path.join(STATIC_DIR, "webinar.html")
-    with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
- 
- 
-@app.get("/admin/webinars", response_class=HTMLResponse)
-def admin_webinars_page(request: Request):
-    if request.session.get("role") != "admin":
-        return RedirectResponse("/admin-login", status_code=302)
-    path = os.path.join(STATIC_DIR, "admin-webinars.html")
-    with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
- 
- 
-# ── PUBLIC: LIST ALL WEBINARS ──────────────────────────────────────────────────
- 
-@app.get("/api/webinars")
-def api_list_webinars(request: Request, status: str = ""):
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    if status:
-        c.execute("""SELECT id,title,description,host,scheduled_at,duration_minutes,
-                            topics,meeting_link,registration_link,cover_color,
-                            status,max_seats,is_free,recording_link,created_at
-                     FROM webinars WHERE status=? ORDER BY scheduled_at ASC""", (status,))
-    else:
-        c.execute("""SELECT id,title,description,host,scheduled_at,duration_minutes,
-                            topics,meeting_link,registration_link,cover_color,
-                            status,max_seats,is_free,recording_link,created_at
-                     FROM webinars ORDER BY scheduled_at DESC""")
-    rows = c.fetchall()
-    username = request.session.get("user") or request.session.get("admin")
-    result = []
-    for r in rows:
-        c.execute("SELECT COUNT(*) FROM webinar_registrations WHERE webinar_id=?", (r[0],))
-        reg_count = c.fetchone()[0]
-        is_registered = False
-        if username:
-            c.execute("SELECT id FROM webinar_registrations WHERE webinar_id=? AND username=?", (r[0], username))
-            is_registered = c.fetchone() is not None
-        result.append({
-            "id": r[0], "title": r[1], "description": r[2] or "",
-            "host": r[3] or "TraderBro Team", "scheduled_at": r[4],
-            "duration_minutes": r[5] or 60,
-            "topics": json.loads(r[6]) if r[6] else [],
-            "meeting_link": r[7] or "", "registration_link": r[8] or "",
-            "cover_color": r[9] or "orange", "status": r[10],
-            "max_seats": r[11] or 0, "is_free": bool(r[12]),
-            "recording_link": r[13] or "", "created_at": r[14] or "",
-            "registrations": reg_count, "is_registered": is_registered,
-        })
-    conn.close()
-    return JSONResponse({"webinars": result, "total": len(result)})
- 
- 
-# ── PUBLIC: NEXT UPCOMING/LIVE WEBINAR (for notification banner) ───────────────
- 
-@app.get("/api/webinar/next")
-def api_next_webinar(request: Request):
-    """Returns the nearest upcoming or live webinar — used by notification banners."""
-    now_str = datetime.now(IST).isoformat()
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    # First check for any live webinar
-    c.execute("""SELECT id,title,scheduled_at,cover_color,status,duration_minutes,meeting_link
-                 FROM webinars WHERE status='live' LIMIT 1""")
-    row = c.fetchone()
-    if not row:
-        # Fall back to next upcoming
-        c.execute("""SELECT id,title,scheduled_at,cover_color,status,duration_minutes,meeting_link
-                     FROM webinars WHERE status='upcoming' AND scheduled_at >= ?
-                     ORDER BY scheduled_at ASC LIMIT 1""", (now_str,))
-        row = c.fetchone()
-    conn.close()
-    if not row:
-        return JSONResponse({"webinar": None})
-    return JSONResponse({"webinar": {
-        "id": row[0], "title": row[1], "scheduled_at": row[2],
-        "cover_color": row[3], "status": row[4],
-        "duration_minutes": row[5], "meeting_link": row[6] or "",
-    }})
- 
- 
-# ── ADMIN: CREATE WEBINAR ──────────────────────────────────────────────────────
- 
-@app.post("/api/admin/webinar/create")
-async def api_create_webinar(request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-    data = await request.json()
-    now  = datetime.now(IST).isoformat()
-    title        = (data.get("title") or "").strip()
-    scheduled_at = (data.get("scheduled_at") or "").strip()
-    if not title or not scheduled_at:
-        return JSONResponse({"success": False, "error": "Title and scheduled_at are required"})
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("""INSERT INTO webinars
-                     (title,description,host,scheduled_at,duration_minutes,topics,
-                      meeting_link,registration_link,cover_color,status,max_seats,
-                      is_free,created_at,updated_at)
-                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-              (title,
-               (data.get("description") or "").strip(),
-               (data.get("host") or "TraderBro Team").strip(),
-               scheduled_at,
-               int(data.get("duration_minutes") or 60),
-               json.dumps(data.get("topics") or []),
-               (data.get("meeting_link") or "").strip(),
-               (data.get("registration_link") or "").strip(),
-               (data.get("cover_color") or "orange").strip(),
-               (data.get("status") or "upcoming").strip(),
-               int(data.get("max_seats") or 0),
-               1 if data.get("is_free", True) else 0,
-               now, now))
-    conn.commit()
-    new_id = c.lastrowid
-    conn.close()
-    return JSONResponse({"success": True, "id": new_id})
- 
- 
-# ── ADMIN: UPDATE WEBINAR ──────────────────────────────────────────────────────
- 
-@app.post("/api/admin/webinar/update")
-async def api_update_webinar(request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-    data = await request.json()
-    wid  = data.get("id")
-    if not wid:
-        return JSONResponse({"success": False, "error": "id required"})
-    now = datetime.now(IST).isoformat()
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("""UPDATE webinars SET
-                     title=?,description=?,host=?,scheduled_at=?,duration_minutes=?,
-                     topics=?,meeting_link=?,registration_link=?,cover_color=?,
-                     status=?,max_seats=?,is_free=?,recording_link=?,updated_at=?
-                 WHERE id=?""",
-              (data.get("title",""),
-               data.get("description",""),
-               data.get("host","TraderBro Team"),
-               data.get("scheduled_at",""),
-               int(data.get("duration_minutes") or 60),
-               json.dumps(data.get("topics") or []),
-               data.get("meeting_link",""),
-               data.get("registration_link",""),
-               data.get("cover_color","orange"),
-               data.get("status","upcoming"),
-               int(data.get("max_seats") or 0),
-               1 if data.get("is_free", True) else 0,
-               data.get("recording_link",""),
-               now, wid))
-    conn.commit()
-    conn.close()
-    return JSONResponse({"success": True})
- 
- 
-# ── ADMIN: DELETE WEBINAR ──────────────────────────────────────────────────────
- 
-@app.post("/api/admin/webinar/delete")
-async def api_delete_webinar(request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-    data = await request.json()
-    wid  = data.get("id")
-    if not wid:
-        return JSONResponse({"success": False, "error": "id required"})
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("DELETE FROM webinars WHERE id=?", (wid,))
-    c.execute("DELETE FROM webinar_registrations WHERE webinar_id=?", (wid,))
-    conn.commit()
-    conn.close()
-    return JSONResponse({"success": True})
- 
- 
-# ── PUBLIC: REGISTER FOR WEBINAR ───────────────────────────────────────────────
- 
-@app.post("/api/webinar/register")
-async def api_webinar_register(request: Request):
-    username = request.session.get("user") or request.session.get("admin")
-    if not username:
-        return JSONResponse({"error": "Login required"}, status_code=401)
-    data = await request.json()
-    wid  = data.get("webinar_id")
-    if not wid:
-        return JSONResponse({"success": False, "error": "webinar_id required"})
-    now = datetime.now(IST).isoformat()
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("SELECT status, max_seats FROM webinars WHERE id=?", (wid,))
-    row = c.fetchone()
-    if not row:
-        conn.close()
-        return JSONResponse({"success": False, "error": "Webinar not found"})
-    if row[0] not in ("upcoming", "live"):
-        conn.close()
-        return JSONResponse({"success": False, "error": "Registrations are closed"})
-    if row[1] and row[1] > 0:
-        c.execute("SELECT COUNT(*) FROM webinar_registrations WHERE webinar_id=?", (wid,))
-        if c.fetchone()[0] >= row[1]:
-            conn.close()
-            return JSONResponse({"success": False, "error": "Seats are full"})
-    try:
-        c.execute("INSERT OR IGNORE INTO webinar_registrations (webinar_id,username,registered_at) VALUES (?,?,?)",
-                  (wid, username, now))
-        conn.commit()
-        inserted = c.rowcount > 0
-        conn.close()
-        if inserted:
-            return JSONResponse({"success": True, "message": "Registered successfully!"})
-        return JSONResponse({"success": False, "error": "Already registered"})
-    except Exception as e:
-        conn.close()
-        return JSONResponse({"success": False, "error": str(e)})
- 
- 
-# ── ADMIN: GET REGISTRATIONS FOR A WEBINAR ─────────────────────────────────────
- 
-@app.get("/api/admin/webinar/{wid}/registrations")
-def api_webinar_registrations(wid: int, request: Request):
-    if request.session.get("role") != "admin":
-        return JSONResponse({"error": "Unauthorized"}, status_code=401)
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("""SELECT wr.username, u.email, u.phone, wr.registered_at
-                 FROM webinar_registrations wr
-                 LEFT JOIN users u ON u.username=wr.username
-                 WHERE wr.webinar_id=? ORDER BY wr.registered_at ASC""", (wid,))
-    rows = c.fetchall()
-    conn.close()
-    return JSONResponse({
-        "registrations": [{"username":r[0],"email":r[1]or"","phone":r[2]or"","registered_at":r[3]} for r in rows],
-        "total": len(rows)
-    })
+</html>
