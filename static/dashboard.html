@@ -3098,7 +3098,9 @@ font-weight:600;
           const istNow = getIST();
           const isWeekend = istNow.getDay() === 0 || istNow.getDay() === 6;
           const allZero = displayableRows.every(r => parseFloat(r.running || 0) === 0);
-          if ((isWeekend || _closedReason) && allZero) {
+
+          // Only render closed box if it's a weekend/holiday with zero data, NOT simply because it is past 12 PM
+          if ((isWeekend || accessData?.is_holiday) && allZero) {
             grid.innerHTML = buildClosedBox();
             return;
           }
@@ -3173,6 +3175,8 @@ font-weight:600;
         })
         .catch(e => console.error("loadData:", e));
     }
+
+
     function startAutoRefresh(ms) { if (_refreshTimer) clearTimeout(_refreshTimer); doRefresh(ms); }
     function doRefresh(ms) { loadData(); _refreshTimer = setTimeout(() => doRefresh(ms), ms); }
 
@@ -3537,9 +3541,8 @@ font-weight:600;
     function updateMarketClosedBanner(accessData) {
       const grid = document.getElementById("rows-grid");
       if (!grid) return;
-      if (grid.querySelector(".data-row")) return;   // real data already there
 
-      // Store the reason so buildClosedBox() can use it
+      // Set internal reason metadata
       if (accessData.is_weekend) {
         const dayName = accessData.weekday_name || "Weekend";
         _closedReason = {
@@ -3556,7 +3559,6 @@ font-weight:600;
           time: `Next session: <b>${accessData.next_trading_day}</b>`,
         };
       } else {
-        // Weekday, non-holiday — time-based reason
         const now = new Date();
         const ist = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
         const mins = ist.getHours() * 60 + ist.getMinutes();
@@ -3571,14 +3573,18 @@ font-weight:600;
           _closedReason = {
             icon: "🔔",
             title: "Market Session Ended for Today",
-            desc: "Today's session has closed. Data will be available again next trading day.",
+            desc: "Today's session has closed. Values remain visible till next trading session.",
             time: `Next session: <b>${accessData.next_trading_day}</b> at <b>9:16 AM IST</b>`,
           };
         }
       }
 
-      grid.innerHTML = buildClosedBox();
+      // ONLY set buildClosedBox if NO data rows exist in the grid
+      if (!grid.querySelector(".data-row") && (!_dashboardRows || _dashboardRows.length === 0)) {
+        grid.innerHTML = buildClosedBox();
+      }
     }
+    
     /* ── Full-screen overlay for queued plan ── */
     function showFullscreenClosed(icon, title, body, extra) {
       // Remove any existing overlay
