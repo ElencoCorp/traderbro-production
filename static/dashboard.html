@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TraderBro — Dashboard</title>
+  <title>TraderBro — Black-Box-Engine Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
@@ -3003,13 +3003,10 @@ font-weight:600;
 
           const grid = document.getElementById("rows-grid");
 
-          // IF NO LIVE MEMORY ROWS, CHECK IF WE ALREADY RECORDED TODAY
-          if (!rows.length) {
+          // If no rows exist at all (e.g. pre-market or non-trading day)
+          if (!rows || rows.length === 0) {
             _dashboardRows = [];
-            // If the grid already has rendered data rows, don't wipe them!
-            if (!grid.querySelector(".data-row")) {
-              grid.innerHTML = buildClosedBox();
-            }
+            grid.innerHTML = buildClosedBox();
             return;
           }
 
@@ -3055,10 +3052,12 @@ font-weight:600;
             bbi: r.bbi
           }));
 
-          document.getElementById("h-ltp").textContent = heroRow.index_ltp || "—";
-          document.getElementById("h-expiry").textContent = heroRow.expiry || "—";
+          // Update header top bar
+          document.getElementById("h-ltp").textContent = heroRow.index_ltp ? parseFloat(heroRow.index_ltp).toFixed(2) : "—";
+          document.getElementById("h-expiry").textContent = heroRow.expiry || "Sensex";
           document.getElementById("h-ts").textContent = heroRow.datetime || "—";
 
+          // Update ATM Hero Card
           const parts = (heroRow.datetime || "").split(" ");
           document.getElementById("atm-dt").innerHTML = `
                 <span style="color:#fff">${parts[0] || ""}</span>
@@ -3087,9 +3086,11 @@ font-weight:600;
               box.querySelector(".run-label").textContent = "◆ Neutral";
             }
           } else {
-            document.getElementById("atm-run-val").textContent = "—";
-            box.className = "atm-run-box atm-run-zero";
-            box.querySelector(".run-label").textContent = "Waiting for BBI...";
+            // Fallback for earlier ticks before BBI accumulates
+            const runVal = parseFloat(heroRow.running || 0);
+            document.getElementById("atm-run-val").textContent = runVal.toFixed(2);
+            box.className = runVal > 0 ? "atm-run-box atm-run-pos" : runVal < 0 ? "atm-run-box atm-run-neg" : "atm-run-box atm-run-zero";
+            box.querySelector(".run-label").textContent = runVal > 0 ? "▲ Bullish" : runVal < 0 ? "▼ Bearish" : "◆ Neutral";
           }
 
           const displayRows = [...displayableRows].reverse();
@@ -3116,14 +3117,7 @@ font-weight:600;
             if (r.bbi !== null && r.bbi !== undefined) {
               const bbiVal = parseFloat(r.bbi);
               bbiStr = (bbiVal > 0 ? "+" : "") + bbiVal.toFixed(2);
-
-              if (bbiVal > 0) {
-                bbiCls = "bbi-pos";
-              } else if (bbiVal < 0) {
-                bbiCls = "bbi-neg";
-              } else {
-                bbiCls = "bbi-zero";
-              }
+              bbiCls = bbiVal > 0 ? "bbi-pos" : bbiVal < 0 ? "bbi-neg" : "bbi-zero";
             }
 
             html += `
@@ -3143,24 +3137,23 @@ font-weight:600;
    					 </div>`;
           });
 
-          // RENDER THE DATA ROWS
           grid.innerHTML = html;
 
+          // Update gauge
           const last6 = displayableRows.slice(-6);
           if (last6.length) {
             const bbiVals = last6.map(r => r.bbi).filter(v => v !== null && v !== undefined);
             if (bbiVals.length > 0) {
-              updateGauge(
-                bbiVals.reduce((s, v) => s + parseFloat(v), 0) / bbiVals.length
-              );
+              updateGauge(bbiVals.reduce((s, v) => s + parseFloat(v), 0) / bbiVals.length);
             } else {
-              updateGauge(0);
+              updateGauge(last6[last6.length - 1].running || 0);
             }
           }
         })
         .catch(e => console.error("loadData:", e));
     }
-
+    
+    
     function startAutoRefresh(ms) { if (_refreshTimer) clearTimeout(_refreshTimer); doRefresh(ms); }
     function doRefresh(ms) { loadData(); _refreshTimer = setTimeout(() => doRefresh(ms), ms); }
 
