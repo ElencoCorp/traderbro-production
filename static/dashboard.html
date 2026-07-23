@@ -2997,14 +2997,16 @@ font-weight:600;
       fetch("/api/get-running")
         .then(r => r.json())
         .then(d => {
-          const rows = (d.rows || []).sort(
+          let rows = (d.rows || []).sort(
             (a, b) => new Date(a.datetime) - new Date(b.datetime)
           );
 
           const grid = document.getElementById("rows-grid");
 
+          // IF NO LIVE MEMORY ROWS, CHECK IF WE ALREADY RECORDED TODAY
           if (!rows.length) {
             _dashboardRows = [];
+            // If the grid already has rendered data rows, don't wipe them!
             if (!grid.querySelector(".data-row")) {
               grid.innerHTML = buildClosedBox();
             }
@@ -3013,7 +3015,7 @@ font-weight:600;
 
           const displayableRows = rows;
 
-          // --- NEW BLACK BOX INDEX (BBI) LOGIC ---
+          // --- BLACK BOX INDEX (BBI) LOGIC ---
           let bbiAcc = 0;
           let prevBbi = null;
           let prevRunning = null;
@@ -3040,10 +3042,8 @@ font-weight:600;
               prevRunning = rVal;
             }
           }
-          // ---------------------------------------
 
           const heroRow = displayableRows[displayableRows.length - 1];
-          // Extract BBI instead of Running
           const heroBbiRaw = heroRow.bbi;
           const heroBbi = (heroBbiRaw !== null && heroBbiRaw !== undefined) ? parseFloat(heroBbiRaw) : null;
 
@@ -3074,7 +3074,6 @@ font-weight:600;
 
           const box = document.getElementById("atm-run-box");
 
-          // Check if BBI has been calculated (it skips the first 6 ticks based on your logic)
           if (heroBbi !== null) {
             document.getElementById("atm-run-val").textContent = heroBbi.toFixed(2);
             if (heroBbi > 0) {
@@ -3088,26 +3087,13 @@ font-weight:600;
               box.querySelector(".run-label").textContent = "◆ Neutral";
             }
           } else {
-            // Fallback for the first few ticks before BBI calculates
             document.getElementById("atm-run-val").textContent = "—";
             box.className = "atm-run-box atm-run-zero";
             box.querySelector(".run-label").textContent = "Waiting for BBI...";
           }
 
-          // ── Filter out stale zero-value rows on non-trading days ──
-          const istNow = getIST();
-          const isWeekend = istNow.getDay() === 0 || istNow.getDay() === 6;
-          const allZero = displayableRows.every(r => parseFloat(r.running || 0) === 0);
-
-          // Only render closed box if it's a weekend/holiday with zero data, NOT simply because it is past 12 PM
-          if ((isWeekend || accessData?.is_holiday) && allZero) {
-            grid.innerHTML = buildClosedBox();
-            return;
-          }
-
           const displayRows = [...displayableRows].reverse();
 
-          // --- INJECT BBI HEADERS & PILLS ---
           let html = `
                 <div style="display: flex; justify-content: space-between; padding: 0 14px 8px; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
                     <span>Time & Sensex</span>
@@ -3124,9 +3110,8 @@ font-weight:600;
             const rcls = val > 0 ? "row-pos" : val < 0 ? "row-neg" : "row-zero";
             const dt = (r.datetime || "").split(" ");
 
-            // Setup BBI Pill
             let bbiStr = "—";
-            let bbiCls = "bbi-zero"; // Using our new grayscale classes
+            let bbiCls = "bbi-zero";
 
             if (r.bbi !== null && r.bbi !== undefined) {
               const bbiVal = parseFloat(r.bbi);
@@ -3157,6 +3142,8 @@ font-weight:600;
 				        </div>
    					 </div>`;
           });
+
+          // RENDER THE DATA ROWS
           grid.innerHTML = html;
 
           const last6 = displayableRows.slice(-6);
@@ -3170,12 +3157,9 @@ font-weight:600;
               updateGauge(0);
             }
           }
-
-          checkMarketCloseAutoSave();
         })
         .catch(e => console.error("loadData:", e));
     }
-
 
     function startAutoRefresh(ms) { if (_refreshTimer) clearTimeout(_refreshTimer); doRefresh(ms); }
     function doRefresh(ms) { loadData(); _refreshTimer = setTimeout(() => doRefresh(ms), ms); }
