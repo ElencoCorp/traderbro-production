@@ -935,6 +935,8 @@ def api_dashboard_access(request: Request):
         nxt += timedelta(days=1)
  
     # ── Subscription check ──
+    process_subscription_queue()
+
     if is_admin:
         return JSONResponse({
             "allowed":         True,
@@ -1566,6 +1568,8 @@ def dashboard_page(request: Request):
 
     username = request.session["user"]
 
+    process_subscription_queue()
+
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute("""
@@ -1733,16 +1737,18 @@ async def activate_plan(request: Request):
         t_days, total_cal, weekends, holidays,
         new_status, price, now.isoformat()
     ))
- 
-    # ── Update users table only if immediately active ──
-    if new_status == "active":
+
+    # ── Update users table if active OR fresh purchase queued for midnight ──
+    if new_status == "active" or not effective_last_expiry:
         c.execute("""
             UPDATE users SET plan=?, plan_start=?, plan_expiry=?
             WHERE username=?
         """, (plan, start_dt.isoformat(), expiry_dt.isoformat(), username))
- 
+
     conn.commit()
     conn.close()
+
+    process_subscription_queue()
  
     return JSONResponse({
         "success":    True,
@@ -3376,7 +3382,7 @@ def save_daily_excel():
 
         # ── Row 2: Subtitle ─────────────────────────────────
         ws.merge_cells("A2:E2")
-        ws["A2"] = "Market Session: 09:16 AM → 12:00 PM IST  |  traderbro.in"
+        ws["A2"] = "Market Session: 09:15 AM → 12:00 PM IST  |  traderbro.in"
         ws["A2"].font      = Font(name="Arial", color="E8EAF0", size=10, italic=True)
         ws["A2"].fill      = HDR_FILL
         ws["A2"].alignment = center
@@ -4478,51 +4484,78 @@ def api_subscription_preview(request: Request, plan: str = ""):
     })
 
 def process_subscription_queue():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
 
-    now = datetime.now(IST)
+        now = datetime.now(IST)
 
-    c.execute("""
-        SELECT id, username, plan,
-               plan_start, plan_expiry
-        FROM subscriptions
-        WHERE status='queued'
-        ORDER BY plan_start ASC
-    """)
+        # 1. Expire active subscriptions whose expiry has passed
+        c.execute("SELECT id, username, plan_expiry FROM subscriptions WHERE status='active'")
+        active_rows = c.fetchall()
+        for row in active_rows:
+            sub_id, username, exp_str = row[0], row[1], row[2]
+            try:
+                exp_dt = datetime.fromisoformat(exp_str)
+                if exp_dt.tzinfo is None:
+                    exp_dt = IST.localize(exp_dt)
+                if now > exp_dt:
+                    c.execute("UPDATE subscriptions SET status='expired' WHERE id=?", (sub_id,))
+            except Exception:
+                pass
 
-    rows = c.fetchall()
+        # 2. Process queued subscriptions
+        c.execute("""
+            SELECT id, username, plan, plan_start, plan_expiry
+            FROM subscriptions
+            WHERE status='queued'
+            ORDER BY plan_start ASC
+        """)
+        queued_rows = c.fetchall()
 
-    for row in rows:
-        sub_id = row[0]
-        username = row[1]
-        plan = row[2]
+        for row in queued_rows:
+            sub_id, username, plan, start_str, exp_str = row[0], row[1], row[2], row[3], row[4]
+            try:
+                start_dt = datetime.fromisoformat(start_str)
+                if start_dt.tzinfo is None:
+                    start_dt = IST.localize(start_dt)
+                exp_dt = datetime.fromisoformat(exp_str)
+                if exp_dt.tzinfo is None:
+                    exp_dt = IST.localize(exp_dt)
 
-        start_dt = datetime.fromisoformat(row[3])
+                if start_dt <= now and now <= exp_dt:
+                    # Expire previous active subs for this user
+                    c.execute("UPDATE subscriptions SET status='expired' WHERE username=? AND status='active' AND id != ?", (username, sub_id))
+                    # Mark this queued sub as active
+                    c.execute("UPDATE subscriptions SET status='active' WHERE id=?", (sub_id,))
+                    # Update users table
+                    c.execute("""
+                        UPDATE users SET plan=?, plan_start=?, plan_expiry=? WHERE username=?
+                    """, (plan, start_str, exp_str, username))
+                elif now < start_dt:
+                    # Sync users table if user currently has no active running plan in users table
+                    c.execute("SELECT plan, plan_expiry FROM users WHERE username=?", (username,))
+                    user_row = c.fetchone()
+                    has_active_user_plan = False
+                    if user_row and user_row[0] and user_row[0] != "free" and user_row[1]:
+                        try:
+                            u_exp = datetime.fromisoformat(user_row[1])
+                            if u_exp.tzinfo is None: u_exp = IST.localize(u_exp)
+                            if now <= u_exp:
+                                has_active_user_plan = True
+                        except Exception:
+                            pass
+                    if not has_active_user_plan:
+                        c.execute("""
+                            UPDATE users SET plan=?, plan_start=?, plan_expiry=? WHERE username=?
+                        """, (plan, start_str, exp_str, username))
+            except Exception as e:
+                print(f"Error processing queued sub {sub_id}: {e}")
 
-        if start_dt <= now:
-
-            c.execute("""
-                UPDATE subscriptions
-                SET status='active'
-                WHERE id=?
-            """, (sub_id,))
-
-            c.execute("""
-                UPDATE users
-                SET plan=?,
-                    plan_start=?,
-                    plan_expiry=?
-                WHERE username=?
-            """, (
-                plan,
-                row[3],
-                row[4],
-                username
-            ))
-
-    conn.commit()
-    conn.close()
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"process_subscription_queue error: {e}")
 
 # ── REWRITTEN ASSIGN PLAN OVERRIDE GATEWAY ───────────────────────────────────
 @app.post("/api/admin/user/assign-plan")
@@ -4616,7 +4649,7 @@ async def api_admin_assign_plan(request: Request):
         new_status, PLAN_CONFIG_DATA.get(plan, {}).get("price", 0), now.isoformat()
     ))
 
-    if new_status == "active":
+    if new_status == "active" or not effective_last_expiry:
         c.execute("""
             UPDATE users SET plan=?, plan_start=?, plan_expiry=?
             WHERE id=?
@@ -4624,7 +4657,83 @@ async def api_admin_assign_plan(request: Request):
 
     conn.commit()
     conn.close()
+    process_subscription_queue()
     return JSONResponse({"success": True})
+
+@app.post("/api/admin/user/grant-immediate-access")
+async def api_admin_grant_immediate_access(request: Request):
+    if request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    data = await request.json()
+    user_id = data.get("user_id")
+    plan = (data.get("plan") or "pro").strip().lower()
+    custom_expiry = data.get("custom_expiry")
+    note = (data.get("note") or "Admin Immediate Special Access").strip()
+
+    if not user_id:
+        return JSONResponse({"success": False, "error": "user_id required"})
+
+    PLAN_DAYS = {"basic": 1, "essential": 5, "pro": 22, "premium": 250}
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    c.execute("SELECT username FROM users WHERE id=?", (user_id,))
+    urow = c.fetchone()
+    if not urow:
+        conn.close()
+        return JSONResponse({"success": False, "error": "User not found"})
+    username = urow[0]
+
+    now = datetime.now(IST)
+    t_days = PLAN_DAYS.get(plan, 22)
+
+    # Immediate access start timestamp is NOW (current moment IST)
+    start_dt = now
+
+    if custom_expiry:
+        try:
+            expiry_dt = datetime.fromisoformat(custom_expiry)
+            if expiry_dt.tzinfo is None:
+                expiry_dt = IST.localize(expiry_dt)
+        except:
+            conn.close()
+            return JSONResponse({"success": False, "error": "Invalid custom expiry date string format"})
+        total_cal = (expiry_dt.date() - start_dt.date()).days + 1
+        weekends_sk = 0
+        holidays_sk = 0
+    else:
+        expiry_dt, total_cal, weekends_sk, holidays_sk = calculate_expiry_from_start(start_dt, t_days)
+
+    new_status = "active"
+
+    # Expire previous active/queued subscriptions for this user
+    c.execute("""
+        UPDATE subscriptions SET status='expired' WHERE username=? AND status IN ('active','queued')
+    """, (username,))
+
+    c.execute("""
+        INSERT INTO subscriptions
+            (username, plan, plan_start, plan_expiry,
+             trading_days, total_calendar_days, weekends_skipped, holidays_skipped,
+             status, price, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)
+    """, (
+        username, plan, start_dt.isoformat(), expiry_dt.isoformat(),
+        t_days, total_cal, weekends_sk, holidays_sk,
+        new_status, PLAN_CONFIG_DATA.get(plan, {}).get("price", 0), now.isoformat()
+    ))
+
+    c.execute("""
+        UPDATE users SET plan=?, plan_start=?, plan_expiry=?
+        WHERE id=?
+    """, (plan, start_dt.isoformat(), expiry_dt.isoformat(), user_id))
+
+    conn.commit()
+    conn.close()
+    process_subscription_queue()
+    return JSONResponse({"success": True, "message": f"Immediate access granted to {username}!"})
 
 # ── DELETE USER (admin only) ─────────────────────────────────────────────
 @app.post("/api/admin/user/delete")
