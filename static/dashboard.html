@@ -2997,22 +2997,23 @@ font-weight:600;
       fetch("/api/get-running")
         .then(r => r.json())
         .then(d => {
-          let rows = (d.rows || []).sort(
+          const rows = (d.rows || []).sort(
             (a, b) => new Date(a.datetime) - new Date(b.datetime)
           );
 
           const grid = document.getElementById("rows-grid");
 
-          // If no rows exist at all (e.g. pre-market or non-trading day)
-          if (!rows || rows.length === 0) {
+          if (!rows.length) {
             _dashboardRows = [];
-            grid.innerHTML = buildClosedBox();
+            if (!grid.querySelector(".data-row")) {
+              grid.innerHTML = buildClosedBox();
+            }
             return;
           }
 
           const displayableRows = rows;
 
-          // --- BLACK BOX INDEX (BBI) LOGIC ---
+          // --- NEW BLACK BOX INDEX (BBI) LOGIC ---
           let bbiAcc = 0;
           let prevBbi = null;
           let prevRunning = null;
@@ -3039,8 +3040,10 @@ font-weight:600;
               prevRunning = rVal;
             }
           }
+          // ---------------------------------------
 
           const heroRow = displayableRows[displayableRows.length - 1];
+          // Extract BBI instead of Running
           const heroBbiRaw = heroRow.bbi;
           const heroBbi = (heroBbiRaw !== null && heroBbiRaw !== undefined) ? parseFloat(heroBbiRaw) : null;
 
@@ -3052,12 +3055,10 @@ font-weight:600;
             bbi: r.bbi
           }));
 
-          // Update header top bar
-          document.getElementById("h-ltp").textContent = heroRow.index_ltp ? parseFloat(heroRow.index_ltp).toFixed(2) : "—";
-          document.getElementById("h-expiry").textContent = heroRow.expiry || "Sensex";
+          document.getElementById("h-ltp").textContent = heroRow.index_ltp || "—";
+          document.getElementById("h-expiry").textContent = heroRow.expiry || "—";
           document.getElementById("h-ts").textContent = heroRow.datetime || "—";
 
-          // Update ATM Hero Card
           const parts = (heroRow.datetime || "").split(" ");
           document.getElementById("atm-dt").innerHTML = `
                 <span style="color:#fff">${parts[0] || ""}</span>
@@ -3073,6 +3074,7 @@ font-weight:600;
 
           const box = document.getElementById("atm-run-box");
 
+          // Check if BBI has been calculated (it skips the first 6 ticks based on your logic)
           if (heroBbi !== null) {
             document.getElementById("atm-run-val").textContent = heroBbi.toFixed(2);
             if (heroBbi > 0) {
@@ -3086,15 +3088,24 @@ font-weight:600;
               box.querySelector(".run-label").textContent = "◆ Neutral";
             }
           } else {
-            // Fallback for earlier ticks before BBI accumulates
-            const runVal = parseFloat(heroRow.running || 0);
-            document.getElementById("atm-run-val").textContent = runVal.toFixed(2);
-            box.className = runVal > 0 ? "atm-run-box atm-run-pos" : runVal < 0 ? "atm-run-box atm-run-neg" : "atm-run-box atm-run-zero";
-            box.querySelector(".run-label").textContent = runVal > 0 ? "▲ Bullish" : runVal < 0 ? "▼ Bearish" : "◆ Neutral";
+            // Fallback for the first few ticks before BBI calculates
+            document.getElementById("atm-run-val").textContent = "—";
+            box.className = "atm-run-box atm-run-zero";
+            box.querySelector(".run-label").textContent = "Waiting for BBI...";
+          }
+
+          // ── Filter out stale zero-value rows on non-trading days ──
+          const istNow = getIST();
+          const isWeekend = istNow.getDay() === 0 || istNow.getDay() === 6;
+          const allZero = displayableRows.every(r => parseFloat(r.running || 0) === 0);
+          if ((isWeekend || _closedReason) && allZero) {
+            grid.innerHTML = buildClosedBox();
+            return;
           }
 
           const displayRows = [...displayableRows].reverse();
 
+          // --- INJECT BBI HEADERS & PILLS ---
           let html = `
                 <div style="display: flex; justify-content: space-between; padding: 0 14px 8px; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
                     <span>Time & Sensex</span>
@@ -3111,13 +3122,21 @@ font-weight:600;
             const rcls = val > 0 ? "row-pos" : val < 0 ? "row-neg" : "row-zero";
             const dt = (r.datetime || "").split(" ");
 
+            // Setup BBI Pill
             let bbiStr = "—";
-            let bbiCls = "bbi-zero";
+            let bbiCls = "bbi-zero"; // Using our new grayscale classes
 
             if (r.bbi !== null && r.bbi !== undefined) {
               const bbiVal = parseFloat(r.bbi);
               bbiStr = (bbiVal > 0 ? "+" : "") + bbiVal.toFixed(2);
-              bbiCls = bbiVal > 0 ? "bbi-pos" : bbiVal < 0 ? "bbi-neg" : "bbi-zero";
+
+              if (bbiVal > 0) {
+                bbiCls = "bbi-pos";
+              } else if (bbiVal < 0) {
+                bbiCls = "bbi-neg";
+              } else {
+                bbiCls = "bbi-zero";
+              }
             }
 
             html += `
@@ -3136,24 +3155,24 @@ font-weight:600;
 				        </div>
    					 </div>`;
           });
-
           grid.innerHTML = html;
 
-          // Update gauge
           const last6 = displayableRows.slice(-6);
           if (last6.length) {
             const bbiVals = last6.map(r => r.bbi).filter(v => v !== null && v !== undefined);
             if (bbiVals.length > 0) {
-              updateGauge(bbiVals.reduce((s, v) => s + parseFloat(v), 0) / bbiVals.length);
+              updateGauge(
+                bbiVals.reduce((s, v) => s + parseFloat(v), 0) / bbiVals.length
+              );
             } else {
-              updateGauge(last6[last6.length - 1].running || 0);
+              updateGauge(0);
             }
           }
+
+          checkMarketCloseAutoSave();
         })
         .catch(e => console.error("loadData:", e));
     }
-    
-    
     function startAutoRefresh(ms) { if (_refreshTimer) clearTimeout(_refreshTimer); doRefresh(ms); }
     function doRefresh(ms) { loadData(); _refreshTimer = setTimeout(() => doRefresh(ms), ms); }
 
@@ -3464,62 +3483,58 @@ font-weight:600;
        AUTH CHECK
     ══════════════════════════════════════════════════════════ */
     async function checkDashboardAccess() {
-  try {
-    const res = await fetch("/api/dashboard-access", { credentials: "include" });
-    const data = await res.json();
 
-    // NOT LOGGED IN
-    if (data.reason === "not_logged_in") {
-      window.location.replace("/user-login");
-      return false;
-    }
+      try {
 
-    // NO PLAN
-    if (data.reason === "no_plan") {
-      window.location.replace("/trading-plan");
-      return false;
-    }
-
-    // EXPIRED
-    if (data.reason === "plan_expired") {
-      window.location.replace("/trading-plan?expired=1");
-      return false;
-    }
-
-    // HANDLE INCOMING FUTURE ACTIVATION (POST-10:00 AM QUEUE LOGIC)
-    if (data.plan_start) {
-      const startMs = new Date(data.plan_start).getTime();
-      if (startMs > Date.now()) {
-        const formattedStart = new Date(data.plan_start).toLocaleString("en-IN", {
-          day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true
+        const res = await fetch("/api/dashboard-access", {
+          credentials: "include"
         });
-        
-        showFullscreenClosed(
-          "⏳",
-          "Subscription Window Pending",
-          `Your subscription was securely processed after our 10:00 AM IST cutoff threshold.<br><br>As a result, your secure structural data dashboard view window will activate explicitly at midnight:<br><strong style="color:var(--primary); font-size:15px;">${formattedStart}</strong>`,
-          `<div style="margin-top:24px;"><a href="/account" style="color:#aaa; text-decoration:underline; font-size:12px;">Go to My Account</a></div>`
-        );
-        return false;
+
+        const data = await res.json();
+
+        // On weekends/holidays, clear stale zero rows from live_running.json display
+        if (data.is_weekend || data.is_holiday) {
+          updateMarketClosedBanner(data);
+        }
+
+        // NOT LOGGED IN
+        if (data.reason === "not_logged_in") {
+
+          window.location.replace("/user-login");
+          return false;
+        }
+
+        // NO PLAN
+        if (data.reason === "no_plan") {
+
+          window.location.replace("/trading-plan");
+          return false;
+        }
+
+        // EXPIRED
+        if (data.reason === "plan_expired") {
+
+          window.location.replace("/trading-plan?expired=1");
+          return false;
+        }
+
+        // ADMIN OR ACTIVE USER
+        return true;
+
+      } catch (err) {
+
+        console.error(err);
+
+        return true; // IMPORTANT
       }
     }
 
-    // On weekends/holidays, clear stale zero rows from display
-    if (data.is_weekend || data.is_holiday) {
-      updateMarketClosedBanner(data);
-    }
-
-    return true;
-  } catch (err) {
-    console.error(err);
-    return true;
-  }
-}
     function updateMarketClosedBanner(accessData) {
       const grid = document.getElementById("rows-grid");
       if (!grid) return;
+      if (grid.querySelector(".data-row")) return;   // real data already there
 
-      // Set internal reason metadata
+      // Store the reason so buildClosedBox() can use it
       if (accessData.is_weekend) {
         const dayName = accessData.weekday_name || "Weekend";
         _closedReason = {
@@ -3536,6 +3551,7 @@ font-weight:600;
           time: `Next session: <b>${accessData.next_trading_day}</b>`,
         };
       } else {
+        // Weekday, non-holiday — time-based reason
         const now = new Date();
         const ist = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
         const mins = ist.getHours() * 60 + ist.getMinutes();
@@ -3550,18 +3566,14 @@ font-weight:600;
           _closedReason = {
             icon: "🔔",
             title: "Market Session Ended for Today",
-            desc: "Today's session has closed. Values remain visible till next trading session.",
+            desc: "Today's session has closed. Data will be available again next trading day.",
             time: `Next session: <b>${accessData.next_trading_day}</b> at <b>9:16 AM IST</b>`,
           };
         }
       }
 
-      // ONLY set buildClosedBox if NO data rows exist in the grid
-      if (!grid.querySelector(".data-row") && (!_dashboardRows || _dashboardRows.length === 0)) {
-        grid.innerHTML = buildClosedBox();
-      }
+      grid.innerHTML = buildClosedBox();
     }
-    
     /* ── Full-screen overlay for queued plan ── */
     function showFullscreenClosed(icon, title, body, extra) {
       // Remove any existing overlay
