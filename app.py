@@ -2917,29 +2917,41 @@ def get_subscription_start_date():
 
 @app.get("/api/get-running")
 def get_running():
-
     try:
-
+        # 1. Check live memory / live_running.json first
         if os.path.exists(RUNNING_FILE):
-
             with open(RUNNING_FILE, "r") as f:
-
                 rows = json.load(f)
+                if rows and len(rows) > 0:
+                    return {"rows": rows[-2000:]}
 
-                return {
-                    "rows": rows[-2000:]
-                }
+        # 2. FALLBACK: If live_running.json is empty/missing, load today's saved EOD Excel file
+        date_str = datetime.now(IST).strftime("%Y-%m-%d")
+        excel_path = os.path.join(EXCEL_DIR, f"{date_str}.xlsx")
+        if os.path.exists(excel_path):
+            from openpyxl import load_workbook
+            wb = load_workbook(excel_path)
+            ws = wb.active
+            rows = []
+            # Data rows start at row 5 in the Excel sheet
+            for row in ws.iter_rows(min_row=5, values_only=True):
+                # Columns: [DateTime, Strike, Sensex, Running Value, BBI Value]
+                if row[0] and not str(row[0]).startswith("Final"):
+                    rows.append({
+                        "datetime": str(row[0]),
+                        "strike": row[1] if row[1] is not None else "—",
+                        "index_ltp": row[2] if row[2] is not None else 0,
+                        "running": row[3] if (row[3] is not None and row[3] != "—") else 0,
+                        "expiry": "Sensex"
+                    })
+            if rows:
+                return {"rows": rows}
 
-        return {
-            "rows": []
-        }
+        return {"rows": []}
 
     except Exception as e:
-
-        return {
-            "rows": [],
-            "error": str(e)
-        }
+        print("get_running error:", e)
+        return {"rows": [], "error": str(e)}
 
 @app.get("/api/test-market")
 def test_market():
