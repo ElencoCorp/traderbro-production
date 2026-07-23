@@ -431,9 +431,10 @@ tbody tr:last-child td{border-bottom:none;}
         <input class="fi" id="p-note" placeholder="Razorpay order ID, UPI ref, cash payment…">
       </div>
     </div>
-    <div class="m-footer">
+    <div class="m-footer" style="gap:10px;">
       <button class="tbtn tbtn-ghost" onclick="closeModal('ov-plan')">Cancel</button>
-      <button class="tbtn tbtn-primary" onclick="assignPlan()"><i class="fas fa-crown"></i> Assign Plan</button>
+      <button class="tbtn" style="background:linear-gradient(135deg,#06b6d4,#0284c7);color:#fff;font-weight:700;" onclick="grantImmediateAccess()" title="Grant immediate access starting right now, bypassing 10:00 AM rule"><i class="fas fa-bolt"></i> Grant Immediate Access</button>
+      <button class="tbtn tbtn-primary" onclick="assignPlan()" title="Standard subscription assignment (pre-10 AM today / post-10 AM 12:00 AM Midnight)"><i class="fas fa-crown"></i> Assign Standard Plan</button>
     </div>
   </div>
 </div>
@@ -741,6 +742,7 @@ function showDrop(e,id){
     <button class="dm-item" onclick="openDetail(${id})"><i class="fas fa-eye"></i> View Profile</button>
     <button class="dm-item" onclick="openEdit(${id})"><i class="fas fa-edit"></i> Edit User</button>
     <button class="dm-item dm-gold" onclick="openPlan(${id})"><i class="fas fa-crown"></i> Manage Subscription</button>
+    <button class="dm-item" style="color:var(--teal);font-weight:700;" onclick="openPlanImmediate(${id})"><i class="fas fa-bolt"></i> Grant Immediate Access</button>
     <button class="dm-item" onclick="openRpw(${id})"><i class="fas fa-key"></i> Reset Password</button>
     <button class="dm-item" onclick="dlDisclaimer(${id})"><i class="fas fa-file-pdf"></i> Download Disclaimer PDF</button>
     <button class="dm-item" onclick="kickSession(${id},'${esc(u.username)}')"><i class="fas fa-sign-out-alt"></i> Force Logout</button>
@@ -1098,6 +1100,37 @@ async function assignPlan(){
       toast(d.error || 'Failed to assign plan.', 'error');
     }
   } catch(e) { toast('Server connection error.', 'error'); }
+}
+
+async function grantImmediateAccess() {
+  const id = document.getElementById('p-uid').value; if (!id) return;
+  if (!_sp || _sp === 'free') { toast('Select a valid paid plan (Basic, Essential, Pro, Premium)', 'error'); return; }
+
+  let selectedExpiry = document.getElementById('cex').value || null;
+
+  const payload = {
+    user_id: parseInt(id),
+    plan: _sp,
+    note: document.getElementById('p-note').value.trim() || 'Admin Immediate Special Access',
+    custom_expiry: selectedExpiry
+  };
+
+  try {
+    const d = await api('/api/admin/user/grant-immediate-access', { method: 'POST', body: JSON.stringify(payload) });
+    if (d.success) {
+      toast(`⚡ Immediate dashboard access granted to user!`, 'success');
+      closeModal('ov-plan');
+      await loadUsers();
+    } else {
+      toast(d.error || 'Failed to grant immediate access.', 'error');
+    }
+  } catch (e) { toast('Server connection error.', 'error'); }
+}
+
+function openPlanImmediate(id) {
+  openPlan(id);
+  selPlan('pro');
+  toast('⚡ Click "Grant Immediate Access" to activate dashboard access right now at any time!', 'info');
 }
 
 function openPlan(id){
