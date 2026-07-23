@@ -3095,13 +3095,6 @@ font-weight:600;
           }
 
           // ── Filter out stale zero-value rows on non-trading days ──
-          const istNow = getIST();
-          const isWeekend = istNow.getDay() === 0 || istNow.getDay() === 6;
-          const allZero = displayableRows.every(r => parseFloat(r.running || 0) === 0);
-          if ((isWeekend || _closedReason) && allZero) {
-            grid.innerHTML = buildClosedBox();
-            return;
-          }
 
           const displayRows = [...displayableRows].reverse();
 
