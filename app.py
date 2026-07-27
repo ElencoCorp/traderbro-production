@@ -141,7 +141,7 @@ DB_FILE = "traderbro.db"
 
 
 from market_holidays import (
-    MARKET_HOLIDAYS, is_market_holiday, get_holiday_reason,
+    MARKET_HOLIDAYS, is_market_holiday, is_trading_day, get_holiday_reason,
     get_upcoming_holidays, get_today_holiday, get_all_holidays_list,
     refresh_holidays, get_holidays_for_year
     )
@@ -1025,7 +1025,9 @@ def api_my_subscriptions(request: Request):
     username = request.session.get("user") or request.session.get("admin")
     if not username:
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
- 
+
+    process_subscription_queue()
+
     conn = sqlite3.connect(DB_FILE)
     c    = conn.cursor()
  
@@ -2275,26 +2277,90 @@ def promote_queued_subscriptions():
     conn.commit()
     conn.close()
 
+def process_subscription_queue():
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+
+        now = datetime.now(IST)
+
+        # 1. Expire active subscriptions whose expiry has passed
+        c.execute("SELECT id, username, plan_expiry FROM subscriptions WHERE status='active'")
+        active_rows = c.fetchall()
+        for row in active_rows:
+            sub_id, username, exp_str = row[0], row[1], row[2]
+            try:
+                exp_dt = datetime.fromisoformat(exp_str)
+                if exp_dt.tzinfo is None:
+                    exp_dt = IST.localize(exp_dt)
+                if now > exp_dt:
+                    c.execute("UPDATE subscriptions SET status='expired' WHERE id=?", (sub_id,))
+            except Exception:
+                pass
+
+        # 2. Process queued subscriptions
+        c.execute("""
+            SELECT id, username, plan, plan_start, plan_expiry
+            FROM subscriptions
+            WHERE status='queued'
+            ORDER BY plan_start ASC
+        """)
+        queued_rows = c.fetchall()
+
+        for row in queued_rows:
+            sub_id, username, plan, start_str, exp_str = row[0], row[1], row[2], row[3], row[4]
+            try:
+                start_dt = datetime.fromisoformat(start_str)
+                if start_dt.tzinfo is None:
+                    start_dt = IST.localize(start_dt)
+                exp_dt = datetime.fromisoformat(exp_str)
+                if exp_dt.tzinfo is None:
+                    exp_dt = IST.localize(exp_dt)
+
+                if start_dt <= now and now <= exp_dt:
+                    # Expire previous active subs for this user
+                    c.execute("UPDATE subscriptions SET status='expired' WHERE username=? AND status='active' AND id != ?", (username, sub_id))
+                    # Mark this queued sub as active
+                    c.execute("UPDATE subscriptions SET status='active' WHERE id=?", (sub_id,))
+                    # Update users table
+                    c.execute("""
+                        UPDATE users SET plan=?, plan_start=?, plan_expiry=? WHERE username=?
+                    """, (plan, start_str, exp_str, username))
+                elif now < start_dt:
+                    # Sync users table if user currently has no active running plan in users table
+                    c.execute("SELECT plan, plan_expiry FROM users WHERE username=?", (username,))
+                    user_row = c.fetchone()
+                    has_active_user_plan = False
+                    if user_row and user_row[0] and user_row[0] != "free" and user_row[1]:
+                        try:
+                            u_exp = datetime.fromisoformat(user_row[1])
+                            if u_exp.tzinfo is None: u_exp = IST.localize(u_exp)
+                            if now <= u_exp:
+                                has_active_user_plan = True
+                        except Exception:
+                            pass
+                    if not has_active_user_plan:
+                        c.execute("""
+                            UPDATE users SET plan=?, plan_start=?, plan_expiry=? WHERE username=?
+                        """, (plan, start_str, exp_str, username))
+            except Exception as e:
+                print(f"Error processing queued sub {sub_id}: {e}")
+
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"process_subscription_queue error: {e}")
+
 scheduler.add_job(
-    promote_queued_subscriptions,
+    process_subscription_queue,
     "interval",
-    minutes=5,
+    minutes=1,
     id="promote_subscriptions",
     replace_existing=True,
     max_instances=1,
     coalesce=True
 )
-"""
-scheduler.add_job(
-    promote_queued_subscriptions,
-    "interval",
-    minutes=5,
-    id="promote_subscriptions",
-    replace_existing=True,
-    max_instances=1,
-    coalesce=True
-)
-print("✅ SUBSCRIPTION PROMOTER SCHEDULED every 5 min")
+print("✅ SUBSCRIPTION QUEUE WORKER SCHEDULED every 1 min")
  
 # ── Daily holiday refresh from NSE (6 AM IST) ────────────────────────────────
 def daily_holiday_refresh():
@@ -2314,8 +2380,18 @@ scheduler.add_job(
     coalesce=True,
 )
 print("✅ HOLIDAY REFRESH SCHEDULED at 6:00 AM IST daily")
-"""
-print("✅ SUBSCRIPTION PROMOTER SCHEDULED every 5 min")
+
+# ── Periodic Subscription Queue Processor (runs every 1 minute) ────────────────
+scheduler.add_job(
+    process_subscription_queue,
+    "interval",
+    minutes=1,
+    id="sub_queue_job",
+    replace_existing=True,
+    max_instances=1,
+    coalesce=True,
+)
+print("✅ SUBSCRIPTION QUEUE WORKER SCHEDULED every 1 min")
 
 app.include_router(token_router)
 from razorpay_integration import (
@@ -2329,7 +2405,7 @@ app.include_router(rzp_router)
 init_token_manager(app, scheduler, HEADERS)
 
 def daily_cleanup():
-    """Runs every day at 8:30 AM IST — clears live running data before market opens."""
+    """Runs every day at 8:30 AM IST - clears live running data before market opens."""
     global LIVE_RUNNING_RECORDS
     
     now = datetime.now(IST)
@@ -2900,25 +2976,30 @@ async def save_running(request: Request):
         }, status_code=500)
 
 # AFTER
-def get_subscription_start_date():
+def get_subscription_start_date(now=None):
     """
-    • Purchased at/before 10:00 AM IST on a trading day → starts TODAY at 12:00 AM midnight
-    • Purchased after 10:00 AM IST (or on non-trading day) → starts NEXT trading day at 12:00 AM midnight
+    - Working trading day (Mon-Fri non-holiday) at/before 10:00 AM IST -> starts TODAY at 12:00 AM midnight (00:00:00 IST)
+    - Working trading day after 10:00 AM IST OR any non-trading day (Saturday, Sunday, NSE/BSE holiday at any time)
+      -> starts NEXT working trading day at 12:00 AM midnight (00:00:00 IST)
     """
-    now = datetime.now(IST)
-    current_minutes = now.hour * 60 + now.minute
-    cutoff_minutes = 10 * 60  # 10:00 AM
+    if now is None:
+        now = datetime.now(IST)
+    elif now.tzinfo is None:
+        now = IST.localize(now)
 
-    today_is_trading = (now.weekday() < 5) and (not is_market_holiday(now))
+    current_minutes = now.hour * 60 + now.minute
+    cutoff_minutes = 10 * 60  # 10:00 AM IST
+
+    today_is_trading = is_trading_day(now)
 
     if today_is_trading and current_minutes <= cutoff_minutes:
-        start_date = now
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
     else:
-        start_date = now + timedelta(days=1)
-        while start_date.weekday() >= 5 or is_market_holiday(start_date):
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+        while not is_trading_day(start_date):
             start_date += timedelta(days=1)
 
-    return start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    return start_date
 
 
 @app.get("/api/get-running")
@@ -2975,11 +3056,7 @@ def clear_running():
 
 @app.get("/api/market-holidays")
 def api_market_holidays(year: int = 0):
-    """
-    Returns all NSE market holidays (with reason/name).
-    Optional ?year=2026 filter.
-    Also returns today's holiday status and upcoming holidays.
-    """
+    # Returns all NSE market holidays
     from market_holidays import (
         get_all_holidays_list, get_upcoming_holidays,
         get_today_holiday, get_holidays_for_year
@@ -3670,6 +3747,8 @@ def api_admin_list_users(request: Request):
     if request.session.get("role") != "admin":
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
 
+    process_subscription_queue()
+
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute("""
@@ -3702,22 +3781,77 @@ def api_admin_list_users(request: Request):
         next_price = qrow[3] if qrow else 0
         next_trading_days = qrow[4] if qrow else 0
 
+        # Subscription creation date & time
+        c.execute("""
+            SELECT created_at FROM subscriptions
+            WHERE username=? AND status IN ('active','queued','expired')
+            ORDER BY id DESC LIMIT 1
+        """, (uname,))
+        sub_created_row = c.fetchone()
+        sub_created_at = sub_created_row[0] if sub_created_row and sub_created_row[0] else ""
+
+        # Check razorpay_orders for payment method
+        c.execute("""
+            SELECT rzp_payment_id, payment_method, payment_detail, created_at
+            FROM razorpay_orders
+            WHERE username=? AND status='paid'
+            ORDER BY id DESC LIMIT 1
+        """, (uname,))
+        rzp_row = c.fetchone()
+
+        if rzp_row:
+            raw_m = (rzp_row[1] or "").lower()
+            dtl = rzp_row[2] or ""
+            if raw_m == "upi":
+                p_mode = "upi"
+                p_label = f"UPI ({dtl})" if dtl else "UPI"
+            elif raw_m == "card":
+                p_mode = "card"
+                p_label = f"Card ({dtl})" if dtl else "Credit/Debit Card"
+            elif raw_m == "netbanking":
+                p_mode = "netbanking"
+                p_label = f"Net Banking ({dtl})" if dtl else "Net Banking"
+            elif raw_m == "wallet":
+                p_mode = "wallet"
+                p_label = f"Wallet ({dtl})" if dtl else "Wallet"
+            elif raw_m == "emi":
+                p_mode = "card"
+                p_label = f"EMI ({dtl})" if dtl else "EMI Card"
+            else:
+                p_mode = "online"
+                p_label = "Online Gateway"
+            rzp_id = rzp_row[0] or ""
+            if not sub_created_at and rzp_row[3]:
+                sub_created_at = rzp_row[3]
+        elif r[5] and r[5] != "free":
+            p_mode = "manual"
+            p_label = "Admin Assignment"
+            rzp_id = ""
+        else:
+            p_mode = "none"
+            p_label = "No Payment"
+            rzp_id = ""
+
         users.append({
-            "id":              uid,
-            "username":        uname,
-            "email":           r[2],
-            "phone":           r[3] or "",
-            "role":            r[4] or "user",
-            "plan":            r[5] or "free",
-            "plan_start":      r[6] or "",
-            "plan_expiry":     r[7] or "",
-            "consent":         bool(r[8]),
-            "created_at":      r[9] or "",
-            "next_plan":       next_plan,
-            "next_plan_start": next_plan_start,
-            "next_plan_expiry":next_plan_expiry,
-            "next_price":      next_price,
-            "next_trading_days": next_trading_days
+            "id":                 uid,
+            "username":           uname,
+            "email":              r[2],
+            "phone":              r[3] or "",
+            "role":               r[4] or "user",
+            "plan":               r[5] or "free",
+            "plan_start":         r[6] or "",
+            "plan_expiry":        r[7] or "",
+            "consent":            bool(r[8]),
+            "created_at":         r[9] or "",
+            "next_plan":          next_plan,
+            "next_plan_start":    next_plan_start,
+            "next_plan_expiry":   next_plan_expiry,
+            "next_price":         next_price,
+            "next_trading_days":  next_trading_days,
+            "sub_created_at":     sub_created_at,
+            "payment_method":     p_mode,
+            "payment_label":      p_label,
+            "payment_id":         rzp_id
         })
 
     conn.close()
@@ -3730,11 +3864,13 @@ def api_admin_user_subscriptions(request: Request, username: str):
     if request.session.get("role") != "admin":
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
 
+    process_subscription_queue()
+
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute("""
         SELECT plan, plan_start, plan_expiry, trading_days, 
-               total_calendar_days, weekends_skipped, holidays_skipped, status, price
+               total_calendar_days, weekends_skipped, holidays_skipped, status, price, created_at
         FROM subscriptions
         WHERE username=?
         ORDER BY plan_start DESC
@@ -3753,7 +3889,8 @@ def api_admin_user_subscriptions(request: Request, username: str):
             "weekends_skipped": r[5],
             "holidays_skipped": r[6],
             "status": r[7],
-            "price": r[8]
+            "price": r[8],
+            "created_at": r[9] if len(r) > 9 else r[1]
         })
     return JSONResponse({"subscriptions": subs})
 
@@ -3764,35 +3901,90 @@ def api_admin_user_payments(request: Request, username: str):
     if request.session.get("role") != "admin":
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
 
+    process_subscription_queue()
+
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
+
+    # 1. Fetch subscriptions for username
     c.execute("""
-        SELECT plan, price, plan_start, status, id, created_at
+        SELECT plan, price, plan_start, status, id, created_at, plan_expiry
         FROM subscriptions
         WHERE username=?
-        ORDER BY plan_start DESC
+        ORDER BY id DESC
     """, (username,))
-    rows = c.fetchall()
+    sub_rows = c.fetchall()
+
+    # 2. Fetch razorpay_orders for username
+    c.execute("""
+        SELECT rzp_payment_id, rzp_order_id, plan, amount_paise, status,
+               payment_method, payment_detail, created_at, verified_at, id
+        FROM razorpay_orders
+        WHERE username=?
+        ORDER BY id DESC
+    """, (username,))
+    rzp_rows = c.fetchall()
+
     conn.close()
 
     payments = []
-    # Dynamic deterministic routing loop to detect payment context modes
-    modes = ["Credit Card", "UPI (PhonePe)", "UPI (GPay)", "NetBanking", "Debit Card"]
-    
-    for r in rows:
-        ok_status = "captured" if r[3] in ("active", "queued", "captured") else "failed"
-        assigned_mode = modes[r[4] % len(modes)] if r[3] != "queued" else "Internal System Transfer"
-        method_label = f"Razorpay Online Gateway ({assigned_mode})" if r[3] != "queued" else "Queued Future Order Allocation"
-        
+
+    # Process razorpay_orders first (real payments made by user)
+    for r in rzp_rows:
+        rzp_pay_id = r[0] or r[1] or f"RZP_ORD_{r[9]}"
+        raw_m = (r[5] or "").lower()
+        dtl = r[6] or ""
+
+        if raw_m == "upi":
+            method_label = f"Razorpay Gateway (UPI · {dtl})" if dtl else "Razorpay Gateway (UPI)"
+        elif raw_m == "card":
+            method_label = f"Razorpay Gateway (Card · {dtl})" if dtl else "Razorpay Gateway (Card)"
+        elif raw_m == "netbanking":
+            method_label = f"Razorpay Gateway (NetBanking · {dtl})" if dtl else "Razorpay Gateway (NetBanking)"
+        elif raw_m == "wallet":
+            method_label = f"Razorpay Gateway (Wallet · {dtl})" if dtl else "Razorpay Gateway (Wallet)"
+        elif raw_m == "emi":
+            method_label = f"Razorpay Gateway (EMI · {dtl})" if dtl else "Razorpay Gateway (EMI)"
+        elif r[4] == "paid":
+            method_label = "Razorpay Online Gateway"
+        else:
+            method_label = "Razorpay Checkout (Pending/Incomplete)"
+
+        # Match corresponding subscription for start date if available
+        matched_sub_start = None
+        for s in sub_rows:
+            if s[0] == r[2]:  # same plan
+                matched_sub_start = s[2]
+                break
+
+        ok_status = "captured" if r[4] in ("paid", "captured") else "created" if r[4] == "created" else "failed"
+
         payments.append({
-            "plan": r[0],
-            "amount": int(r[1] or 0) * 100,
+            "plan": r[2],
+            "amount": r[3] or 0,  # paise
             "status": ok_status,
             "method_label": method_label,
-            "payment_id": f"PAY_REF_SUB_{r[4]:04d}",
-            "created_at": r[5] or r[2],  # Fallback to execution window date context if transaction stamp is null
-            "plan_start": r[2]
+            "payment_id": rzp_pay_id,
+            "created_at": r[8] or r[7] or "",
+            "plan_start": matched_sub_start or r[8] or r[7] or ""
         })
+
+    # Add subscriptions that were manually assigned by Admin (no razorpay_orders row)
+    for s in sub_rows:
+        sub_plan, price, p_start, s_status, s_id, s_created, p_exp = s
+        has_rzp_match = any(r[2] == sub_plan for r in rzp_rows)
+        if not has_rzp_match or (not rzp_rows and price > 0):
+            sub_ref_id = f"ADM_ASSIGN_{s_id:04d}"
+            payments.append({
+                "plan": sub_plan,
+                "amount": int(price or 0) * 100,
+                "status": "captured" if s_status in ("active", "queued", "expired") else "failed",
+                "method_label": "👑 Admin Manual Assignment",
+                "payment_id": sub_ref_id,
+                "created_at": s_created or p_start,
+                "plan_start": p_start
+            })
+
     return JSONResponse({"payments": payments})
 
 
@@ -4482,80 +4674,6 @@ def api_subscription_preview(request: Request, plan: str = ""):
         "is_queued": is_queued,
         "price": cfg["price"]
     })
-
-def process_subscription_queue():
-    try:
-        conn = sqlite3.connect(DB_FILE)
-        c = conn.cursor()
-
-        now = datetime.now(IST)
-
-        # 1. Expire active subscriptions whose expiry has passed
-        c.execute("SELECT id, username, plan_expiry FROM subscriptions WHERE status='active'")
-        active_rows = c.fetchall()
-        for row in active_rows:
-            sub_id, username, exp_str = row[0], row[1], row[2]
-            try:
-                exp_dt = datetime.fromisoformat(exp_str)
-                if exp_dt.tzinfo is None:
-                    exp_dt = IST.localize(exp_dt)
-                if now > exp_dt:
-                    c.execute("UPDATE subscriptions SET status='expired' WHERE id=?", (sub_id,))
-            except Exception:
-                pass
-
-        # 2. Process queued subscriptions
-        c.execute("""
-            SELECT id, username, plan, plan_start, plan_expiry
-            FROM subscriptions
-            WHERE status='queued'
-            ORDER BY plan_start ASC
-        """)
-        queued_rows = c.fetchall()
-
-        for row in queued_rows:
-            sub_id, username, plan, start_str, exp_str = row[0], row[1], row[2], row[3], row[4]
-            try:
-                start_dt = datetime.fromisoformat(start_str)
-                if start_dt.tzinfo is None:
-                    start_dt = IST.localize(start_dt)
-                exp_dt = datetime.fromisoformat(exp_str)
-                if exp_dt.tzinfo is None:
-                    exp_dt = IST.localize(exp_dt)
-
-                if start_dt <= now and now <= exp_dt:
-                    # Expire previous active subs for this user
-                    c.execute("UPDATE subscriptions SET status='expired' WHERE username=? AND status='active' AND id != ?", (username, sub_id))
-                    # Mark this queued sub as active
-                    c.execute("UPDATE subscriptions SET status='active' WHERE id=?", (sub_id,))
-                    # Update users table
-                    c.execute("""
-                        UPDATE users SET plan=?, plan_start=?, plan_expiry=? WHERE username=?
-                    """, (plan, start_str, exp_str, username))
-                elif now < start_dt:
-                    # Sync users table if user currently has no active running plan in users table
-                    c.execute("SELECT plan, plan_expiry FROM users WHERE username=?", (username,))
-                    user_row = c.fetchone()
-                    has_active_user_plan = False
-                    if user_row and user_row[0] and user_row[0] != "free" and user_row[1]:
-                        try:
-                            u_exp = datetime.fromisoformat(user_row[1])
-                            if u_exp.tzinfo is None: u_exp = IST.localize(u_exp)
-                            if now <= u_exp:
-                                has_active_user_plan = True
-                        except Exception:
-                            pass
-                    if not has_active_user_plan:
-                        c.execute("""
-                            UPDATE users SET plan=?, plan_start=?, plan_expiry=? WHERE username=?
-                        """, (plan, start_str, exp_str, username))
-            except Exception as e:
-                print(f"Error processing queued sub {sub_id}: {e}")
-
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        print(f"process_subscription_queue error: {e}")
 
 # ── REWRITTEN ASSIGN PLAN OVERRIDE GATEWAY ───────────────────────────────────
 @app.post("/api/admin/user/assign-plan")
