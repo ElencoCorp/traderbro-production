@@ -287,18 +287,43 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="sm c-o" onclick="setFilter('free')"><div class="sm-label">No Plan</div><div class="sm-val c-o" id="st-free">—</div><div class="sm-sub">Not subscribed</div></div>
   </div>
 
-  <div class="toolbar">
+  <div class="toolbar" style="gap:10px; flex-wrap:wrap;">
     <div class="srch">
       <i class="fas fa-search"></i>
       <input id="srch" placeholder="Search username, email, mobile…" oninput="applyFilters()">
     </div>
+
+    <!-- Date Selector Filter -->
+    <div style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.03);padding:3px 8px;border-radius:8px;border:1px solid var(--border);">
+      <i class="fas fa-calendar-alt" style="color:var(--blue);font-size:12px;" title="Filter by date"></i>
+      <input type="date" id="f-date" class="fsel" onchange="applyFilters()" style="padding:4px 6px;font-size:11px;cursor:pointer;background:transparent;color:var(--fg);border:none;" title="Choose subscription or start date">
+      <select class="fsel" id="f-date-type" onchange="applyFilters()" style="padding:4px 4px;font-size:11px;background:transparent;border:none;color:var(--muted);">
+        <option value="sub">Subscribed Time</option>
+        <option value="start">Plan Start Date</option>
+        <option value="reg">Registration Date</option>
+      </select>
+      <button class="tbtn tbtn-ghost" onclick="clearDateFilter()" title="Clear Date Filter" style="padding:3px 6px;font-size:10px;"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- Payment Mode Filter -->
+    <select class="fsel" id="f-payment-mode" onchange="applyFilters()">
+      <option value="all">💳 All Payment Modes</option>
+      <option value="upi">📱 UPI (GPay / PhonePe / Paytm)</option>
+      <option value="card">💳 Credit / Debit Card</option>
+      <option value="netbanking">🏦 Net Banking</option>
+      <option value="wallet">👛 Wallet</option>
+      <option value="manual">👑 Admin Assignment</option>
+    </select>
+
     <select class="fsel" id="f-sort" onchange="applyFilters()">
       <option value="newest">Newest First</option>
       <option value="oldest">Oldest First</option>
       <option value="name">Name A–Z</option>
+      <option value="sub-desc">Subscribed Time ↓</option>
       <option value="expiry-asc">Expiry ↑</option>
       <option value="expiry-desc">Expiry ↓</option>
     </select>
+
     <button class="tbtn tbtn-primary" onclick="openAdd()"><i class="fas fa-user-plus"></i> Add User</button>
     <button class="tbtn tbtn-ghost" onclick="loadUsers()"><i class="fas fa-sync-alt" id="ri"></i></button>
   </div>
@@ -334,12 +359,13 @@ tbody tr:last-child td{border-bottom:none;}
             <th>Subscriptions</th>
             <th>Expiry</th>
             <th>Days Left</th>
-            <th class="tc">Payments</th>
+            <th class="tc">Pay Method</th>
+            <th class="tc">Sub Time</th>
             <th class="tc">Actions</th>
           </tr>
         </thead>
         <tbody id="tbody">
-          <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)"><span class="spin"></span></td></tr>
+          <tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)"><span class="spin"></span></td></tr>
         </tbody>
       </table>
     </div>
@@ -623,32 +649,83 @@ function setFilter(k){
   applyFilters();
 }
 
+function clearDateFilter() {
+  const el = document.getElementById('f-date');
+  if (el) el.value = '';
+  applyFilters();
+}
+
 function applyFilters(){
-  const q=document.getElementById('srch').value.toLowerCase();
-  const so=document.getElementById('f-sort').value;
-  FIL=ALL.filter(u=>{
-    if(u.role==='admin')return false;
-    const mq=!q||[u.username,u.email,u.phone].some(v=>(v||'').toLowerCase().includes(q));
-    if(!mq)return false;
-    const st=planStatus(u);
-    const pl=(u.plan||'').toLowerCase();
-    const iq=isQueued(u);
-    if(_qf==='all')return true;
-    if(_qf==='active')return(st==='active'||st==='expiring')&&!iq;
-    if(_qf==='expiring')return st==='expiring';
-    if(_qf==='expired')return st==='expired';
-    if(_qf==='queued')return iq;
-    if(_qf==='free')return st==='free';
-    return pl===_qf;
+  const q = document.getElementById('srch').value.toLowerCase();
+  const so = document.getElementById('f-sort').value;
+  const fDate = document.getElementById('f-date').value; // "YYYY-MM-DD"
+  const fDateType = document.getElementById('f-date-type').value; // "sub", "start", "reg"
+  const fPayMode = document.getElementById('f-payment-mode').value; // "all", "upi", "card", etc.
+
+  FIL = ALL.filter(u => {
+    if (u.role === 'admin') return false;
+
+    // 1. Search Query
+    const mq = !q || [u.username, u.email, u.phone].some(v => (v || '').toLowerCase().includes(q));
+    if (!mq) return false;
+
+    // 2. Status / Plan filter tab
+    const st = planStatus(u);
+    const pl = (u.plan || '').toLowerCase();
+    const iq = isQueued(u);
+
+    let matchTab = true;
+    if (_qf === 'all') matchTab = true;
+    else if (_qf === 'active') matchTab = (st === 'active' || st === 'expiring') && !iq;
+    else if (_qf === 'expiring') matchTab = st === 'expiring';
+    else if (_qf === 'expired') matchTab = st === 'expired';
+    else if (_qf === 'queued') matchTab = iq;
+    else if (_qf === 'free') matchTab = st === 'free';
+    else matchTab = (pl === _qf);
+
+    if (!matchTab) return false;
+
+    // 3. Payment Mode Filter
+    if (fPayMode !== 'all') {
+      const userMode = (u.payment_method || '').toLowerCase();
+      if (fPayMode === 'upi' && !userMode.includes('upi')) return false;
+      if (fPayMode === 'card' && !userMode.includes('card') && !userMode.includes('emi')) return false;
+      if (fPayMode === 'netbanking' && !userMode.includes('netbanking')) return false;
+      if (fPayMode === 'wallet' && !userMode.includes('wallet')) return false;
+      if (fPayMode === 'manual' && userMode !== 'manual') return false;
+    }
+
+    // 4. Date Filter
+    if (fDate) {
+      let targetDateStr = '';
+      if (fDateType === 'sub') {
+        targetDateStr = u.sub_created_at || u.plan_start || u.created_at;
+      } else if (fDateType === 'start') {
+        targetDateStr = u.plan_start;
+      } else if (fDateType === 'reg') {
+        targetDateStr = u.created_at;
+      }
+      if (!targetDateStr) return false;
+      try {
+        const dIso = new Date(targetDateStr).toISOString().substring(0, 10);
+        if (dIso !== fDate) return false;
+      } catch(e) { return false; }
+    }
+
+    return true;
   });
-  FIL.sort((a,b)=>{
-    if(so==='oldest')return a.id-b.id;
-    if(so==='name')return(a.username||'').localeCompare(b.username||'');
-    if(so==='expiry-asc')return new Date(a.plan_expiry||0)-new Date(b.plan_expiry||0);
-    if(so==='expiry-desc')return new Date(b.plan_expiry||0)-new Date(a.plan_expiry||0);
-    return b.id-a.id;
+
+  FIL.sort((a, b) => {
+    if (so === 'oldest') return a.id - b.id;
+    if (so === 'name') return (a.username || '').localeCompare(b.username || '');
+    if (so === 'sub-desc') return new Date(b.sub_created_at || b.plan_start || 0) - new Date(a.sub_created_at || a.plan_start || 0);
+    if (so === 'expiry-asc') return new Date(a.plan_expiry || 0) - new Date(b.plan_expiry || 0);
+    if (so === 'expiry-desc') return new Date(b.plan_expiry || 0) - new Date(a.plan_expiry || 0);
+    return b.id - a.id;
   });
-  PAGE=1;render();
+
+  PAGE = 1;
+  render();
 }
 
 /* ─── BADGES ─── */
@@ -665,6 +742,17 @@ function statusBadge(u){
   if(st==='expiring') return '<span class="badge b-expiring">⏳ Expiring</span>';
   if(st==='expired') return '<span class="badge b-expired">❌ Expired</span>';
   return '<span class="badge b-noplan">No Plan</span>';
+}
+function payBadge(u) {
+  const m = (u.payment_method || '').toLowerCase();
+  const label = u.payment_label || '—';
+  if (m === 'upi') return `<span class="badge" style="background:rgba(37,99,235,.15);color:#3b82f6;border-color:rgba(37,99,235,.3);" title="${esc(label)}">📱 UPI</span>`;
+  if (m === 'card') return `<span class="badge" style="background:rgba(168,85,247,.15);color:#a855f7;border-color:rgba(168,85,247,.3);" title="${esc(label)}">💳 Card</span>`;
+  if (m === 'netbanking') return `<span class="badge" style="background:rgba(234,179,8,.15);color:#eab308;border-color:rgba(234,179,8,.3);" title="${esc(label)}">🏦 NetBank</span>`;
+  if (m === 'wallet') return `<span class="badge" style="background:rgba(20,184,166,.15);color:#14b8a6;border-color:rgba(20,184,166,.3);" title="${esc(label)}">👛 Wallet</span>`;
+  if (m === 'manual') return `<span class="badge" style="background:rgba(236,72,153,.15);color:#ec4899;border-color:rgba(236,72,153,.3);" title="${esc(label)}">👑 Admin</span>`;
+  if (u.plan && u.plan !== 'free') return `<span class="badge" style="background:rgba(16,185,129,.15);color:#10b981;border-color:rgba(16,185,129,.3);" title="${esc(label)}">Online</span>`;
+  return `<span style="font-size:11px;color:var(--muted)">—</span>`;
 }
 
 /* ─── RENDER ─── */
@@ -692,7 +780,7 @@ function render(){
   addP('<i class="fas fa-chevron-right"></i>',PAGE+1,PAGE>=pages);
 
   if(!sl.length){
-    document.getElementById('tbody').innerHTML=`<tr><td colspan="10"><div class="empty"><i class="fas fa-users"></i><div class="empty-t">No users found</div><div class="empty-s">Adjust filters or search</div></div></td></tr>`;
+    document.getElementById('tbody').innerHTML=`<tr><td colspan="11"><div class="empty"><i class="fas fa-users"></i><div class="empty-t">No users found</div><div class="empty-s">Adjust filters, date selector or search</div></div></td></tr>`;
     return;
   }
 
@@ -701,6 +789,8 @@ function render(){
     const d=isRev ? null : dleft(u.plan_expiry);
     const dlHtml=isRev ? '<span class="dl-exp">Revoked</span>' : d===null?'<span class="dl-none">—</span>':d<=0?'<span class="dl-exp">Expired</span>':d<=7?`<span class="dl-warn">${d}d left</span>`:`<span class="dl-ok">${d}d left</span>`;
     const subHtml=isRev ? '<span style="font-size:10px;color:var(--red)">Access Terminated</span>' : isQueued(u)?`<span style="font-size:10px;color:var(--purple)">🔵 Starts ${fd(u.plan_start)}</span>`:`<span style="font-size:10px;color:var(--muted)">${u.plan_expiry?fd(u.plan_start)+' →':''}</span>`;
+    const subTimeHtml = u.sub_created_at ? `<span style="font-size:10px;color:var(--dim);white-space:nowrap;">${fdt(u.sub_created_at)}</span>` : '<span style="font-size:10px;color:var(--muted)">—</span>';
+    
     return `<tr>
       <td style="color:var(--muted);font-size:10px">${(PAGE-1)*PP+i+1}</td>
       <td>
@@ -715,9 +805,8 @@ function render(){
       <td>${subHtml}</td>
       <td style="font-size:11px;color:var(--dim)">${isRev ? '—' : fd(u.plan_expiry)}</td>
       <td>${dlHtml}</td>
-      <td style="text-align:center;font-size:11px;font-weight:700;color:${u.plan&&u.plan!=='free'?'var(--green)':'var(--muted)'}">
-        ${u.plan&&u.plan!=='free'?'1+':'0'}
-      </td>
+      <td style="text-align:center">${payBadge(u)}</td>
+      <td style="text-align:center">${subTimeHtml}</td>
       <td style="text-align:center">
         <button class="action-btn" onclick="showDrop(event,${u.id})" title="Actions">
           <i class="fas fa-ellipsis-v"></i>
@@ -990,6 +1079,7 @@ async function loadPayments(u, body) {
     let html = `<div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Payment Event Ledger (${pays.length})</div>`;
     pays.forEach(p => {
       const ok = p.status === 'captured' || p.status === 'paid';
+      const statusTag = p.status === 'created' ? '⏳ PENDING' : ok ? '✅ CAPTURED' : '❌ FAILED';
       html += `
         <div class="pay-item" style="padding: 12px 0; display:flex; align-items:center; border-bottom:1px solid rgba(255,255,255,.04);">
           <div class="pay-icon ${ok?'ok':'fail'}" style="width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;">
@@ -999,7 +1089,7 @@ async function loadPayments(u, body) {
             <div class="pay-plan" style="font-weight:700; font-size:13px;">${(p.plan || 'Subscription Charge').toUpperCase()} Plan</div>
             <div class="pay-meta" style="font-size:11px; color:var(--dim); margin-top:2px; line-height:1.5;">
               💳 Txn Date: <strong>${fdt(p.created_at)}</strong><br>
-              🚀 Activation: <span style="color:var(--blue); font-weight:600;">${fdt(p.plan_start)}</span> &nbsp;·&nbsp; <span style="color:var(--gold); font-weight:500;">${p.method_label || 'Admin Sync'}</span>
+              🚀 Activation Window: <span style="color:var(--blue); font-weight:600;">${fdt(p.plan_start)}</span> &nbsp;·&nbsp; <span style="color:var(--gold); font-weight:500;">${p.method_label || 'Razorpay Online Gateway'}</span> &nbsp;·&nbsp; <span style="font-size:10px;font-weight:700;color:${ok?'var(--green)':'var(--gold)'}">${statusTag}</span>
             </div>
             <div style="font-family:monospace; font-size:10px; color:var(--muted); margin-top:2px;">ID: ${p.payment_id || '—'}</div>
           </div>
