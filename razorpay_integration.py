@@ -7,6 +7,9 @@ from fastapi.responses import JSONResponse
 RZP_KEY_ID     = os.getenv("RAZORPAY_KEY_ID",     "")
 RZP_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
 
+print("KEY ID:", RZP_KEY_ID)
+print("SECRET STARTS WITH:", RZP_KEY_SECRET[:8])
+
 # ── Lazy Razorpay client ──────────────────────────────────────────────────────
 _rzp_client = None
 def get_rzp_client():
@@ -341,7 +344,7 @@ async def verify_payment(request: Request):
         """, (username, plan, start_dt.isoformat(), expiry_dt.isoformat(),
               t_days, total_cal, weekends, holidays, new_status, price, now.isoformat()))
 
-        if new_status == "active":
+        if new_status == "active" or not effective_last:
             c.execute("""
                 UPDATE users SET plan=?, plan_start=?, plan_expiry=? WHERE username=?
             """, (plan, start_dt.isoformat(), expiry_dt.isoformat(), username))
@@ -355,6 +358,12 @@ async def verify_payment(request: Request):
 
         conn.commit()
         conn.close()
+
+        try:
+            from app import process_subscription_queue
+            process_subscription_queue()
+        except Exception:
+            pass
 
     except Exception as e:
         import traceback; traceback.print_exc()
