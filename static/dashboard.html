@@ -12,6 +12,7 @@
     rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="/static/js/xlsx.full.min.js"></script>
+  <script src="/static/js/admin-error-popup.js"></script>
   <style>
     :root {
       --primary: #02A3FE;
@@ -3101,11 +3102,11 @@ font-weight:600;
             box.querySelector(".run-label").textContent = "Waiting for BBI...";
           }
 
-          // ── Filter out stale zero-value rows on non-trading days ──
+          // ── Filter out stale zero-value rows on weekends ──
           const istNow = getIST();
           const isWeekend = istNow.getDay() === 0 || istNow.getDay() === 6;
           const allZero = displayableRows.every(r => parseFloat(r.running || 0) === 0);
-          if ((isWeekend || _closedReason) && allZero) {
+          if (isWeekend && allZero) {
             grid.innerHTML = buildClosedBox();
             return;
           }
@@ -3544,7 +3545,7 @@ font-weight:600;
     function updateMarketClosedBanner(accessData) {
       const grid = document.getElementById("rows-grid");
       if (!grid) return;
-      if (grid.querySelector(".data-row")) return;   // real data already there
+      if (grid.querySelector(".data-row") || (_dashboardRows && _dashboardRows.length > 0)) return;   // real data already there
 
       // Store the reason so buildClosedBox() can use it
       if (accessData.is_weekend) {
