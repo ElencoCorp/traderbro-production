@@ -4,7 +4,7 @@
 <head>
   <title>Live Running Tracker</title>
   <link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="/static/js/xlsx.full.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
@@ -240,7 +240,8 @@
 
   <div class="card">
     <div class="controls">
-      <input type="number" id="interval" value="15" min="1">
+      <label for="interval" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">Interval (seconds)</label>
+      <input type="number" id="interval" value="15" min="1" aria-label="Interval in seconds">
       <button class="btn-primary" onclick="setIntervalTime()">⚡ Set Interval</button>
       <button class="btn-download" onclick="downloadExcel()">⬇ Download Excel</button>
     </div>
