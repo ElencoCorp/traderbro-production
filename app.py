@@ -1,3 +1,4 @@
+from typing import Any
 from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.responses import (
     HTMLResponse,
@@ -362,10 +363,29 @@ LAST_DATA = {
 LAST_FETCH_TIME = None
 LIVE_RUNNING_RECORDS = []
 RUNNING_FILE = "live_running.json"
-LOGIN_ATTEMPTS = {}
+def sanitize_for_json(obj):
+    """Recursively converts NaN, Infinity, and -Infinity floats to None so json.dumps never crashes."""
+    if isinstance(obj, dict):
+        return {k: sanitize_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [sanitize_for_json(v) for v in obj]
+    elif isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+        return obj
+    return obj
 
+class SafeJSONResponse(JSONResponse):
+    def render(self, content: Any) -> bytes:
+        return json.dumps(
+            sanitize_for_json(content),
+            ensure_ascii=False,
+            allow_nan=False,
+            indent=None,
+            separators=(",", ":"),
+        ).encode("utf-8")
 
-app = FastAPI()
+app = FastAPI(default_response_class=SafeJSONResponse)
 app.add_middleware(
     SessionMiddleware,
     secret_key="TraderBro@2026#Secure$FastAPI",
@@ -501,10 +521,14 @@ def auto_market_recorder():
 
             if len(LIVE_RUNNING_RECORDS) > 0:
                 prev = LIVE_RUNNING_RECORDS[-1]
-                diff_change = current_diff - prev["difference"]
+                prev_diff = prev.get("difference") if prev.get("difference") is not None else 0
+                c_diff = current_diff if current_diff is not None else 0
+                diff_change = c_diff - prev_diff
                 row["diff_prev"] = round(diff_change, 2)
-                row["running"]   = round(prev.get("running", 0) + diff_change, 2)
+                row["running"]   = round((prev.get("running") or 0) + diff_change, 2)
             # First record: running stays 0 (baseline)
+
+            row = sanitize_for_json(row)
 
             # DUPLICATE TIMESTAMP PROTECTION
             if len(LIVE_RUNNING_RECORDS) > 0:
@@ -2062,20 +2086,11 @@ def get_live_chain(expiry, force_live=False):
     cached_time = LAST_DATA.get("time")
 
     # USE CACHE
-    if (
-        cached is not None
-        and cached_time is not None
-        and not force_live
-    ):
-
-        elapsed = (
-            now - cached_time
-        ).total_seconds()
-
-        if elapsed < current_interval:
-
+    if cached is not None and cached_time is not None:
+        elapsed = (now - cached_time).total_seconds()
+        # Protect against Dhan 805 Rate Limit: throttle force_live calls to max 1 per 2 seconds
+        if elapsed < 2 or (not force_live and elapsed < current_interval):
             print("⚡ USING CACHED DATA")
-
             return cached
 
     try:
@@ -2521,6 +2536,10 @@ async def api_set_interval(request: Request):
         "success": True,
         "interval": interval
     }
+
+@app.get("/api/get-interval")
+def api_get_interval():
+    return {"interval": get_interval()}
 
 @app.get("/admin/token-manager", response_class=HTMLResponse)
 def token_manager_page(request: Request):
