@@ -47,6 +47,33 @@ DASHBOARD_OPEN_MIN = 30
 
 CONFIG_FILE = "config.json"
 
+# ── Global System Error Tracker ─────────────────────
+LAST_SYSTEM_ERROR = {
+    "has_error": False,
+    "error_title": None,
+    "error_message": None,
+    "timestamp": None
+}
+
+def set_system_error(title: str, message: str):
+    global LAST_SYSTEM_ERROR
+    LAST_SYSTEM_ERROR = {
+        "has_error": True,
+        "error_title": title,
+        "error_message": message,
+        "timestamp": datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S IST")
+    }
+
+def clear_system_error():
+    global LAST_SYSTEM_ERROR
+    LAST_SYSTEM_ERROR = {
+        "has_error": False,
+        "error_title": None,
+        "error_message": None,
+        "timestamp": None
+    }
+
+
 def get_interval():
 
     try:
@@ -773,6 +800,49 @@ def get_current_user(request: Request):
             "role": role,
             "is_admin": role == "admin"
         }
+
+    return {
+        "username": username,
+        "role": role,
+        "is_admin": role == "admin"
+    }
+
+
+@app.get("/api/system-status")
+def api_system_status(request: Request):
+    is_admin = request.session.get("role") == "admin" or "admin" in request.session
+    if not is_admin:
+        return JSONResponse({"is_admin": False})
+
+    # Check Dhan token state from dhan_token_manager
+    try:
+        from dhan_token_manager import _state as token_state
+        if token_state.get("token_invalid") or token_state.get("last_error"):
+            err_msg = token_state.get("last_error") or "Dhan API Token is invalid or expired."
+            return JSONResponse({
+                "is_admin": True,
+                "has_error": True,
+                "error_title": "Dhan API Token Error",
+                "error_message": err_msg,
+                "timestamp": token_state.get("last_renewed_at") or datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S IST")
+            })
+    except Exception as te:
+        print("Error checking token state:", te)
+
+    # Check global system error
+    if LAST_SYSTEM_ERROR.get("has_error"):
+        return JSONResponse({
+            "is_admin": True,
+            "has_error": True,
+            "error_title": LAST_SYSTEM_ERROR.get("error_title"),
+            "error_message": LAST_SYSTEM_ERROR.get("error_message"),
+            "timestamp": LAST_SYSTEM_ERROR.get("timestamp")
+        })
+
+    return JSONResponse({
+        "is_admin": True,
+        "has_error": False
+    })
 
 
 @app.get("/api/admin/user/disclaimer-pdf/{user_id}")
@@ -2111,11 +2181,14 @@ def get_live_chain(expiry, force_live=False):
         LAST_DATA["time"] = now
         LAST_DATA["data"] = (ltp, df, atm)
 
+        clear_system_error()
+
         return (ltp, df, atm)
 
     except Exception as e:
-
-        print("🔥 FULL ERROR:", str(e))
+        err_msg = str(e)
+        print("🔥 FULL ERROR:", err_msg)
+        set_system_error("Dhan API Fetch Error", err_msg)
 
         if cached:
 
