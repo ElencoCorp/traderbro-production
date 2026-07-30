@@ -2372,7 +2372,7 @@
           </div>
         </div>
         <div class="market-note" id="market-note" style="display:none;">
-          <i class="fas fa-clock"></i>Values generated 9:16 AM – 12 PM IST · Visible till next trading session
+          <i class="fas fa-clock"></i>Values generated 9:15 AM – 12 PM IST · Visible till next trading session
         </div>
       </div>
       <div class="rows-scroll">
@@ -2382,7 +2382,7 @@
             <div class="market-title">Market Insight Window Closed</div>
             <div class="market-desc">Live Black-Box-Engine values are generated during active market analysis hours.
             </div>
-            <div class="market-time">9:16 AM → 12 PM</div>
+            <div class="market-time">9:15 AM → 12 PM</div>
             <div class="market-sub">Previous values remain visible till next trading day 8:30 AM</div>
           </div>
         </div>
@@ -2603,7 +2603,7 @@ font-weight:600;
         id: 'sys-market-soon',
         fromMins: 9 * 60,          // 9:00 AM
         toMins: 9 * 60 + 15,     // 9:15 AM (show for 15 mins)
-        text: '🔔 Market Opening Soon — Session starts at 9:16 AM IST'
+        text: '🔔 Market Opening Soon — Session starts at 9:15 AM IST'
       },
       {
         id: 'sys-closing-soon',
@@ -2958,27 +2958,27 @@ font-weight:600;
         icon = "📅";
         title = "Market Closed — Saturday";
         desc = "NSE is closed on weekends. No live values are generated today.";
-        time = "Next session: <b>Monday at 9:16 AM IST</b>";
+        time = "Next session: <b>Monday at 9:15 AM IST</b>";
       } else if (day === 0) {
         icon = "📅";
         title = "Market Closed — Sunday";
         desc = "NSE is closed on weekends. No live values are generated today.";
-        time = "Next session: <b>Monday at 9:16 AM IST</b>";
+        time = "Next session: <b>Monday at 9:15 AM IST</b>";
       } else if (mins < marketOpen) {
         icon = "⏰";
         title = "Pre-Market — Session Not Started";
         desc = "Live Black-Box-Engine values are generated during active market analysis hours.";
-        time = "Session opens at <b>9:16 AM IST</b>";
+        time = "Session opens at <b>9:15 AM IST</b>";
       } else if (mins > marketClose) {
         icon = "🔔";
         title = "Market Session Ended for Today";
         desc = "Today's session has closed. Data will be available again next trading day.";
-        time = "Next session: <b>Tomorrow at 9:16 AM IST</b>";
+        time = "Next session: <b>Tomorrow at 9:15 AM IST</b>";
       } else {
         icon = "⏰";
         title = "Market Insight Window Closed";
         desc = "Live Black-Box-Engine values are generated during active market hours.";
-        time = "9:16 AM → 12:00 PM IST";
+        time = "9:15 AM → 12:00 PM IST";
       }
 
       return `
@@ -2995,8 +2995,15 @@ font-weight:600;
 
     function loadData() {
       fetch("/api/get-running")
-        .then(r => r.json())
+        .then(r => {
+          if (!r.ok) {
+            console.warn("loadData HTTP error:", r.status);
+            return null;
+          }
+          return r.json();
+        })
         .then(d => {
+          if (!d) return;
           const rows = (d.rows || []).sort(
             (a, b) => new Date(a.datetime) - new Date(b.datetime)
           );
@@ -3565,14 +3572,14 @@ font-weight:600;
             icon: "⏰",
             title: "Pre-Market — Session Not Started",
             desc: "Live Black-Box-Engine values are generated during active market analysis hours.",
-            time: "Session opens at <b>9:16 AM IST</b>",
+            time: "Session opens at <b>9:15 AM IST</b>",
           };
         } else if (mins > 12 * 60) {
           _closedReason = {
             icon: "🔔",
             title: "Market Session Ended for Today",
             desc: "Today's session has closed. Data will be available again next trading day.",
-            time: `Next session: <b>${accessData.next_trading_day}</b> at <b>9:16 AM IST</b>`,
+            time: `Next session: <b>${accessData.next_trading_day}</b> at <b>9:15 AM IST</b>`,
           };
         }
       }
