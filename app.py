@@ -389,7 +389,8 @@ LAST_DATA = {
 }
 LAST_FETCH_TIME = None
 LIVE_RUNNING_RECORDS = []
-RUNNING_FILE = "live_running.json"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+RUNNING_FILE = os.path.join(BASE_DIR, "live_running.json")
 def sanitize_for_json(obj):
     """Recursively converts NaN, Infinity, and -Infinity floats to None so json.dumps never crashes."""
     if isinstance(obj, dict):
@@ -2810,22 +2811,22 @@ def api_expiries():
 def live_data():
     try:
         global LIVE_RUNNING_RECORDS
-        if LIVE_RUNNING_RECORDS:
-            return JSONResponse({"rows": LIVE_RUNNING_RECORDS[-2000:]})
-
         if os.path.exists(RUNNING_FILE):
             try:
-                with open(RUNNING_FILE, "r") as f:
+                with open(RUNNING_FILE, "r", encoding="utf-8") as f:
                     rows = json.load(f)
-                    if isinstance(rows, list):
-                        LIVE_RUNNING_RECORDS = rows
-                        return JSONResponse({"rows": rows[-2000:]})
+                    if isinstance(rows, list) and len(rows) > 0:
+                        LIVE_RUNNING_RECORDS = sanitize_for_json(rows)
+                        return SafeJSONResponse({"rows": LIVE_RUNNING_RECORDS[-2000:]})
             except Exception as fe:
                 print("⚠️ Error reading RUNNING_FILE in live_data:", fe)
 
-        return JSONResponse({"rows": []})
+        if LIVE_RUNNING_RECORDS:
+            return SafeJSONResponse({"rows": sanitize_for_json(LIVE_RUNNING_RECORDS[-2000:])})
+
+        return SafeJSONResponse({"rows": []})
     except Exception as e:
-        return JSONResponse({"rows": [], "error": str(e)})
+        return SafeJSONResponse({"rows": [], "error": str(e)})
 
 # ═══════════════════════════════════════════════════════════════════════
 # API — FULL CHAIN (all columns, all rows) — used by admin AJAX refresh
@@ -3096,22 +3097,22 @@ def get_subscription_start_date(now=None):
 def get_running():
     try:
         global LIVE_RUNNING_RECORDS
-        if LIVE_RUNNING_RECORDS:
-            return JSONResponse({"rows": LIVE_RUNNING_RECORDS[-2000:]})
-
         if os.path.exists(RUNNING_FILE):
             try:
-                with open(RUNNING_FILE, "r") as f:
+                with open(RUNNING_FILE, "r", encoding="utf-8") as f:
                     rows = json.load(f)
-                    if isinstance(rows, list):
-                        LIVE_RUNNING_RECORDS = rows
-                        return JSONResponse({"rows": rows[-2000:]})
+                    if isinstance(rows, list) and len(rows) > 0:
+                        LIVE_RUNNING_RECORDS = sanitize_for_json(rows)
+                        return SafeJSONResponse({"rows": LIVE_RUNNING_RECORDS[-2000:]})
             except Exception as fe:
                 print("⚠️ Error reading RUNNING_FILE in get_running:", fe)
 
-        return JSONResponse({"rows": []})
+        if LIVE_RUNNING_RECORDS:
+            return SafeJSONResponse({"rows": sanitize_for_json(LIVE_RUNNING_RECORDS[-2000:])})
+
+        return SafeJSONResponse({"rows": []})
     except Exception as e:
-        return JSONResponse({"rows": [], "error": str(e)})
+        return SafeJSONResponse({"rows": [], "error": str(e)})
 
 @app.get("/api/test-market")
 def test_market():
