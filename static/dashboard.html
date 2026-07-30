@@ -3556,6 +3556,7 @@ font-weight:600;
           desc: "NSE is closed on weekends. No live values are generated today.",
           time: `Next session: <b>${accessData.next_trading_day || "Monday"}</b>`,
         };
+        grid.innerHTML = buildClosedBox();
       } else if (accessData.is_holiday) {
         _closedReason = {
           icon: "🏖️",
@@ -3563,6 +3564,7 @@ font-weight:600;
           desc: `NSE is closed today for <b>${accessData.holiday_reason}</b>. No live values are generated.`,
           time: `Next session: <b>${accessData.next_trading_day}</b>`,
         };
+        grid.innerHTML = buildClosedBox();
       } else {
         // Weekday, non-holiday — time-based reason
         const now = new Date();
@@ -3575,17 +3577,12 @@ font-weight:600;
             desc: "Live Black-Box-Engine values are generated during active market analysis hours.",
             time: "Session opens at <b>9:15 AM IST</b>",
           };
-        } else if (mins > 12 * 60) {
-          _closedReason = {
-            icon: "🔔",
-            title: "Market Session Ended for Today",
-            desc: "Today's session has closed. Data will be available again next trading day.",
-            time: `Next session: <b>${accessData.next_trading_day}</b> at <b>9:15 AM IST</b>`,
-          };
+          grid.innerHTML = buildClosedBox();
+        } else {
+          // Session started or ended on a trading weekday — do not block data rendering
+          _closedReason = null;
         }
       }
-
-      grid.innerHTML = buildClosedBox();
     }
     /* ── Full-screen overlay for queued plan ── */
     function showFullscreenClosed(icon, title, body, extra) {
