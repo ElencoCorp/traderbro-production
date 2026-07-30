@@ -517,8 +517,10 @@ def auto_market_recorder():
             LIVE_RUNNING_RECORDS.append(row)
             LIVE_RUNNING_RECORDS = LIVE_RUNNING_RECORDS[-2000:]
 
-            with open(RUNNING_FILE, "w") as f:
+            temp_file = RUNNING_FILE + ".tmp"
+            with open(temp_file, "w") as f:
                 json.dump(LIVE_RUNNING_RECORDS, f)
+            os.replace(temp_file, RUNNING_FILE)
 
             print("✅ SAVED:", row["datetime"])
 
@@ -2714,29 +2716,24 @@ def api_expiries():
 
 @app.get("/api/live-data")
 def live_data():
-
     try:
+        global LIVE_RUNNING_RECORDS
+        if LIVE_RUNNING_RECORDS:
+            return JSONResponse({"rows": LIVE_RUNNING_RECORDS[-2000:]})
 
         if os.path.exists(RUNNING_FILE):
+            try:
+                with open(RUNNING_FILE, "r") as f:
+                    rows = json.load(f)
+                    if isinstance(rows, list):
+                        LIVE_RUNNING_RECORDS = rows
+                        return JSONResponse({"rows": rows[-2000:]})
+            except Exception as fe:
+                print("⚠️ Error reading RUNNING_FILE in live_data:", fe)
 
-            with open(RUNNING_FILE, "r") as f:
-
-                rows = json.load(f)
-
-                return {
-                    "rows": rows[-2000:]
-                }
-
-        return {
-            "rows": []
-        }
-
+        return JSONResponse({"rows": []})
     except Exception as e:
-
-        return {
-            "rows": [],
-            "error": str(e)
-        }
+        return JSONResponse({"rows": [], "error": str(e)})
 
 # ═══════════════════════════════════════════════════════════════════════
 # API — FULL CHAIN (all columns, all rows) — used by admin AJAX refresh
@@ -2960,9 +2957,10 @@ async def save_running(request: Request):
         # LIMIT
         rows = rows[-2000:]
 
-        with open(RUNNING_FILE, "w") as f:
-
+        temp_file = RUNNING_FILE + ".tmp"
+        with open(temp_file, "w") as f:
             json.dump(rows, f)
+        os.replace(temp_file, RUNNING_FILE)
 
         return {
             "success": True
@@ -3004,29 +3002,24 @@ def get_subscription_start_date(now=None):
 
 @app.get("/api/get-running")
 def get_running():
-
     try:
+        global LIVE_RUNNING_RECORDS
+        if LIVE_RUNNING_RECORDS:
+            return JSONResponse({"rows": LIVE_RUNNING_RECORDS[-2000:]})
 
         if os.path.exists(RUNNING_FILE):
+            try:
+                with open(RUNNING_FILE, "r") as f:
+                    rows = json.load(f)
+                    if isinstance(rows, list):
+                        LIVE_RUNNING_RECORDS = rows
+                        return JSONResponse({"rows": rows[-2000:]})
+            except Exception as fe:
+                print("⚠️ Error reading RUNNING_FILE in get_running:", fe)
 
-            with open(RUNNING_FILE, "r") as f:
-
-                rows = json.load(f)
-
-                return {
-                    "rows": rows[-2000:]
-                }
-
-        return {
-            "rows": []
-        }
-
+        return JSONResponse({"rows": []})
     except Exception as e:
-
-        return {
-            "rows": [],
-            "error": str(e)
-        }
+        return JSONResponse({"rows": [], "error": str(e)})
 
 @app.get("/api/test-market")
 def test_market():
