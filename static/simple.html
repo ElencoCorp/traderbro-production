@@ -372,8 +372,9 @@
        BUILD ONE TABLE ROW
     ════════════════════════════════════════════ */
     function buildRow(r, isPending) {
+      const showPending = isPending && isMarketOpen();
       const runVal = parseFloat(r.running || 0);
-      const runCls = isPending ? "cell-pending"
+      const runCls = showPending ? "cell-pending"
         : runVal > 0 ? "cell-pos"
           : runVal < 0 ? "cell-neg" : "";
       const fmt = v => (v === null || v === undefined || v === '') ? "—" : v;
@@ -396,8 +397,8 @@
     <td>${fmt(r.reference)}</td>
     <td>${fmt(r.stretched)}</td>
     <td>${fmt(r.difference)}</td>
-    <td class="${isPending ? 'cell-pending' : ''}">${isPending ? "—" : Number(r.diff_prev || 0).toFixed(2)}</td>
-    <td class="${runCls}">${isPending ? "—" : runVal.toFixed(2)}</td>
+    <td class="${showPending ? 'cell-pending' : ''}">${showPending ? "—" : Number(r.diff_prev || 0).toFixed(2)}</td>
+    <td class="${runCls}">${showPending ? "—" : runVal.toFixed(2)}</td>
   `;
     }
 
