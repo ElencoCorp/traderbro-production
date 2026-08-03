@@ -293,12 +293,23 @@ def migrate_db():
     # Add created_at to users if missing
     try:
         c.execute("ALTER TABLE users ADD COLUMN created_at TEXT")
-        # Backfill existing rows with a placeholder date
         c.execute("UPDATE users SET created_at = datetime('now') WHERE created_at IS NULL")
         conn.commit()
         print("✅ DB migrated: added created_at to users")
     except:
-        pass  # Column already exists
+        pass
+
+    for col, default_val in [("source", "''"), ("note", "''")]:
+        try:
+            c.execute(f"ALTER TABLE subscriptions ADD COLUMN {col} TEXT DEFAULT {default_val}")
+            conn.commit()
+        except:
+            pass
+
+    # Backfill missing prices in subscriptions table
+    for p_name, p_data in PLAN_CONFIG_DATA.items():
+        c.execute("UPDATE subscriptions SET price=? WHERE (price IS NULL OR price=0) AND LOWER(plan)=?", (p_data["price"], p_name))
+    conn.commit()
     conn.close()
 
 migrate_db()
@@ -319,7 +330,9 @@ def init_subscriptions_table():
         holidays_skipped INTEGER DEFAULT 0,
         status TEXT DEFAULT 'queued',
         price INTEGER DEFAULT 0,
-        created_at TEXT
+        created_at TEXT,
+        source TEXT DEFAULT '',
+        note TEXT DEFAULT ''
     )
     """)
     conn.commit()
@@ -1154,7 +1167,9 @@ def api_my_subscriptions(request: Request):
         holidays_skipped INTEGER DEFAULT 0,
         status TEXT DEFAULT 'queued',
         price INTEGER DEFAULT 0,
-        created_at TEXT
+        created_at TEXT,
+        source TEXT DEFAULT '',
+        note TEXT DEFAULT ''
     )
     """)
  
@@ -3863,6 +3878,7 @@ def api_admin_list_users(request: Request):
     for r in rows:
         uid = r[0]
         uname = r[1]
+        uplan = (r[5] or "free").lower().strip()
         
         # Look for the very next upcoming queued plan in line for this user
         c.execute("""
@@ -3876,23 +3892,37 @@ def api_admin_list_users(request: Request):
         next_plan = qrow[0] if qrow else ""
         next_plan_start = qrow[1] if qrow else ""
         next_plan_expiry = qrow[2] if qrow else ""
-        next_price = qrow[3] if qrow else 0
+        next_price = (qrow[3] if qrow and qrow[3] else PLAN_CONFIG_DATA.get(next_plan, {}).get("price", 0))
         next_trading_days = qrow[4] if qrow else 0
 
-        # Subscription creation date & time
+        # Latest subscription record for pricing, dates, and source notes
         c.execute("""
-            SELECT created_at FROM subscriptions
+            SELECT id, created_at, price, source, note, plan_start
+            FROM subscriptions
             WHERE username=? AND status IN ('active','queued','expired')
             ORDER BY id DESC LIMIT 1
         """, (uname,))
-        sub_created_row = c.fetchone()
-        sub_created_at = sub_created_row[0] if sub_created_row and sub_created_row[0] else ""
+        sub_row = c.fetchone()
+        
+        sub_created_at = ""
+        sub_price = PLAN_CONFIG_DATA.get(uplan, {}).get("price", 0)
+        sub_source = ""
+        sub_note = ""
+        sub_id = None
+        
+        if sub_row:
+            sub_id = sub_row[0]
+            sub_created_at = sub_row[1] or sub_row[5] or ""
+            if sub_row[2] and sub_row[2] > 0:
+                sub_price = sub_row[2]
+            if len(sub_row) > 3: sub_source = sub_row[3] or ""
+            if len(sub_row) > 4: sub_note = sub_row[4] or ""
 
         # Check razorpay_orders for payment method
         c.execute("""
             SELECT rzp_payment_id, payment_method, payment_detail, created_at
             FROM razorpay_orders
-            WHERE username=? AND status='paid'
+            WHERE LOWER(username)=LOWER(?) AND status IN ('paid', 'captured')
             ORDER BY id DESC LIMIT 1
         """, (uname,))
         rzp_row = c.fetchone()
@@ -3902,29 +3932,33 @@ def api_admin_list_users(request: Request):
             dtl = rzp_row[2] or ""
             if raw_m == "upi":
                 p_mode = "upi"
-                p_label = f"UPI ({dtl})" if dtl else "UPI"
+                p_label = f"UPI ({dtl})" if dtl else "Razorpay Gateway (UPI)"
             elif raw_m == "card":
                 p_mode = "card"
-                p_label = f"Card ({dtl})" if dtl else "Credit/Debit Card"
+                p_label = f"Card ({dtl})" if dtl else "Razorpay Gateway (Card)"
             elif raw_m == "netbanking":
                 p_mode = "netbanking"
-                p_label = f"Net Banking ({dtl})" if dtl else "Net Banking"
+                p_label = f"Net Banking ({dtl})" if dtl else "Razorpay Gateway (NetBanking)"
             elif raw_m == "wallet":
                 p_mode = "wallet"
-                p_label = f"Wallet ({dtl})" if dtl else "Wallet"
+                p_label = f"Wallet ({dtl})" if dtl else "Razorpay Gateway (Wallet)"
             elif raw_m == "emi":
                 p_mode = "card"
-                p_label = f"EMI ({dtl})" if dtl else "EMI Card"
+                p_label = f"EMI ({dtl})" if dtl else "Razorpay Gateway (EMI)"
             else:
                 p_mode = "online"
-                p_label = "Online Gateway"
+                p_label = "Razorpay Gateway (Online)"
             rzp_id = rzp_row[0] or ""
             if not sub_created_at and rzp_row[3]:
                 sub_created_at = rzp_row[3]
-        elif r[5] and r[5] != "free":
+        elif sub_source == 'admin_instant' or 'instant' in sub_note.lower():
+            p_mode = "admin_instant"
+            p_label = "Admin (Instant Access)"
+            rzp_id = f"ADM_INST_{sub_id:04d}" if sub_id else "ADM_INST"
+        elif uplan != "free":
             p_mode = "manual"
-            p_label = "Admin Assignment"
-            rzp_id = ""
+            p_label = "Admin (Manual)"
+            rzp_id = f"ADM_ASSIGN_{sub_id:04d}" if sub_id else "ADM_ASSIGN"
         else:
             p_mode = "none"
             p_label = "No Payment"
@@ -3937,6 +3971,7 @@ def api_admin_list_users(request: Request):
             "phone":              r[3] or "",
             "role":               r[4] or "user",
             "plan":               r[5] or "free",
+            "price":              sub_price,
             "plan_start":         r[6] or "",
             "plan_expiry":        r[7] or "",
             "consent":            bool(r[8]),
@@ -3946,7 +3981,7 @@ def api_admin_list_users(request: Request):
             "next_plan_expiry":   next_plan_expiry,
             "next_price":         next_price,
             "next_trading_days":  next_trading_days,
-            "sub_created_at":     sub_created_at,
+            "sub_created_at":     sub_created_at or r[6] or r[9] or "",
             "payment_method":     p_mode,
             "payment_label":      p_label,
             "payment_id":         rzp_id
@@ -3968,18 +4003,34 @@ def api_admin_user_subscriptions(request: Request, username: str):
     c = conn.cursor()
     c.execute("""
         SELECT plan, plan_start, plan_expiry, trading_days, 
-               total_calendar_days, weekends_skipped, holidays_skipped, status, price, created_at
+               total_calendar_days, weekends_skipped, holidays_skipped, status, price, created_at, source, note, id
         FROM subscriptions
-        WHERE username=?
+        WHERE LOWER(username)=LOWER(?)
         ORDER BY plan_start DESC
     """, (username,))
     rows = c.fetchall()
+
+    # Also check razorpay_orders for transaction payment IDs
+    c.execute("""
+        SELECT plan, rzp_payment_id, payment_method, payment_detail
+        FROM razorpay_orders
+        WHERE LOWER(username)=LOWER(?) AND status IN ('paid', 'captured')
+    """, (username,))
+    rzp_map = {r[0].lower(): (r[1], r[2], r[3]) for r in c.fetchall()}
+
     conn.close()
 
     subs = []
     for r in rows:
+        plan_name = r[0] or ""
+        exact_price = r[8] if (r[8] and r[8] > 0) else PLAN_CONFIG_DATA.get(plan_name.lower(), {}).get("price", 0)
+        rzp_info = rzp_map.get(plan_name.lower())
+        
+        payment_id = rzp_info[0] if rzp_info else (f"ADM_INST_{r[12]:04d}" if (r[10]=='admin_instant' or 'instant' in str(r[11]).lower()) else f"ADM_ASSIGN_{r[12]:04d}")
+        
         subs.append({
-            "plan": r[0],
+            "id": r[12],
+            "plan": plan_name,
             "plan_start": r[1],
             "plan_expiry": r[2],
             "trading_days": r[3],
@@ -3987,8 +4038,11 @@ def api_admin_user_subscriptions(request: Request, username: str):
             "weekends_skipped": r[5],
             "holidays_skipped": r[6],
             "status": r[7],
-            "price": r[8],
-            "created_at": r[9] if len(r) > 9 else r[1]
+            "price": exact_price,
+            "created_at": r[9] if (len(r) > 9 and r[9]) else r[1],
+            "source": r[10] if len(r) > 10 else "",
+            "note": r[11] if len(r) > 11 else "",
+            "payment_id": payment_id
         })
     return JSONResponse({"subscriptions": subs})
 
@@ -4857,12 +4911,13 @@ async def api_admin_assign_plan(request: Request):
         INSERT INTO subscriptions
             (username, plan, plan_start, plan_expiry,
              trading_days, total_calendar_days, weekends_skipped, holidays_skipped,
-             status, price, created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?)
+             status, price, created_at, source, note)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
         username, plan, start_dt.isoformat(), expiry_dt.isoformat(),
         t_days, total_cal, weekends_sk, holidays_sk,
-        new_status, PLAN_CONFIG_DATA.get(plan, {}).get("price", 0), now.isoformat()
+        new_status, PLAN_CONFIG_DATA.get(plan, {}).get("price", 0), now.isoformat(),
+        "admin_manual", note or "Admin Plan Assignment"
     ))
 
     if new_status == "active" or not effective_last_expiry:
@@ -4933,12 +4988,13 @@ async def api_admin_grant_immediate_access(request: Request):
         INSERT INTO subscriptions
             (username, plan, plan_start, plan_expiry,
              trading_days, total_calendar_days, weekends_skipped, holidays_skipped,
-             status, price, created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?)
+             status, price, created_at, source, note)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
         username, plan, start_dt.isoformat(), expiry_dt.isoformat(),
         t_days, total_cal, weekends_sk, holidays_sk,
-        new_status, PLAN_CONFIG_DATA.get(plan, {}).get("price", 0), now.isoformat()
+        new_status, PLAN_CONFIG_DATA.get(plan, {}).get("price", 0), now.isoformat(),
+        "admin_instant", note or "Admin Immediate Special Access"
     ))
 
     c.execute("""
