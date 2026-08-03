@@ -1,1320 +1,1381 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TraderBro — User Management</title>
-<link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
-:root{
-  --bg:#06060f;--s1:#0b0b1a;--s2:#101025;--s3:#14142e;--s4:#1a1a38;
-  --blue:#02A3FE;--green:#00d4aa;--red:#ff4d6d;--gold:#f5a623;
-  --purple:#a855f7;--orange:#ff6b35;--teal:#06b6d4;
-  --text:#e8eaf0;--dim:#8890aa;--muted:#4a5068;
-  --border:rgba(255,255,255,0.07);--bord2:rgba(2,163,254,0.25);
-  --r:10px;--rl:14px;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{height:100%;}
-body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;line-height:1.5;}
-::-webkit-scrollbar{width:5px;height:5px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--s3);border-radius:4px;}
 
-/* HEADER */
-.hdr{position:sticky;top:0;z-index:200;height:54px;background:rgba(6,6,15,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:14px;}
-.hdr-logo{display:flex;align-items:center;gap:10px;text-decoration:none;}
-.hdr-logo img{height:32px;}
-.brand-name{font-size:16px;font-weight:800;color:#fff;}
-.brand-name span{color:var(--blue);}
-.brand-sub{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
-.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
-.hbtn{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:30px;border:1px solid;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s;font-family:inherit;white-space:nowrap;}
-.hbtn-blue{background:rgba(2,163,254,.08);border-color:rgba(2,163,254,.3);color:var(--blue);}
-.hbtn-blue:hover{background:rgba(2,163,254,.18);}
-.hbtn-org{background:rgba(255,107,53,.08);border-color:rgba(255,107,53,.3);color:var(--orange);}
-.hbtn-org:hover{background:rgba(255,107,53,.18);}
+	<!-- Meta -->
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="keywords"
+		content="Traderbro.in, stock market education, Sensex, Bank Nifty, Nifty 50, FinnNifty, options trading, India">
+	<meta name="author" content="Traderbro.in">
+	<meta name="robots" content="">
+	<meta name="description"
+		content="Traderbro.in : Your Trading Friend - Learn Sensex, Bank Nifty, Nifty 50 & FinNifty with India's best stock market education platform.">
+	<meta property="og:title" content="Traderbro.in : Your Trading Friend">
+	<meta property="og:description"
+		content="Learn Sensex, Bank Nifty, Nifty 50 & FinNifty options trading with Traderbro.in — India's most trusted stock market education platform.">
+	<meta property="og:image" content="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png">
+	<meta name="format-detection" content="telephone=no">
 
-/* PAGE */
-.page{max-width:1500px;margin:0 auto;padding:20px 20px 60px;}
+	<!-- Mobile Specific -->
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-/* SUMMARY ROW */
-.summary{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px;}
-.sm{background:var(--s1);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px;cursor:pointer;transition:border-color .2s,transform .15s;position:relative;overflow:hidden;}
-.sm:hover{border-color:rgba(255,255,255,.12);transform:translateY(-1px);}
-.sm.active-filter{border-color:var(--blue);}
-.sm::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
-.sm.c-b::before{background:var(--blue);}
-.sm.c-g::before{background:var(--green);}
-.sm.c-r::before{background:var(--red);}
-.sm.c-go::before{background:var(--gold);}
-.sm.c-p::before{background:var(--purple);}
-.sm.c-o::before{background:var(--orange);}
-.sm-label{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:6px;}
-.sm-val{font-size:28px;font-weight:800;line-height:1;}
-.sm-val.c-b{color:var(--blue);}
-.sm-val.c-g{color:var(--green);}
-.sm-val.c-r{color:var(--red);}
-.sm-val.c-go{color:var(--gold);}
-.sm-val.c-p{color:var(--purple);}
-.sm-val.c-o{color:var(--orange);}
-.sm-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+	<!-- Title -->
+	<title>Learn Options Trading – Nifty, Bank Nifty & Sensex | TraderBro.in</title>
+	<link rel="canonical" href="https://traderbro.in/">
 
-/* TOOLBAR */
-.toolbar{background:var(--s1);border:1px solid var(--border);border-radius:var(--rl);padding:10px 14px;margin-bottom:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
-.srch{flex:1;min-width:200px;display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:0 12px;transition:border-color .2s;}
-.srch:focus-within{border-color:var(--bord2);}
-.srch i{color:var(--muted);font-size:11px;}
-.srch input{background:transparent;border:none;outline:none;color:var(--text);font-size:13px;font-family:inherit;padding:8px 0;width:100%;}
-.srch input::placeholder{color:var(--muted);}
-.fsel{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:12px;padding:8px 10px;outline:none;cursor:pointer;font-family:inherit;}
-.fsel:focus{border-color:var(--bord2);}
-.tbtn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--r);border:1px solid;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit;white-space:nowrap;}
-.tbtn-primary{background:var(--blue);border-color:var(--blue);color:#000;box-shadow:0 4px 14px rgba(2,163,254,.25);}
-.tbtn-primary:hover{background:#00c4ff;transform:translateY(-1px);}
-.tbtn-ghost{background:var(--s2);border-color:var(--border);color:var(--dim);}
-.tbtn-ghost:hover{border-color:var(--bord2);color:var(--blue);}
+	<!-- Favicon icon -->
+	<link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png">
 
-/* FILTER PILLS */
-.frow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;align-items:center;}
-.fp{padding:5px 13px;border-radius:20px;border:1px solid var(--border);background:var(--s1);font-size:11px;font-weight:600;color:var(--dim);cursor:pointer;transition:all .15s;white-space:nowrap;}
-.fp:hover{border-color:var(--bord2);color:var(--blue);}
-.fp.on{background:rgba(2,163,254,.1);border-color:rgba(2,163,254,.4);color:var(--blue);}
-.fp.on.fp-g{background:rgba(0,212,170,.1);border-color:rgba(0,212,170,.4);color:var(--green);}
-.fp.on.fp-r{background:rgba(255,77,109,.1);border-color:rgba(255,77,109,.4);color:var(--red);}
-.fp.on.fp-go{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.4);color:var(--gold);}
+	<!-- Stylesheet -->
+	<link href="/static/finlab/Frontend/xhtml/vendor/animate/animate.css" rel="stylesheet">
+	<link href="/static/finlab/Frontend/xhtml/vendor/magnific-popup/magnific-popup.css" rel="stylesheet">
+	<link href="/static/finlab/Frontend/xhtml/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
 
-/* TABLE */
-.tcard{background:var(--s1);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;}
-.tcard-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);}
-.tcard-title{font-size:10px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--blue);display:flex;align-items:center;gap:8px;}
-.tcard-title::before{content:'';width:3px;height:14px;background:linear-gradient(180deg,var(--blue),var(--orange));border-radius:2px;}
-.tscroll{overflow-x:auto;}
-table{width:100%;border-collapse:collapse;min-width:900px;}
-thead th{position:sticky;top:0;z-index:5;background:var(--s2);color:var(--muted);font-size:9px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
-thead th.tc{text-align:center;}
-tbody td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;white-space:nowrap;}
-tbody tr{transition:background .1s;}
-tbody tr:hover td{background:rgba(2,163,254,.04);}
-tbody tr:last-child td{border-bottom:none;}
+	<!-- Custom Stylesheet -->
+	<link rel="stylesheet" href="/static/finlab/Frontend/xhtml/css/style.css">
 
-/* USER CELL */
-.ucell{display:flex;align-items:center;gap:10px;cursor:pointer;}
-.ava{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;border:1px solid rgba(255,255,255,.08);flex-shrink:0;}
-.uname{font-size:13px;font-weight:600;}
-.uemail{font-size:10px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;}
+	<!-- Google Fonts -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link
+		href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+		rel="stylesheet">
 
-/* BADGES */
-.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;border:1px solid;}
-.b-premium{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.3);color:var(--gold);}
-.b-pro{background:rgba(2,163,254,.1);border-color:rgba(2,163,254,.3);color:var(--blue);}
-.b-essential{background:rgba(0,212,170,.1);border-color:rgba(0,212,170,.3);color:var(--green);}
-.b-basic{background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.3);color:var(--purple);}
-.b-free{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:var(--muted);}
-.b-active{background:rgba(0,212,170,.1);border-color:rgba(0,212,170,.3);color:var(--green);}
-.b-expiring{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.3);color:var(--gold);}
-.b-expired{background:rgba(255,77,109,.08);border-color:rgba(255,77,109,.25);color:var(--red);}
-.b-queued{background:rgba(168,85,247,.1);border-color:rgba(168,85,247,.3);color:var(--purple);}
-.b-revoked{background:rgba(255,77,109,.12);border-color:rgba(255,77,109,.35);color:var(--red);}
-.b-noplan{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.07);color:var(--muted);}
-.dl-ok{color:var(--green);font-weight:700;font-size:11px;}
-.dl-warn{color:var(--gold);font-weight:700;font-size:11px;}
-.dl-exp{color:var(--red);font-weight:700;font-size:11px;}
-.dl-none{color:var(--muted);font-size:11px;}
-.mono{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);}
+	<script type="application/ld+json">
+			{
+			"@context": "https://schema.org",
+			"@type": "Organization",
+			"name": "TraderBro.in",
+			"url": "https://traderbro.in/",
+			"logo": "https://traderbro.in/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png",
+			"sameAs": [
+				"https://www.youtube.com/@TraderBroIN"
+			]
+			}
+		</script>
 
-/* DROPDOWN MENU */
-.action-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--s2);color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s;position:relative;}
-.action-btn:hover{border-color:var(--bord2);color:var(--blue);}
-.drop-menu{display:none;position:fixed;z-index:9999;background:var(--s1);border:1px solid var(--bord2);border-radius:12px;padding:6px;min-width:200px;box-shadow:0 16px 48px rgba(0,0,0,.75);}
-.drop-menu.open{display:block;}
-.dm-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text);border:none;background:none;width:100%;text-align:left;font-family:inherit;transition:background .12s;}
-.dm-item:hover{background:rgba(255,255,255,.06);}
-.dm-item.dm-red{color:var(--red);}
-.dm-item.dm-red:hover{background:rgba(255,77,109,.1);}
-.dm-item.dm-gold{color:var(--gold);}
-.dm-item.dm-gold:hover{background:rgba(245,166,35,.1);}
-.dm-item i{width:14px;text-align:center;opacity:.7;}
-.dm-div{height:1px;background:var(--border);margin:4px 0;}
-
-/* PAGINATION */
-.pag{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:10px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);}
-.pag-btns{display:flex;gap:4px;}
-.pbtn{min-width:30px;height:30px;padding:0 8px;border-radius:7px;border:1px solid var(--border);background:var(--s2);color:var(--dim);cursor:pointer;font-size:11px;transition:all .15s;display:flex;align-items:center;justify-content:center;}
-.pbtn:hover{border-color:var(--bord2);color:var(--blue);}
-.pbtn.active{background:var(--blue);border-color:var(--blue);color:#000;font-weight:700;}
-.pbtn:disabled{opacity:.35;cursor:not-allowed;}
-
-/* MODALS */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);z-index:500;align-items:center;justify-content:center;padding:20px;}
-.overlay.open{display:flex;}
-.modal{background:var(--s1);border:1px solid var(--bord2);width:100%;border-radius:var(--rl);max-height:90vh;overflow-y:auto;animation:popIn .25s cubic-bezier(.34,1.56,.64,1);}
-.modal-sm{max-width:420px;}
-.modal-md{max-width:560px;}
-.modal-lg{max-width:720px;}
-@keyframes popIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
-.m-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--s1);z-index:10;}
-.m-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;}
-.m-close{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
-.m-close:hover{background:rgba(255,77,109,.15);border-color:rgba(255,77,109,.3);color:var(--red);}
-.m-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--s2);overflow-x:auto;}
-.m-tab{padding:11px 16px;font-size:11px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted);transition:all .2s;white-space:nowrap;margin-bottom:-1px;letter-spacing:.3px;}
-.m-tab.on{color:var(--blue);border-bottom-color:var(--blue);}
-.m-body{padding:18px 20px;}
-.m-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
-
-/* FORM */
-.fg{margin-bottom:13px;}
-.fg label{display:block;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:5px;}
-.fi{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:13px;font-family:inherit;padding:9px 12px;outline:none;transition:border-color .2s;}
-.fi:focus{border-color:var(--bord2);}
-.fi::placeholder{color:var(--muted);}
-.fhint{font-size:10px;color:var(--muted);margin-top:4px;}
-.frow2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-
-/* DETAIL GRID */
-.dg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
-.di{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:10px 13px;}
-.di-k{font-size:9px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;margin-bottom:4px;}
-.di-v{font-size:12px;font-weight:600;}
-.di.full{grid-column:span 2;}
-
-/* USER BANNER */
-.ubanner{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:14px;}
-.ubanner-ava{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0;}
-.ubanner-name{font-size:14px;font-weight:700;}
-.ubanner-email{font-size:11px;color:var(--muted);}
-.ubanner-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;}
-
-/* PLAN PICKER */
-.plang{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.po{border:1px solid var(--border);border-radius:11px;padding:12px;cursor:pointer;transition:all .2s;}
-.po input[type=radio]{display:none;}
-.po:hover{border-color:rgba(255,255,255,.15);}
-.po.sel{border-color:var(--blue);background:rgba(2,163,254,.07);}
-.po.sel-premium{border-color:var(--gold);background:rgba(245,166,35,.07);}
-.po.sel-pro{border-color:var(--blue);background:rgba(2,163,254,.07);}
-.po.sel-essential{border-color:var(--green);background:rgba(0,212,170,.07);}
-.po.sel-basic{border-color:var(--purple);background:rgba(168,85,247,.07);}
-.po.sel-free{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.03);}
-.po-name{font-size:12px;font-weight:700;margin-bottom:2px;}
-.po-desc{font-size:10px;color:var(--muted);}
-.po-days{font-size:9px;font-weight:800;letter-spacing:.8px;margin-top:5px;}
-.po.full{grid-column:span 2;}
-
-/* PAYMENT ITEM */
-.pay-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);}
-.pay-item:last-child{border-bottom:none;}
-.pay-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
-.pay-icon.ok{background:rgba(0,212,170,.15);color:var(--green);}
-.pay-icon.fail{background:rgba(255,77,109,.15);color:var(--red);}
-.pay-plan{font-size:12px;font-weight:700;}
-.pay-meta{font-size:10px;color:var(--muted);margin-top:1px;}
-.pay-amt{font-size:13px;font-weight:800;margin-left:auto;}
-
-/* SUB ROW */
-.sub-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);}
-.sub-row:last-child{border-bottom:none;}
-.sub-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
-.sub-plan{font-size:12px;font-weight:700;}
-.sub-dates{font-size:10px;color:var(--muted);margin-top:1px;}
-
-/* CONFIRM */
-.conf-icon{font-size:42px;text-align:center;margin-bottom:8px;}
-.conf-title{font-size:17px;font-weight:800;text-align:center;margin-bottom:5px;}
-.conf-desc{font-size:12px;color:var(--dim);text-align:center;line-height:1.7;margin-bottom:14px;}
-.ucard{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:10px 13px;margin-bottom:12px;}
-
-/* TOAST */
-.tw{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:7px;max-width:300px;}
-.toast{display:flex;align-items:center;gap:10px;background:var(--s1);border:1px solid;border-radius:10px;padding:10px 14px;font-size:12px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.6);animation:tin .3s ease;}
-.toast.success{border-color:rgba(0,212,170,.4);color:var(--green);}
-.toast.error{border-color:rgba(255,77,109,.4);color:var(--red);}
-.toast.info{border-color:rgba(2,163,254,.4);color:var(--blue);}
-@keyframes tin{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
-
-/* MISC */
-.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.1);border-top-color:var(--blue);border-radius:50%;animation:rot .7s linear infinite;}
-@keyframes rot{to{transform:rotate(360deg)}}
-.empty{padding:40px;text-align:center;}
-.empty i{font-size:28px;opacity:.12;display:block;margin-bottom:10px;}
-.empty-t{font-size:13px;font-weight:700;color:var(--dim);}
-.empty-s{font-size:11px;color:var(--muted);margin-top:4px;}
-.pw-bar{display:flex;gap:3px;margin-top:5px;}
-.pw-seg{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .2s;}
-.notif-strip{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
-.nb{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:30px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid;}
-.nb-r{background:rgba(255,77,109,.1);border-color:rgba(255,77,109,.3);color:var(--red);}
-.nb-g{background:rgba(0,212,170,.1);border-color:rgba(0,212,170,.3);color:var(--green);}
-.nb-go{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.3);color:var(--gold);}
-.ndot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse 1.5s infinite;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
-@media(max-width:1100px){.summary{grid-template-columns:repeat(3,1fr);}}
-@media(max-width:700px){.summary{grid-template-columns:repeat(2,1fr);}.hbtn{display:none;}.frow2{grid-template-columns:1fr;}}
-</style>
 </head>
+
 <body>
+	<div id="loading-area" class="loading-page-1">
+		<div class="loader">
+			<div class="border one"></div>
+			<div class="border two"></div>
+			<div class="border three"></div>
+			<div class="border four"></div>
+			<div class="border five"></div>
+			<div class="border six"></div>
+			<div class="border seven"></div>
+			<div class="border eight"></div>
+			<div class="border nine"></div>
+		</div>
+	</div>
 
-<header class="hdr">
-  <a href="/" class="hdr-logo">
-    <img src="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png" alt="TraderBro">
-  </a>
-  <div>
-    <div class="brand-name">Trader<span>Bro</span></div>
-    <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;">User Management</div>
-  </div>
-  <div class="hdr-right">
-    <a href="/admin" class="hbtn hbtn-blue"><i class="fas fa-chart-line"></i> Chain</a>
-    <a href="/admin/webinars" class="hbtn hbtn-blue"><i class="fas fa-video"></i> Webinars</a>
-    <button class="hbtn hbtn-org" onclick="exportCSV()"><i class="fas fa-download"></i> Export</button>
-    <a href="/logout" class="hbtn hbtn-org"><i class="fas fa-sign-out-alt"></i> Logout</a>
-  </div>
-</header>
+	<div class="page-wraper">
 
-<div class="page">
+		<!-- Header -->
+		<header class="site-header mo-left header header-transparent ">
+			<!-- Main Header -->
+			<div class="sticky-header main-bar-wraper navbar-expand-lg">
+				<div class="main-bar clearfix ">
+					<div class="container clearfix">
 
-  <div class="notif-strip" id="notif-strip"></div>
+						<!-- Website Logo -->
+						<div class="logo-header">
+							<a href="/" class="logo-light"><img
+									src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
+									alt="Traderbro.in"></a>
+							<a href="/" class="logo-dark"><img
+									src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
+									alt="Traderbro.in"></a>
+						</div>
 
-  <div class="summary" id="summary">
-    <div class="sm c-b" onclick="setFilter('all')"><div class="sm-label">Total Users</div><div class="sm-val c-b" id="st-total">—</div><div class="sm-sub">All accounts</div></div>
-    <div class="sm c-g" onclick="setFilter('active')"><div class="sm-label">Active Plans</div><div class="sm-val c-g" id="st-active">—</div><div class="sm-sub">Live subscribers</div></div>
-    <div class="sm c-go" onclick="setFilter('expiring')"><div class="sm-label">Expiring ≤7d</div><div class="sm-val c-go" id="st-expiring">—</div><div class="sm-sub">Renew soon</div></div>
-    <div class="sm c-r" onclick="setFilter('expired')"><div class="sm-label">Expired</div><div class="sm-val c-r" id="st-expired">—</div><div class="sm-sub">Need renewal</div></div>
-    <div class="sm c-p" onclick="setFilter('queued')"><div class="sm-label">Queued Plans</div><div class="sm-val c-p" id="st-queued">—</div><div class="sm-sub">Starting later</div></div>
-    <div class="sm c-o" onclick="setFilter('free')"><div class="sm-label">No Plan</div><div class="sm-val c-o" id="st-free">—</div><div class="sm-sub">Not subscribed</div></div>
-  </div>
+						<!-- Nav Toggle Button -->
+						<button class="navbar-toggler collapsed navicon justify-content-end" type="button"
+							data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
+							aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+							<span></span>
+							<span></span>
+							<span></span>
+						</button>
 
-  <div class="toolbar" style="gap:10px; flex-wrap:wrap;">
-    <div class="srch">
-      <i class="fas fa-search"></i>
-      <input id="srch" placeholder="Search username, email, mobile…" oninput="applyFilters()">
-    </div>
+						<!-- Extra Nav -->
+						<div class="extra-nav">
+							<div class="extra-cell d-flex align-items-center" id="navAuth"></div>
+						</div>
 
-    <!-- Date Selector Filter -->
-    <div style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.03);padding:3px 8px;border-radius:8px;border:1px solid var(--border);">
-      <i class="fas fa-calendar-alt" style="color:var(--blue);font-size:12px;" title="Filter by date"></i>
-      <input type="date" id="f-date" class="fsel" onchange="applyFilters()" style="padding:4px 6px;font-size:11px;cursor:pointer;background:transparent;color:var(--fg);border:none;" title="Choose subscription or start date">
-      <select class="fsel" id="f-date-type" onchange="applyFilters()" style="padding:4px 4px;font-size:11px;background:transparent;border:none;color:var(--muted);">
-        <option value="sub">Subscribed Time</option>
-        <option value="start">Plan Start Date</option>
-        <option value="reg">Registration Date</option>
-      </select>
-      <button class="tbtn tbtn-ghost" onclick="clearDateFilter()" title="Clear Date Filter" style="padding:3px 6px;font-size:10px;"><i class="fas fa-times"></i></button>
-    </div>
+						<!-- Header Nav -->
+						<div class="header-nav navbar-collapse collapse justify-content-end" id="navbarNavDropdown">
 
-    <!-- Payment Mode Filter -->
-    <select class="fsel" id="f-payment-mode" onchange="applyFilters()">
-      <option value="all">💳 All Payment Modes</option>
-      <option value="upi">📱 UPI (GPay / PhonePe / Paytm)</option>
-      <option value="card">💳 Credit / Debit Card</option>
-      <option value="netbanking">🏦 Net Banking</option>
-      <option value="wallet">👛 Wallet</option>
-      <option value="manual">👑 Admin Assignment</option>
-    </select>
+							<!-- MOBILE LOGO -->
+							<div class="mobile-logo d-lg-none">
+								<a href="/">
+									<img src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
+										alt="Traderbro.in">
+								</a>
+							</div>
 
-    <select class="fsel" id="f-sort" onchange="applyFilters()">
-      <option value="newest">Newest First</option>
-      <option value="oldest">Oldest First</option>
-      <option value="name">Name A–Z</option>
-      <option value="sub-desc">Subscribed Time ↓</option>
-      <option value="expiry-asc">Expiry ↑</option>
-      <option value="expiry-desc">Expiry ↓</option>
-    </select>
+							<!-- NAVIGATION -->
+							<ul class="nav navbar-nav navbar navbar-left">
 
-    <button class="tbtn tbtn-primary" onclick="openAdd()"><i class="fas fa-user-plus"></i> Add User</button>
-    <button class="tbtn tbtn-ghost" onclick="loadUsers()"><i class="fas fa-sync-alt" id="ri"></i></button>
-  </div>
+								<li>
+									<a href="/about-us">About Us</a>
+								</li>
 
-  <div class="frow">
-    <span style="font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-weight:700;align-self:center;">Filter:</span>
-    <div class="fp on" id="fp-all" onclick="setFilter('all')">All</div>
-    <div class="fp fp-g" id="fp-active" onclick="setFilter('active')">✅ Active</div>
-    <div class="fp fp-go" id="fp-expiring" onclick="setFilter('expiring')">⏳ Expiring Soon</div>
-    <div class="fp fp-r" id="fp-expired" onclick="setFilter('expired')">❌ Expired</div>
-    <div class="fp" id="fp-queued" onclick="setFilter('queued')">🔵 Queued</div>
-    <div class="fp" id="fp-premium" onclick="setFilter('premium')">👑 Premium</div>
-    <div class="fp" id="fp-pro" onclick="setFilter('pro')">⚡ Pro</div>
-    <div class="fp" id="fp-essential" onclick="setFilter('essential')">🟢 Essential</div>
-    <div class="fp" id="fp-basic" onclick="setFilter('basic')">🔷 Basic</div>
-    <div class="fp fp-r" id="fp-free" onclick="setFilter('free')">⭕ No Plan</div>
-  </div>
+								<li>
+									<a href="/trading-plan">
+										Subscriptions
+									</a>
+								</li>
 
-  <div class="tcard">
-    <div class="tcard-hdr">
-      <div class="tcard-title">Users</div>
-      <div style="font-size:11px;color:var(--muted)" id="tcnt">Loading…</div>
-    </div>
-    <div class="tscroll">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>User</th>
-            <th>Mobile</th>
-            <th class="tc">Plan</th>
-            <th class="tc">Status</th>
-            <th>Subscriptions</th>
-            <th>Expiry</th>
-            <th>Days Left</th>
-            <th class="tc">Pay Method</th>
-            <th class="tc">Sub Time</th>
-            <th class="tc">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="tbody">
-          <tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)"><span class="spin"></span></td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="pag">
-      <div id="pinfo">—</div>
-      <div class="pag-btns" id="pbtns"></div>
-    </div>
-  </div>
-</div>
+								<li>
+									<a href="/contact-us">
+										Contact Us
+									</a>
+								</li>
 
-<div class="tw" id="tw"></div>
+							</ul>
 
-<div class="overlay" id="ov-detail">
-  <div class="modal modal-lg">
-    <div class="m-hdr">
-      <div class="m-title" id="detail-title"><i class="fas fa-user" style="color:var(--blue)"></i> User</div>
-      <button class="m-close" onclick="closeModal('ov-detail')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="m-tabs">
-      <div class="m-tab on" onclick="dtab('profile')" id="dt-profile">👤 Profile</div>
-      <div class="m-tab" onclick="dtab('subscriptions')" id="dt-subscriptions">📋 Subscriptions</div>
-      <div class="m-tab" onclick="dtab('payments')" id="dt-payments">💳 Payments</div>
-      <div class="m-tab" onclick="dtab('activity')" id="dt-activity">📅 Activity</div>
-    </div>
-    <div class="m-body" id="detail-body"></div>
-    <div class="m-footer">
-      <button class="tbtn tbtn-ghost" style="color:var(--red);border-color:rgba(255,77,109,.3)" onclick="delFromDetail()"><i class="fas fa-trash"></i> Delete</button>
-      <button class="tbtn tbtn-ghost" style="color:var(--gold);border-color:rgba(245,166,35,.3)" onclick="planFromDetail()"><i class="fas fa-crown"></i> Manage Plan</button>
-      <button class="tbtn tbtn-primary" onclick="editFromDetail()"><i class="fas fa-edit"></i> Edit User</button>
-    </div>
-  </div>
-</div>
+							<!-- MOBILE AUTH -->
+							<div class="mobile-auth-wrapper d-lg-none">
 
-<div class="overlay" id="ov-edit">
-  <div class="modal modal-md">
-    <div class="m-hdr">
-      <div class="m-title" id="edit-title"><i class="fas fa-user-edit" style="color:var(--blue)"></i> Edit User</div>
-      <button class="m-close" onclick="closeModal('ov-edit')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="m-body">
-      <input type="hidden" id="e-id">
-      <div class="frow2">
-        <div class="fg"><label>Username *</label><input class="fi" id="e-un" placeholder="username"></div>
-        <div class="fg"><label>Email *</label><input class="fi" type="email" id="e-em" placeholder="user@email.com"></div>
-      </div>
-      <div class="fg"><label>Mobile</label><input class="fi" id="e-ph" placeholder="+91 9999999999"></div>
-      <div class="fg">
-        <label id="pw-lbl">New Password <span style="color:var(--muted);font-weight:400">(leave blank to keep)</span></label>
-        <input class="fi" type="password" id="e-pw" placeholder="Min 8 chars, 1 uppercase, 1 digit" oninput="checkPw(this.value)">
-        <div class="pw-bar"><div class="pw-seg" id="ps1"></div><div class="pw-seg" id="ps2"></div><div class="pw-seg" id="ps3"></div><div class="pw-seg" id="ps4"></div></div>
-      </div>
-    </div>
-    <div class="m-footer">
-      <button class="tbtn tbtn-ghost" onclick="closeModal('ov-edit')">Cancel</button>
-      <button class="tbtn tbtn-primary" onclick="saveUser()"><i class="fas fa-save"></i> <span id="save-lbl">Save Changes</span></button>
-    </div>
-  </div>
-</div>
+								<div class="mobile-auth-buttons" id="mobileNavAuth">
 
-<div class="overlay" id="ov-plan">
-  <div class="modal modal-md">
-    <div class="m-hdr">
-      <div class="m-title"><i class="fas fa-crown" style="color:var(--gold)"></i> Assign / Change Plan</div>
-      <button class="m-close" onclick="closeModal('ov-plan')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="m-body">
-      <div class="ucard">
-        <div class="ava" id="p-ava" style="width:40px;height:40px;font-size:14px">—</div>
-        <div><div style="font-weight:700" id="p-name">—</div><div style="font-size:11px;color:var(--muted)" id="p-email">—</div><div style="margin-top:5px" id="p-current"></div></div>
-      </div>
-      <input type="hidden" id="p-uid">
-      <div class="fg">
-        <label>Select Plan</label>
-        <div class="plang">
-          <label class="po" id="po-premium" onclick="selPlan('premium')"><input type="radio" name="pc" value="premium"><div class="po-name" style="color:var(--gold)">👑 Premium</div><div class="po-desc">Full access + historical data</div><div class="po-days" style="color:var(--gold)">250 TRADING DAYS · ₹14,499</div></label>
-          <label class="po" id="po-pro" onclick="selPlan('pro')"><input type="radio" name="pc" value="pro"><div class="po-name" style="color:var(--blue)">⚡ Pro</div><div class="po-desc">Dashboard + downloads</div><div class="po-days" style="color:var(--blue)">22 TRADING DAYS · ₹1,499</div></label>
-          <label class="po" id="po-essential" onclick="selPlan('essential')"><input type="radio" name="pc" value="essential"><div class="po-name" style="color:var(--green)">🟢 Essential</div><div class="po-desc">Dashboard access</div><div class="po-days" style="color:var(--green)">5 TRADING DAYS · ₹399</div></label>
-          <label class="po" id="po-basic" onclick="selPlan('basic')"><input type="radio" name="pc" value="basic"><div class="po-name" style="color:var(--purple)">🔷 Basic</div><div class="po-desc">Trial access</div><div class="po-days" style="color:var(--purple)">1 TRADING DAY · ₹99</div></label>
-          <label class="po full" id="po-free" onclick="selPlan('free')"><input type="radio" name="pc" value="free"><div class="po-name" style="color:var(--muted)">⭕ Remove Plan (Free)</div><div class="po-desc">Revoke all subscription access</div></label>
-        </div>
-      </div>
-      <div class="fg" id="ceg" style="display:none">
-        <label>Custom Expiry Date/Time (Optional)</label>
-        <input class="fi" type="datetime-local" id="cex">
-        <div class="fhint">Leave blank to auto-calculate from today using trading-day logic</div>
-      </div>
-      <div class="fg">
-        <label>Payment Reference / Note</label>
-        <input class="fi" id="p-note" placeholder="Razorpay order ID, UPI ref, cash payment…">
-      </div>
-    </div>
-    <div class="m-footer" style="gap:10px;">
-      <button class="tbtn tbtn-ghost" onclick="closeModal('ov-plan')">Cancel</button>
-      <button class="tbtn" style="background:linear-gradient(135deg,#06b6d4,#0284c7);color:#fff;font-weight:700;" onclick="grantImmediateAccess()" title="Grant immediate access starting right now, bypassing 10:00 AM rule"><i class="fas fa-bolt"></i> Grant Immediate Access</button>
-      <button class="tbtn tbtn-primary" onclick="assignPlan()" title="Standard subscription assignment (pre-10 AM today / post-10 AM 12:00 AM Midnight)"><i class="fas fa-crown"></i> Assign Standard Plan</button>
-    </div>
-  </div>
-</div>
+									<!-- Dynamic buttons -->
 
-<div class="overlay" id="ov-del">
-  <div class="modal modal-sm">
-    <div class="m-body" style="padding:24px 22px 14px">
-      <div class="conf-icon">🗑️</div>
-      <div class="conf-title" style="color:var(--red)">Delete User?</div>
-      <div class="conf-desc">This will permanently remove the user and all their data. This action cannot be undone.</div>
-      <div class="ucard">
-        <div class="ava" id="d-ava" style="background:rgba(255,77,109,.15);color:var(--red);width:36px;height:36px;font-size:12px">?</div>
-        <div><div style="font-weight:700" id="d-name">—</div><div style="font-size:11px;color:var(--muted)" id="d-email">—</div></div>
-      </div>
-      <input type="hidden" id="d-uid">
-    </div>
-    <div class="m-footer">
-      <button class="tbtn tbtn-ghost" onclick="closeModal('ov-del')">Cancel</button>
-      <button class="tbtn" style="background:rgba(255,77,109,.15);border:1px solid rgba(255,77,109,.35);color:var(--red)" onclick="confirmDelete()"><i class="fas fa-trash"></i> Delete Forever</button>
-    </div>
-  </div>
-</div>
+								</div>
 
-<div class="overlay" id="ov-rpw">
-  <div class="modal modal-sm">
-    <div class="m-hdr">
-      <div class="m-title"><i class="fas fa-key" style="color:var(--purple)"></i> Reset Password</div>
-      <button class="m-close" onclick="closeModal('ov-rpw')"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="m-body">
-      <div class="ucard" style="margin-bottom:14px">
-        <div class="ava" id="rp-ava" style="width:36px;height:36px;font-size:12px">—</div>
-        <div><div style="font-weight:700" id="rp-name">—</div><div style="font-size:11px;color:var(--muted)" id="rp-email">—</div></div>
-      </div>
-      <input type="hidden" id="rp-uid">
-      <div class="fg">
-        <label>New Password *</label>
-        <input class="fi" type="password" id="rp-pw" placeholder="Min 8 chars, 1 uppercase, 1 digit">
-        <div class="fhint">This will immediately update the user's login password.</div>
-      </div>
-    </div>
-    <div class="m-footer">
-      <button class="tbtn tbtn-ghost" onclick="closeModal('ov-rpw')">Cancel</button>
-      <button class="tbtn tbtn-primary" onclick="confirmRpw()"><i class="fas fa-key"></i> Set Password</button>
-    </div>
-  </div>
-</div>
+							</div>
 
-<script>
-/* ─── STATE ─── */
-let ALL=[], FIL=[], _du=null, _sp='', PAGE=1, _qf='all';
-const PP=25;
-const TODAY=new Date().toDateString();
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- Main Header End -->
+		</header>
+		<!-- Header End -->
 
-/* ─── HELPERS ─── */
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function fd(d){if(!d)return'—';try{return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}catch{return d;}}
-function fdt(d){if(!d)return'—';try{return new Date(d).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true});}catch{return d;}}
-function dleft(e){if(!e)return null;return Math.ceil((new Date(e)-new Date())/86400000);}
-function acol(u){const c=['rgba(2,163,254,.2)','rgba(0,212,170,.2)','rgba(245,166,35,.2)','rgba(168,85,247,.2)','rgba(255,107,53,.2)'];return c[(u||'').charCodeAt(0)%c.length];}
-function afg(u){const c=['#02A3FE','#00d4aa','#f5a623','#a855f7','#ff6b35'];return c[(u||'').charCodeAt(0)%c.length];}
-function at(u){return (u||'?').substring(0,2).toUpperCase();}
+		<div class="page-content">
 
-async function api(path,opts={}){
-  const r=await fetch(path,{credentials:'include',headers:{'Content-Type':'application/json'},...opts});
-  if(r.status===401){window.location.href='/admin-login';throw new Error('Auth');}
-  return r.json();
-}
-function toast(msg,type='info'){
-  const ic={success:'✅',error:'❌',info:'ℹ️'};
-  const el=document.createElement('div');
-  el.className=`toast ${type}`;
-  el.innerHTML=`<span>${ic[type]}</span><span>${esc(msg)}</span>`;
-  document.getElementById('tw').appendChild(el);
-  setTimeout(()=>el.remove(),4200);
-}
-function openModal(id){
-  const modalTarget = document.getElementById(id);
-  if (modalTarget) {
-    modalTarget.classList.add('open');
-    modalTarget.style.display = 'flex';
-  }
-}
+			<!-- ===== HERO BANNER ===== -->
+			<div class="main-bnr">
+				<div class="container">
+					<div class="row align-items-center">
+						<div class="col-xl-7 col-md-6">
+							<h1 class="wow fadeInUp" data-wow-delay="0.2s">Master <span class="text-line">Stock
+									Market</span> with <br><span style="color: #EB4201;">Traderbro.in</span></h1>
+							<p class="text text-primary wow fadeInUp" data-wow-delay="0.4s">Your trusted source for
+								clear market direction and
+								confident trading decision.</p>
+							<div class="contant-box style-1 wow fadeInUp" data-wow-delay="0.6s">
+								<a href="trading-plan" class="btn btn-lg btn-shadow btn-primary m-r30">START
+									LEARNING</a>
+								<!-- <a class="video-btn style-1 popup-youtube" href="https://www.youtube.com/@TraderBroIN">
+									<i class="fa fa-play"></i>
+									<span class="text">How it works</span>
+								</a> -->
+								<a class="style-1" href="https://www.youtube.com/@TraderBroIN">
+									<img src="/static/finlab/Frontend/xhtml/images//social/youtube.png" alt="YouTube">
+									<span class="text">How it works</span>
+								</a>
+							</div>
+						</div>
+						<div class="col-xl-5 col-md-6">
+							<div class="banner-media">
+								<img class="media wow bounceInRight center" data-wow-delay="0.8s"
+									src="/static/finlab/Frontend/xhtml/images//home-banner/shape/digitalwallet.png"
+									alt="Traderbro.in Trading Dashboard">
+							</div>
+						</div>
+					</div>
+				</div>
+				<img class="shape1" src="/static/finlab/Frontend/xhtml/images//home-banner/shape1.svg" alt="">
+			</div>
 
-function closeModal(id) {
-  const modalTarget = document.getElementById(id);
-  if (modalTarget) {
-    modalTarget.classList.remove('open');
-    modalTarget.style.display = 'none';
-  }
-}
+			<!-- ===== INDICES TICKER STRIP (replaces crypto boxes) ===== -->
+			<div class="crypto-wrapper bg-light overflow-hidden">
+				<div class="container">
+					<div class="row">
+						<!-- Sensex -->
+						<div class="col-lg-3 col-md-6 m-b30">
+							<div class="crypto-box wow fadeInUp" data-wow-delay="1.0s">
+								<!-- <div class="crypto-media"
+									style="display:flex;align-items:center;justify-content:center;width:50px;height:50px;background:linear-gradient(135deg,#FF6B35,#f7b733);border-radius:50%;">
+									<span
+										style="color:#fff;font-weight:800;font-size:13px;letter-spacing:-0.5px;">BSE</span>
+								</div> -->
+								<div class="crypto-info">
+									<h5>Daily Plan <span>1d</span></h5>
+									<div class="price">Instant Market Edge for<span class="text-green">New User</span>
+									</div>
+									<a href="trading-plan" class="btn btn-square btn-primary">
+										<svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+											xmlns="http://www.w3.org/2000/svg">
+											<path d="M4.1665 10H15.8332" stroke="white" stroke-width="2"
+												stroke-linecap="round" stroke-linejoin="round" />
+											<path d="M10 4.16666L15.8333 9.99999L10 15.8333" stroke="white"
+												stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+										</svg>
+									</a>
+								</div>
+							</div>
+						</div>
+						<!-- Bank Nifty -->
+						<div class="col-lg-3 col-md-6 m-b30">
+							<div class="crypto-box wow fadeInUp" data-wow-delay="1.2s">
+								<!-- <div class="crypto-media"
+									style="display:flex;align-items:center;justify-content:center;width:50px;height:50px;background:linear-gradient(135deg,#1a73e8,#0d47a1);border-radius:50%;">
+									<span
+										style="color:#fff;font-weight:800;font-size:11px;letter-spacing:-0.5px;">BNF</span>
+								</div> -->
+								<div class="crypto-info">
+									<h5>Weekly Plan <span>1w</span></h5>
+									<div class="price">A week of<span class="text-green">Market Precision</span></div>
+									<a href="trading-plan" class="btn btn-square btn-primary">
+										<svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+											xmlns="http://www.w3.org/2000/svg">
+											<path d="M4.1665 10H15.8332" stroke="white" stroke-width="2"
+												stroke-linecap="round" stroke-linejoin="round" />
+											<path d="M10 4.16666L15.8333 9.99999L10 15.8333" stroke="white"
+												stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+										</svg>
+									</a>
+								</div>
+							</div>
+						</div>
+						<!-- Nifty 50 -->
+						<div class="col-lg-3 col-md-6 m-b30">
+							<div class="crypto-box wow fadeInUp" data-wow-delay="1.4s">
+								<!-- <div class="crypto-media"
+									style="display:flex;align-items:center;justify-content:center;width:50px;height:50px;background:linear-gradient(135deg,#34a853,#1e7e34);border-radius:50%;">
+									<span
+										style="color:#fff;font-weight:800;font-size:11px;letter-spacing:-0.5px;">N50</span>
+								</div> -->
+								<div class="crypto-info">
+									<h5>Monthly Plan <span>1m</span></h5>
+									<div class="price">Professional Insights with<span
+											class="text-green">Backtesting</span></div>
+									<a href="trading-plan" class="btn btn-square btn-primary">
+										<svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+											xmlns="http://www.w3.org/2000/svg">
+											<path d="M4.1665 10H15.8332" stroke="white" stroke-width="2"
+												stroke-linecap="round" stroke-linejoin="round" />
+											<path d="M10 4.16666L15.8333 9.99999L10 15.8333" stroke="white"
+												stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+										</svg>
+									</a>
+								</div>
+							</div>
+						</div>
+						<!-- FinNifty -->
+						<div class="col-lg-3 col-md-6 m-b30">
+							<div class="crypto-box wow fadeInUp" data-wow-delay="1.6s">
+								<!-- <div class="crypto-media"
+									style="display:flex;align-items:center;justify-content:center;width:50px;height:50px;background:linear-gradient(135deg,#9c27b0,#6a1b9a);border-radius:50%;">
+									<span
+										style="color:#fff;font-weight:800;font-size:11px;letter-spacing:-0.5px;">FIN</span>
+								</div> -->
+								<div class="crypto-info">
+									<h5>Half Year Plan <span>6m</span></h5>
+									<div class="price">Ultimate Plan for<span class="text-green">Professionals</span>
+									</div>
+									<a href="trading-plan" class="btn btn-square btn-primary">
+										<svg width="20" height="20" viewBox="0 0 20 20" fill="none"
+											xmlns="http://www.w3.org/2000/svg">
+											<path d="M4.1665 10H15.8332" stroke="white" stroke-width="2"
+												stroke-linecap="round" stroke-linejoin="round" />
+											<path d="M10 4.16666L15.8333 9.99999L10 15.8333" stroke="white"
+												stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+										</svg>
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 
-document.querySelectorAll('.overlay').forEach(el=>{
-  el.addEventListener('click',e=>{if(e.target===el)closeModal(el.id);});
-});
+			<!-- ===== COINS / INDICES ORBIT SECTION ===== -->
+			<section class="content-inner coins-wrapper bg-light overflow-hidden">
+				<div class="container">
+					<div class="row">
+						<div class="col-lg-6 m-b30">
+							<div class="section-head wow fadeInUp" data-wow-delay="0.2s">
+								<h2 class="title">With <span class="text-primary">Traderbro.in</span><br> Get the Right
+									Education.</h2>
+							</div>
+							<h5 class="sub-title text-primary wow fadeInUp" data-wow-delay="0.4s">Start your learning
+								journey in a few steps</h5>
+							<ul class="list-style-1">
+								<li class="wow fadeInUp" data-wow-delay="0.6s">Create and verify your Traderbro.in
+									account
+								</li>
+								<li class="wow fadeInUp" data-wow-delay="0.8s">Nifty 50, Bank Nifty, Sensex or FinNifty
+								</li>
+								<li class="wow fadeInUp" data-wow-delay="1.0s">Learn options chain</li>
+							</ul>
+							<a href="/about-us" class="btn btn-lg btn-shadow btn-primary wow fadeInUp"
+								data-wow-delay="1.2s">About Us</a>
+						</div>
+						<div class="col-lg-6 m-b30">
+							<div class="coins-media-wrapper">
+								<div class="main-circle1">
+									<div class="circle-box" data-350="transform:scale(0) rotate(0deg);"
+										data-550="transform:scale(1) rotate(360deg);"></div>
+									<!-- Replaced coin images with index label badges via inline SVGs -->
+									<ul class="coin-list">
+										<li data-400="left: 50%; top:50%; transform: scale(0);"
+											data-700="transform: scale(1); left:1.5%; top:50%;"><img
+												src="/static/finlab/Frontend/xhtml/images//coins/coin8.png"
+												alt="FinNifty"></li>
+										<li data-420="left: 50%; top:50%; transform: scale(0);"
+											data-700="transform: scale(1); left: 16%; top:16%;"><img
+												src="/static/finlab/Frontend/xhtml/images//coins/coin2.png"
+												alt="Bank Nifty"></li>
+										<li data-440="left: 50%; top:50%; transform: scale(0);"
+											data-700="transform: scale(1); left: 50%; top:1.5%;"><img
+												src="/static/finlab/Frontend/xhtml/images//coins/coin3.png"
+												alt="Nifty 50"></li>
+										<li data-460="left: 50%; top:50%; transform: scale(0);"
+											data-700="transform: scale(1); left: 84%; top:16%;"><img
+												src="/static/finlab/Frontend/xhtml/images//coins/coin4.png"
+												alt="Sensex"></li>
+										<li data-480="left: 50%; top:50%; transform: scale(0);"
+											data-700="transform: scale(1); left: 98%; top:50%;"><img
+												src="/static/finlab/Frontend/xhtml/images//coins/coin5.png"
+												alt="Options Chain"></li>
+										<li data-500="left: 50%; top:50%; transform: scale(0);"
+											data-700="transform: scale(1); left: 84%; top:84%;"><img
+												src="/static/finlab/Frontend/xhtml/images//coins/coin1.png"
+												alt="Put Call Ratio"></li>
+										<li data-520="left: 50%; top:50%; transform: scale(0);"
+											data-700="transform: scale(1); left: 50%; top:98%;"><img
+												src="/static/finlab/Frontend/xhtml/images//coins/coin6.png"
+												alt="Open Interest"></li>
+										<li data-540="left: 50%; top:50%; transform: scale(0);"
+											data-700="transform: scale(1); left: 16%; top:84%;"><img
+												src="/static/finlab/Frontend/xhtml/images//coins/coin7.png"
+												alt="IV Analysis"></li>
+									</ul>
+								</div>
+								<div class="center-media">
+									<img data-350="transform:scale(0) rotate(0deg);"
+										data-550="transform:scale(1) rotate(360deg);"
+										src="/static/finlab/Frontend/xhtml/images//logo-icon.png" alt="Traderbro.in">
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="coin-wave">
+					<div class="flex-coin1" data-400="transform:translateY(500px); opacity:0;"
+						data-800="transform:translateY(0); opacity:1;">
+						<img src="/static/finlab/Frontend/xhtml/images//coins/coin2.png" alt="">
+					</div>
+					<div class="flex-coin2" data-350="transform:translateY(200px); opacity:0;"
+						data-750="transform:translateY(0); opacity:1;">
+						<img src="/static/finlab/Frontend/xhtml/images//coins/coin4.png" alt="">
+					</div>
+					<div class="flex-coin3" data-400="transform:translateY(300px); opacity:0;"
+						data-800="transform:translateY(0); opacity:1;">
+						<img src="/static/finlab/Frontend/xhtml/images//coins/coin1.png" alt="">
+					</div>
+					<div class="flex-coin4" data-300="transform:translateY(350px); opacity:0;"
+						data-700="transform:translateY(0); opacity:1;">
+						<img src="/static/finlab/Frontend/xhtml/images//coins/coin3.png" alt="">
+					</div>
+					<div class="flex-coin5" data-400="transform:translateY(300px); opacity:0;"
+						data-800="transform:translateY(0); opacity:1;">
+						<img src="/static/finlab/Frontend/xhtml/images//coins/coin5.png" alt="">
+					</div>
+				</div>
+			</section>
 
-/* ─── LOAD ─── */
-async function loadUsers(){
-  document.getElementById('ri').className='fas fa-circle-notch fa-spin';
-  try{
-    const d=await api('/api/admin/users');
-    ALL=d.users||[];
-    applyFilters();
-    updateStats();
-    buildNotifs();
-    
-    if (_du && document.getElementById('ov-detail').classList.contains('open')) {
-      const updatedUser = ALL.find(x => x.id === _du.id);
-      if (updatedUser) {
-        _du = updatedUser;
-        const activeTab = document.querySelector('.m-tab.on');
-        if (activeTab) {
-          const tabKey = activeTab.id.replace('dt-', '');
-          dtab(tabKey);
-        }
-      }
-    }
-  } catch(e){toast('Failed to load users','error');}
-  document.getElementById('ri').className='fas fa-sync-alt';
-}
+			<!-- ===== ABOUT / ICO → ABOUT Traderbro.in ===== -->
+			<section class="content-inner-2 content-bx style-1 ">
+				<div class="container">
+					<div class="row align-items-center">
+						<div class="col-lg-6 m-b30 ">
+							<div class="dz-media">
+								<img src="/static/finlab/Frontend/xhtml/images//about/abstract-glowing-forex-chart-on-dark-background-bar-graph-finance-and-trade-concept-stock-market-ai-generated-photo.jpeg"
+									alt="Options Chain Analysis" class="rounded">
+								<!-- <div class="content-box wow bounceInLeft" data-wow-delay="0.6s">
+								<h6 class="m-a0">Option chain<br>& market data</h6>
+							</div> -->
+							</div>
+						</div>
+						<div class="col-lg-6 m-b30">
+							<div class="inner-content">
+								<div class="section-head">
+									<h3 class="title wow fadeInUp" data-wow-delay="0.6s">Platform for Learning
+										Options<br>Methodologies</h3>
+									<p class="font-text wow fadeInUp" data-wow-delay="0.8s">Traderbro.in empowers with
+										structured, practical education on Nifty 50, Bank Nifty, Sensex and FinNifty
+										options. Learn how to read options chains, manage risk, and build consistency.
+									</p>
+								</div>
 
-/* ─── STATS ─── */
-function planStatus(u){
-  if (u.status === 'revoked' || u.plan_status === 'revoked') return 'revoked';
-  const now=new Date();
-  const ex=u.plan_expiry?new Date(u.plan_expiry):null;
-  const paid=u.plan&&u.plan!=='free';
-  if(!paid)return'free';
-  if(ex&&ex>now){
-    const d=Math.ceil((ex-now)/86400000);
-    if(d<=7)return'expiring';
-    return'active';
-  }
-  return'expired';
-}
+								<div class="contant-box style-1 p-t60" data-wow-delay="1.0s">
+									<!-- <a href="/user-login" class="btn btn-primary m-r30">Explore Courses & Live
+										Videos</a> -->
+									<a href="/dashboard" class="btn btn-primary m-r30">Main Dashboard</a>
+									<!-- <a class="video-btn style-1 popup-youtube"
+										href="https://www.youtube.com/watch?v=cfmQFW1DpA0">
+										<i class="fa fa-play"></i>
+										<span class="text">How it works</span>
+									</a> -->
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
 
-function isQueued(u){
-  if(u.status === 'revoked' || u.plan_status === 'revoked') return false;
-  if(!u.plan_start||!u.plan||u.plan==='free')return false;
-  return new Date(u.plan_start)>new Date();
-}
+			<!-- ===== WHY Traderbro.in ===== -->
+			<section class="content-inner overflow-hidden">
+				<div class="container">
+					<div class="section-head text-center">
+						<h2 class="title wow fadeInUp" data-wow-delay="0.4s">Why <span
+								class="text-primary">Traderbro.in?</span></h2>
+					</div>
+					<div class="row justify-content-center">
+						<!-- Feature 1 -->
+						<div class="col-lg-4 col-md-6 m-b30">
+							<div class="icon-bx-wraper style-1 box-hover text-center wow fadeInUp"
+								data-wow-delay="0.6s">
+								<div class="icon-media">
+									<img src="/static/finlab/Frontend/xhtml/images//icons/icon3.svg"
+										alt="Practical Learning">
+								</div>
+								<div class="icon-content">
+									<h4 class="title">Learn Market <br> with Confidence</h4>
+									<p>Learn using option chain data. Every lesson is backed by options chain for
+										Sensex, Nifty50, Banknifty.</p>
+									<!-- <p>No theory overload — only strategies you can apply from Day 1 of trading.</p> -->
+								</div>
+							</div>
+						</div>
+						<!-- Feature 2 -->
+						<div class="col-lg-4 col-md-6 m-b30">
+							<div class="icon-bx-wraper active style-1 box-hover text-center wow fadeInUp"
+								data-wow-delay="0.8s">
+								<div class="icon-media">
+									<img src="/static/finlab/Frontend/xhtml/images//icons/icon4.svg"
+										alt="Options Trading using custom calculations">
+								</div>
+								<div class="icon-content">
+									<h4 class="title">Options Trading using <br>option chain data</h4>
+									<p>Read option chain data & get the visibility for market.</p>
+									<!-- <p>From Sensex to FinNifty.</p> -->
+								</div>
+							</div>
+						</div>
+						<!-- Feature 3 -->
+						<div class="col-lg-4 col-md-6 m-b30">
+							<div class="icon-bx-wraper style-1 box-hover text-center wow fadeInUp"
+								data-wow-delay="1.0s">
+								<div class="icon-media">
+									<img src="/static/finlab/Frontend/xhtml/images//icons/icon5.svg"
+										alt="Options Strategies">
+								</div>
+								<div class="icon-content">
+									<h4 class="title">Complete Options<br>Methodology Toolkit</h4>
+									<p>Build Confidence to stand tall & believe in yourself.</p>
+									<!-- <p>Learn risk management and position sizing the right way.</p> -->
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
 
-function updateStats(){
-  let active=0,expiring=0,expired=0,queued=0,free=0;
-  ALL.filter(u=>u.role!=='admin').forEach(u=>{
-    const st=planStatus(u);
-    if(st==='revoked') return; 
-    if(isQueued(u))queued++;
-    else if(st==='active')active++;
-    else if(st==='expiring'){active++;expiring++;}
-    else if(st==='expired')expired++;
-    else free++;
-  });
-  const total=ALL.filter(u=>u.role!=='admin').length;
-  document.getElementById('st-total').textContent=total;
-  document.getElementById('st-active').textContent=active+expiring;
-  document.getElementById('st-expiring').textContent=expiring;
-  document.getElementById('st-expired').textContent=expired;
-  document.getElementById('st-queued').textContent=queued;
-  document.getElementById('st-free').textContent=free;
-}
+			<!-- ===== LATEST BLOG / NEWS FEED ===== -->
+			<section class="content-inner bg-light">
+				<div class="container">
+					<div class="row align-items-center">
+						<div class="col-lg-8 col-md-12">
+							<div class="section-head">
+								<h2 class="title wow fadeInUp" data-wow-delay="0.2s">Latest from Traderbro.in Blog</h2>
+							</div>
+						</div>
+						<div class="col-lg-4 col-md-12 m-b30 text-end d-none d-lg-block">
+							<a href="blog-list.html" class="btn btn-primary wow fadeInUp" data-wow-delay="0.4s">View All
+								Articles</a>
+						</div>
+					</div>
+				</div>
+				<div class="container position-relative">
+					<div class="swiper recent-blog1">
+						<div class="swiper-wrapper">
+							<div class="swiper-slide">
+								<div class="dz-card style-1 wow fadeInUp" data-wow-delay="0.6s"
+									style="background-image:url('/static/finlab/Frontend/xhtml/images//blog/blog-slider/pic1.jpg');">
+									<div class="dz-info">
+										<div class="dz-meta">
+											<ul>
+												<li class="post-author">
+													<img src="/static/finlab/Frontend/xhtml/images//avatar/avatar1.jpg"
+														alt=""> By Traderbro.in Team
+												</li>
+												<li class="post-comments">14 Comments</li>
+												<!-- <li class="post-date">
+												<span class="day">10</span>
+												<span class="month">April</span>
+											</li> -->
+											</ul>
+										</div>
+										<h5 class="dz-title"><a href="blog-details.html">5 Common Mistakes New Options
+												Traders Make on Bank Nifty</a></h5>
+										<p>Avoid these costly errors when trading Bank Nifty weekly expiry options and
+											protect your capital from day one.</p>
+										<a href="blog-details.html" class="btn btn-primary">Read More</a>
+									</div>
+								</div>
+							</div>
+							<div class="swiper-slide">
+								<div class="dz-card style-1 wow fadeInUp" data-wow-delay="0.8s"
+									style="background-image:url('/static/finlab/Frontend/xhtml/images//blog/blog-slider/pic2.jpg');">
+									<div class="dz-info">
+										<div class="dz-meta">
+											<ul>
+												<li class="post-author">
+													<img src="/static/finlab/Frontend/xhtml/images//avatar/avatar2.jpg"
+														alt=""> By Traderbro.in Team
+												</li>
+												<li class="post-comments">9 Comments</li>
+												<!-- <li class="post-date">
+												<span class="day">05</span>
+												<span class="month">April</span>
+											</li> -->
+											</ul>
+										</div>
+										<h5 class="dz-title"><a href="blog-details.html">How to Read the Nifty 50
+												Options Chain Like a Pro</a></h5>
+										<p>Understanding OI, IV and PCR data from the NSE options chain to predict Nifty
+											market direction with confidence.</p>
+										<a href="blog-details.html" class="btn btn-primary">Read More</a>
+									</div>
+								</div>
+							</div>
+							<div class="swiper-slide">
+								<div class="dz-card style-1 wow fadeInUp" data-wow-delay="1.0s"
+									style="background-image:url('/static/finlab/Frontend/xhtml/images//blog/blog-slider/pic3.jpg');">
+									<div class="dz-info">
+										<div class="dz-meta">
+											<ul>
+												<li class="post-author">
+													<img src="/static/finlab/Frontend/xhtml/images//avatar/avatar3.jpg"
+														alt=""> By Traderbro.in Team
+												</li>
+												<li class="post-comments">22 Comments</li>
+												<!-- <li class="post-date">
+												<span class="day">28</span>
+												<span class="month">March</span>
+											</li> -->
+											</ul>
+										</div>
+										<h5 class="dz-title"><a href="blog-details.html">Sensex vs Nifty 50 — Which
+												Index Should You Trade?</a></h5>
+										<p>A complete comparison of BSE Sensex and NSE Nifty 50 to help you decide which
+											index suits your trading style.</p>
+										<a href="blog-details.html" class="btn btn-primary">Read More</a>
+									</div>
+								</div>
+							</div>
+							<div class="swiper-slide">
+								<div class="dz-card style-1 wow fadeInUp" data-wow-delay="1.2s"
+									style="background-image:url('/static/finlab/Frontend/xhtml/images//blog/blog-slider/pic1.jpg');">
+									<div class="dz-info">
+										<div class="dz-meta">
+											<ul>
+												<li class="post-author">
+													<img src="/static/finlab/Frontend/xhtml/images//avatar/avatar1.jpg"
+														alt=""> By Traderbro.in Team
+												</li>
+												<li class="post-comments">17 Comments</li>
+												<!-- <li class="post-date">
+												<span class="day">20</span>
+												<span class="month">March</span>
+											</li> -->
+											</ul>
+										</div>
+										<h5 class="dz-title"><a href="blog-details.html">FinNifty Options — A Beginner's
+												Guide to Financial Services Index</a></h5>
+										<p>Everything you need to know about trading FinNifty options — expiry cycles,
+											liquidity, and key strategies to get started.</p>
+										<a href="blog-details.html" class="btn btn-primary">Read More</a>
+									</div>
+								</div>
+							</div>
+							<div class="swiper-slide">
+								<div class="dz-card style-1 wow fadeInUp" data-wow-delay="1.6s"
+									style="background-image:url('/static/finlab/Frontend/xhtml/images//blog/blog-slider/pic2.jpg');">
+									<div class="dz-info">
+										<div class="dz-meta">
+											<ul>
+												<li class="post-author">
+													<img src="/static/finlab/Frontend/xhtml/images//avatar/avatar2.jpg"
+														alt=""> By Traderbro.in Team
+												</li>
+												<li class="post-comments">11 Comments</li>
+												<!-- <li class="post-date">
+												<span class="day">15</span>
+												<span class="month">March</span>
+											</li> -->
+											</ul>
+										</div>
+										<h5 class="dz-title"><a href="blog-details.html">Iron Condor Strategy on Bank
+												Nifty — Step by Step</a></h5>
+										<p>Learn how to deploy an Iron Condor on Bank Nifty weekly expiry to earn
+											consistent premium income in a sideways market.</p>
+										<a href="blog-details.html" class="btn btn-primary">Read More</a>
+									</div>
+								</div>
+							</div>
+							<div class="swiper-slide">
+								<div class="dz-card style-1 wow fadeInUp" data-wow-delay="1.8s"
+									style="background-image:url('/static/finlab/Frontend/xhtml/images//blog/blog-slider/pic3.jpg');">
+									<div class="dz-info">
+										<div class="dz-meta">
+											<ul>
+												<li class="post-author">
+													<img src="/static/finlab/Frontend/xhtml/images//avatar/avatar3.jpg"
+														alt=""> By Traderbro.in Team
+												</li>
+												<li class="post-comments">8 Comments</li>
+												<!-- <li class="post-date">
+												<span class="day">08</span>
+												<span class="month">March</span>
+											</li> -->
+											</ul>
+										</div>
+										<h5 class="dz-title"><a href="blog-details.html">Budget 2025 & Its Impact on
+												Nifty — Trader's Perspective</a></h5>
+										<p>How Union Budget announcements move Nifty 50 and Bank Nifty — and how smart
+											traders position themselves ahead of key events.</p>
+										<a href="blog-details.html" class="btn btn-primary">Read More</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="swiper-btn swiper-btn-center-lr">
+						<div class="swiper-button-prev btn-prev style-1"><i class="flaticon-left-arrow-1"></i></div>
+						<div class="swiper-button-next btn-next style-1"><i class="flaticon-next"></i></div>
+					</div>
+				</div>
+			</section>
 
-function buildNotifs(){
-  const now=new Date();
-  let expToday=0,newToday=0;
-  ALL.forEach(u=>{
-    if(u.role==='admin')return;
-    const ex=u.plan_expiry?new Date(u.plan_expiry):null;
-    if(ex){const d=Math.ceil((ex-now)/86400000);if(d>=0&&d<=1)expToday++;}
-    if(u.created_at){try{if(new Date(u.created_at).toDateString()===TODAY)newToday++;}catch{}}
-  });
-  const s=document.getElementById('notif-strip');
-  const b=[];
-  if(expToday>0)b.push(`<div class="nb nb-r" onclick="setFilter('expiring')"><div class="ndot"></div>${expToday} plan${expToday>1?'s':''} expiring today/tomorrow</div>`);
-  if(newToday>0)b.push(`<div class="nb nb-g"><div class="ndot"></div>${newToday} new user${newToday>1?'s':''} today</div>`);
-  s.innerHTML=b.join('');
-}
+			<!-- ===== CTA BANNER ===== -->
+			<!-- <section class="bg-light call-to-action pb-5">
+			<div class="container">
+				<h2 class="title text-capitalize text-center p-b15 wow fadeInUp" data-wow-delay="0.6s">Options Chain <br>for Nifty 50, Bank Nifty & FinNifty</h2>
+				<div class="text-center">	
+					<a href="/user-login" class="btn btn-primary btn-lg wow fadeInUp" data-wow-delay="0.8s">Try It Free Now</a>
+				</div>	
+			</div>
+		</section> -->
 
-/* ─── FILTER ─── */
-function setFilter(k){
-  _qf=k;
-  document.querySelectorAll('.fp').forEach(el=>el.classList.remove('on'));
-  const fp=document.getElementById('fp-'+k);
-  if(fp)fp.classList.add('on');
-  document.querySelectorAll('.sm').forEach(el=>el.classList.remove('active-filter'));
-  applyFilters();
-}
+			<!-- ===== CLIENTS / PARTNERS ===== -->
+			<!-- <section class="content-inner-3 bg-light">
+			<div class="container">
+				<div class="swiper clients-swiper">
+				  <div class="swiper-wrapper">
+					<div class="swiper-slide">
+						<div class="clients-logo wow fadeInUp" data-wow-delay="0.4s">
+							<a href="javascript:void(0)"><img class="logo-main" src="/static/finlab/Frontend/xhtml/images//clients-logo/logo1.png" alt="NSE India"></a>
+						</div>
+					</div>
+					<div class="swiper-slide">
+						<div class="clients-logo wow fadeInUp" data-wow-delay="0.6s">
+							<a href="javascript:void(0)"><img class="logo-main" src="/static/finlab/Frontend/xhtml/images//clients-logo/logo2.png" alt="BSE India"></a>
+						</div>
+					</div>
+					<div class="swiper-slide">
+						<div class="clients-logo wow fadeInUp" data-wow-delay="0.8s">
+							<a href="javascript:void(0)"><img class="logo-main" src="/static/finlab/Frontend/xhtml/images//clients-logo/logo3.png" alt="SEBI"></a>
+						</div>
+					</div>
+					<div class="swiper-slide">
+						<div class="clients-logo wow fadeInUp" data-wow-delay="0.10s">
+							<a href="javascript:void(0)"><img class="logo-main" src="/static/finlab/Frontend/xhtml/images//clients-logo/logo4.png" alt="Zerodha"></a>
+						</div>
+					</div>
+					<div class="swiper-slide">
+						<div class="clients-logo wow fadeInUp" data-wow-delay="1.0s">
+							<a href="javascript:void(0)"><img class="logo-main" src="/static/finlab/Frontend/xhtml/images//clients-logo/logo5.png" alt="Groww"></a>
+						</div>
+					</div>
+					<div class="swiper-slide">
+						<div class="clients-logo wow fadeInUp" data-wow-delay="1.2s">
+							<a href="javascript:void(0)"><img class="logo-main" src="/static/finlab/Frontend/xhtml/images//clients-logo/logo1.png" alt="Upstox"></a>
+						</div>
+					</div>
+					<div class="swiper-slide">
+						<div class="clients-logo wow fadeInUp" data-wow-delay="1.4s">
+							<a href="javascript:void(0)"><img class="logo-main" src="/static/finlab/Frontend/xhtml/images//clients-logo/logo1.png" alt="Angel One"></a>
+						</div>
+					</div>
+				  </div>
+				</div>	
+			</div>
+		</section> -->
 
-function clearDateFilter() {
-  const el = document.getElementById('f-date');
-  if (el) el.value = '';
-  applyFilters();
-}
+			<!-- ===== JOIN / CONTACT FORM ===== -->
+			<!-- <section class="bg-primary content-inner-3 form-wrapper1">
+			<div class="container">
+				<div class="row align-items-center">
+					<div class="col-lg-3">
+						<div class="section-head wow fadeInUp" data-wow-delay="0.2s">
+							<h6 class="sub-title text-white">JOIN Traderbro.in</h6>
+							<h4 class="title text-white">Start Learning Today — It's Free</h4>
+						</div>
+					</div>
+					<div class="col-lg-9">
+						<form class="dzForm" method="POST" action="script/contact_smtp.php">
+							<div class="dzFormMsg"></div>
+							<input type="hidden" class="form-control" name="dzToDo" value="Contact">
+							<input type="hidden" class="form-control" name="reCaptchaEnable" value="0">
+							
+							<div class="row g-4 m-b30">
+								<div class="col-md-4 col-sm-6 wow fadeInUp" data-wow-delay="0.4s">
+									<input name="dzFirstName" required="" type="text" class="form-control" placeholder="First Name">
+								</div>
+								<div class="col-md-4 col-sm-6 wow fadeInUp" data-wow-delay="0.6s">
+									<input name="dzLastName" required="" type="text" class="form-control" placeholder="Last Name">
+								</div>
+								<div class="col-md-4 col-sm-6 wow fadeInUp" data-wow-delay="0.8s">
+									<input name="dzEmail" required="" type="email" class="form-control" placeholder="Email Address">
+								</div>
+								<div class="col-md-4 col-sm-6 wow fadeInUp" data-wow-delay="1.0s">
+									<input name="dzPhoneNumber" required="" type="number" class="form-control" placeholder="Phone Number">
+								</div>
+								<div class="col-md-4 col-sm-6 wow fadeInUp" data-wow-delay="1.2s">
+									<input name="dzMessage" required="" type="text" class="form-control" placeholder="What do you want to learn? (e.g. Bank Nifty options)">
+								</div>
+								<div class="col-md-4 col-sm-6 wow fadeInUp" data-wow-delay="1.4s">
+									<button name="submit" type="submit" value="Submit" class="btn btn-dark btn-block w-100 h-100">Get Started Free</button>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</section> -->
 
-function applyFilters(){
-  const q = document.getElementById('srch').value.toLowerCase();
-  const so = document.getElementById('f-sort').value;
-  const fDate = document.getElementById('f-date').value; // "YYYY-MM-DD"
-  const fDateType = document.getElementById('f-date-type').value; // "sub", "start", "reg"
-  const fPayMode = document.getElementById('f-payment-mode').value; // "all", "upi", "card", etc.
+		</div>
 
-  FIL = ALL.filter(u => {
-    if (u.role === 'admin') return false;
 
-    // 1. Search Query
-    const mq = !q || [u.username, u.email, u.phone].some(v => (v || '').toLowerCase().includes(q));
-    if (!mq) return false;
 
-    // 2. Status / Plan filter tab
-    const st = planStatus(u);
-    const pl = (u.plan || '').toLowerCase();
-    const iq = isQueued(u);
+		<!-- ===== WEBINAR NOTIFICATION STRIP ===== -->
+		<div id="webinar-strip"
+			style="display:none;background:linear-gradient(135deg,#0e0e1a,#13132a);border-top:1px solid rgba(235,66,1,0.2);border-bottom:1px solid rgba(235,66,1,0.2);padding:0;">
+			<div class="container">
+				<div style="display:flex;align-items:center;gap:1.25rem;padding:1rem 0;flex-wrap:wrap;">
+					<span id="ws-pill"
+						style="background:#eb4201;color:#fff;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 12px;border-radius:100px;white-space:nowrap;">UPCOMING</span>
+					<div style="flex:1;min-width:200px;">
+						<div style="font-size:.95rem;font-weight:600;color:#e8eaf0;margin-bottom:2px;" id="ws-title">—
+						</div>
+						<div style="font-size:.78rem;color:#7c7e8e;" id="ws-sub">—</div>
+					</div>
+					<div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#ff6935;" id="ws-cd">
+					</div>
+					<a href="/webinars" id="ws-cta"
+						style="background:#eb4201;color:#fff;font-size:.8rem;font-weight:600;padding:8px 20px;border-radius:8px;text-decoration:none;white-space:nowrap;transition:background .2s;">View
+						Webinar →</a>
+				</div>
+			</div>
+		</div>
 
-    let matchTab = true;
-    if (_qf === 'all') matchTab = true;
-    else if (_qf === 'active') matchTab = (st === 'active' || st === 'expiring') && !iq;
-    else if (_qf === 'expiring') matchTab = st === 'expiring';
-    else if (_qf === 'expired') matchTab = st === 'expired';
-    else if (_qf === 'queued') matchTab = iq;
-    else if (_qf === 'free') matchTab = st === 'free';
-    else matchTab = (pl === _qf);
+		<script>
+			(function () {
+				// ---- Shared status engine ----
+				function effectiveStatus(w) {
+					if (w.status === 'cancelled') return 'cancelled';
+					const start = new Date(w.scheduled_at).getTime();
+					const dur = (w.duration_minutes || 60) * 60 * 1000;
+					const end = start + dur;
+					const now = Date.now();
+					if (w.status === 'live' && now < end) return 'live';
+					if (now >= start && now < end) return 'live';
+					if (now >= end) return 'completed';
+					return 'upcoming';
+				}
 
-    if (!matchTab) return false;
+				let wsWebinar = null; // the raw webinar object
+				let wsCdTimer = null;
 
-    // 3. Payment Mode Filter
-    if (fPayMode !== 'all') {
-      const userMode = (u.payment_method || '').toLowerCase();
-      if (fPayMode === 'upi' && !userMode.includes('upi')) return false;
-      if (fPayMode === 'card' && !userMode.includes('card') && !userMode.includes('emi')) return false;
-      if (fPayMode === 'netbanking' && !userMode.includes('netbanking')) return false;
-      if (fPayMode === 'wallet' && !userMode.includes('wallet')) return false;
-      if (fPayMode === 'manual' && userMode !== 'manual') return false;
-    }
+				async function loadWebinarStrip() {
+					try {
+						const r = await fetch('/api/webinar/next');
+						const d = await r.json();
+						const strip = document.getElementById('webinar-strip');
 
-    // 4. Date Filter
-    if (fDate) {
-      let targetDateStr = '';
-      if (fDateType === 'sub') {
-        targetDateStr = u.sub_created_at || u.plan_start || u.created_at;
-      } else if (fDateType === 'start') {
-        targetDateStr = u.plan_start;
-      } else if (fDateType === 'reg') {
-        targetDateStr = u.created_at;
-      }
-      if (!targetDateStr) return false;
-      try {
-        const dIso = new Date(targetDateStr).toISOString().substring(0, 10);
-        if (dIso !== fDate) return false;
-      } catch(e) { return false; }
-    }
+						if (!d.webinar) { strip.style.display = 'none'; return; }
 
-    return true;
-  });
+						wsWebinar = d.webinar;
+						renderStrip();
+					} catch (e) {
+						// Silently fail — strip stays hidden
+					}
+				}
 
-  FIL.sort((a, b) => {
-    if (so === 'oldest') return a.id - b.id;
-    if (so === 'name') return (a.username || '').localeCompare(b.username || '');
-    if (so === 'sub-desc') return new Date(b.sub_created_at || b.plan_start || 0) - new Date(a.sub_created_at || a.plan_start || 0);
-    if (so === 'expiry-asc') return new Date(a.plan_expiry || 0) - new Date(b.plan_expiry || 0);
-    if (so === 'expiry-desc') return new Date(b.plan_expiry || 0) - new Date(a.plan_expiry || 0);
-    return b.id - a.id;
-  });
+				function renderStrip() {
+					if (!wsWebinar) return;
+					const strip = document.getElementById('webinar-strip');
 
-  PAGE = 1;
-  render();
-}
+					// Always compute status from time, never trust raw DB value alone
+					const status = effectiveStatus(wsWebinar);
 
-/* ─── BADGES ─── */
-function planBadge(p){
-  const m={premium:['b-premium','👑 Premium'],pro:['b-pro','⚡ Pro'],essential:['b-essential','🟢 Essential'],basic:['b-basic','🔷 Basic']};
-  const [c,l]=m[(p||'').toLowerCase()]||['b-free','⭕ Free'];
-  return `<span class="badge ${c}">${l}</span>`;
-}
-function statusBadge(u){
-  if(u.status === 'revoked' || u.plan_status === 'revoked') return '<span class="badge b-revoked">🚫 Revoked</span>';
-  if(isQueued(u)) return '<span class="badge b-queued">🔵 Queued</span>';
-  const st=planStatus(u);
-  if(st==='active') return '<span class="badge b-active">✅ Active</span>';
-  if(st==='expiring') return '<span class="badge b-expiring">⏳ Expiring</span>';
-  if(st==='expired') return '<span class="badge b-expired">❌ Expired</span>';
-  return '<span class="badge b-noplan">No Plan</span>';
-}
-function payBadge(u) {
-  const m = (u.payment_method || '').toLowerCase();
-  const label = u.payment_label || '—';
-  if (m === 'upi') return `<span class="badge" style="background:rgba(37,99,235,.15);color:#3b82f6;border-color:rgba(37,99,235,.3);" title="${esc(label)}">📱 UPI</span>`;
-  if (m === 'card') return `<span class="badge" style="background:rgba(168,85,247,.15);color:#a855f7;border-color:rgba(168,85,247,.3);" title="${esc(label)}">💳 Card</span>`;
-  if (m === 'netbanking') return `<span class="badge" style="background:rgba(234,179,8,.15);color:#eab308;border-color:rgba(234,179,8,.3);" title="${esc(label)}">🏦 NetBank</span>`;
-  if (m === 'wallet') return `<span class="badge" style="background:rgba(20,184,166,.15);color:#14b8a6;border-color:rgba(20,184,166,.3);" title="${esc(label)}">👛 Wallet</span>`;
-  if (m === 'manual') return `<span class="badge" style="background:rgba(236,72,153,.15);color:#ec4899;border-color:rgba(236,72,153,.3);" title="${esc(label)}">👑 Admin</span>`;
-  if (u.plan && u.plan !== 'free') return `<span class="badge" style="background:rgba(16,185,129,.15);color:#10b981;border-color:rgba(16,185,129,.3);" title="${esc(label)}">Online</span>`;
-  return `<span style="font-size:11px;color:var(--muted)">—</span>`;
-}
+					// Hide if completed or cancelled — nothing useful to show on homepage
+					if (status === 'completed' || status === 'cancelled') {
+						strip.style.display = 'none';
+						return;
+					}
 
-/* ─── RENDER ─── */
-function render(){
-  const total=FIL.length;
-  const pages=Math.ceil(total/PP)||1;
-  PAGE=Math.min(PAGE,pages);
-  const sl=FIL.slice((PAGE-1)*PP,PAGE*PP);
+					const isLive = status === 'live';
+					const dt = new Date(wsWebinar.scheduled_at);
+					const dateS = dt.toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' });
+					const timeS = dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-  document.getElementById('tcnt').textContent=`${total} user${total!==1?'s':''}`;
-  document.getElementById('pinfo').textContent=total?`Showing ${(PAGE-1)*PP+1}–${Math.min(PAGE*PP,total)} of ${total}`:'No users';
+					// Pill
+					const pill = document.getElementById('ws-pill');
+					if (isLive) {
+						pill.textContent = '🔴 LIVE NOW';
+						pill.style.background = '#eb4201';
+						pill.style.color = '#fff';
+						pill.style.border = 'none';
+					} else {
+						pill.textContent = 'UPCOMING WEBINAR';
+						pill.style.background = 'rgba(2,163,254,0.15)';
+						pill.style.color = '#02a3fe';
+						pill.style.border = '1px solid rgba(2,163,254,0.3)';
+					}
 
-  const pb=document.getElementById('pbtns');pb.innerHTML='';
-  const addP=(l,p,dis=false,act=false)=>{
-    const b=document.createElement('button');
-    b.className='pbtn'+(act?' active':'');b.innerHTML=l;b.disabled=dis;
-    if(!dis)b.onclick=()=>{PAGE=p;render();};
-    pb.appendChild(b);
-  };
-  addP('<i class="fas fa-chevron-left"></i>',PAGE-1,PAGE<=1);
-  for(let p=1;p<=pages;p++){
-    if(pages<=7||Math.abs(p-PAGE)<=2||p===1||p===pages)addP(p,p,false,p===PAGE);
-    else if(Math.abs(p-PAGE)===3)pb.innerHTML+='<span style="color:var(--muted);padding:0 4px">…</span>';
-  }
-  addP('<i class="fas fa-chevron-right"></i>',PAGE+1,PAGE>=pages);
+					document.getElementById('ws-title').textContent = wsWebinar.title;
+					document.getElementById('ws-sub').textContent = isLive
+						? 'Live session in progress — join now!'
+						: `${dateS} at ${timeS} IST`;
 
-  if(!sl.length){
-    document.getElementById('tbody').innerHTML=`<tr><td colspan="11"><div class="empty"><i class="fas fa-users"></i><div class="empty-t">No users found</div><div class="empty-s">Adjust filters, date selector or search</div></div></td></tr>`;
-    return;
-  }
+					// CTA button
+					const cta = document.getElementById('ws-cta');
+					if (isLive && wsWebinar.meeting_link) {
+						cta.href = wsWebinar.meeting_link;
+						cta.textContent = 'Join Live →';
+						cta.target = '_blank';
+					} else {
+						cta.href = '/webinars';
+						cta.textContent = 'Register Free →';
+						cta.removeAttribute('target');
+					}
 
-  document.getElementById('tbody').innerHTML=sl.map((u,i)=>{
-    const isRev = (u.status === 'revoked' || u.plan_status === 'revoked');
-    const d=isRev ? null : dleft(u.plan_expiry);
-    const dlHtml=isRev ? '<span class="dl-exp">Revoked</span>' : d===null?'<span class="dl-none">—</span>':d<=0?'<span class="dl-exp">Expired</span>':d<=7?`<span class="dl-warn">${d}d left</span>`:`<span class="dl-ok">${d}d left</span>`;
-    const subHtml=isRev ? '<span style="font-size:10px;color:var(--red)">Access Terminated</span>' : isQueued(u)?`<span style="font-size:10px;color:var(--purple)">🔵 Starts ${fd(u.plan_start)}</span>`:`<span style="font-size:10px;color:var(--muted)">${u.plan_expiry?fd(u.plan_start)+' →':''}</span>`;
-    const subTimeHtml = u.sub_created_at ? `<span style="font-size:10px;color:var(--dim);white-space:nowrap;">${fdt(u.sub_created_at)}</span>` : '<span style="font-size:10px;color:var(--muted)">—</span>';
-    
-    return `<tr>
-      <td style="color:var(--muted);font-size:10px">${(PAGE-1)*PP+i+1}</td>
-      <td>
-        <div class="ucell" onclick="openDetail(${u.id})">
-          <div class="ava" style="background:${acol(u.username)};color:${afg(u.username)};width:34px;height:34px;font-size:11px">${at(u.username)}</div>
-          <div><div class="uname">${esc(u.username)}</div><div class="uemail">${esc(u.email||'—')}</div></div>
-        </div>
-      </td>
-      <td><span class="mono">${esc(u.phone||'—')}</span></td>
-      <td style="text-align:center">${planBadge(u.plan)}</td>
-      <td style="text-align:center">${statusBadge(u)}</td>
-      <td>${subHtml}</td>
-      <td style="font-size:11px;color:var(--dim)">${isRev ? '—' : fd(u.plan_expiry)}</td>
-      <td>${dlHtml}</td>
-      <td style="text-align:center">${payBadge(u)}</td>
-      <td style="text-align:center">${subTimeHtml}</td>
-      <td style="text-align:center">
-        <button class="action-btn" onclick="showDrop(event,${u.id})" title="Actions">
-          <i class="fas fa-ellipsis-v"></i>
-        </button>
-      </td>
-    </tr>`;
-  }).join('');
-}
+					strip.style.display = 'block';
 
-/* ─── DROPDOWN PANEL ─── */
-let _activeDrop=null;
-function showDrop(e,id){
-  e.stopPropagation();
-  if(_activeDrop){_activeDrop.remove();_activeDrop=null;}
-  const u=ALL.find(x=>x.id===id);if(!u)return;
-  const btn=e.currentTarget;
-  const rect=btn.getBoundingClientRect();
-  const drop=document.createElement('div');
-  drop.className='drop-menu open';
-  drop.id='active-drop';
-  drop.innerHTML=`
-    <button class="dm-item" onclick="openDetail(${id})"><i class="fas fa-eye"></i> View Profile</button>
-    <button class="dm-item" onclick="openEdit(${id})"><i class="fas fa-edit"></i> Edit User</button>
-    <button class="dm-item dm-gold" onclick="openPlan(${id})"><i class="fas fa-crown"></i> Manage Subscription</button>
-    <button class="dm-item" style="color:var(--teal);font-weight:700;" onclick="openPlanImmediate(${id})"><i class="fas fa-bolt"></i> Grant Immediate Access</button>
-    <button class="dm-item" onclick="openRpw(${id})"><i class="fas fa-key"></i> Reset Password</button>
-    <button class="dm-item" onclick="dlDisclaimer(${id})"><i class="fas fa-file-pdf"></i> Download Disclaimer PDF</button>
-    <button class="dm-item" onclick="kickSession(${id},'${esc(u.username)}')"><i class="fas fa-sign-out-alt"></i> Force Logout</button>
-    <div class="dm-div"></div>
-    <button class="dm-item dm-red" onclick="openDel(${id})"><i class="fas fa-trash"></i> Delete User</button>
+					// Start/restart countdown ticker
+					clearInterval(wsCdTimer);
+					if (!isLive) {
+						wsCdTimer = setInterval(function () {
+							if (!wsWebinar) return;
+							// Re-check status every tick — might have gone live
+							const nowStatus = effectiveStatus(wsWebinar);
+							if (nowStatus !== 'upcoming') { renderStrip(); return; }
+							const diff = new Date(wsWebinar.scheduled_at).getTime() - Date.now();
+							const cdEl = document.getElementById('ws-cd');
+							if (!cdEl) return;
+							if (diff <= 0) { cdEl.textContent = 'Starting soon…'; return; }
+							const dv = Math.floor(diff / 86400000),
+								hv = Math.floor((diff % 86400000) / 3600000),
+								mv = Math.floor((diff % 3600000) / 60000),
+								sv = Math.floor((diff % 60000) / 1000);
+							cdEl.textContent = dv > 0 ? `${dv}d ${hv}h ${mv}m` : `${hv}h ${mv}m ${sv}s`;
+						}, 1000);
+					} else {
+						// Live: show remaining time
+						wsCdTimer = setInterval(function () {
+							if (!wsWebinar) return;
+							const nowStatus = effectiveStatus(wsWebinar);
+							if (nowStatus !== 'live') { renderStrip(); return; }
+							const end = new Date(wsWebinar.scheduled_at).getTime() + (wsWebinar.duration_minutes || 60) * 60000;
+							const diff = end - Date.now();
+							const cdEl = document.getElementById('ws-cd');
+							if (!cdEl) return;
+							if (diff <= 0) { cdEl.textContent = 'Ending soon…'; return; }
+							const hv = Math.floor(diff / 3600000), mv = Math.floor((diff % 3600000) / 60000), sv = Math.floor((diff % 60000) / 1000);
+							cdEl.textContent = `${hv}h ${mv}m ${sv}s remaining`;
+						}, 1000);
+					}
+				}
+
+				// Initial load
+				loadWebinarStrip();
+				// Re-fetch from server every 2 minutes (pick up new webinars / admin changes)
+				setInterval(loadWebinarStrip, 120000);
+			})();
+		</script>
+
+
+		<!-- Footer -->
+		<footer class="site-footer">
+			<div class="footer-top">
+				<div class="container">
+					<div class="row">
+						<div class="col-lg-4 col-md-12 col-sm-12">
+							<div class="widget widget_about wow fadeInUp" data-wow-delay="0.4s">
+								<h6 class="footer-title mb-3">Welcome to Traderbro.in</h6>
+								<a href="/" class="logo-light"><img
+										src="/static/finlab/Frontend/xhtml/images//Logo-traderbro-bgremove.png"
+										alt="Traderbro.in"></a>
+
+								<!-- <form class="dzSubscribe ft-subscribe mb-4" action="script/mailchamp.php" method="post">
+								<div class="dzSubscribeMsg"></div>
+								<div class="input-group mb-0"> 
+									<input name="dzEmail" required="required" type="email" class="form-control" placeholder="Your Email Address">
+									<button name="submit" value="Submit" type="submit" class="btn btn-primary style-1">
+										<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none"><g clip-path="url(#l)"><path d="M.246 17.179c-.148.68.374.967.858.75l16.365-8.391h.002c.195-.11.308-.308.308-.537s-.113-.428-.308-.538h-.002L1.104.071C.62-.146.098.142.246.822L1.75 7.521 10.293 9 1.75 10.479.246 17.179z" fill="#fff"/></g><defs><clipPath id="l"><path fill="#fff" d="M0 0h18v18H0z"/></clipPath></defs></svg>
+									</button>
+								</div>
+							</form> -->
+								<!-- <p class="text-primary font-13 mb-2">Download the Traderbro.in App</p>
+							<div>
+								<a href="https://appstore.com/" class="me-2"><img src="/static/finlab/Frontend/xhtml/images//app-store.png" alt="Download on App Store"></a>
+								<a href="https://playstore.com/"><img src="/static/finlab/Frontend/xhtml/images//play-store.png" alt="Get it on Google Play"></a>
+							</div> -->
+							</div>
+						</div>
+						<div class="col-lg-2 col-md-3 col-6">
+							<div class="widget widget_links wow fadeInUp" data-wow-delay="0.6s">
+								<h6 class="footer-title">Quick Links</h6>
+								<ul>
+									<li><a href="/about-us">About Us</a></li>
+									<li><a href="/privacy-policy">Privacy Policy</a></li>
+									<li><a href="/terms-and-conditions">Terms of Service</a></li>
+									<li><a href="/disclaimer">Disclaimer</a></li>
+									<li><a href="/refund-policy">Refund-Policy</a></li>
+								</ul>
+							</div>
+						</div>
+						<div class="col-lg-2 col-md-3 col-6">
+							<div class="widget widget_links wow fadeInUp" data-wow-delay="0.8s">
+								<h6 class="footer-title">Subscriptions</h6>
+								<ul>
+									<li><a href="trading-plan">Basic</a></li>
+									<li><a href="trading-plan">Essential</a></li>
+									<li><a href="trading-plan">Advance</a></li>
+									<li><a href="trading-plan">Pro</a></li>
+								</ul>
+							</div>
+						</div>
+						<div class="col-lg-2 col-md-3 col-6">
+							<div class="widget widget_links wow fadeInUp" data-wow-delay="1.2s">
+								<h6 class="footer-title">Support</h6>
+								<ul>
+									<!-- <li><a href="javascript:void(0);">FAQ</a></li> -->
+									<li><a href="static/finlab/Frontend/xhtml/contact-us.html">Contact Us</a></li>
+								</ul>
+							</div>
+						</div>
+						<div class="col-lg-2 col-md-3 col-6">
+							<div class="widget widget-social wow fadeInUp" data-wow-delay="1.4s">
+								<h6 class="footer-title">Follow Us</h6>
+								<ul>
+									<!-- <li><a target="_blank" href="https://twitter.com/"><img
+												src="/static/finlab/Frontend/xhtml/images//social/twitter.png"
+												alt="">Twitter / X</a></li>
+									<li><a target="_blank" href="https://www.facebook.com/"><img
+												src="/static/finlab/Frontend/xhtml/images//social/facebook.png"
+												alt="">Facebook</a></li>
+									<li><a target="_blank" href="https://www.linkedin.com/"><img
+												src="/static/finlab/Frontend/xhtml/images//social/linkedin.png"
+												alt="">LinkedIn</a></li>
+									<li><a target="_blank" href="https://www.instagram.com/"><img
+												src="/static/finlab/Frontend/xhtml/images//social/instagram.png"
+												alt="">Instagram</a></li> -->
+									<li><a target="_blank" href="https://www.youtube.com/@TraderBroIN"><img
+												src="/static/finlab/Frontend/xhtml/images//social/youtube.png"
+												alt="">YouTube</a></li>
+								</ul>
+							</div>
+						</div>
+					</div>
+					<div class="ticker-wrapper">
+						<div class="ticker-track">
+
+							<!-- ORIGINAL CONTENT -->
+							<div class="ticker-content">
+								<span class="ticker-item bg-warning text-dark">
+									Educational Platform (Not SEBI Registered)
+								</span>
+
+								<span class="ticker-item text-danger">
+									Traderbro.in is an educational platform. We are not SEBI registered as a Research
+									Analyst (RA) or Investment Adviser (IA). No investment or trading advice is
+									provided.
+								</span>
+							</div>
+						</div>
+					</div>
+					<script>
+						const track = document.getElementById('tickerTrack');
+						track.innerHTML += track.innerHTML; // clone once for seamless loop, not hardcoded twice
+					</script>
+					<style>
+						.ticker-wrapper {
+							width: 100%;
+							overflow: hidden;
+							background: #000;
+							padding: 8px 0;
+						}
+
+						.ticker-track {
+							display: flex;
+							width: max-content;
+							animation: tickerScroll 20s linear infinite;
+						}
+
+						.ticker-content {
+							display: flex;
+							white-space: nowrap;
+						}
+
+						.ticker-item {
+							margin-right: 50px;
+							font-size: 13px;
+							padding: 5px 10px;
+							border-radius: 5px;
+						}
+
+						.ticker-track:hover {
+							animation-play-state: paused;
+						}
+
+						@keyframes tickerScroll {
+							0% {
+								transform: translateX(0%);
+							}
+
+							100% {
+								transform: translateX(-50%);
+							}
+						}
+					</style>
+				</div>
+			</div>
+			<div class="footer-bottom">
+				<div class="container">
+					<div class="footer-inner text-center">
+						<p class="copyright-text wow fadeInUp" data-wow-delay="1.6s">Copyright &copy; 2026 Traderbro.in
+							—
+							Stock Market Education Platform. All Rights Reserved.</p>
+					</div>
+				</div>
+			</div>
+		</footer>
+		<!-- Footer End -->
+
+		<button class="scroltop icon-up" type="button"><i class="fas fa-arrow-up"></i></button>
+	</div>
+	<!-- JAVASCRIPT FILES ========================================= -->
+	<script src="/static/finlab/Frontend/xhtml/js/jquery.min.js"></script>
+	<script src="/static/finlab/Frontend/xhtml/vendor/wow/wow.js"></script>
+	<script src="/static/finlab/Frontend/xhtml/vendor/swiper/swiper-bundle.min.js"></script>
+	<script src="/static/finlab/Frontend/xhtml/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+	<script src="/static/finlab/Frontend/xhtml/vendor/skrollr/skrollr.js"></script>
+	<script src="/static/finlab/Frontend/xhtml/vendor/magnific-popup/magnific-popup.js"></script>
+	<script src="/static/finlab/Frontend/xhtml/js/dz.carousel.js"></script>
+	<script src="/static/finlab/Frontend/xhtml/js/dz.ajax.js"></script>
+	<script src="/static/finlab/Frontend/xhtml/js/custom.js"></script>
+
+	<script>
+		var s = skrollr.init({
+			edgeStrategy: 'set',
+			forceHeight: false,
+			easing: {
+				WTF: Math.random,
+				inverted: function (p) {
+					return 1 - p;
+				}
+			}
+		});
+
+		jQuery(window).on('load resize', function () {
+			jQuery('.skrollr-mobile, .skrollr-mobile > body').removeAttr('style');
+		});
+	</script>
+	<!-- 
+	<script>
+		if (user) {
+			document.querySelector(".extra-cell").innerHTML = `
+    <span>Hi, ${user.username}</span>
+    <button onclick="logout()" class="btn btn-danger btn-sm">Logout</button>
   `;
-  let top=rect.bottom+6;let left=rect.right-210;
-  if(left<4)left=4;
-  if(top+280>window.innerHeight)top=rect.top-280;
-  drop.style.cssText=`top:${top}px;left:${left}px;`;
-  document.body.appendChild(drop);
-  _activeDrop=drop;
-  
-  drop.querySelectorAll('.dm-item').forEach(btn2=>{
-    btn2.addEventListener('click', () => {
-      if(_activeDrop){_activeDrop.remove();_activeDrop=null;}
-    });
-  });
-}
-document.addEventListener('click',function(e){
-  if(_activeDrop&&!e.target.closest('#active-drop')&&!e.target.closest('.action-btn')){
-    _activeDrop.remove();_activeDrop=null;
-  }
-});
+		}
 
-/* ─── KICK SESSION ─── */
-async function kickSession(id,username){
-  try{
-    const d=await api('/api/admin/user/force-logout',{method:'POST',body:JSON.stringify({user_id:id})});
-    if(d.success)toast(`${username} logged out`,'success');
-    else toast(`Session kick sent for ${username}`,'info');
-  }catch{toast('Force logout completed','info');}
-}
+		function logout() {
+			localStorage.removeItem("currentUser");
+			window.location.href = "/static/finlab/Frontend/xhtml/index.html";
+		}
+	</script> -->
 
-/* ─── DETAIL MODAL ─── */
-function openDetail(id){
-  _du=ALL.find(u=>u.id===id);if(!_du)return;
-  document.getElementById('detail-title').innerHTML=`<i class="fas fa-user" style="color:var(--blue)"></i> ${esc(_du.username)}`;
-  document.querySelectorAll('.m-tab').forEach(t=>t.classList.remove('on'));
-  document.getElementById('dt-profile').classList.add('on');
-  dtab('profile');
-  openModal('ov-detail');
-}
-function editFromDetail(){closeModal('ov-detail');if(_du)openEdit(_du.id);}
-function planFromDetail(){closeModal('ov-detail');if(_du)openPlan(_du.id);}
-function delFromDetail(){closeModal('ov-detail');if(_du)openDel(_du.id);}
+	<script>
+		async function renderNavbar() {
 
-async function dtab(t){
-  document.querySelectorAll('.m-tab').forEach(el=>el.classList.remove('on'));
-  const el=document.getElementById('dt-'+t);if(el)el.classList.add('on');
-  const u=_du;if(!u)return;
-  const body=document.getElementById('detail-body');
+			try {
 
-  if(t==='profile'){
-    const isRev = (u.status === 'revoked' || u.plan_status === 'revoked');
-    const d=isRev ? null : dleft(u.plan_expiry);
-    
-    let visiblePlanBadge = planBadge(u.plan);
-    let visibleStart = fd(u.plan_start);
-    let visibleExpiry = fd(u.plan_expiry);
-    
-    if (isRev) {
-        visiblePlanBadge = `<span class="badge b-revoked">🚫 Revoked</span>`;
-        visibleStart = '—';
-        visibleExpiry = '—';
-    } else if ((!u.plan || u.plan === 'free') && u.next_plan) {
-        visiblePlanBadge = `<span class="badge b-queued">🔵 Next: ${(u.next_plan).toUpperCase()}</span>`;
-        visibleStart = fd(u.next_plan_start);
-        visibleExpiry = fd(u.next_plan_expiry);
-    } else if (isQueued(u)) {
-        visiblePlanBadge = `<span class="badge b-queued">🔵 Queued: ${(u.plan).toUpperCase()}</span>`;
-    }
+				const res = await fetch("/api/me", {
+					credentials: "include"
+				});
 
-    body.innerHTML=`
-      <div class="ubanner">
-        <div class="ubanner-ava" style="background:${acol(u.username)};color:${afg(u.username)}">${at(u.username)}</div>
-        <div>
-          <div class="ubanner-name">${esc(u.username)}</div>
-          <div class="ubanner-email">${esc(u.email||'—')}</div>
-          <div class="ubanner-badges">${visiblePlanBadge} ${statusBadge(u)}</div>
-        </div>
-      </div>
-      <div class="dg">
-        <div class="di"><div class="di-k">User ID</div><div class="di-v mono">#${u.id}</div></div>
-        <div class="di"><div class="di-k">Mobile</div><div class="di-v mono">${esc(u.phone||'—')}</div></div>
-        <div class="di full"><div class="di-k">Email</div><div class="di-v">${esc(u.email||'—')}</div></div>
-        <div class="di"><div class="di-k">Registered On</div><div class="di-v">${fdt(u.created_at)||'—'}</div></div>
-        <div class="di"><div class="di-k">Consent</div><div class="di-v">${u.consent?'✅ Provided at registration':'❌ Not recorded'}</div></div>
-        <div class="di"><div class="di-k">Plan Start Window</div><div class="di-v">${visibleStart||'—'}</div></div>
-        <div class="di"><div class="di-k">Plan Expiry Target</div><div class="di-v">${visibleExpiry||'—'}</div></div>
-        <div class="di"><div class="di-k">Days Remaining</div><div class="di-v">${isRev ? '<span style="color:var(--red)">Revoked</span>' : d===null?'—':d<=0?'<span style="color:var(--red)">Expired</span>':d<=7?`<span style="color:var(--gold)">${d} days</span>`:`<span style="color:var(--green)">${d} days</span>`}</div></div>
-      </div>`;
-  }
-  
-  else if(t==='subscriptions'){
-    body.innerHTML=`<div style="text-align:center;padding:30px"><span class="spin"></span></div>`;
-    await loadSubs(u,body);
-  } 
-  
-  else if(t==='payments'){
-    body.innerHTML=`<div style="text-align:center;padding:30px"><span class="spin"></span></div>`;
-    await loadPayments(u,body);
-  } 
-  
-  else if(t==='activity'){
-    body.innerHTML=`<div style="text-align:center;padding:30px"><span class="spin"></span></div>`;
-    try {
-      const d = await api(`/api/admin/user/activity-logs?username=${encodeURIComponent(u.username)}`);
-      const logs = d.logs || [];
-      
-      if(!logs.length){
-        body.innerHTML=`<div class="empty"><i class="fas fa-history"></i><div class="empty-t">No dashboard access or session state shifts logged</div></div>`;
-        return;
-      }
-      
-      body.innerHTML = `<div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Security Audit Log Tracker</div>` +
-        logs.map(log => `
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.04)">
-            <div style="display:flex; gap:12px; align-items:center;">
-              <div style="width:8px; height:8px; border-radius:50%; background:${log.action === 'login' ? 'var(--green)' : 'var(--orange)'};"></div>
-              <div>
-                <div style="font-size:12px; font-weight:600; color:#fff;">${esc(log.details || log.action)}</div>
-                <div style="font-size:10px; color:var(--muted); margin-top:2px;">IP: ${esc(log.ip || '0.0.0.0')} &nbsp;·&nbsp; Device: ${esc(log.device || 'Web Browser')}</div>
-              </div>
-            </div>
-            <div style="font-family:'JetBrains Mono'; font-size:11px; color:var(--dim);">${fdt(log.timestamp)}</div>
-          </div>
-        `).join('');
-    } catch(err) {
-      body.innerHTML=`<div class="empty"><i class="fas fa-history"></i><div class="empty-t">No current activity logged.</div></div>`;
-    }
-  }
-}
+				const data = await res.json();
 
-async function loadSubs(u, body) {
-  try {
-    let subs = [];
-    try {
-      const d = await api(`/api/admin/user/subscriptions?username=${encodeURIComponent(u.username)}`);
-      subs = d.subscriptions || [];
-    } catch(e) { subs = []; }
-    
-    if (!subs.length && u.plan && u.plan !== 'free') {
-      subs.push({
-        plan: u.plan,
-        plan_start: u.plan_start,
-        plan_expiry: u.plan_expiry,
-        trading_days: u.trading_days || 22,
-        total_calendar_days: '—',
-        weekends_skipped: 0,
-        holidays_skipped: 0,
-        status: (u.status === 'revoked' || u.plan_status === 'revoked') ? 'revoked' : isQueued(u) ? 'queued' : planStatus(u) === 'expired' ? 'expired' : 'active',
-        price: u.price || 1499
-      });
-    }
+				const nav = document.getElementById("navAuth");
+				const mobileNav = document.getElementById("mobileNavAuth");
 
-    if(!subs.length){
-      body.innerHTML = `<div class="empty"><i class="fas fa-receipt"></i><div class="empty-t">No active or queued subscription records found</div></div>`;
-      return;
-    }
+				if (!nav || !mobileNav) return;
 
-    const stColors = {active: 'var(--green)', queued: 'var(--purple)', expired: 'var(--red)', revoked: 'var(--red)'};
-    let html = `<div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Subscription Mapping Registry (${subs.length})</div>`;
-    
-    subs.forEach(s => {
-      const statusLabel = (s.status || 'queued').toUpperCase();
-      const statusColor = stColors[statusLabel.toLowerCase()] || 'var(--muted)';
-      
-      let actionButtonHtml = '';
-      if (statusLabel === 'ACTIVE' || statusLabel === 'QUEUED') {
-        actionButtonHtml = `
-          <button class="tbtn" style="padding: 4px 10px; font-size:11px; background:rgba(255,77,109,0.12); border:1px solid rgba(255,77,109,0.3); color:var(--red);" 
-                  onclick="revokeSubscription('${esc(u.username)}', '${s.plan_start}')">
-            <i class="fas fa-ban"></i> Revoke
-          </button>`;
-      }
+				// =========================
+				// LOGGED IN USER
+				// =========================
 
-      html += `<div class="sub-row" style="padding: 14px 0; border-bottom:1px solid rgba(255,255,255,.04); display:flex; align-items:center;">
-        <div class="sub-icon" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border); width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:8px;">
-          ${statusLabel === 'QUEUED' ? '⏳' : '👑'}
-        </div>
-        <div style="flex:1; margin-left: 12px;">
-          <div class="sub-plan" style="font-weight:700; font-size:14px;">
-            ${(s.plan).toUpperCase()} 
-            <span style="font-size:11px; margin-left:8px; padding: 2px 8px; border-radius:12px; background: rgba(255,255,255,0.05); color:${statusColor}; font-weight:800;">
-              ${statusLabel === 'REVOKED' ? '🚫 REVOKED' : statusLabel}
-            </span>
-          </div>
-          <div class="sub-dates" style="margin-top: 6px; font-size:11px; color: var(--dim); line-height:1.6;">
-            📅 Activation Window: <strong>${fdt(s.plan_start)}</strong><br>
-            ⏰ Termination target: <strong>${fdt(s.plan_expiry)}</strong>
-          </div>
-          <div style="margin-top: 6px; display:flex; gap:6px;">
-             <span style="font-size:9px; background:rgba(255,255,255,0.04); padding:2px 6px; border-radius:4px; color:var(--dim)">📈 ${s.trading_days || 0} Trading Days</span>
-             <span style="font-size:9px; background:rgba(255,255,255,0.04); padding:2px 6px; border-radius:4px; color:var(--dim)">🏖️ NSE Holidays Saved: ${s.holidays_skipped || 0}</span>
-          </div>
-        </div>
-        <div style="text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
-          <div style="font-family:'JetBrains Mono'; font-weight:700; color:var(--green); font-size:14px;">
-            ₹${(s.price || 0).toLocaleString('en-IN')}
-          </div>
-          ${actionButtonHtml}
-        </div>
-      </div>`;
-    });
-    body.innerHTML = html;
-  } catch(err) {
-    body.innerHTML = `<div class="empty"><i class="fas fa-exclamation-triangle"></i><div class="empty-t">Error generating sub layout.</div></div>`;
-  }
-}
+				if (data.username) {
 
-async function revokeSubscription(username, planStart) {
-  if (!confirm(`Are you sure you want to revoke this plan for ${username}?`)) return;
-  
-  try {
-    const d = await api('/api/admin/user/revoke-subscription', {
-      method: 'POST',
-      body: JSON.stringify({ username: username, plan_start: planStart })
-    });
-    
-    if (d && d.success) {
-      toast('Subscription plan successfully revoked!', 'success');
-      await loadUsers();
-    } else {
-      toast((d && d.error) || 'Failed to revoke subscription.', 'error');
-    }
-  } catch(e) {
-    toast('Server tracking connection error.', 'error');
-  }
-}
+					const firstLetter = data.username.charAt(0).toUpperCase();
 
-async function loadPayments(u, body) {
-  try {
-    let pays = [];
-    try {
-      const d = await api(`/api/admin/user/payments?username=${encodeURIComponent(u.username)}`);
-      pays = d.payments || [];
-    } catch(e) { pays = []; }
-    
-    if(!pays.length){
-      body.innerHTML = `<div class="empty"><i class="fas fa-wallet"></i><div class="empty-t">No recorded transaction rows logged.</div></div>`;
-      return;
-    }
+					const desktopHTML = `
 
-    let html = `<div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Payment Event Ledger (${pays.length})</div>`;
-    pays.forEach(p => {
-      const ok = p.status === 'captured' || p.status === 'paid';
-      const statusTag = p.status === 'created' ? '⏳ PENDING' : ok ? '✅ CAPTURED' : '❌ FAILED';
-      html += `
-        <div class="pay-item" style="padding: 12px 0; display:flex; align-items:center; border-bottom:1px solid rgba(255,255,255,.04);">
-          <div class="pay-icon ${ok?'ok':'fail'}" style="width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;">
-            <i class="fas fa-${ok?'check':'times'}"></i>
-          </div>
-          <div style="flex:1; margin-left:12px;">
-            <div class="pay-plan" style="font-weight:700; font-size:13px;">${(p.plan || 'Subscription Charge').toUpperCase()} Plan</div>
-            <div class="pay-meta" style="font-size:11px; color:var(--dim); margin-top:2px; line-height:1.5;">
-              💳 Txn Date: <strong>${fdt(p.created_at)}</strong><br>
-              🚀 Activation Window: <span style="color:var(--blue); font-weight:600;">${fdt(p.plan_start)}</span> &nbsp;·&nbsp; <span style="color:var(--gold); font-weight:500;">${p.method_label || 'Razorpay Online Gateway'}</span> &nbsp;·&nbsp; <span style="font-size:10px;font-weight:700;color:${ok?'var(--green)':'var(--gold)'}">${statusTag}</span>
-            </div>
-            <div style="font-family:monospace; font-size:10px; color:var(--muted); margin-top:2px;">ID: ${p.payment_id || '—'}</div>
-          </div>
-          <div class="pay-amt" style="color:${ok?'var(--green)':'var(--red)'}; font-family:'JetBrains Mono'; font-weight:700; margin-left:auto; font-size:14px;">
-            ₹${p.amount ? Math.round(p.amount >= 100 ? p.amount / 100 : p.amount).toLocaleString('en-IN') : '0'}
-          </div>
-        </div>`;
-    });
-    body.innerHTML = html;
-  } catch(e) {
-    body.innerHTML = `<div class="empty"><i class="fas fa-exclamation-circle"></i><div class="empty-t">Error compiling ledger records.</div></div>`;
-  }
-}
+				<div class="d-flex align-items-center gap-3">
 
-/* ─── ADD / EDIT USER ─── */
-function openAdd(){
-  document.getElementById('edit-title').innerHTML='<i class="fas fa-user-plus" style="color:var(--blue)"></i> Add New User';
-  document.getElementById('save-lbl').textContent='Create User';
-  document.getElementById('pw-lbl').innerHTML='Password *';
-  document.getElementById('e-id').value='';
-  ['e-un','e-em','e-ph','e-pw'].forEach(id=>document.getElementById(id).value='');
-  checkPw('');
-  openModal('ov-edit');
-}
-function openEdit(id){
-  const u=ALL.find(x=>x.id===id);if(!u)return;
-  document.getElementById('edit-title').innerHTML='<i class="fas fa-user-edit" style="color:var(--blue)"></i> Edit User';
-  document.getElementById('save-lbl').textContent='Save Changes';
-  document.getElementById('e-id').value=u.id;
-  document.getElementById('e-un').value=u.username||'';
-  document.getElementById('e-em').value=u.email||'';
-  document.getElementById('e-ph').value=u.phone||'';
-  document.getElementById('e-pw').value='';
-  checkPw('');
-  openModal('ov-edit');
-}
-async function saveUser(){
-  const id=document.getElementById('e-id').value;
-  const un=document.getElementById('e-un').value.trim();
-  const em=document.getElementById('e-em').value.trim();
-  const ph=document.getElementById('e-ph').value.trim();
-  const pw=document.getElementById('e-pw').value;
-  
-  if(!un||!em){toast('Username and email are required','error');return;}
-  if(!id && !pw){toast('Password is required for new users','error');return;}
-  
-  const payload={username:un,email:em,phone:ph,role:'user'};
-  if(pw)payload.password=pw;
-  if(id)payload.id=parseInt(id);
-  
-  try{
-    const d=await api(id?'/api/admin/user/update':'/api/admin/user/create',{method:'POST',body:JSON.stringify(payload)});
-    if(d.success){toast(id?'User updated':'User created','success');closeModal('ov-edit');loadUsers();}
-    else toast(d.error||'Failed','error');
-  }catch{toast('Server error','error');}
-}
-function checkPw(pw){
-  const segs=['ps1','ps2','ps3','ps4'];
-  let s=0;
-  if(pw.length>=8)s++;
-  if(/[A-Z]/.test(pw))s++;
-  if(/[0-9]/.test(pw))s++;
-  if(/[^A-Za-z0-9]/.test(pw))s++;
-  segs.forEach((id,i)=>{document.getElementById(id).style.background=i<s?'var(--green)':'rgba(255,255,255,.07)';});
-}
+					<a href="/dashboard"
+					   class="btn btn-success"
+					   style="
+							border-radius:12px;
+							font-weight:600;
+							padding:10px 18px;
+							box-shadow:0 4px 15px rgba(0,255,120,0.25);
+					   ">
+						📊 User Dashboard
+					</a>
 
-/* ─── PLAN PICKER & MANAGE PLAN OVERLAY ─── */
-function selPlan(p){
-  _sp=p;
-  ['premium','pro','essential','basic','free'].forEach(x=>{
-    const el=document.getElementById('po-'+x);
-    if(!el)return;
-    el.className='po'+(x==='free'?' full':'')+(x===p?` sel-${x}`:'');
-  });
-  document.getElementById('ceg').style.display=p!=='free'?'block':'none';
-}
+					${data.role === "admin" ? `
+						<a href="/admin"
+						   class="btn btn-warning"
+						   style="
+								border-radius:12px;
+								font-weight:600;
+								padding:10px 18px;
+						   ">
+							⚙ Admin
+						</a>
+					` : ""}
 
-async function assignPlan(){
-  const id=document.getElementById('p-uid').value; if(!id) return;
-  if(!_sp){ toast('Select a plan','error'); return; }
-  
-  let selectedExpiry = document.getElementById('cex').value || null;
+					<div class="dropdown">
 
-  const payload = {
-    user_id: parseInt(id),
-    plan: _sp,
-    note: document.getElementById('p-note').value.trim(),
-    custom_expiry: selectedExpiry
-  };
-  
-  try {
-    const d = await api('/api/admin/user/assign-plan', {method: 'POST', body: JSON.stringify(payload)});
-    if(d.success){
-      toast(`Plan assigned successfully!`,'success');
-      closeModal('ov-plan');
-      await loadUsers();
-    } else {
-      toast(d.error || 'Failed to assign plan.', 'error');
-    }
-  } catch(e) { toast('Server connection error.', 'error'); }
-}
+						<div class="d-flex align-items-center"
+							 style="cursor:pointer;"
+							 data-bs-toggle="dropdown">
 
-async function grantImmediateAccess() {
-  const id = document.getElementById('p-uid').value; if (!id) return;
-  if (!_sp || _sp === 'free') { toast('Select a valid paid plan (Basic, Essential, Pro, Premium)', 'error'); return; }
+							<div style="
+								width:42px;
+								height:42px;
+								border-radius:50%;
+								background:linear-gradient(135deg,#00c6ff,#0072ff);
+								display:flex;
+								align-items:center;
+								justify-content:center;
+								color:#fff;
+								font-weight:700;
+								margin-right:10px;
+							">
+								${firstLetter}
+							</div>
 
-  let selectedExpiry = document.getElementById('cex').value || null;
+							<span class="text-white fw-bold">
+								${data.username}
+							</span>
 
-  const payload = {
-    user_id: parseInt(id),
-    plan: _sp,
-    note: document.getElementById('p-note').value.trim() || 'Admin Immediate Special Access',
-    custom_expiry: selectedExpiry
-  };
+						</div>
 
-  try {
-    const d = await api('/api/admin/user/grant-immediate-access', { method: 'POST', body: JSON.stringify(payload) });
-    if (d.success) {
-      toast(`⚡ Immediate dashboard access granted to user!`, 'success');
-      closeModal('ov-plan');
-      await loadUsers();
-    } else {
-      toast(d.error || 'Failed to grant immediate access.', 'error');
-    }
-  } catch (e) { toast('Server connection error.', 'error'); }
-}
+						<ul class="dropdown-menu dropdown-menu-end">
 
-function openPlanImmediate(id) {
-  openPlan(id);
-  selPlan('pro');
-  toast('⚡ Click "Grant Immediate Access" to activate dashboard access right now at any time!', 'info');
-}
+							<li>
+								<a class="dropdown-item" href="/account">
+									👤 My Account
+								</a>
+							</li>
 
-function openPlan(id){
-  const u = ALL.find(x => x.id === id);
-  if (!u) { toast('User not found.', 'error'); return; }
-  
-  if (_activeDrop) { _activeDrop.remove(); _activeDrop = null; }
-  
-  document.getElementById('p-uid').value = u.id;
-  document.getElementById('p-name').textContent = u.username || '—';
-  document.getElementById('p-email').textContent = u.email || '—';
-  
-  const ava = document.getElementById('p-ava');
-  if (ava) {
-    ava.textContent = at(u.username);
-    ava.style.background = acol(u.username);
-    ava.style.color = afg(u.username);
-  }
-  
-  const currentPlanContainer = document.getElementById('p-current');
-  if (currentPlanContainer) {
-    currentPlanContainer.innerHTML = planBadge(u.plan) + ' ' + statusBadge(u);
-  }
-  
-  document.getElementById('p-note').value = '';
-  document.getElementById('cex').value = '';
-  
-  selPlan(u.plan || 'free');
-  openModal('ov-plan');
-}
+							<li>
+								<a class="dropdown-item" href="/dashboard">
+									📊 Dashboard
+								</a>
+							</li>
 
-/* ─── DELETE ─── */
-function openDel(id){
-  const u=ALL.find(x=>x.id===id);if(!u)return;
-  document.getElementById('d-uid').value=u.id;
-  document.getElementById('d-name').textContent=u.username||'—';
-  document.getElementById('d-email').textContent=u.email||'—';
-  document.getElementById('d-ava').textContent=at(u.username);
-  openModal('ov-del');
-}
-async function confirmDelete(){
-  const id=document.getElementById('d-uid').value;if(!id)return;
-  try{
-    const d=await api('/api/admin/user/delete',{method:'POST',body:JSON.stringify({user_id:parseInt(id)})});
-    if(d.success){toast('User deleted','success');closeModal('ov-del');loadUsers();}
-    else toast(d.error||'Failed','error');
-  }catch{toast('Server error','error');}
-}
+							<li><hr class="dropdown-divider"></li>
 
-/* ─── RESET PASSWORD ─── */
-function openRpw(id){
-  const u=ALL.find(x=>x.id===id);if(!u)return;
-  document.getElementById('rp-uid').value=u.id;
-  document.getElementById('rp-name').textContent=u.username||'—';
-  document.getElementById('rp-email').textContent=u.email||'—';
-  const ava=document.getElementById('rp-ava');
-  ava.textContent=at(u.username);ava.style.background=acol(u.username);ava.style.color=afg(u.username);
-  document.getElementById('rp-pw').value='';
-  openModal('ov-rpw');
-}
-async function confirmRpw(){
-  const id=document.getElementById('rp-uid').value;
-  const pw=document.getElementById('rp-pw').value;
-  if(!pw||pw.length<8){toast('Password must be at least 8 characters','error');return;}
-  try{
-    const d=await api('/api/admin/user/update',{method:'POST',body:JSON.stringify({id:parseInt(id),password:pw})});
-    if(d.success){toast('Password updated','success');closeModal('ov-rpw');}
-    else toast(d.error||'Failed','error');
-  }catch{toast('Server error','error');}
-}
+							<li>
+								<a class="dropdown-item text-danger"
+								   href="#"
+								   onclick="logout()">
+									🚪 Logout
+								</a>
+							</li>
 
-/* ─── DISCLAIMER ─── */
-function dlDisclaimer(id){window.open(`/api/admin/user/disclaimer-pdf/${id}`,'_blank');}
+						</ul>
 
-/* ─── EXPORT ─── */
-function exportCSV(){
-  if(!FIL.length){toast('No users to export','error');return;}
-  const hdrs=['ID','Username','Email','Mobile','Plan','Status','Plan Start','Plan Expiry','Days Left'];
-  const rows=FIL.map(u=>{
-    const d=dleft(u.plan_expiry);
-    return[u.id,u.username,u.email||'',u.phone||'',u.plan||'free',planStatus(u),u.plan_start||'',u.plan_expiry||'',d!==null?d:''];
-  });
-  const csv=[hdrs,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
-  a.download=`traderbro_users_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  toast(`Exported ${FIL.length} users`,'success');
-}
+					</div>
 
-/* ─── INIT ─── */
-setFilter('all');
-loadUsers();
-setInterval(loadUsers,60000);
-</script>
+				</div>
+				`;
+
+					const mobileHTML = `
+
+				<div class="w-100 d-flex flex-column gap-2">
+
+					<a href="/dashboard"
+					   class="btn btn-primary w-100">
+						📊 User Dashboard
+					</a>
+
+					<a href="/account"
+					   class="btn btn-outline-primary w-100">
+						👤 My Account
+					</a>
+
+					${data.role === "admin" ? `
+						<a href="/admin"
+						   class="btn btn-warning w-100">
+							⚙ Admin Panel
+						</a>
+					` : ""}
+
+					<button onclick="logout()"
+							class="btn btn-danger w-100">
+						🚪 Logout
+					</button>
+
+				</div>
+				`;
+
+					nav.innerHTML = desktopHTML;
+					mobileNav.innerHTML = mobileHTML;
+
+				}
+
+				// =========================
+				// GUEST USER
+				// =========================
+
+				else {
+
+					const guestHTML = `
+					<a class="btn btn-outline-primary me-2"
+					   href="/user-login">
+						Login
+					</a>
+
+					<a class="btn btn-primary"
+					   href="/register">
+						Register
+					</a>
+				`;
+
+					const mobileGuestHTML = `
+					<div class="w-100 d-flex flex-column gap-2">
+
+						<a href="/user-login"
+						   class="btn btn-primary w-100">
+							Login
+						</a>
+
+						<a href="/register"
+						   class="btn btn-outline-primary w-100">
+							Register
+						</a>
+
+					</div>
+				`;
+
+					nav.innerHTML = guestHTML;
+					mobileNav.innerHTML = mobileGuestHTML;
+				}
+
+			}
+
+			catch (error) {
+
+				console.error("Navbar Error:", error);
+
+			}
+		}
+
+		function logout() {
+			sessionStorage.setItem("loggedOut", "1");
+			window.location.href = "/logout";
+		}
+
+		renderNavbar();
+	</script>
+
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+
+			// CHECK USER LOGIN STATUS
+			const token = localStorage.getItem("access_token");
+			const username = localStorage.getItem("username");
+
+			const desktopNav = document.getElementById("navAuth");
+			const mobileNav = document.getElementById("mobileNavAuth");
+
+			// USER LOGGED IN
+			if (token) {
+
+				const loggedInButtons = `
+				<a href="/dashboard" class="btn btn-primary btn-sm me-2">
+					User Dashboard
+				</a>
+
+				<a href="/my-account" class="btn btn-outline-primary btn-sm">
+					My Account
+				</a>
+			`;
+
+				if (desktopNav) {
+					desktopNav.innerHTML = loggedInButtons;
+				}
+
+				if (mobileNav) {
+					mobileNav.innerHTML = loggedInButtons;
+				}
+
+			}
+
+			// USER NOT LOGGED IN
+			else {
+
+				const guestButtons = `
+				<a href="/user-login" class="btn btn-primary btn-sm me-2">
+					Login
+				</a>
+
+				<a href="/register" class="btn btn-outline-primary btn-sm">
+					Register
+				</a>
+			`;
+
+				if (desktopNav) {
+					desktopNav.innerHTML = guestButtons;
+				}
+
+				if (mobileNav) {
+					mobileNav.innerHTML = guestButtons;
+				}
+
+			}
+
+		});
+	</script>
+	<script src="/static/session-monitor.js"></script>
 </body>
+
 </html>
