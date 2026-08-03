@@ -3846,8 +3846,6 @@ def admin_trigger_excel(request: Request):
 
 # ── SERVE the user management page ──────────────────────────────────────
 @app.get("/admin/users", response_class=HTMLResponse)
-@app.get("/admin-users", response_class=HTMLResponse)
-@app.get("/admin-users.html", response_class=HTMLResponse)
 def admin_users_page(request: Request):
     if request.session.get("role") != "admin":
         return RedirectResponse("/admin-login", status_code=302)
@@ -3879,6 +3877,7 @@ def api_admin_list_users(request: Request):
 
     users = []
     now_str = datetime.now(IST).isoformat()
+
 
     for r in rows:
         uid = r[0]
