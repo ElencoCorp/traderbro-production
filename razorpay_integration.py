@@ -335,14 +335,25 @@ async def verify_payment(request: Request):
         expiry_dt, total_cal, weekends, holidays = calculate_expiry_from_start(start_dt, t_days)
         new_status = "active" if start_dt <= now else "queued"
 
-        c.execute("""
-            INSERT INTO subscriptions
-                (username, plan, plan_start, plan_expiry,
-                 trading_days, total_calendar_days, weekends_skipped, holidays_skipped,
-                 status, price, created_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?)
-        """, (username, plan, start_dt.isoformat(), expiry_dt.isoformat(),
-              t_days, total_cal, weekends, holidays, new_status, price, now.isoformat()))
+        try:
+            c.execute("""
+                INSERT INTO subscriptions
+                    (username, plan, plan_start, plan_expiry,
+                     trading_days, total_calendar_days, weekends_skipped, holidays_skipped,
+                     status, price, created_at, source, note)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """, (username, plan, start_dt.isoformat(), expiry_dt.isoformat(),
+                  t_days, total_cal, weekends, holidays, new_status, price, now.isoformat(),
+                  "razorpay", f"Razorpay Payment ID: {rzp_payment_id}"))
+        except Exception:
+            c.execute("""
+                INSERT INTO subscriptions
+                    (username, plan, plan_start, plan_expiry,
+                     trading_days, total_calendar_days, weekends_skipped, holidays_skipped,
+                     status, price, created_at)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)
+            """, (username, plan, start_dt.isoformat(), expiry_dt.isoformat(),
+                  t_days, total_cal, weekends, holidays, new_status, price, now.isoformat()))
 
         if new_status == "active" or not effective_last:
             c.execute("""
@@ -358,6 +369,12 @@ async def verify_payment(request: Request):
 
         conn.commit()
         conn.close()
+
+        # Cache payment method details from Razorpay immediately
+        try:
+            _fetch_and_cache_payment_method(rzp_payment_id, db_row_id)
+        except Exception:
+            pass
 
         try:
             from app import process_subscription_queue
