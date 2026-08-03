@@ -1466,11 +1466,12 @@ async def admin_login(
         request.session["admin"] = username
         request.session["role"] = "admin"
 
-        return RedirectResponse(url="/", status_code=303)
+        return RedirectResponse(url="/admin", status_code=303)
 
     return HTMLResponse(load_login_template("admin", True))
 
 @app.get("/admin", response_class=HTMLResponse)
+@app.get("/admin.html", response_class=HTMLResponse)
 def admin_panel(request: Request):
 
     if request.session.get("role") != "admin":
@@ -2643,6 +2644,8 @@ def api_get_interval():
     return {"interval": get_interval()}
 
 @app.get("/admin/token-manager", response_class=HTMLResponse)
+@app.get("/admin-token-manager", response_class=HTMLResponse)
+@app.get("/token_manager.html", response_class=HTMLResponse)
 def token_manager_page(request: Request):
     if request.session.get("role") != "admin":
         return RedirectResponse("/admin-login", status_code=302)
@@ -3843,6 +3846,8 @@ def admin_trigger_excel(request: Request):
 
 # ── SERVE the user management page ──────────────────────────────────────
 @app.get("/admin/users", response_class=HTMLResponse)
+@app.get("/admin-users", response_class=HTMLResponse)
+@app.get("/admin-users.html", response_class=HTMLResponse)
 def admin_users_page(request: Request):
     if request.session.get("role") != "admin":
         return RedirectResponse("/admin-login", status_code=302)
@@ -4298,6 +4303,8 @@ def webinars_page(request: Request):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/admin/webinars", response_class=HTMLResponse)
+@app.get("/admin-webinars", response_class=HTMLResponse)
+@app.get("/admin-webinars.html", response_class=HTMLResponse)
 def admin_webinars_page(request: Request):
     if request.session.get("role") != "admin":
         return RedirectResponse("/admin-login", status_code=302)
@@ -5044,15 +5051,6 @@ async def api_admin_delete_user(request: Request):
 @app.get("/webinars", response_class=HTMLResponse)
 def webinars_page(request: Request):
     path = os.path.join(STATIC_DIR, "webinar.html")
-    with open(path, "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
- 
- 
-@app.get("/admin/webinars", response_class=HTMLResponse)
-def admin_webinars_page(request: Request):
-    if request.session.get("role") != "admin":
-        return RedirectResponse("/admin-login", status_code=302)
-    path = os.path.join(STATIC_DIR, "admin-webinars.html")
     with open(path, "r", encoding="utf-8") as f:
         return HTMLResponse(f.read())
  
