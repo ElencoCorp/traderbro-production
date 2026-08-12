@@ -3501,6 +3501,20 @@ font-weight:600;
           return false;
         }
 
+        // MAINTENANCE MODE FOR USER LOGIN
+        if (data.reason === "maintenance") {
+          if (typeof _refreshTimer !== "undefined" && _refreshTimer) {
+            clearTimeout(_refreshTimer);
+          }
+          showFullscreenClosed(
+            "🛠️",
+            "Site Under Maintenance",
+            data.message || "Currently Site is under maintenance on account of CAS(Closing Auction Session) alignment",
+            `<div style="margin-top:24px;"><a href="/account" style="color:#02A3FE; text-decoration:underline; font-size:13px; font-weight:500;">Go to My Account</a> <span style="color:#555; margin:0 8px;">|</span> <a href="/logout" style="color:#ef4444; text-decoration:underline; font-size:13px; font-weight:500;">Logout</a></div>`
+          );
+          return false;
+        }
+
         // NO PLAN
         if (data.reason === "no_plan") {
           window.location.replace("/trading-plan");
@@ -3600,7 +3614,7 @@ font-weight:600;
     `;
       div.innerHTML = `
         <div style="
-            max-width:420px; width:90%;
+            max-width:500px; width:90%;
             background:#111827;
             border:1px solid rgba(2,163,254,0.3);
             border-radius:20px;
