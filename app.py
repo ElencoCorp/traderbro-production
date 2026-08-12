@@ -1070,61 +1070,14 @@ def api_dashboard_access(request: Request):
             "weekday_name":    weekday_name,
             "next_trading_day": nxt.strftime("%d %b %Y, %A"),
         })
- 
-    conn = sqlite3.connect(DB_FILE)
-    c    = conn.cursor()
-    c.execute("SELECT plan, plan_start, plan_expiry FROM users WHERE username=?", (username,))
-    row  = c.fetchone()
-    conn.close()
- 
-    if not row or not row[0] or row[0] == "free":
-        return JSONResponse({"allowed": False, "reason": "no_plan"})
- 
-    plan, plan_start, plan_expiry = row
- 
-    if not plan_expiry:
-        return JSONResponse({"allowed": False, "reason": "no_plan"})
- 
-    try:
-        edt = datetime.fromisoformat(plan_expiry)
-        if edt.tzinfo is None:
-            edt = IST.localize(edt)
-        if now > edt:
-            return JSONResponse({"allowed": False, "reason": "plan_expired"})
-    except Exception as e:
-        print(f"api_dashboard_access expiry parse error for {username}: {e}")
-        return JSONResponse({"allowed": False, "reason": "plan_expired"})
 
-    # plan_start check — only block if plan hasn't started yet
-    # NULL plan_start means admin assigned it without a start date → treat as started
-    if plan_start:
-        try:
-            sdt = datetime.fromisoformat(plan_start)
-            if sdt.tzinfo is None:
-                sdt = IST.localize(sdt)
-            if now < sdt:
-                return JSONResponse({
-                    "allowed": False,
-                    "reason":  "plan_queued",
-                    "plan_start": sdt.isoformat(),
-                })
-        except Exception as e:
-            print(f"api_dashboard_access plan_start parse error for {username}: {e}")
-            # Don't block on parse error — let them through
-            pass
- 
-    # Plan is active — return full status
+    # ── Maintenance Mode for User Login ──
+    # User dashboard is put into maintenance mode for regular user logins.
+    # Admin login ("role" == "admin") is allowed above and bypasses maintenance.
     return JSONResponse({
-        "allowed":          True,
-        "reason":           "active",
-        "plan":             plan,
-        "plan_expiry":      plan_expiry,
-        "market_open":      market_open,
-        "is_holiday":       is_holiday,
-        "holiday_reason":   holiday_reason,
-        "is_weekend":       is_weekend,
-        "weekday_name":     weekday_name,
-        "next_trading_day": nxt.strftime("%d %b %Y, %A"),
+        "allowed": False,
+        "reason": "maintenance",
+        "message": "Currently Site is under maintenance on account of CAS(Closing Auction Session) alignment"
     })
 
 
