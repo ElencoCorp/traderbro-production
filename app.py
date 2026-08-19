@@ -497,10 +497,56 @@ scheduler = BackgroundScheduler()
 scheduler.start()
 
 # VPS AUTO RECORDER
-AUTO_RUNNING = False
+_VIX_CACHE = {"value": None, "timestamp": 0}
 
-# Remove these two globals (no longer needed):
-# LAST_FETCH_TIME = None   ← delete this line at the top
+def get_volatility_index():
+    global _VIX_CACHE
+    now_ts = datetime.now(IST).timestamp()
+    if _VIX_CACHE["value"] is not None and (now_ts - _VIX_CACHE["timestamp"]) < 20:
+        return _VIX_CACHE["value"]
+
+    val = None
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+
+    try:
+        url = "https://query1.finance.yahoo.com/v8/finance/chart/%5EINDIAVIX?interval=1m&range=1d"
+        r = requests.get(url, headers=headers, timeout=3)
+        if r.status_code == 200:
+            data = r.json()
+            meta = data.get("chart", {}).get("result", [{}])[0].get("meta", {})
+            v = meta.get("regularMarketPrice")
+            if v is not None:
+                val = round(float(v), 2)
+    except Exception as e:
+        print("Yahoo VIX fetch error:", e)
+
+    if val is None:
+        try:
+            s = requests.Session()
+            s.get("https://www.nseindia.com", headers=headers, timeout=2)
+            r = s.get("https://www.nseindia.com/api/allIndices", headers=headers, timeout=3)
+            if r.status_code == 200:
+                data = r.json()
+                for idx in data.get("data", []):
+                    if "VIX" in idx.get("index", "") or "INDIA VIX" in idx.get("indexSymbol", ""):
+                        v = idx.get("last")
+                        if v is not None:
+                            val = round(float(v), 2)
+                            break
+        except Exception as e:
+            print("NSE VIX fetch error:", e)
+
+    if val is not None:
+        _VIX_CACHE["value"] = val
+        _VIX_CACHE["timestamp"] = now_ts
+        return val
+
+    return _VIX_CACHE["value"]
+
+
+AUTO_RUNNING = False
 
 def auto_market_recorder():
     global AUTO_RUNNING
@@ -549,6 +595,8 @@ def auto_market_recorder():
             if current_diff is None:
                 current_diff = 0
 
+            vix_val = get_volatility_index()
+
             row = {
                 "datetime":   str(r["DateTime"]),
                 "expiry":     str(r["Expiry"]),
@@ -570,6 +618,7 @@ def auto_market_recorder():
                 "difference": current_diff,
                 "diff_prev":  0,
                 "running":    0,
+                "vix":        vix_val,
             }
 
             c_diff = float(current_diff or 0)
@@ -3090,22 +3139,23 @@ def get_subscription_start_date(now=None):
 def get_running():
     try:
         global LIVE_RUNNING_RECORDS
+        vix_val = get_volatility_index()
         if os.path.exists(RUNNING_FILE):
             try:
                 with open(RUNNING_FILE, "r", encoding="utf-8") as f:
                     rows = json.load(f)
                     if isinstance(rows, list) and len(rows) > 0:
                         LIVE_RUNNING_RECORDS = sanitize_for_json(rows)
-                        return SafeJSONResponse({"rows": LIVE_RUNNING_RECORDS[-2000:]})
+                        return SafeJSONResponse({"rows": LIVE_RUNNING_RECORDS[-2000:], "vix": vix_val})
             except Exception as fe:
                 print("⚠️ Error reading RUNNING_FILE in get_running:", fe)
 
         if LIVE_RUNNING_RECORDS:
-            return SafeJSONResponse({"rows": sanitize_for_json(LIVE_RUNNING_RECORDS[-2000:])})
+            return SafeJSONResponse({"rows": sanitize_for_json(LIVE_RUNNING_RECORDS[-2000:]), "vix": vix_val})
 
-        return SafeJSONResponse({"rows": []})
+        return SafeJSONResponse({"rows": [], "vix": vix_val})
     except Exception as e:
-        return SafeJSONResponse({"rows": [], "error": str(e)})
+        return SafeJSONResponse({"rows": [], "vix": get_volatility_index(), "error": str(e)})
 
 @app.get("/api/test-market")
 def test_market():
