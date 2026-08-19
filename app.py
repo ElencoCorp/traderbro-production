@@ -572,14 +572,24 @@ def auto_market_recorder():
                 "running":    0,
             }
 
-            if len(LIVE_RUNNING_RECORDS) > 0:
+            c_diff = float(current_diff or 0)
+            has_anchor = any(r.get("running") != "-" and r.get("running") is not None for r in LIVE_RUNNING_RECORDS)
+
+            if has_anchor:
                 prev = LIVE_RUNNING_RECORDS[-1]
-                prev_diff = prev.get("difference") if prev.get("difference") is not None else 0
-                c_diff = current_diff if current_diff is not None else 0
+                prev_diff = float(prev.get("difference") or 0)
                 diff_change = c_diff - prev_diff
                 row["diff_prev"] = round(diff_change, 2)
-                row["running"]   = round((prev.get("running") or 0) + diff_change, 2)
-            # First record: running stays 0 (baseline)
+                prev_run = float(prev.get("running") or 0)
+                row["running"] = round(prev_run + diff_change, 2)
+            else:
+                is_in_range = (-40 <= c_diff <= -20) or (20 <= c_diff <= 40)
+                if is_in_range:
+                    row["diff_prev"] = 0
+                    row["running"] = 0
+                else:
+                    row["diff_prev"] = 0
+                    row["running"] = "-"
 
             row = sanitize_for_json(row)
 
