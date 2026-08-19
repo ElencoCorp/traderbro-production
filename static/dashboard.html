@@ -2994,6 +2994,52 @@ font-weight:600;
         </div>`;
     }
 
+    function processRunningRecords(rawRecords) {
+      if (!rawRecords || rawRecords.length === 0) return [];
+
+      const records = rawRecords.map(r => ({ ...r }));
+
+      let startIdx = -1;
+      for (let i = 0; i < records.length; i++) {
+        const diff = parseFloat(records[i].difference);
+        if (!isNaN(diff) && ((diff >= -40 && diff <= -20) || (diff >= 20 && diff <= 40))) {
+          startIdx = i;
+          break;
+        }
+      }
+
+      if (startIdx === -1) {
+        for (let i = 0; i < records.length; i++) {
+          records[i].diff_prev = 0;
+          records[i].running = "-";
+          records[i].isSkipped = true;
+        }
+      } else {
+        for (let i = 0; i < startIdx; i++) {
+          records[i].diff_prev = 0;
+          records[i].running = "-";
+          records[i].isSkipped = true;
+        }
+
+        records[startIdx].diff_prev = 0;
+        records[startIdx].running = 0;
+        records[startIdx].isSkipped = false;
+
+        let accum = 0;
+        for (let i = startIdx + 1; i < records.length; i++) {
+          const prevDiff = parseFloat(records[i - 1].difference) || 0;
+          const currDiff = parseFloat(records[i].difference) || 0;
+          const diffChange = currDiff - prevDiff;
+          accum += diffChange;
+          records[i].diff_prev = diffChange;
+          records[i].running = accum;
+          records[i].isSkipped = false;
+        }
+      }
+
+      return records;
+    }
+
     function loadData() {
       fetch("/api/get-running")
         .then(r => {
@@ -3019,23 +3065,31 @@ font-weight:600;
             return;
           }
 
-          const displayableRows = rows;
+          const displayableRows = processRunningRecords(rows);
 
           // --- NEW BLACK BOX INDEX (BBI) LOGIC ---
           let bbiAcc = 0;
           let prevBbi = null;
           let prevRunning = null;
+          let validRunCount = 0;
 
           for (let i = 0; i < displayableRows.length; i++) {
+            const isSkipped = displayableRows[i].running === "-" || displayableRows[i].isSkipped;
+            if (isSkipped) {
+              displayableRows[i].bbi = null;
+              continue;
+            }
+
+            validRunCount++;
             let rVal = parseFloat(displayableRows[i].running || 0);
 
-            if (i === 0) {
+            if (validRunCount === 1) {
               displayableRows[i].bbi = null;
               prevRunning = rVal;
-            } else if (i >= 1 && i <= 6) {
+            } else if (validRunCount >= 2 && validRunCount <= 6) {
               bbiAcc += rVal;
               displayableRows[i].bbi = null;
-              if (i === 6) {
+              if (validRunCount === 6) {
                 let avg = bbiAcc / 6;
                 displayableRows[i].bbi = avg;
                 prevBbi = avg;
@@ -3125,10 +3179,21 @@ font-weight:600;
             `;
 
           displayRows.forEach(r => {
-            const val = parseFloat(r.running || 0);
-            const cls = val > 0 ? "val-pos" : val < 0 ? "val-neg" : "val-zero";
-            const rcls = val > 0 ? "row-pos" : val < 0 ? "row-neg" : "row-zero";
-            const dt = (r.datetime || "").split(" ");
+            const isSkipped = r.running === "-" || r.isSkipped;
+            let valStr = "—";
+            let cls = "val-zero";
+            let rcls = "row-zero";
+
+            if (isSkipped) {
+              valStr = "-";
+              cls = "val-zero";
+              rcls = "row-zero";
+            } else {
+              const val = parseFloat(r.running || 0);
+              valStr = (val > 0 ? "+" : "") + val.toFixed(2);
+              cls = val > 0 ? "val-pos" : val < 0 ? "val-neg" : "val-zero";
+              rcls = val > 0 ? "row-pos" : val < 0 ? "row-neg" : "row-zero";
+            }
 
             // Setup BBI Pill
             let bbiStr = "—";
@@ -3155,7 +3220,7 @@ font-weight:600;
 				        </div>
 				        <div style="display: flex; gap: 6px;">
 				            <div class="val-pill ${cls}" title="Running Value">
-				                ${val > 0 ? "+" : ""}${val.toFixed(2)}
+				                ${valStr}
 				            </div>
 				            <div class="val-pill ${bbiCls}" title="Black Box Index">
 				                ${bbiStr}
