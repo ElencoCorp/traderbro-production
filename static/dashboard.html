@@ -360,7 +360,8 @@
     }
 
     .atm-run-box {
-      min-width: 110px;
+      min-width: 155px;
+      padding: 10px 14px;
       border-radius: var(--radius);
       display: flex;
       flex-direction: column;
@@ -369,6 +370,8 @@
       flex-shrink: 0;
       position: relative;
       overflow: hidden;
+      background: var(--bg-card2);
+      border: 1px solid var(--border);
     }
 
     .atm-run-box .run-label {
@@ -376,44 +379,48 @@
       letter-spacing: 1.5px;
       font-weight: 700;
       text-transform: uppercase;
-      margin-bottom: 4px;
-      opacity: .7;
+      margin-bottom: 8px;
+      color: var(--primary);
+      opacity: .95;
+      white-space: nowrap;
+      text-align: center;
     }
 
-    .atm-run-box .run-val {
-      font-size: 26px;
-      font-weight: 900;
-      line-height: 1;
+    .bbi-minmax-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .bbi-stat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .bbi-stat-lbl {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--text-dim);
     }
 
     .atm-run-pos {
       background: linear-gradient(135deg, rgba(0, 212, 170, .15), rgba(0, 212, 170, .05));
       border: 1px solid rgba(0, 212, 170, .4);
-      color: var(--green);
-    }
-
-    .atm-run-pos .run-label {
-      color: var(--green);
     }
 
     .atm-run-neg {
       background: linear-gradient(135deg, rgba(255, 77, 109, .15), rgba(255, 77, 109, .05));
       border: 1px solid rgba(255, 77, 109, .4);
-      color: var(--red);
-    }
-
-    .atm-run-neg .run-label {
-      color: var(--red);
     }
 
     .atm-run-zero {
       background: linear-gradient(135deg, rgba(245, 166, 35, .15), rgba(245, 166, 35, .05));
       border: 1px solid rgba(245, 166, 35, .4);
-      color: var(--gold);
-    }
-
-    .atm-run-zero .run-label {
-      color: var(--gold);
     }
 
     .market-note {
@@ -1643,6 +1650,21 @@
         min-height: auto;
       }
 
+      .atm-hero {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .atm-dt-box {
+        flex: 1 1 200px;
+      }
+
+      .atm-run-box {
+        flex: 1 1 130px;
+        min-width: 130px;
+      }
+
       .gauge-wrapper {
         width: 100%;
         display: flex;
@@ -2368,8 +2390,17 @@
             <div class="atm-dt-val" id="atm-dt">Waiting for market session...</div>
           </div>
           <div class="atm-run-box atm-run-zero" id="atm-run-box">
-            <span class="run-label">Running</span>
-            <span class="run-val" id="atm-run-val">—</span>
+            <span class="run-label" id="atm-run-label">Min &amp; Max BBI</span>
+            <div class="bbi-minmax-container" id="atm-run-val">
+              <div class="bbi-stat-row">
+                <span class="bbi-stat-lbl">MIN</span>
+                <div class="val-pill bbi-zero" id="bbi-min-val">—</div>
+              </div>
+              <div class="bbi-stat-row">
+                <span class="bbi-stat-lbl">MAX</span>
+                <div class="val-pill bbi-zero" id="bbi-max-val">—</div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="market-note" id="market-note" style="display:none;">
@@ -3122,38 +3153,49 @@ font-weight:600;
           document.getElementById("h-ts").textContent = heroRow.datetime || "—";
 
           const parts = (heroRow.datetime || "").split(" ");
+          const vixVal = (d && d.vix !== undefined && d.vix !== null) ? d.vix : (heroRow.vix !== undefined ? heroRow.vix : null);
+          const vixStr = (vixVal !== null && vixVal !== undefined) ? parseFloat(vixVal).toFixed(2) : "—";
+
           document.getElementById("atm-dt").innerHTML = `
                 <span style="color:#fff">${parts[0] || ""}</span>
                 <span style="color:#fff;margin:0 6px">|</span>
                 <span style="color:#fff">${parts[1] || heroRow.datetime}</span><br>
-                <span style="color:#ff6b35">Strike: </span>
-                <span class="strike-highlight">${heroRow.strike}</span>
-                <span style="color:var(--text-muted);margin:0 8px">·</span>
-                <span style="color:#ff6b35">Sensex: </span>
-                <span style="color:var(--primary)">
-                    ${parseFloat(heroRow.index_ltp || 0).toFixed(2)}
-                </span>`;
+                <div style="display:flex; flex-wrap:wrap; align-items:center; gap:3px 6px; margin-top:2px;">
+                  <span><span style="color:#ff6b35">Strike: </span><span class="strike-highlight">${heroRow.strike}</span></span>
+                  <span style="color:var(--text-muted)">·</span>
+                  <span><span style="color:#ff6b35">Sensex: </span><span style="color:var(--primary)">${parseFloat(heroRow.index_ltp || 0).toFixed(2)}</span></span>
+                  <span style="color:var(--text-muted)">·</span>
+                  <span><span style="color:#ff6b35">Volatility Index: </span><span style="color:var(--gold);font-weight:700">${vixStr}</span></span>
+                </div>`;
 
-          const box = document.getElementById("atm-run-box");
+          // ── CALCULATE MIN & MAX BBI OUT OF ALL PRESENT DASHBOARD VALUES ──
+          const allBbiVals = displayableRows
+            .map(r => r.bbi)
+            .filter(v => v !== null && v !== undefined && !isNaN(v))
+            .map(v => parseFloat(v));
 
-          // Check if BBI has been calculated (it skips the first 6 ticks based on your logic)
-          if (heroBbi !== null) {
-            document.getElementById("atm-run-val").textContent = heroBbi.toFixed(2);
-            if (heroBbi > 0) {
-              box.className = "atm-run-box atm-run-pos";
-              box.querySelector(".run-label").textContent = "▲ Bullish";
-            } else if (heroBbi < 0) {
-              box.className = "atm-run-box atm-run-neg";
-              box.querySelector(".run-label").textContent = "▼ Bearish";
-            } else {
-              box.className = "atm-run-box atm-run-zero";
-              box.querySelector(".run-label").textContent = "◆ Neutral";
+          const runLabel = document.getElementById("atm-run-label");
+          const minEl = document.getElementById("bbi-min-val");
+          const maxEl = document.getElementById("bbi-max-val");
+
+          if (allBbiVals.length > 0) {
+            const minBbi = Math.min(...allBbiVals);
+            const maxBbi = Math.max(...allBbiVals);
+
+            if (runLabel) runLabel.textContent = "Min & Max BBI";
+
+            if (minEl) {
+              minEl.textContent = (minBbi > 0 ? "+" : "") + minBbi.toFixed(2);
+              minEl.className = "val-pill " + (minBbi > 0 ? "bbi-pos" : minBbi < 0 ? "bbi-neg" : "bbi-zero");
+            }
+            if (maxEl) {
+              maxEl.textContent = (maxBbi > 0 ? "+" : "") + maxBbi.toFixed(2);
+              maxEl.className = "val-pill " + (maxBbi > 0 ? "bbi-pos" : maxBbi < 0 ? "bbi-neg" : "bbi-zero");
             }
           } else {
-            // Fallback for the first few ticks before BBI calculates
-            document.getElementById("atm-run-val").textContent = "—";
-            box.className = "atm-run-box atm-run-zero";
-            box.querySelector(".run-label").textContent = "Waiting for BBI...";
+            if (runLabel) runLabel.textContent = "Waiting for BBI...";
+            if (minEl) { minEl.textContent = "—"; minEl.className = "val-pill bbi-zero"; }
+            if (maxEl) { maxEl.textContent = "—"; maxEl.className = "val-pill bbi-zero"; }
           }
 
           // ── Filter out stale zero-value rows on weekends ──
