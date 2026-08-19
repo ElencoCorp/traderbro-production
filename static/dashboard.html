@@ -3179,6 +3179,7 @@ font-weight:600;
             `;
 
           displayRows.forEach(r => {
+            const dt = (r.datetime || "").split(" ");
             const isSkipped = r.running === "-" || r.isSkipped;
             let valStr = "—";
             let cls = "val-zero";
