@@ -369,14 +369,89 @@
     }
 
     /* ════════════════════════════════════════════
+       PROCESS RUNNING RECORDS
+       - Scans difference column until a value falls in range: [-40 to -20] or [+20 to +40]
+       - Until that first in-range row is reached, running column prints "-"
+       - On the first in-range row, running value is set to 0
+       - After that, normal calculation flow carries on continuously
+    ════════════════════════════════════════════ */
+    function processRunningRecords(rawRecords) {
+      if (!rawRecords || rawRecords.length === 0) return [];
+
+      const records = rawRecords.map(r => ({ ...r }));
+
+      // Find the first index where difference is in range: [-40..-20] or [20..40]
+      let startIdx = -1;
+      for (let i = 0; i < records.length; i++) {
+        const diff = parseFloat(records[i].difference);
+        if (!isNaN(diff) && ((diff >= -40 && diff <= -20) || (diff >= 20 && diff <= 40))) {
+          startIdx = i;
+          break;
+        }
+      }
+
+      if (startIdx === -1) {
+        // No difference value in range yet: print "-" for all running values
+        for (let i = 0; i < records.length; i++) {
+          records[i].diff_prev = 0;
+          records[i].running = "-";
+          records[i].isSkipped = true;
+        }
+      } else {
+        // Print "-" for all rows before the first in-range difference value
+        for (let i = 0; i < startIdx; i++) {
+          records[i].diff_prev = 0;
+          records[i].running = "-";
+          records[i].isSkipped = true;
+        }
+
+        // First in-range row sets running value to 0
+        records[startIdx].diff_prev = 0;
+        records[startIdx].running = 0;
+        records[startIdx].isSkipped = false;
+
+        // Normal accumulation flow carries on for all subsequent rows
+        let accum = 0;
+        for (let i = startIdx + 1; i < records.length; i++) {
+          const prevDiff = parseFloat(records[i - 1].difference) || 0;
+          const currDiff = parseFloat(records[i].difference) || 0;
+          const diffChange = currDiff - prevDiff;
+          accum += diffChange;
+          records[i].diff_prev = diffChange;
+          records[i].running = accum;
+          records[i].isSkipped = false;
+        }
+      }
+
+      return records;
+    }
+
+    /* ════════════════════════════════════════════
        BUILD ONE TABLE ROW
     ════════════════════════════════════════════ */
     function buildRow(r, isPending) {
       const showPending = isPending && isMarketOpen();
-      const runVal = parseFloat(r.running || 0);
-      const runCls = showPending ? "cell-pending"
-        : runVal > 0 ? "cell-pos"
-          : runVal < 0 ? "cell-neg" : "";
+
+      const isSkipped = r.isSkipped || r.running === "-";
+      let runDisplay = "—";
+      let runCls = "";
+
+      if (showPending) {
+        runCls = "cell-pending";
+        runDisplay = "—";
+      } else if (isSkipped) {
+        runDisplay = "-";
+        runCls = "";
+      } else {
+        const runVal = parseFloat(r.running);
+        if (!isNaN(runVal)) {
+          runDisplay = runVal.toFixed(2);
+          if (runVal > 0) runCls = "cell-pos";
+          else if (runVal < 0) runCls = "cell-neg";
+        }
+      }
+
+      const diffPrevDisplay = showPending ? "—" : (r.diff_prev === null || r.diff_prev === undefined || r.diff_prev === "" ? "0.00" : Number(r.diff_prev || 0).toFixed(2));
       const fmt = v => (v === null || v === undefined || v === '') ? "—" : v;
       return `
     <td>${fmt(r.datetime)}</td>
@@ -397,8 +472,8 @@
     <td>${fmt(r.reference)}</td>
     <td>${fmt(r.stretched)}</td>
     <td>${fmt(r.difference)}</td>
-    <td class="${showPending ? 'cell-pending' : ''}">${showPending ? "—" : Number(r.diff_prev || 0).toFixed(2)}</td>
-    <td class="${runCls}">${showPending ? "—" : runVal.toFixed(2)}</td>
+    <td class="${showPending ? 'cell-pending' : ''}">${diffPrevDisplay}</td>
+    <td class="${runCls}">${runDisplay}</td>
   `;
     }
 
@@ -415,26 +490,8 @@
         const data = await res.json();
         if (!data || !data.rows || !data.rows.length) return;
 
-        const newRecords = data.rows; // already sorted oldest→newest from server
+        records = processRunningRecords(data.rows);
         const tbody = document.getElementById("tbl");
-
-        // Incremental update: only one new row arrived
-        if (records.length > 0 && newRecords.length === records.length + 1) {
-          const prevIdx = records.length - 1;
-          const prevTr = tbody.querySelector(`tr[data-idx="${prevIdx}"]`);
-          if (prevTr) {
-            prevTr.innerHTML = buildRow(newRecords[prevIdx], false);
-          }
-          const tr = document.createElement("tr");
-          tr.setAttribute("data-idx", String(newRecords.length - 1));
-          tr.innerHTML = buildRow(newRecords[newRecords.length - 1], true);
-          tbody.appendChild(tr);
-          records = newRecords;
-          return;
-        }
-
-        // Full re-render
-        records = newRecords;
         tbody.innerHTML = "";
         records.forEach((r, idx) => {
           const tr = document.createElement("tr");
@@ -526,6 +583,9 @@
 
       const dataRows = records.map((r, idx) => {
         const isPending = idx === records.length - 1;
+        const isSkipped = r.isSkipped || r.running === "-";
+        const runVal = isPending ? '' : (isSkipped ? '-' : fmtNum(r.running));
+        const diffPrevVal = isPending ? '' : fmtNum(r.diff_prev);
         return [
           r.datetime ?? '',
           r.expiry ?? '',
