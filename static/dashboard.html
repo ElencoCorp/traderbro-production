@@ -419,7 +419,7 @@
     }
 
     .atm-run-zero {
-      background: linear-gradient(135deg, rgba(245, 166, 35, .15), rgba(245, 166, 35, .05));
+      /* background: linear-gradient(135deg, rgba(245, 166, 35, .15), rgba(245, 166, 35, .05)); */
       border: 1px solid rgba(245, 166, 35, .4);
     }
 
@@ -2404,7 +2404,7 @@
           </div>
         </div>
         <div class="market-note" id="market-note" style="display:none;">
-          <i class="fas fa-clock"></i>Values generated 9:16 AM – 12 PM IST · Visible till next trading session
+          <i class="fas fa-clock"></i>Values generated 9:16 AM – 2 PM IST · Visible till next trading session
         </div>
       </div>
       <div class="rows-scroll">
@@ -2414,7 +2414,7 @@
             <div class="market-title">Market Insight Window Closed</div>
             <div class="market-desc">Live Black-Box-Engine values are generated during active market analysis hours.
             </div>
-            <div class="market-time">9:16 AM → 12 PM</div>
+            <div class="market-time">9:16 AM → 2 PM</div>
             <div class="market-sub">Previous values remain visible till next trading day 8:30 AM</div>
           </div>
         </div>
@@ -2639,14 +2639,14 @@ font-weight:600;
       },
       {
         id: 'sys-closing-soon',
-        fromMins: 11 * 60 + 45,    // 11:45 AM
-        toMins: 12 * 60,         // 12:00 PM
-        text: '⏳ TraderBro.in session will be closing at 12:00 PM IST'
+        fromMins: 13 * 60 + 45,    // 1:45 PM
+        toMins: 14 * 60,         // 2:00 PM
+        text: '⏳ TraderBro.in session will be closing at 2:00 PM IST'
       },
       {
         id: 'sys-download-ready',
-        fromMins: 12 * 60 + 1,     // 12:01 PM
-        toMins: 14 * 60,         // show till 2 PM
+        fromMins: 14 * 60 + 1,     // 2:01 PM
+        toMins: 16 * 60,         // show till 4 PM
         text: '📥 You can now download today\'s data — Available with Pro & Premium Plans only'
       }
     ];
@@ -2680,12 +2680,12 @@ font-weight:600;
     }
     function isMarketOpen() {
       const ist = getIST(); const mins = ist.getHours() * 60 + ist.getMinutes();
-      return mins >= 9 * 60 + 16 && mins <= 12 * 60 + 30;
+      return mins >= 9 * 60 + 16 && mins <= 14 * 60 + 30;
     }
     // REPLACE WITH:
     function isJustAfterMarketClose() {
       const ist = getIST(); const mins = ist.getHours() * 60 + ist.getMinutes();
-      return mins >= 12 * 60 + 0 && mins <= 12 * 60 + 30;   // 12:00 PM – 12:30 PM IST
+      return mins >= 14 * 60 + 0 && mins <= 14 * 60 + 30;   // 2:00 PM – 2:30 PM IST
     }
 
     async function checkMarketCloseAutoSave() {
@@ -2976,7 +2976,7 @@ font-weight:600;
       const day = ist.getDay();   // 0=Sun, 6=Sat
       const mins = ist.getHours() * 60 + ist.getMinutes();
       const marketOpen = 9 * 60 + 16;
-      const marketClose = 12 * 60;
+      const marketClose = 14 * 60;
 
       let icon, title, desc, time;
 
@@ -3010,7 +3010,7 @@ font-weight:600;
         icon = "⏰";
         title = "Market Insight Window Closed";
         desc = "Live Black-Box-Engine values are generated during active market hours.";
-        time = "9:16 AM → 12:00 PM IST";
+        time = "9:16 AM → 2:00 PM IST";
       }
 
       return `
@@ -3606,20 +3606,6 @@ font-weight:600;
         // NOT LOGGED IN
         if (data.reason === "not_logged_in") {
           window.location.replace("/user-login");
-          return false;
-        }
-
-        // MAINTENANCE MODE FOR USER LOGIN
-        if (data.reason === "maintenance") {
-          if (typeof _refreshTimer !== "undefined" && _refreshTimer) {
-            clearTimeout(_refreshTimer);
-          }
-          showFullscreenClosed(
-            "🛠️",
-            "Site Under Maintenance",
-            data.message || "Currently Site is under maintenance on account of CAS(Closing Auction Session) alignment",
-            `<div style="margin-top:24px;"><a href="/account" style="color:#02A3FE; text-decoration:underline; font-size:13px; font-weight:500;">Go to My Account</a> <span style="color:#555; margin:0 8px;">|</span> <a href="/logout" style="color:#ef4444; text-decoration:underline; font-size:13px; font-weight:500;">Logout</a></div>`
-          );
           return false;
         }
 
