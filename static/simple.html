@@ -248,7 +248,7 @@
     </div>
 
     <div id="loading">
-      ⏰ Live values are generated from 9:16 AM to 12 PM IST and remain visible till next trading session.
+      ⏰ Live values are generated from 9:16 AM to 2 PM IST and remain visible till next trading session.
     </div>
 
     <div class="table-wrap">
@@ -306,14 +306,13 @@
     function isMarketOpen() {
       const ist = getISTTime();
       const mins = ist.getHours() * 60 + ist.getMinutes();
-      return mins >= (9 * 60 + 16) && mins <= (15 * 60 + 30);
+      return mins >= (9 * 60 + 16) && mins <= (14 * 60 + 30);
     }
 
     function isJustAfterMarketClose() {
       const ist = getISTTime();
       const mins = ist.getHours() * 60 + ist.getMinutes();
-      // 5-minute window: 15:30 to 15:35
-      return mins >= (15 * 60 + 30) && mins <= (15 * 60 + 35);
+      return mins >= (14 * 60 + 0) && mins <= (14 * 60 + 30);
     }
 
     /* ════════════════════════════════════════════
@@ -516,7 +515,7 @@
         const data = await res.json();
         if (data && data.error) {
           document.getElementById("loading").innerHTML =
-            "⏰ Live values are generated from 9:16 AM to 3:30 PM IST and remain visible till next trading session.";
+            "⏰ Live values are generated from 9:16 AM to 2:00 PM IST and remain visible till next trading session.";
           document.getElementById("loading").style.display = "";
         } else {
           document.getElementById("loading").style.display = "none";
@@ -572,7 +571,7 @@
       ];
 
       const titleRow = [`TraderBro — Black-Box-Engine  |  Live Running Data  |  ${dateStr}  (${dayName})`];
-      const subRow = ["Market Session: 09:16 AM → 03:30 PM IST  |  traderbro.in"];
+      const subRow = ["Market Session: 09:16 AM → 02:00 PM IST  |  traderbro.in"];
       const blankRow = [];
 
       const fmtNum = (v) => {
