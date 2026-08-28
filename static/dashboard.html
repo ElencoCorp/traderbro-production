@@ -3145,7 +3145,8 @@ font-weight:600;
             strike: r.strike || "",
             index_ltp: r.index_ltp || "",
             running: r.running || 0,
-            bbi: r.bbi
+            bbi: r.bbi,
+            vix: r.vix
           }));
 
           document.getElementById("h-ltp").textContent = heroRow.index_ltp || "—";
@@ -3212,7 +3213,7 @@ font-weight:600;
           // --- INJECT BBI HEADERS & PILLS ---
           let html = `
                 <div style="display: flex; justify-content: space-between; padding: 0 14px 8px; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
-                    <span>Time & Sensex</span>
+                    <span>Time & Sensex / VI</span>
                     <div style="display: flex; gap: 6px; text-align: center;">
                         <span style="width: 80px;">Running</span>
                         <span style="width: 80px; color: var(--primary);">BBI</span>
@@ -3255,11 +3256,14 @@ font-weight:600;
               }
             }
 
+            const rowVix = (r.vix !== undefined && r.vix !== null) ? r.vix : ((d && d.vix !== undefined && d.vix !== null) ? d.vix : null);
+            const vixStr = (rowVix !== null && rowVix !== undefined && !isNaN(parseFloat(rowVix))) ? parseFloat(rowVix).toFixed(2) : "—";
+
             html += `
 				    <div class="data-row ${rcls}">
 				        <div class="row-dt">
 				            <span class="row-time">${dt[1] || r.datetime}</span>
-				            <span class="row-sensex">Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)}</span>
+				            <span class="row-sensex">Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)} <span style="margin:0 3px;opacity:0.4;">|</span> <span style="color:var(--gold);font-weight:600">VIX: ${vixStr}</span></span>
 				        </div>
 				        <div style="display: flex; gap: 6px;">
 				            <div class="val-pill ${cls}" title="Running Value">
