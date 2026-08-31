@@ -241,7 +241,9 @@
 
   <div class="card">
     <div class="controls">
-      <label for="interval" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">Interval (seconds)</label>
+      <label for="interval"
+        style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">Interval
+        (seconds)</label>
       <input type="number" id="interval" value="15" min="1" aria-label="Interval in seconds">
       <button class="btn-primary" onclick="setIntervalTime()">⚡ Set Interval</button>
       <button class="btn-download" onclick="downloadExcel()">⬇ Download Excel</button>
@@ -560,13 +562,13 @@
       const dayName = ist.toLocaleDateString("en-IN", { weekday: "long" });
       const fileName = `TraderBro_LiveRunning_${dateStr}.xlsx`;
 
-      // ── All 20 columns matching LIVE_RUNNING_RECORDS structure ──
+      // ── All 21 columns matching LIVE_RUNNING_RECORDS structure ──
       const headers = [
         "DateTime", "Expiry",
         "CE LTP", "CE Delta", "CE Gamma", "CE Theta", "CE Vega",
         "Strike",
         "PE LTP", "PE Delta", "PE Gamma", "PE Theta", "PE Vega",
-        "Delta Ratio", "Index LTP", "Reference", "Stretched", "Difference",
+        "Delta Ratio", "Index LTP", "Volatility Index (VIX)", "Reference", "Stretched", "Difference",
         "Diff Prev", "Running"
       ];
 
@@ -601,6 +603,7 @@
           fmtNum(r.pe_vega),
           fmtNum(r.delta_ratio),
           fmtNum(r.index_ltp),
+          fmtNum(r.vix),
           fmtNum(r.reference),
           fmtNum(r.stretched),
           fmtNum(r.difference),
@@ -626,14 +629,14 @@
         { wch: 9 }, { wch: 10 }, { wch: 10 }, { wch: 11 }, { wch: 9 },
         { wch: 9 },
         { wch: 9 }, { wch: 10 }, { wch: 10 }, { wch: 11 }, { wch: 9 },
-        { wch: 12 }, { wch: 11 }, { wch: 11 }, { wch: 12 }, { wch: 11 },
+        { wch: 12 }, { wch: 11 }, { wch: 22 }, { wch: 11 }, { wch: 12 }, { wch: 11 },
         { wch: 10 }, { wch: 10 }
       ];
 
       // Merge title, sub-title, summary
       ws["!merges"] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 19 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 19 } },
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 20 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 20 } },
         { s: { r: wsData.length - 1, c: 0 }, e: { r: wsData.length - 1, c: 9 } },
       ];
 
@@ -679,6 +682,10 @@
         font: { bold: true, color: { rgb: "02A3FE" }, sz: 10, name: "Arial" },
         alignment: { horizontal: "center" }
       };
+      const GOLD_STYLE = {
+        font: { bold: true, color: { rgb: "F5A623" }, sz: 10, name: "Arial" },
+        alignment: { horizontal: "center" }
+      };
       const NORMAL_STYLE = {
         font: { color: { rgb: "E8EAF0" }, sz: 10, name: "Arial" },
         alignment: { horizontal: "center" }
@@ -689,24 +696,25 @@
       styleCell(ws, "A2", SUB_STYLE);
 
       // Header row (Excel row 4)
-      "ABCDEFGHIJKLMNOPQRST".split('').forEach(col => styleCell(ws, col + "4", HDR_STYLE));
+      "ABCDEFGHIJKLMNOPQRSTU".split('').forEach(col => styleCell(ws, col + "4", HDR_STYLE));
 
       // Data rows (start Excel row 5)
       dataRows.forEach((row, ridx) => {
         const excelRow = 5 + ridx;
-        const runVal = parseFloat(row[19] || 0);
+        const runVal = parseFloat(row[20] || 0);
         const rowBg = runVal > 0 ? "00291F" : runVal < 0 ? "2D0010" : "0A0A18";
         const rowFill = { patternType: "solid", fgColor: { rgb: rowBg } };
         const thin = { style: "thin", color: { rgb: "1A1A35" } };
         const thinBorder = { left: thin, right: thin, top: thin, bottom: thin };
 
-        "ABCDEFGHIJKLMNOPQRST".split('').forEach((col, cidx) => {
+        "ABCDEFGHIJKLMNOPQRSTU".split('').forEach((col, cidx) => {
           const addr = col + excelRow;
           if (!ws[addr]) return;
           let style;
           if (cidx === 0) { style = { ...DT_STYLE, fill: rowFill, border: thinBorder }; }
           else if (cidx === 7) { style = { ...STRIKE_STYLE, fill: rowFill, border: thinBorder }; }
-          else if (cidx === 19) {
+          else if (cidx === 15) { style = { ...GOLD_STYLE, fill: rowFill, border: thinBorder }; }
+          else if (cidx === 20) {
             style = runVal > 0 ? { ...POS_STYLE, border: thinBorder }
               : runVal < 0 ? { ...NEG_STYLE, border: thinBorder }
                 : { ...NORMAL_STYLE, fill: rowFill, border: thinBorder };
