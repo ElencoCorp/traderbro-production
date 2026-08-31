@@ -3602,6 +3602,7 @@ def save_daily_excel():
         NORMAL_F = Font(name="Arial", color="E8EAF0", size=10)
         ORANGE_F = Font(name="Arial", color="FF6B35", size=10)
         BLUE_F   = Font(name="Arial", color="02A3FE", bold=True, size=10)
+        GOLD_F   = Font(name="Arial", color="F5A623", bold=True, size=10)
 
         # Running Value fonts matching dashboard.html styling (smaller, non-bold, muted colors)
         RUN_POS_F = Font(name="Arial", color="D6CACA", bold=False, size=8)
@@ -3620,12 +3621,12 @@ def save_daily_excel():
 
         center = Alignment(horizontal="center", vertical="center")
 
-        # ── 5 columns ──────────────────────────────────────
-        headers = ["DateTime", "Strike", "Sensex (Index LTP)", "Running Value", "BBI Value"]
-        num_cols = 5
+        # ── 6 columns ──────────────────────────────────────
+        headers = ["DateTime", "Strike", "Sensex (Index LTP)", "Volatility Index (VIX)", "Running Value", "BBI Value"]
+        num_cols = 6
 
         # ── Row 1: Title ────────────────────────────────────
-        ws.merge_cells("A1:E1")
+        ws.merge_cells("A1:F1")
         ws["A1"] = f"TraderBro — Black-Box-Engine Dashboard  |  {date_str}  ({day_name})"
         ws["A1"].font      = Font(name="Arial", color="FFFFFF", bold=True, size=13)
         ws["A1"].fill      = TITLE_FILL
@@ -3633,7 +3634,7 @@ def save_daily_excel():
         ws.row_dimensions[1].height = 26
 
         # ── Row 2: Subtitle ─────────────────────────────────
-        ws.merge_cells("A2:E2")
+        ws.merge_cells("A2:F2")
         ws["A2"] = "Market Session: 09:15 AM → 02:00 PM IST  |  traderbro.in"
         ws["A2"].font      = Font(name="Arial", color="E8EAF0", size=10, italic=True)
         ws["A2"].fill      = HDR_FILL
@@ -3644,7 +3645,7 @@ def save_daily_excel():
         ws.row_dimensions[3].height = 6
 
         # ── Row 4: Column headers ────────────────────────────
-        col_widths = [22, 10, 20, 15, 15]
+        col_widths = [22, 10, 20, 22, 15, 15]
         for col_idx, hdr in enumerate(headers, start=1):
             cell = ws.cell(row=4, column=col_idx, value=hdr)
             cell.font      = Font(name="Arial", color="02A3FE", bold=True, size=10)
@@ -3663,6 +3664,7 @@ def save_daily_excel():
             running_val = safe_num(r.get("running")) or 0.0
             bbi_val     = safe_num(r.get("bbi"))
             index_ltp   = safe_num(r.get("index_ltp"))
+            vix_val     = safe_num(r.get("vix"))
 
             # Alternating row background for a clean layout
             row_fill = ODD_FILL if row_idx % 2 == 1 else EVEN_FILL
@@ -3694,6 +3696,7 @@ def save_daily_excel():
                 r.get("datetime", ""),                                  # DateTime
                 r.get("strike", ""),                                    # Strike
                 round(index_ltp, 2) if index_ltp is not None else "",   # Sensex
+                round(vix_val, 2) if vix_val is not None else "—",      # Volatility Index (VIX)
                 round(running_val, 2),                                  # Running Value
                 round(bbi_val, 2) if bbi_val is not None else "—",      # BBI Value
             ]
@@ -3714,9 +3717,12 @@ def save_daily_excel():
                     cell.font = NORMAL_F
                     cell.fill = row_fill
                 elif col_idx == 4:
+                    cell.font = GOLD_F
+                    cell.fill = row_fill  # Volatility Index (VIX) gets GOLD font
+                elif col_idx == 5:
                     cell.font = run_font
                     cell.fill = row_fill  # Running Value cell gets row_fill
-                elif col_idx == 5:
+                elif col_idx == 6:
                     cell.font = bbi_font
                     cell.fill = bbi_cell_fill  # BBI cell gets its colored fill
 
@@ -3731,7 +3737,7 @@ def save_daily_excel():
         sign_run      = '+' if total_running > 0 else ''
         sign_bbi      = '+' if total_bbi > 0 else ''
 
-        ws.merge_cells(f"A{last_row}:E{last_row}")
+        ws.merge_cells(f"A{last_row}:F{last_row}")
         ws[f"A{last_row}"] = f"Final Running Value: {sign_run}{total_running}   |   Final BBI Value: {sign_bbi}{total_bbi}"
 
         fill_col = "00291F" if total_bbi > 0 else ("2D0010" if total_bbi < 0 else "1A1A35")
