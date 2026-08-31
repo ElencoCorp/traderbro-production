@@ -3779,7 +3779,131 @@ def schedule_daily_excel_save():
     print("✅ DAILY EXCEL EXPORT SCHEDULED at 2:01 PM IST")
 
 
+# ── AUTOMATIC VPS EXCEL FILE UPGRADER ──────────────────────────────────
+def upgrade_all_vps_excel_files():
+    """
+    Scans EXCEL_DIR on server startup and upgrades any existing 4-col or 5-col 
+    Excel file to 6 columns containing Volatility Index (VIX).
+    """
+    try:
+        if not os.path.exists(EXCEL_DIR):
+            return
+            
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        
+        HDR_FILL = PatternFill("solid", fgColor="090915")
+        GOLD_F   = Font(name="Arial", color="F5A623", bold=True, size=10)
+        HDR_FONT = Font(name="Arial", color="02A3FE", bold=True, size=10)
+        thin = Side(style="thin", color="1A1A35")
+        thin_border = Border(left=thin, right=thin, top=thin, bottom=thin)
+        center = Alignment(horizontal="center", vertical="center")
+
+        files = sorted(glob.glob(os.path.join(EXCEL_DIR, "*.xlsx")))
+        upgraded_count = 0
+
+        for filepath in files:
+            try:
+                wb = openpyxl.load_workbook(filepath)
+                ws = wb.active
+
+                headers_row4 = [ws.cell(4, c).value for c in range(1, 30)]
+                
+                # Check if already upgraded
+                if "Volatility Index (VIX)" in headers_row4 or "Volatility Index" in headers_row4:
+                    continue
+
+                # Case 1: 5-column dashboard Excel
+                # ["DateTime", "Strike", "Sensex (Index LTP)", "Running Value", "BBI Value"]
+                if len(headers_row4) >= 5 and headers_row4[0] == "DateTime" and headers_row4[2] == "Sensex (Index LTP)" and headers_row4[3] == "Running Value" and headers_row4[4] == "BBI Value":
+                    ws.insert_cols(4)
+                    ws.cell(row=4, column=4, value="Volatility Index (VIX)")
+                    
+                    hdr_cell = ws.cell(row=4, column=4)
+                    hdr_cell.font = HDR_FONT
+                    hdr_cell.fill = HDR_FILL
+                    hdr_cell.alignment = center
+                    hdr_cell.border = Border(left=thin, right=thin, top=Side(style="medium", color="02A3FE"), bottom=Side(style="medium", color="02A3FE"))
+                    ws.column_dimensions["D"].width = 22
+
+                    for r in range(5, ws.max_row + 1):
+                        val_a = ws.cell(r, 1).value
+                        if val_a and "Final Running Value" in str(val_a):
+                            try: ws.unmerge_cells(f"A{r}:E{r}")
+                            except: pass
+                            ws.merge_cells(f"A{r}:F{r}")
+                            break
+
+                        vix_cell = ws.cell(row=r, column=4)
+                        vix_cell.value = "—"
+                        vix_cell.font = GOLD_F
+                        vix_cell.alignment = center
+                        vix_cell.border = thin_border
+
+                    try: ws.unmerge_cells("A1:E1")
+                    except: pass
+                    ws.merge_cells("A1:F1")
+                    try: ws.unmerge_cells("A2:E2")
+                    except: pass
+                    ws.merge_cells("A2:F2")
+                    ws.freeze_panes = "A5"
+
+                    wb.save(filepath)
+                    upgraded_count += 1
+
+                # Case 2: 4-column dashboard Excel
+                # ["DateTime", "Strike", "Sensex (Index LTP)", "Running Value"]
+                elif len(headers_row4) >= 4 and headers_row4[0] == "DateTime" and headers_row4[2] == "Sensex (Index LTP)" and headers_row4[3] == "Running Value":
+                    ws.insert_cols(4)
+                    ws.cell(row=4, column=4, value="Volatility Index (VIX)")
+                    
+                    hdr_cell = ws.cell(row=4, column=4)
+                    hdr_cell.font = HDR_FONT
+                    hdr_cell.fill = HDR_FILL
+                    hdr_cell.alignment = center
+                    hdr_cell.border = Border(left=thin, right=thin, top=Side(style="medium", color="02A3FE"), bottom=Side(style="medium", color="02A3FE"))
+                    ws.column_dimensions["D"].width = 22
+
+                    for r in range(5, ws.max_row + 1):
+                        val_a = ws.cell(r, 1).value
+                        if val_a and "Final Running Value" in str(val_a):
+                            try: ws.unmerge_cells(f"A{r}:D{r}")
+                            except: pass
+                            ws.merge_cells(f"A{r}:E{r}")
+                            break
+
+                        vix_cell = ws.cell(row=r, column=4)
+                        vix_cell.value = "—"
+                        vix_cell.font = GOLD_F
+                        vix_cell.alignment = center
+                        vix_cell.border = thin_border
+
+                    try: ws.unmerge_cells("A1:D1")
+                    except: pass
+                    ws.merge_cells("A1:E1")
+                    try: ws.unmerge_cells("A2:D2")
+                    except: pass
+                    ws.merge_cells("A2:E2")
+                    ws.freeze_panes = "A5"
+
+                    wb.save(filepath)
+                    upgraded_count += 1
+
+            except Exception as fe:
+                print(f"⚠️ Error upgrading file {filepath}: {fe}")
+
+        if upgraded_count > 0:
+            print(f"✅ Upgraded {upgraded_count} existing VPS Excel files with VIX column.")
+
+    except Exception as e:
+        print(f"⚠️ Error in upgrade_all_vps_excel_files: {e}")
+
+
 schedule_daily_excel_save()
+try:
+    upgrade_all_vps_excel_files()
+except Exception as e:
+    print("Startup excel upgrade check:", e)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -3896,6 +4020,13 @@ def download_excel(filename: str, request: Request):
 # ═══════════════════════════════════════════════════════════════════════
 @app.post("/api/admin/trigger-excel-save")
 def admin_trigger_excel(request: Request):
+    save_daily_excel()
+    return JSONResponse({"success": True, "message": "Excel saved."})
+
+@app.post("/api/admin/upgrade-excel-files")
+def admin_upgrade_excel_endpoint(request: Request):
+    upgrade_all_vps_excel_files()
+    return JSONResponse({"success": True, "message": "All VPS Excel files upgraded with VIX column."})
     if request.session.get("role") != "admin":
         raise HTTPException(status_code=401, detail="Unauthorized")
     try:
