@@ -2442,7 +2442,12 @@
         </div>
 
         <div class="download-card">
-          <div class="dl-title"><i class="fas fa-download"></i>Historical Data Downloads</div>
+          <div class="dl-title" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+            <span><i class="fas fa-download"></i>Historical Data Downloads</span>
+            <button onclick="downloadDashboardExcel()" title="Download live session data as Excel file with Volatility Index (VIX)" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark)); border:none; border-radius:6px; color:#fff; font-size:10px; font-weight:700; padding:4px 10px; cursor:pointer; display:flex; align-items:center; gap:5px; box-shadow: 0 2px 8px rgba(2,163,254,0.3);">
+              <i class="fas fa-file-excel"></i> Live Excel
+            </button>
+          </div>
           <div class="plan-strip plan-free" id="plan-strip">
             <span class="plan-strip-label" id="plan-strip-label">⭕ Free Plan</span>
             <span class="plan-strip-status" id="plan-strip-status">⛔ Downloads Locked</span>
@@ -3510,6 +3515,81 @@ font-weight:600;
         }
       }
       renderDlList(plan, canDl);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       LIVE DASHBOARD EXCEL DOWNLOAD (WITH VIX)
+    ══════════════════════════════════════════════════════════ */
+    function downloadDashboardExcel() {
+      if (!_dashboardRows || !_dashboardRows.length) {
+        alert("No live dashboard data available to download yet.");
+        return;
+      }
+
+      const ist = getIST();
+      const dateStr = ist.toISOString().slice(0, 10);
+      const dayName = ist.toLocaleDateString("en-IN", { weekday: "long" });
+      const fileName = `TraderBro_Dashboard_${dateStr}.xlsx`;
+
+      // 6 columns matching server-side export format
+      const headers = [
+        "DateTime",
+        "Strike",
+        "Sensex (Index LTP)",
+        "Volatility Index (VIX)",
+        "Running Value",
+        "BBI Value"
+      ];
+
+      const titleRow = [`TraderBro — Black-Box-Engine Dashboard  |  ${dateStr}  (${dayName})`];
+      const subRow = ["Market Session: 09:16 AM → 02:00 PM IST  |  traderbro.in"];
+      const blankRow = [];
+
+      const fmtNum = (v) => {
+        if (v === null || v === undefined || v === '') return '';
+        const n = parseFloat(v);
+        return isNaN(n) ? '' : n;
+      };
+
+      const dataRows = _dashboardRows.map((r) => {
+        const isSkipped = r.running === "-" || r.isSkipped;
+        const runVal = isSkipped ? '-' : (r.running !== undefined && r.running !== null ? fmtNum(r.running) : '');
+        const bbiVal = (r.bbi !== null && r.bbi !== undefined) ? fmtNum(r.bbi) : '—';
+        const vixVal = (r.vix !== null && r.vix !== undefined) ? fmtNum(r.vix) : '—';
+
+        return [
+          r.datetime ?? '',
+          r.strike ?? '',
+          fmtNum(r.index_ltp),
+          vixVal,
+          runVal,
+          bbiVal
+        ];
+      });
+
+      const lastSettled = _dashboardRows.length ? _dashboardRows[_dashboardRows.length - 1] : null;
+      const finalRunning = lastSettled ? Number(lastSettled.running || 0) : 0;
+      const finalBbi = lastSettled && lastSettled.bbi !== null && lastSettled.bbi !== undefined ? Number(lastSettled.bbi) : 0;
+      const fv = finalRunning.toFixed(2);
+      const fb = finalBbi.toFixed(2);
+      const summaryRow = [`Final Running Value: ${finalRunning > 0 ? "+" : ""}${fv}   |   Final BBI Value: ${finalBbi > 0 ? "+" : ""}${fb}`];
+
+      const wsData = [titleRow, subRow, blankRow, headers, ...dataRows, blankRow, summaryRow];
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      ws["!cols"] = [
+        { wch: 22 }, { wch: 10 }, { wch: 20 }, { wch: 22 }, { wch: 15 }, { wch: 15 }
+      ];
+
+      ws["!merges"] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
+        { s: { r: wsData.length - 1, c: 0 }, e: { r: wsData.length - 1, c: 5 } },
+      ];
+
+      XLSX.writeFile(wb, fileName);
     }
     /* ══════════════════════════════════════════════════════════
        UPGRADE MODAL
