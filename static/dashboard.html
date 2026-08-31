@@ -2381,8 +2381,11 @@
 
     <div class="left-panel">
       <div class="panel-header">
-        <div class="panel-header-top">
+        <div class="panel-header-top" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
           <div class="panel-title">Black-Box-Engine</div>
+          <button id="admin-live-excel-btn" onclick="downloadAdminLiveExcel()" title="Download current live session data up to this moment (Admin Only)" style="display: none; background: linear-gradient(135deg, #7c3aed, #6d28d9); border: 1px solid rgba(124,58,237,0.5); border-radius: 8px; color: #fff; font-size: 11px; font-weight: 700; padding: 6px 14px; cursor: pointer; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(124,58,237,0.35); transition: all 0.2s;">
+            <i class="fas fa-file-excel"></i> ⚡ Live Excel Export (Admin)
+          </button>
         </div>
         <div class="atm-hero">
           <div class="atm-dt-box">
@@ -2442,12 +2445,7 @@
         </div>
 
         <div class="download-card">
-          <div class="dl-title" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-            <span><i class="fas fa-download"></i>Historical Data Downloads</span>
-            <button onclick="downloadDashboardExcel()" title="Download live session data as Excel file with Volatility Index (VIX)" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark)); border:none; border-radius:6px; color:#fff; font-size:10px; font-weight:700; padding:4px 10px; cursor:pointer; display:flex; align-items:center; gap:5px; box-shadow: 0 2px 8px rgba(2,163,254,0.3);">
-              <i class="fas fa-file-excel"></i> Live Excel
-            </button>
-          </div>
+          <div class="dl-title"><i class="fas fa-download"></i>Historical Data Downloads</div>
           <div class="plan-strip plan-free" id="plan-strip">
             <span class="plan-strip-label" id="plan-strip-label">⭕ Free Plan</span>
             <span class="plan-strip-status" id="plan-strip-status">⛔ Downloads Locked</span>
@@ -3376,6 +3374,9 @@ font-weight:600;
           _userPlan = plan;
           _allDlFiles = files;
 
+          const adminBtn = document.getElementById("admin-live-excel-btn");
+          if (adminBtn) adminBtn.style.display = (plan === "admin") ? "inline-flex" : "none";
+
           // Plan strip
           document.getElementById("plan-strip").className = `plan-strip plan-${plan}`;
           const labels = { admin: '🔑 Admin Access', pro: '⚡ Pro Plan', premium: '👑 Premium Plan', essential: '🟡 Essential Plan', basic: '🔵 Basic Plan', free: '⭕ Free Plan' };
@@ -3518,9 +3519,10 @@ font-weight:600;
     }
 
     /* ══════════════════════════════════════════════════════════
-       LIVE DASHBOARD EXCEL DOWNLOAD (WITH VIX)
+       ADMIN LIVE EXCEL EXPORT (9:16 AM → CURRENT MOMENT)
+       Client-side only download — zero server storage
     ══════════════════════════════════════════════════════════ */
-    function downloadDashboardExcel() {
+    function downloadAdminLiveExcel() {
       if (!_dashboardRows || !_dashboardRows.length) {
         alert("No live dashboard data available to download yet.");
         return;
@@ -3528,8 +3530,10 @@ font-weight:600;
 
       const ist = getIST();
       const dateStr = ist.toISOString().slice(0, 10);
+      const currentHMs = ist.toTimeString().slice(0, 5);
+      const timeFileName = currentHMs.replace(":", "-");
       const dayName = ist.toLocaleDateString("en-IN", { weekday: "long" });
-      const fileName = `TraderBro_Dashboard_${dateStr}.xlsx`;
+      const fileName = `TraderBro_Live_Session_${dateStr}_${timeFileName}.xlsx`;
 
       // 6 columns matching server-side export format
       const headers = [
@@ -3542,7 +3546,7 @@ font-weight:600;
       ];
 
       const titleRow = [`TraderBro — Black-Box-Engine Dashboard  |  ${dateStr}  (${dayName})`];
-      const subRow = ["Market Session: 09:16 AM → 02:00 PM IST  |  traderbro.in"];
+      const subRow = [`Live Session Data (09:16 AM → ${currentHMs} IST)  |  traderbro.in`];
       const blankRow = [];
 
       const fmtNum = (v) => {
@@ -3572,7 +3576,7 @@ font-weight:600;
       const finalBbi = lastSettled && lastSettled.bbi !== null && lastSettled.bbi !== undefined ? Number(lastSettled.bbi) : 0;
       const fv = finalRunning.toFixed(2);
       const fb = finalBbi.toFixed(2);
-      const summaryRow = [`Final Running Value: ${finalRunning > 0 ? "+" : ""}${fv}   |   Final BBI Value: ${finalBbi > 0 ? "+" : ""}${fb}`];
+      const summaryRow = [`Current Running Value: ${finalRunning > 0 ? "+" : ""}${fv}   |   Current BBI Value: ${finalBbi > 0 ? "+" : ""}${fb}`];
 
       const wsData = [titleRow, subRow, blankRow, headers, ...dataRows, blankRow, summaryRow];
 
@@ -3589,6 +3593,7 @@ font-weight:600;
         { s: { r: wsData.length - 1, c: 0 }, e: { r: wsData.length - 1, c: 5 } },
       ];
 
+      // Instant client-side download without saving to server storage
       XLSX.writeFile(wb, fileName);
     }
     /* ══════════════════════════════════════════════════════════
