@@ -3511,47 +3511,11 @@ font-weight:600;
             );
             if (rawRows.length > 0) {
               const displayableRows = processRunningRecords(rawRows);
-              let bbiAcc = 0;
-              let prevBbi = null;
-              let prevRunning = null;
-              let validRunCount = 0;
-
-              for (let i = 0; i < displayableRows.length; i++) {
-                const isSkipped = displayableRows[i].running === "-" || displayableRows[i].isSkipped;
-                if (isSkipped) {
-                  displayableRows[i].bbi = null;
-                  continue;
-                }
-
-                validRunCount++;
-                let rVal = parseFloat(displayableRows[i].running || 0);
-
-                if (validRunCount === 1) {
-                  displayableRows[i].bbi = null;
-                  prevRunning = rVal;
-                } else if (validRunCount >= 2 && validRunCount <= 6) {
-                  bbiAcc += rVal;
-                  displayableRows[i].bbi = null;
-                  if (validRunCount === 6) {
-                    let avg = bbiAcc / 6;
-                    displayableRows[i].bbi = avg;
-                    prevBbi = avg;
-                  }
-                  prevRunning = rVal;
-                } else {
-                  let currentBbi = prevBbi + rVal - prevRunning;
-                  displayableRows[i].bbi = currentBbi;
-                  prevBbi = currentBbi;
-                  prevRunning = rVal;
-                }
-              }
-
               _dashboardRows = displayableRows.map(r => ({
                 datetime: r.datetime || "",
                 strike: r.strike || "",
                 index_ltp: r.index_ltp || "",
                 running: r.running || 0,
-                bbi: r.bbi,
                 vix: r.vix
               }));
               rowsToExport = _dashboardRows;
@@ -3575,14 +3539,13 @@ font-weight:600;
         const dayName = ist.toLocaleDateString("en-IN", { weekday: "long" });
         const fileName = `TraderBro_Live_Session_${dateStr}_${timeFileName}.xlsx`;
 
-        // 6 columns matching server-side export format
+        // 5 columns matching server-side export format
         const headers = [
           "DateTime",
           "Strike",
           "Sensex (Index LTP)",
           "Volatility Index (VIX)",
-          "Running Value",
-          "BBI Value"
+          "BBIR Value"
         ];
 
         const titleRow = [`TraderBro — Black-Box-Engine Dashboard  |  ${dateStr}  (${dayName})`];
@@ -3598,7 +3561,6 @@ font-weight:600;
         const dataRows = rowsToExport.map((r) => {
           const isSkipped = r.running === "-" || r.isSkipped;
           const runVal = isSkipped ? '-' : (r.running !== undefined && r.running !== null ? fmtNum(r.running) : '');
-          const bbiVal = (r.bbi !== null && r.bbi !== undefined) ? fmtNum(r.bbi) : '—';
           const vixVal = (r.vix !== null && r.vix !== undefined) ? fmtNum(r.vix) : '—';
 
           return [
@@ -3606,17 +3568,14 @@ font-weight:600;
             r.strike ?? '',
             fmtNum(r.index_ltp),
             vixVal,
-            runVal,
-            bbiVal
+            runVal
           ];
         });
 
         const lastSettled = rowsToExport.length ? rowsToExport[rowsToExport.length - 1] : null;
         const finalRunning = lastSettled ? Number(lastSettled.running || 0) : 0;
-        const finalBbi = lastSettled && lastSettled.bbi !== null && lastSettled.bbi !== undefined ? Number(lastSettled.bbi) : 0;
         const fv = finalRunning.toFixed(2);
-        const fb = finalBbi.toFixed(2);
-        const summaryRow = [`Current Running Value: ${finalRunning > 0 ? "+" : ""}${fv}   |   Current BBI Value: ${finalBbi > 0 ? "+" : ""}${fb}`];
+        const summaryRow = [`Final BBIR Value: ${finalRunning > 0 ? "+" : ""}${fv}`];
 
         const wsData = [titleRow, subRow, blankRow, headers, ...dataRows, blankRow, summaryRow];
 
@@ -3624,13 +3583,13 @@ font-weight:600;
         const ws = XLSX.utils.aoa_to_sheet(wsData);
 
         ws["!cols"] = [
-          { wch: 22 }, { wch: 10 }, { wch: 20 }, { wch: 22 }, { wch: 15 }, { wch: 15 }
+          { wch: 22 }, { wch: 10 }, { wch: 20 }, { wch: 22 }, { wch: 18 }
         ];
 
         ws["!merges"] = [
-          { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
-          { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
-          { s: { r: wsData.length - 1, c: 0 }, e: { r: wsData.length - 1, c: 5 } },
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } },
+          { s: { r: wsData.length - 1, c: 0 }, e: { r: wsData.length - 1, c: 4 } },
         ];
 
         // Append worksheet to workbook before saving
