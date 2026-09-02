@@ -48,8 +48,12 @@
 
     html,
     body {
-      height: 100%;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     body {
@@ -58,6 +62,14 @@
       color: var(--text);
       background-image: radial-gradient(ellipse at 20% 50%, rgba(2, 163, 254, .04) 0%, transparent 60%),
         radial-gradient(ellipse at 80% 20%, rgba(235, 66, 1, .04) 0%, transparent 60%);
+    }
+
+    .welcome-bar,
+    #holiday-banner,
+    #upcoming-holiday-strip,
+    .header,
+    .dashboard-footer {
+      flex-shrink: 0;
     }
 
     .welcome-bar {
@@ -69,6 +81,114 @@
       color: white;
       letter-spacing: 1.5px;
       text-transform: uppercase;
+    }
+
+    /* Single-Bar Responsive Holiday Section */
+    .dashboard-footer {
+      background: #070712;
+      border-top: 1px solid var(--border);
+      padding: 6px 20px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-dim);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 4px 18px;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .dashboard-footer span {
+      opacity: 0.85;
+      font-weight: 500;
+    }
+
+    .holiday-strip-wrapper {
+      background: linear-gradient(90deg, #120a02, #1c0e04, #120a02);
+      border-bottom: 1px solid rgba(245, 166, 35, 0.25);
+      padding: 6px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      flex-shrink: 0;
+    }
+
+    .holiday-strip-wrapper::-webkit-scrollbar {
+      display: none;
+    }
+
+    .holiday-strip-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--gold);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .holiday-strip-items {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: nowrap;
+    }
+
+    .holiday-pill-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(245, 166, 35, 0.07);
+      border: 1px solid rgba(245, 166, 35, 0.25);
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .holiday-pill-item:hover {
+      background: rgba(245, 166, 35, 0.14);
+      border-color: rgba(245, 166, 35, 0.4);
+    }
+
+    .holiday-pill-item .h-reason {
+      color: #ffffff;
+      font-weight: 700;
+    }
+
+    .holiday-pill-item .h-date {
+      color: var(--gold);
+      font-size: 10.5px;
+      font-weight: 500;
+    }
+
+    .holiday-pill-item .h-days-away {
+      background: rgba(235, 66, 1, 0.2);
+      color: #ff6b35;
+      border: 1px solid rgba(235, 66, 1, 0.3);
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 9.5px;
+      font-weight: 700;
+    }
+
+    .holiday-pill-item .h-long-weekend {
+      background: rgba(0, 212, 170, 0.15);
+      color: var(--green);
+      border: 1px solid rgba(0, 212, 170, 0.3);
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 9.5px;
+      font-weight: 600;
     }
 
     .header {
@@ -256,7 +376,8 @@
     .main-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      height: calc(100vh - var(--header-h) - 36px);
+      flex: 1;
+      min-height: 0;
     }
 
     .left-panel {
@@ -2233,35 +2354,13 @@
 
   <div class="welcome-bar">Welcome to the Black-Box-Engine Developed by TraderBro.in</div>
 
-  <div id="holiday-banner" style="
-  display:none;
-  background: linear-gradient(135deg,#1a0a00,#2d1500);
-  border-bottom: 2px solid #f5a623;
-  padding: 10px 28px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  animation: fadeInDown 0.4s ease;
-">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <span style="font-size:24px;">🏖️</span>
-      <div>
-        <div style="font-size:13px;font-weight:800;color:#f5a623;letter-spacing:0.5px;">
-          MARKET HOLIDAY TODAY
-        </div>
-        <div style="font-size:12px;color:#e0a060;" id="holiday-reason-text">
-          Market is closed today
-        </div>
-      </div>
+  <div id="holiday-banner" class="holiday-strip-wrapper" style="display:none; background: linear-gradient(90deg, #2b0b00, #401000, #2b0b00); border-bottom: 2px solid #ff4d6d;">
+    <div class="holiday-strip-title" style="color:#ff4d6d;">
+      🏖️ <span>MARKET CLOSED TODAY:</span>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <div id="upcoming-holiday-chips" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
-      <button onclick="document.getElementById('holiday-banner').style.display='none'" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
-             color:#aaa;font-size:12px;padding:4px 10px;border-radius:8px;cursor:pointer;">
-        ✕
-      </button>
-    </div>
+    <div style="color:#fff; font-size:11.5px; font-weight:700;" id="holiday-reason-text">Market is closed today</div>
+    <div id="upcoming-holiday-chips" style="display:flex;gap:6px;margin-left:auto;align-items:center;"></div>
+    <button onclick="document.getElementById('holiday-banner').style.display='none'" style="background:rgba(255,255,255,0.1);border:none;color:#aaa;font-size:11px;padding:2px 8px;border-radius:8px;cursor:pointer;">✕</button>
   </div>
 
   <div id="upcoming-holiday-strip" style="display:none;"></div>
@@ -2393,7 +2492,7 @@
             <div class="atm-dt-val" id="atm-dt">Waiting for market session...</div>
           </div>
           <div class="atm-run-box atm-run-zero" id="atm-run-box">
-            <span class="run-label" id="atm-run-label">Min &amp; Max BBIR</span>
+            <span class="run-label" id="atm-run-label">Min &amp; Max BBI(R)</span>
             <div class="bbi-minmax-container" id="atm-run-val">
               <div class="bbi-stat-row">
                 <span class="bbi-stat-lbl">MIN</span>
@@ -2545,6 +2644,12 @@
 
     </div>
   </div>
+
+  <footer class="dashboard-footer">
+    <span>© 2026 Traderbro.in. All Rights Reserved.</span>
+    <span style="color:var(--text-muted)">•</span>
+    <span>© 2026 TraderBro.in – Black Box Engine. All Rights Reserved.</span>
+  </footer>
 
   <div class="upgrade-overlay" id="upgrade-overlay">
     <div class="upgrade-modal">
@@ -3170,7 +3275,7 @@ font-weight:600;
                   <span><span style="color:#ff6b35">Volatility Index: </span><span style="color:var(--gold);font-weight:700">${vixStr}</span></span>
                 </div>`;
 
-          // ── CALCULATE MIN & MAX BBIR OUT OF ALL PRESENT DASHBOARD VALUES ──
+          // ── CALCULATE MIN & MAX BBI(R) OUT OF ALL PRESENT DASHBOARD VALUES ──
           const allBbirVals = displayableRows
             .filter(r => !r.isSkipped && r.running !== "-" && r.running !== null && r.running !== undefined)
             .map(r => parseFloat(r.running))
@@ -3184,7 +3289,7 @@ font-weight:600;
             const minBbir = Math.min(...allBbirVals);
             const maxBbir = Math.max(...allBbirVals);
 
-            if (runLabel) runLabel.textContent = "Min & Max BBIR";
+            if (runLabel) runLabel.textContent = "Min & Max BBI(R)";
 
             if (minEl) {
               minEl.textContent = (minBbir > 0 ? "+" : "") + minBbir.toFixed(2);
@@ -3195,7 +3300,7 @@ font-weight:600;
               maxEl.className = "val-pill " + (maxBbir > 0 ? "bbi-pos" : maxBbir < 0 ? "bbi-neg" : "bbi-zero");
             }
           } else {
-            if (runLabel) runLabel.textContent = "Waiting for BBIR...";
+            if (runLabel) runLabel.textContent = "Waiting for BBI(R)...";
             if (minEl) { minEl.textContent = "—"; minEl.className = "val-pill bbi-zero"; }
             if (maxEl) { maxEl.textContent = "—"; maxEl.className = "val-pill bbi-zero"; }
           }
@@ -3211,12 +3316,12 @@ font-weight:600;
 
           const displayRows = [...displayableRows].reverse();
 
-          // --- INJECT BBIR HEADER ---
+          // --- INJECT BBI(R) HEADER ---
           let html = `
                 <div style="display: flex; justify-content: space-between; padding: 0 14px 8px; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
                     <span>Time & Sensex / VI</span>
                     <div style="display: flex; gap: 6px; text-align: center;">
-                        <span style="width: 80px; color: var(--primary);">BBIR</span>
+                        <span style="width: 80px; color: var(--primary);">BBI(R)</span>
                     </div>
                 </div>
             `;
@@ -3249,7 +3354,7 @@ font-weight:600;
 				            <span class="row-sensex">Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)} <span style="margin:0 3px;opacity:0.4;">|</span> <span style="color:var(--gold);font-weight:600">VIX: ${vixStr}</span></span>
 				        </div>
 				        <div style="display: flex; gap: 6px;">
-				            <div class="val-pill ${bbiCls}" title="BBIR Value">
+				            <div class="val-pill ${bbiCls}" title="BBI(R) Value">
 				                ${valStr}
 				            </div>
 				        </div>
@@ -3545,7 +3650,7 @@ font-weight:600;
           "Strike",
           "Sensex (Index LTP)",
           "Volatility Index (VIX)",
-          "BBIR Value"
+          "BBI(R) Value"
         ];
 
         const titleRow = [`TraderBro — Black-Box-Engine Dashboard  |  ${dateStr}  (${dayName})`];
@@ -3575,7 +3680,7 @@ font-weight:600;
         const lastSettled = rowsToExport.length ? rowsToExport[rowsToExport.length - 1] : null;
         const finalRunning = lastSettled ? Number(lastSettled.running || 0) : 0;
         const fv = finalRunning.toFixed(2);
-        const summaryRow = [`Final BBIR Value: ${finalRunning > 0 ? "+" : ""}${fv}`];
+        const summaryRow = [`Final BBI(R) Value: ${finalRunning > 0 ? "+" : ""}${fv}`];
 
         const wsData = [titleRow, subRow, blankRow, headers, ...dataRows, blankRow, summaryRow];
 
@@ -4075,66 +4180,22 @@ font-weight:600;
   <script>
     /* ════════════════════════════════════════════════════════════════════
        HOLIDAY NOTIFICATION SYSTEM
-       • Shows banner when TODAY is a holiday
-       • Shows strip notification 1–5 days before a holiday
-       • Multiple holidays can be queued in the strip
+       • Single responsive bar displaying upcoming market holidays
     ════════════════════════════════════════════════════════════════════ */
 
-    const HOLIDAY_COLORS = {
-      0: { bg: "#1a0a00", border: "#f5a623", text: "#f5a623", badge: "#eb4201" },   // today
-      1: { bg: "rgba(235,66,1,0.10)", border: "rgba(235,66,1,0.4)", text: "#ff6b35", badge: "#eb4201" },
-      2: { bg: "rgba(245,166,35,0.10)", border: "rgba(245,166,35,0.35)", text: "#f5a623", badge: "#c8841a" },
-      3: { bg: "rgba(245,166,35,0.07)", border: "rgba(245,166,35,0.25)", text: "#c8841a", badge: "#a06010" },
-      4: { bg: "rgba(245,166,35,0.05)", border: "rgba(245,166,35,0.18)", text: "#a06010", badge: "#806000" },
-      5: { bg: "rgba(245,166,35,0.04)", border: "rgba(245,166,35,0.14)", text: "#806000", badge: "#606000" },
-    };
-
-    function _dayLabel(daysAway) {
-      if (daysAway === 0) return "TODAY";
-      if (daysAway === 1) return "TOMORROW";
-      return ` HOLIDAY IN ${daysAway} DAYS`;
-    }
-
-    function _urgencyIcon(daysAway) {
-      if (daysAway === 0) return "🏖️";
-      if (daysAway === 1) return "⚠️";
-      if (daysAway === 2) return "📅";
-      return "🗓️";
-    }
-
     function _buildStripItem(h) {
-      const col = HOLIDAY_COLORS[Math.min(h.days_away, 5)];
-      const label = _dayLabel(h.days_away);
-      const icon = _urgencyIcon(h.days_away);
-      const adj = h.is_weekend_adjacent
-        ? `<span style="font-size:9px;background:rgba(255,255,255,0.12);padding:1px 6px;border-radius:6px;margin-left:6px;">🔁 Long Weekend</span>`
+      const daysText = h.days_away === 0 ? "Today" : h.days_away === 1 ? "Tomorrow" : `In ${h.days_away} days`;
+      const lwBadge = h.is_weekend_adjacent
+        ? `<span class="h-long-weekend">Long Weekend</span>`
         : "";
 
       return `
-    <div style="
-      display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
-      gap:8px; padding:7px 28px;
-      background:${col.bg};
-      border-bottom:1px solid ${col.border};
-      font-size:11px; font-weight:600;
-      animation: fadeInDown 0.3s ease;
-    ">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:14px;">${icon}</span>
-        <span style="color:${col.text};font-weight:800;letter-spacing:0.5px;">${label}:</span>
-        <span style="color:#e8eaf0;">${h.reason}</span>
-        <span style="color:${col.text};font-size:10px;">· ${h.formatted_date} (${h.weekday_name})</span>
-        ${adj}
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <span style="
-          background:${col.badge}; color:white;
-          padding:2px 10px; border-radius:20px;
-          font-size:10px; font-weight:700; letter-spacing:0.5px;
-          @media (max-width: 500px) { display:none; }
-        ">MARKET WILL BE CLOSED · ${h.formatted_date}</span>
-      </div>
-    </div>`;
+        <div class="holiday-pill-item">
+          <span class="h-reason">${h.reason}</span>
+          <span class="h-date">· ${h.formatted_date} (${(h.weekday_name || "").slice(0, 3)})</span>
+          <span class="h-days-away">${daysText}</span>
+          ${lwBadge}
+        </div>`;
     }
 
     async function checkHolidayStatus() {
@@ -4152,29 +4213,37 @@ font-weight:600;
           }
         }
 
-        /* ── UPCOMING (next 5 days, not today) ──────────────────────── */
+        /* ── UPCOMING ───────────────────────────────────────────────── */
         const upcoming = (data.upcoming || []).filter(h => !h.is_today);
 
-        // Chips inside today's banner
+        // Chips inside today's banner if active
         const chipsEl = document.getElementById('upcoming-holiday-chips');
         if (chipsEl && upcoming.length) {
           chipsEl.innerHTML = upcoming.slice(0, 2).map(h =>
             `<span style="
           background:rgba(245,166,35,0.15);
           border:1px solid rgba(245,166,35,0.3);
-          color:#f5a623; padding:3px 10px;
-          border-radius:20px; font-size:10px; font-weight:700;
-        ">📅 ${h.reason} — ${_dayLabel(h.days_away)}</span>`
+          color:#f5a623; padding:2px 8px;
+          border-radius:12px; font-size:10px; font-weight:700;
+        ">📅 ${h.reason}</span>`
           ).join('');
         }
 
-        /* ── STRIP: show ALL upcoming holidays within 5 days ────────── */
+        /* ── STRIP: show ALL upcoming holidays in single responsive bar ── */
         const strip = document.getElementById('upcoming-holiday-strip');
         if (strip && upcoming.length) {
-          // Sort by proximity
           const sorted = [...upcoming].sort((a, b) => a.days_away - b.days_away);
-          strip.style.display = 'block';
-          strip.innerHTML = sorted.map(h => _buildStripItem(h)).join('');
+          strip.style.display = 'flex';
+          strip.className = 'holiday-strip-wrapper';
+          strip.innerHTML = `
+            <div class="holiday-strip-title">
+              <i class="fa-solid fa-calendar-days"></i>
+              <span>Market Holidays:</span>
+            </div>
+            <div class="holiday-strip-items">
+              ${sorted.map(h => _buildStripItem(h)).join('')}
+            </div>
+          `;
         } else if (strip) {
           strip.style.display = 'none';
         }
