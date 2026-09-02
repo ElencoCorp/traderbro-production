@@ -3512,7 +3512,7 @@ def is_plan_active(plan: str, expiry_str: str) -> bool:
 def save_daily_excel():
     """
     Save today's dashboard data to a simple 5-column .xlsx:
-    DateTime | Strike | Sensex (Index LTP) | Volatility Index (VIX) | BBIR Value
+    DateTime | Strike | Sensex (Index LTP) | Volatility Index (VIX) | BBI(R) Value
     This matches exactly what is visible on the dashboard.
     """
     global LIVE_RUNNING_RECORDS
@@ -3601,7 +3601,7 @@ def save_daily_excel():
         BLUE_F   = Font(name="Arial", color="02A3FE", bold=True, size=10)
         GOLD_F   = Font(name="Arial", color="F5A623", bold=True, size=10)
 
-        # BBIR Value fonts matching dashboard.html BBI styling (bold, standard size, bright colors)
+        # BBI(R) Value fonts matching dashboard.html BBI styling (bold, standard size, bright colors)
         BBI_POS_F  = Font(name="Arial", color="00D4AA", bold=True, size=10)
         BBI_NEG_F  = Font(name="Arial", color="FF4D6D", bold=True, size=10)
         BBI_ZERO_F = Font(name="Arial", color="7A8099", bold=False, size=10)
@@ -3614,7 +3614,7 @@ def save_daily_excel():
         center = Alignment(horizontal="center", vertical="center")
 
         # ── 5 columns ──────────────────────────────────────
-        headers = ["DateTime", "Strike", "Sensex (Index LTP)", "Volatility Index (VIX)", "BBIR Value"]
+        headers = ["DateTime", "Strike", "Sensex (Index LTP)", "Volatility Index (VIX)", "BBI(R) Value"]
         num_cols = 5
 
         # ── Row 1: Title ────────────────────────────────────
@@ -3660,7 +3660,7 @@ def save_daily_excel():
             # Alternating row background for a clean layout
             row_fill = ODD_FILL if row_idx % 2 == 1 else EVEN_FILL
 
-            # Determine BBIR font and cell fill using BBI styling
+            # Determine BBI(R) font and cell fill using BBI styling
             if running_val > 0:
                 bbir_font = BBI_POS_F
                 bbir_cell_fill = POS_FILL
@@ -3676,7 +3676,7 @@ def save_daily_excel():
                 r.get("strike", ""),                                    # Strike
                 round(index_ltp, 2) if index_ltp is not None else "",   # Sensex
                 round(vix_val, 2) if vix_val is not None else "—",      # Volatility Index (VIX)
-                round(running_val, 2),                                  # BBIR Value
+                round(running_val, 2),                                  # BBI(R) Value
             ]
 
             for col_idx, val in enumerate(values, start=1):
@@ -3699,7 +3699,7 @@ def save_daily_excel():
                     cell.fill = row_fill  # Volatility Index (VIX) gets GOLD font
                 elif col_idx == 5:
                     cell.font = bbir_font
-                    cell.fill = bbir_cell_fill  # BBIR cell gets its colored fill
+                    cell.fill = bbir_cell_fill  # BBI(R) cell gets its colored fill
 
             ws.row_dimensions[row_idx].height = 16
 
@@ -3711,7 +3711,7 @@ def save_daily_excel():
         sign_run      = '+' if total_running > 0 else ''
 
         ws.merge_cells(f"A{last_row}:E{last_row}")
-        ws[f"A{last_row}"] = f"Final BBIR Value: {sign_run}{total_running}"
+        ws[f"A{last_row}"] = f"Final BBI(R) Value: {sign_run}{total_running}"
 
         fill_col = "00291F" if total_running > 0 else ("2D0010" if total_running < 0 else "1A1A35")
         txt_col  = "00D4AA" if total_running > 0 else ("FF4D6D" if total_running < 0 else "F5A623")
@@ -3756,7 +3756,7 @@ def schedule_daily_excel_save():
 def upgrade_all_vps_excel_files():
     """
     Scans EXCEL_DIR on server startup and upgrades any existing Excel files 
-    to 5 columns: DateTime, Strike, Sensex (Index LTP), Volatility Index (VIX), BBIR Value.
+    to 5 columns: DateTime, Strike, Sensex (Index LTP), Volatility Index (VIX), BBI(R) Value.
     Removes old BBI Value column if present.
     """
     try:
@@ -3792,7 +3792,7 @@ def upgrade_all_vps_excel_files():
                 # Case 1: 6-column dashboard Excel with BBI Value (col 6)
                 if len(headers_row4) >= 6 and (headers_row4[5] == "BBI Value" or "BBI" in str(headers_row4[5])):
                     ws.delete_cols(6)
-                    ws.cell(row=4, column=5, value="BBIR Value")
+                    ws.cell(row=4, column=5, value="BBI(R) Value")
                     ws.cell(row=4, column=5).font = HDR_FONT
                     ws.cell(row=4, column=5).fill = HDR_FILL
                     ws.cell(row=4, column=5).alignment = center
@@ -3807,9 +3807,9 @@ def upgrade_all_vps_excel_files():
 
                     for r in range(5, ws.max_row + 1):
                         val_a = ws.cell(r, 1).value
-                        if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a)):
+                        if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a) or "BBI(R) Value" in str(val_a)):
                             curr_val = str(val_a)
-                            new_txt = curr_val.replace("Final Running Value", "Final BBIR Value").replace("Current Running Value", "Final BBIR Value")
+                            new_txt = curr_val.replace("Final Running Value", "Final BBI(R) Value").replace("Current Running Value", "Final BBI(R) Value").replace("Final BBIR Value", "Final BBI(R) Value")
                             if "|" in new_txt:
                                 new_txt = new_txt.split("|")[0].strip()
                             ws.cell(r, 1, value=new_txt)
@@ -3835,7 +3835,7 @@ def upgrade_all_vps_excel_files():
                     hdr_vix.border = Border(left=thin, right=thin, top=Side(style="medium", color="02A3FE"), bottom=Side(style="medium", color="02A3FE"))
                     ws.column_dimensions["D"].width = 22
 
-                    ws.cell(row=4, column=5, value="BBIR Value")
+                    ws.cell(row=4, column=5, value="BBI(R) Value")
                     ws.cell(row=4, column=5).font = HDR_FONT
                     ws.cell(row=4, column=5).fill = HDR_FILL
                     ws.cell(row=4, column=5).alignment = center
@@ -3843,11 +3843,11 @@ def upgrade_all_vps_excel_files():
 
                     for r in range(5, ws.max_row + 1):
                         val_a = ws.cell(r, 1).value
-                        if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a)):
+                        if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a) or "BBI(R) Value" in str(val_a)):
                             try: ws.unmerge_cells(f"A{r}:E{r}")
                             except: pass
                             ws.merge_cells(f"A{r}:E{r}")
-                            curr_val = str(val_a).replace("Final Running Value", "Final BBIR Value").replace("Current Running Value", "Final BBIR Value")
+                            curr_val = str(val_a).replace("Final Running Value", "Final BBI(R) Value").replace("Current Running Value", "Final BBI(R) Value").replace("Final BBIR Value", "Final BBI(R) Value")
                             if "|" in curr_val:
                                 curr_val = curr_val.split("|")[0].strip()
                             ws.cell(r, 1, value=curr_val)
@@ -3879,7 +3879,7 @@ def upgrade_all_vps_excel_files():
                     hdr_vix.border = Border(left=thin, right=thin, top=Side(style="medium", color="02A3FE"), bottom=Side(style="medium", color="02A3FE"))
                     ws.column_dimensions["D"].width = 22
 
-                    ws.cell(row=4, column=5, value="BBIR Value")
+                    ws.cell(row=4, column=5, value="BBI(R) Value")
                     ws.cell(row=4, column=5).font = HDR_FONT
                     ws.cell(row=4, column=5).fill = HDR_FILL
                     ws.cell(row=4, column=5).alignment = center
@@ -3887,13 +3887,13 @@ def upgrade_all_vps_excel_files():
 
                     for r in range(5, ws.max_row + 1):
                         val_a = ws.cell(r, 1).value
-                        if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a)):
+                        if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a) or "BBI(R) Value" in str(val_a)):
                             try: ws.unmerge_cells(f"A{r}:D{r}")
                             except: pass
                             try: ws.unmerge_cells(f"A{r}:E{r}")
                             except: pass
                             ws.merge_cells(f"A{r}:E{r}")
-                            curr_val = str(val_a).replace("Final Running Value", "Final BBIR Value").replace("Current Running Value", "Final BBIR Value")
+                            curr_val = str(val_a).replace("Final Running Value", "Final BBI(R) Value").replace("Current Running Value", "Final BBI(R) Value").replace("Final BBIR Value", "Final BBI(R) Value")
                             if "|" in curr_val:
                                 curr_val = curr_val.split("|")[0].strip()
                             ws.cell(r, 1, value=curr_val)
@@ -3914,13 +3914,13 @@ def upgrade_all_vps_excel_files():
                     ws.freeze_panes = "A5"
                     modified = True
 
-                # Case 4: 5-column dashboard Excel with VIX at col 4 but col 5 is "Running Value"
-                elif len(headers_row4) >= 5 and "Volatility Index" in str(headers_row4[3]) and headers_row4[4] == "Running Value":
-                    ws.cell(row=4, column=5, value="BBIR Value")
+                # Case 4: 5-column dashboard Excel with VIX at col 4 but col 5 is "Running Value" or "BBIR Value"
+                elif len(headers_row4) >= 5 and "Volatility Index" in str(headers_row4[3]) and headers_row4[4] in ("Running Value", "BBIR Value"):
+                    ws.cell(row=4, column=5, value="BBI(R) Value")
                     for r in range(5, ws.max_row + 1):
                         val_a = ws.cell(r, 1).value
-                        if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a)):
-                            curr_val = str(val_a).replace("Final Running Value", "Final BBIR Value").replace("Current Running Value", "Final BBIR Value")
+                        if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a) or "BBI(R) Value" in str(val_a)):
+                            curr_val = str(val_a).replace("Final Running Value", "Final BBI(R) Value").replace("Current Running Value", "Final BBI(R) Value").replace("Final BBIR Value", "Final BBI(R) Value")
                             if "|" in curr_val:
                                 curr_val = curr_val.split("|")[0].strip()
                             ws.cell(r, 1, value=curr_val)
@@ -3935,7 +3935,7 @@ def upgrade_all_vps_excel_files():
                 print(f"⚠️ Error upgrading file {filepath}: {fe}")
 
         if upgraded_count > 0:
-            print(f"✅ Upgraded {upgraded_count} existing VPS Excel files to 5-column BBIR format.")
+            print(f"✅ Upgraded {upgraded_count} existing VPS Excel files to 5-column BBI(R) format.")
 
     except Exception as e:
         print(f"⚠️ Error in upgrade_all_vps_excel_files: {e}")
