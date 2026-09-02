@@ -2393,7 +2393,7 @@
             <div class="atm-dt-val" id="atm-dt">Waiting for market session...</div>
           </div>
           <div class="atm-run-box atm-run-zero" id="atm-run-box">
-            <span class="run-label" id="atm-run-label">Min &amp; Max BBI</span>
+            <span class="run-label" id="atm-run-label">Min &amp; Max BBIR</span>
             <div class="bbi-minmax-container" id="atm-run-val">
               <div class="bbi-stat-row">
                 <span class="bbi-stat-lbl">MIN</span>
@@ -3101,7 +3101,8 @@ font-weight:600;
 
           const displayableRows = processRunningRecords(rows);
 
-          // --- NEW BLACK BOX INDEX (BBI) LOGIC ---
+          /*
+          // --- NEW BLACK BOX INDEX (BBI) LOGIC (COMMENTED OUT) ---
           let bbiAcc = 0;
           let prevBbi = null;
           let prevRunning = null;
@@ -3137,18 +3138,15 @@ font-weight:600;
             }
           }
           // ---------------------------------------
+          */
 
           const heroRow = displayableRows[displayableRows.length - 1];
-          // Extract BBI instead of Running
-          const heroBbiRaw = heroRow.bbi;
-          const heroBbi = (heroBbiRaw !== null && heroBbiRaw !== undefined) ? parseFloat(heroBbiRaw) : null;
 
           _dashboardRows = displayableRows.map(r => ({
             datetime: r.datetime || "",
             strike: r.strike || "",
             index_ltp: r.index_ltp || "",
             running: r.running || 0,
-            bbi: r.bbi,
             vix: r.vix
           }));
 
@@ -3172,32 +3170,32 @@ font-weight:600;
                   <span><span style="color:#ff6b35">Volatility Index: </span><span style="color:var(--gold);font-weight:700">${vixStr}</span></span>
                 </div>`;
 
-          // ── CALCULATE MIN & MAX BBI OUT OF ALL PRESENT DASHBOARD VALUES ──
-          const allBbiVals = displayableRows
-            .map(r => r.bbi)
-            .filter(v => v !== null && v !== undefined && !isNaN(v))
-            .map(v => parseFloat(v));
+          // ── CALCULATE MIN & MAX BBIR OUT OF ALL PRESENT DASHBOARD VALUES ──
+          const allBbirVals = displayableRows
+            .filter(r => !r.isSkipped && r.running !== "-" && r.running !== null && r.running !== undefined)
+            .map(r => parseFloat(r.running))
+            .filter(v => !isNaN(v));
 
           const runLabel = document.getElementById("atm-run-label");
           const minEl = document.getElementById("bbi-min-val");
           const maxEl = document.getElementById("bbi-max-val");
 
-          if (allBbiVals.length > 0) {
-            const minBbi = Math.min(...allBbiVals);
-            const maxBbi = Math.max(...allBbiVals);
+          if (allBbirVals.length > 0) {
+            const minBbir = Math.min(...allBbirVals);
+            const maxBbir = Math.max(...allBbirVals);
 
-            if (runLabel) runLabel.textContent = "Min & Max BBI";
+            if (runLabel) runLabel.textContent = "Min & Max BBIR";
 
             if (minEl) {
-              minEl.textContent = (minBbi > 0 ? "+" : "") + minBbi.toFixed(2);
-              minEl.className = "val-pill " + (minBbi > 0 ? "bbi-pos" : minBbi < 0 ? "bbi-neg" : "bbi-zero");
+              minEl.textContent = (minBbir > 0 ? "+" : "") + minBbir.toFixed(2);
+              minEl.className = "val-pill " + (minBbir > 0 ? "bbi-pos" : minBbir < 0 ? "bbi-neg" : "bbi-zero");
             }
             if (maxEl) {
-              maxEl.textContent = (maxBbi > 0 ? "+" : "") + maxBbi.toFixed(2);
-              maxEl.className = "val-pill " + (maxBbi > 0 ? "bbi-pos" : maxBbi < 0 ? "bbi-neg" : "bbi-zero");
+              maxEl.textContent = (maxBbir > 0 ? "+" : "") + maxBbir.toFixed(2);
+              maxEl.className = "val-pill " + (maxBbir > 0 ? "bbi-pos" : maxBbir < 0 ? "bbi-neg" : "bbi-zero");
             }
           } else {
-            if (runLabel) runLabel.textContent = "Waiting for BBI...";
+            if (runLabel) runLabel.textContent = "Waiting for BBIR...";
             if (minEl) { minEl.textContent = "—"; minEl.className = "val-pill bbi-zero"; }
             if (maxEl) { maxEl.textContent = "—"; maxEl.className = "val-pill bbi-zero"; }
           }
@@ -3213,13 +3211,12 @@ font-weight:600;
 
           const displayRows = [...displayableRows].reverse();
 
-          // --- INJECT BBI HEADERS & PILLS ---
+          // --- INJECT BBIR HEADER ---
           let html = `
                 <div style="display: flex; justify-content: space-between; padding: 0 14px 8px; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
                     <span>Time & Sensex / VI</span>
                     <div style="display: flex; gap: 6px; text-align: center;">
-                        <span style="width: 80px;">Running</span>
-                        <span style="width: 80px; color: var(--primary);">BBI</span>
+                        <span style="width: 80px; color: var(--primary);">BBIR</span>
                     </div>
                 </div>
             `;
@@ -3228,35 +3225,18 @@ font-weight:600;
             const dt = (r.datetime || "").split(" ");
             const isSkipped = r.running === "-" || r.isSkipped;
             let valStr = "—";
-            let cls = "val-zero";
+            let bbiCls = "bbi-zero";
             let rcls = "row-zero";
 
             if (isSkipped) {
               valStr = "-";
-              cls = "val-zero";
+              bbiCls = "bbi-zero";
               rcls = "row-zero";
             } else {
               const val = parseFloat(r.running || 0);
               valStr = (val > 0 ? "+" : "") + val.toFixed(2);
-              cls = val > 0 ? "val-pos" : val < 0 ? "val-neg" : "val-zero";
+              bbiCls = val > 0 ? "bbi-pos" : val < 0 ? "bbi-neg" : "bbi-zero";
               rcls = val > 0 ? "row-pos" : val < 0 ? "row-neg" : "row-zero";
-            }
-
-            // Setup BBI Pill
-            let bbiStr = "—";
-            let bbiCls = "bbi-zero"; // Using our new grayscale classes
-
-            if (r.bbi !== null && r.bbi !== undefined) {
-              const bbiVal = parseFloat(r.bbi);
-              bbiStr = (bbiVal > 0 ? "+" : "") + bbiVal.toFixed(2);
-
-              if (bbiVal > 0) {
-                bbiCls = "bbi-pos";
-              } else if (bbiVal < 0) {
-                bbiCls = "bbi-neg";
-              } else {
-                bbiCls = "bbi-zero";
-              }
             }
 
             const rowVix = (r.vix !== undefined && r.vix !== null) ? r.vix : ((d && d.vix !== undefined && d.vix !== null) ? d.vix : null);
@@ -3269,27 +3249,22 @@ font-weight:600;
 				            <span class="row-sensex">Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)} <span style="margin:0 3px;opacity:0.4;">|</span> <span style="color:var(--gold);font-weight:600">VIX: ${vixStr}</span></span>
 				        </div>
 				        <div style="display: flex; gap: 6px;">
-				            <div class="val-pill ${cls}" title="Running Value">
+				            <div class="val-pill ${bbiCls}" title="BBIR Value">
 				                ${valStr}
-				            </div>
-				            <div class="val-pill ${bbiCls}" title="Black Box Index">
-				                ${bbiStr}
 				            </div>
 				        </div>
    					 </div>`;
           });
           grid.innerHTML = html;
 
-          const last6 = displayableRows.slice(-6);
+          const last6 = displayableRows.filter(r => !r.isSkipped && r.running !== "-").slice(-6);
           if (last6.length) {
-            const bbiVals = last6.map(r => r.bbi).filter(v => v !== null && v !== undefined);
-            if (bbiVals.length > 0) {
-              updateGauge(
-                bbiVals.reduce((s, v) => s + parseFloat(v), 0) / bbiVals.length
-              );
-            } else {
-              updateGauge(0);
-            }
+            const runVals = last6.map(r => parseFloat(r.running || 0));
+            updateGauge(
+              runVals.reduce((s, v) => s + v, 0) / runVals.length
+            );
+          } else {
+            updateGauge(0);
           }
 
           checkMarketCloseAutoSave();
