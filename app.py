@@ -3511,8 +3511,8 @@ def is_plan_active(plan: str, expiry_str: str) -> bool:
 # ── SAVE DAILY EXCEL ────────────────────────────────────────────────────
 def save_daily_excel():
     """
-    Save today's dashboard data to a simple 4-column .xlsx:
-    DateTime | Strike | Sensex (Index LTP) | Running Value
+    Save today's dashboard data to a simple 5-column .xlsx:
+    DateTime | Strike | Sensex (Index LTP) | Volatility Index (VIX) | BBIR Value
     This matches exactly what is visible on the dashboard.
     """
     global LIVE_RUNNING_RECORDS
@@ -3552,34 +3552,31 @@ def save_daily_excel():
             except:
                 return None
 
-        # Calculate BBI values
-        bbi_acc = 0.0
-        prev_bbi = None
-        prev_running = None
-
-        records_with_bbi = []
-        for i, r in enumerate(sorted_records):
-            r_copy = dict(r)  # Shallow copy
-            r_val = safe_num(r_copy.get("running")) or 0.0
-
-            if i == 0:
-                r_copy["bbi"] = None
-                prev_running = r_val
-            elif 1 <= i <= 6:
-                bbi_acc += r_val
-                r_copy["bbi"] = None
-                if i == 6:
-                    avg = bbi_acc / 6.0
-                    r_copy["bbi"] = avg
-                    prev_bbi = avg
-                prev_running = r_val
-            else:
-                current_bbi = prev_bbi + r_val - prev_running
-                r_copy["bbi"] = current_bbi
-                prev_bbi = current_bbi
-                prev_running = r_val
-
-            records_with_bbi.append(r_copy)
+        # --- BBI Calculation (Commented Out) ---
+        # bbi_acc = 0.0
+        # prev_bbi = None
+        # prev_running = None
+        # records_with_bbi = []
+        # for i, r in enumerate(sorted_records):
+        #     r_copy = dict(r)
+        #     r_val = safe_num(r_copy.get("running")) or 0.0
+        #     if i == 0:
+        #         r_copy["bbi"] = None
+        #         prev_running = r_val
+        #     elif 1 <= i <= 6:
+        #         bbi_acc += r_val
+        #         r_copy["bbi"] = None
+        #         if i == 6:
+        #             avg = bbi_acc / 6.0
+        #             r_copy["bbi"] = avg
+        #             prev_bbi = avg
+        #         prev_running = r_val
+        #     else:
+        #         current_bbi = prev_bbi + r_val - prev_running
+        #         r_copy["bbi"] = current_bbi
+        #         prev_bbi = current_bbi
+        #         prev_running = r_val
+        #     records_with_bbi.append(r_copy)
 
         now      = datetime.now(IST)
         date_str = now.strftime("%Y-%m-%d")
@@ -3604,14 +3601,9 @@ def save_daily_excel():
         BLUE_F   = Font(name="Arial", color="02A3FE", bold=True, size=10)
         GOLD_F   = Font(name="Arial", color="F5A623", bold=True, size=10)
 
-        # Running Value fonts matching dashboard.html styling (smaller, non-bold, muted colors)
-        RUN_POS_F = Font(name="Arial", color="D6CACA", bold=False, size=8)
-        RUN_NEG_F = Font(name="Arial", color="6E6969", bold=False, size=8)
-        RUN_ZERO_F = Font(name="Arial", color="7A8099", bold=False, size=8)
-
-        # BBI Value fonts matching dashboard.html styling (bold, standard size, bright colors)
-        BBI_POS_F = Font(name="Arial", color="00D4AA", bold=True, size=10)
-        BBI_NEG_F = Font(name="Arial", color="FF4D6D", bold=True, size=10)
+        # BBIR Value fonts matching dashboard.html BBI styling (bold, standard size, bright colors)
+        BBI_POS_F  = Font(name="Arial", color="00D4AA", bold=True, size=10)
+        BBI_NEG_F  = Font(name="Arial", color="FF4D6D", bold=True, size=10)
         BBI_ZERO_F = Font(name="Arial", color="7A8099", bold=False, size=10)
 
         thin = Side(style="thin", color="1A1A35")
@@ -3621,12 +3613,12 @@ def save_daily_excel():
 
         center = Alignment(horizontal="center", vertical="center")
 
-        # ── 6 columns ──────────────────────────────────────
-        headers = ["DateTime", "Strike", "Sensex (Index LTP)", "Volatility Index (VIX)", "Running Value", "BBI Value"]
-        num_cols = 6
+        # ── 5 columns ──────────────────────────────────────
+        headers = ["DateTime", "Strike", "Sensex (Index LTP)", "Volatility Index (VIX)", "BBIR Value"]
+        num_cols = 5
 
         # ── Row 1: Title ────────────────────────────────────
-        ws.merge_cells("A1:F1")
+        ws.merge_cells("A1:E1")
         ws["A1"] = f"TraderBro — Black-Box-Engine Dashboard  |  {date_str}  ({day_name})"
         ws["A1"].font      = Font(name="Arial", color="FFFFFF", bold=True, size=13)
         ws["A1"].fill      = TITLE_FILL
@@ -3634,7 +3626,7 @@ def save_daily_excel():
         ws.row_dimensions[1].height = 26
 
         # ── Row 2: Subtitle ─────────────────────────────────
-        ws.merge_cells("A2:F2")
+        ws.merge_cells("A2:E2")
         ws["A2"] = "Market Session: 09:15 AM → 02:00 PM IST  |  traderbro.in"
         ws["A2"].font      = Font(name="Arial", color="E8EAF0", size=10, italic=True)
         ws["A2"].fill      = HDR_FILL
@@ -3645,7 +3637,7 @@ def save_daily_excel():
         ws.row_dimensions[3].height = 6
 
         # ── Row 4: Column headers ────────────────────────────
-        col_widths = [22, 10, 20, 22, 15, 15]
+        col_widths = [22, 10, 20, 22, 18]
         for col_idx, hdr in enumerate(headers, start=1):
             cell = ws.cell(row=4, column=col_idx, value=hdr)
             cell.font      = Font(name="Arial", color="02A3FE", bold=True, size=10)
@@ -3660,45 +3652,31 @@ def save_daily_excel():
         ws.row_dimensions[4].height = 20
 
         # ── Data rows ────────────────────────────────────────
-        for row_idx, r in enumerate(records_with_bbi, start=5):
+        for row_idx, r in enumerate(sorted_records, start=5):
             running_val = safe_num(r.get("running")) or 0.0
-            bbi_val     = safe_num(r.get("bbi"))
             index_ltp   = safe_num(r.get("index_ltp"))
             vix_val     = safe_num(r.get("vix"))
 
             # Alternating row background for a clean layout
             row_fill = ODD_FILL if row_idx % 2 == 1 else EVEN_FILL
 
-            # Determine Running font
+            # Determine BBIR font and cell fill using BBI styling
             if running_val > 0:
-                run_font = RUN_POS_F
+                bbir_font = BBI_POS_F
+                bbir_cell_fill = POS_FILL
             elif running_val < 0:
-                run_font = RUN_NEG_F
+                bbir_font = BBI_NEG_F
+                bbir_cell_fill = NEG_FILL
             else:
-                run_font = RUN_ZERO_F
-
-            # Determine BBI font and cell fill
-            if bbi_val is not None:
-                if bbi_val > 0:
-                    bbi_font = BBI_POS_F
-                    bbi_cell_fill = POS_FILL
-                elif bbi_val < 0:
-                    bbi_font = BBI_NEG_F
-                    bbi_cell_fill = NEG_FILL
-                else:
-                    bbi_font = BBI_ZERO_F
-                    bbi_cell_fill = row_fill
-            else:
-                bbi_font = BBI_ZERO_F
-                bbi_cell_fill = row_fill
+                bbir_font = BBI_ZERO_F
+                bbir_cell_fill = row_fill
 
             values = [
                 r.get("datetime", ""),                                  # DateTime
                 r.get("strike", ""),                                    # Strike
                 round(index_ltp, 2) if index_ltp is not None else "",   # Sensex
                 round(vix_val, 2) if vix_val is not None else "—",      # Volatility Index (VIX)
-                round(running_val, 2),                                  # Running Value
-                round(bbi_val, 2) if bbi_val is not None else "—",      # BBI Value
+                round(running_val, 2),                                  # BBIR Value
             ]
 
             for col_idx, val in enumerate(values, start=1):
@@ -3720,28 +3698,23 @@ def save_daily_excel():
                     cell.font = GOLD_F
                     cell.fill = row_fill  # Volatility Index (VIX) gets GOLD font
                 elif col_idx == 5:
-                    cell.font = run_font
-                    cell.fill = row_fill  # Running Value cell gets row_fill
-                elif col_idx == 6:
-                    cell.font = bbi_font
-                    cell.fill = bbi_cell_fill  # BBI cell gets its colored fill
+                    cell.font = bbir_font
+                    cell.fill = bbir_cell_fill  # BBIR cell gets its colored fill
 
             ws.row_dimensions[row_idx].height = 16
 
         # ── Summary row ──────────────────────────────────────
-        last_row      = 4 + len(records_with_bbi) + 1
-        last_rec      = records_with_bbi[-1] if records_with_bbi else {}
+        last_row      = 4 + len(sorted_records) + 1
+        last_rec      = sorted_records[-1] if sorted_records else {}
         total_running = round(last_rec.get("running", 0) if last_rec else 0, 2)
-        total_bbi     = round(last_rec.get("bbi", 0) if last_rec and last_rec.get("bbi") is not None else 0, 2)
 
         sign_run      = '+' if total_running > 0 else ''
-        sign_bbi      = '+' if total_bbi > 0 else ''
 
-        ws.merge_cells(f"A{last_row}:F{last_row}")
-        ws[f"A{last_row}"] = f"Final Running Value: {sign_run}{total_running}   |   Final BBI Value: {sign_bbi}{total_bbi}"
+        ws.merge_cells(f"A{last_row}:E{last_row}")
+        ws[f"A{last_row}"] = f"Final BBIR Value: {sign_run}{total_running}"
 
-        fill_col = "00291F" if total_bbi > 0 else ("2D0010" if total_bbi < 0 else "1A1A35")
-        txt_col  = "00D4AA" if total_bbi > 0 else ("FF4D6D" if total_bbi < 0 else "F5A623")
+        fill_col = "00291F" if total_running > 0 else ("2D0010" if total_running < 0 else "1A1A35")
+        txt_col  = "00D4AA" if total_running > 0 else ("FF4D6D" if total_running < 0 else "F5A623")
         ws[f"A{last_row}"].font      = Font(name="Arial", color=txt_col, bold=True, size=12)
         ws[f"A{last_row}"].fill      = PatternFill("solid", fgColor=fill_col)
         ws[f"A{last_row}"].alignment = center
@@ -3751,7 +3724,7 @@ def save_daily_excel():
         ws.freeze_panes = "A5"
 
         wb.save(dest)
-        print(f"✅ Daily Excel saved: {dest}  ({len(records_with_bbi)} rows, 5 columns)")
+        print(f"✅ Daily Excel saved: {dest}  ({len(sorted_records)} rows, 5 columns)")
 
     except Exception as e:
         print(f"❌ save_daily_excel ERROR: {e}")
