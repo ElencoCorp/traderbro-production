@@ -3755,8 +3755,9 @@ def schedule_daily_excel_save():
 # ── AUTOMATIC VPS EXCEL FILE UPGRADER ──────────────────────────────────
 def upgrade_all_vps_excel_files():
     """
-    Scans EXCEL_DIR on server startup and upgrades any existing 4-col or 5-col 
-    Excel file to 6 columns containing Volatility Index (VIX).
+    Scans EXCEL_DIR on server startup and upgrades any existing Excel files 
+    to 5 columns: DateTime, Strike, Sensex (Index LTP), Volatility Index (VIX), BBIR Value.
+    Removes old BBI Value column if present.
     """
     try:
         if not os.path.exists(EXCEL_DIR):
@@ -3781,30 +3782,75 @@ def upgrade_all_vps_excel_files():
                 ws = wb.active
 
                 headers_row4 = [ws.cell(4, c).value for c in range(1, 30)]
-                
-                # Check if already upgraded
-                if "Volatility Index (VIX)" in headers_row4 or "Volatility Index" in headers_row4:
+
+                # Check if it's a dashboard excel (has DateTime at col 1)
+                if not headers_row4 or headers_row4[0] != "DateTime":
                     continue
 
-                # Case 1: 5-column dashboard Excel
-                # ["DateTime", "Strike", "Sensex (Index LTP)", "Running Value", "BBI Value"]
-                if len(headers_row4) >= 5 and headers_row4[0] == "DateTime" and headers_row4[2] == "Sensex (Index LTP)" and headers_row4[3] == "Running Value" and headers_row4[4] == "BBI Value":
-                    ws.insert_cols(4)
-                    ws.cell(row=4, column=4, value="Volatility Index (VIX)")
-                    
-                    hdr_cell = ws.cell(row=4, column=4)
-                    hdr_cell.font = HDR_FONT
-                    hdr_cell.fill = HDR_FILL
-                    hdr_cell.alignment = center
-                    hdr_cell.border = Border(left=thin, right=thin, top=Side(style="medium", color="02A3FE"), bottom=Side(style="medium", color="02A3FE"))
-                    ws.column_dimensions["D"].width = 22
+                modified = False
+
+                # Case 1: 6-column dashboard Excel with BBI Value (col 6)
+                if len(headers_row4) >= 6 and (headers_row4[5] == "BBI Value" or "BBI" in str(headers_row4[5])):
+                    ws.delete_cols(6)
+                    ws.cell(row=4, column=5, value="BBIR Value")
+                    ws.cell(row=4, column=5).font = HDR_FONT
+                    ws.cell(row=4, column=5).fill = HDR_FILL
+                    ws.cell(row=4, column=5).alignment = center
+                    ws.column_dimensions["E"].width = 18
+
+                    try: ws.unmerge_cells("A1:F1")
+                    except: pass
+                    ws.merge_cells("A1:E1")
+                    try: ws.unmerge_cells("A2:F2")
+                    except: pass
+                    ws.merge_cells("A2:E2")
 
                     for r in range(5, ws.max_row + 1):
                         val_a = ws.cell(r, 1).value
-                        if val_a and "Final Running Value" in str(val_a):
+                        if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a)):
+                            curr_val = str(val_a)
+                            new_txt = curr_val.replace("Final Running Value", "Final BBIR Value").replace("Current Running Value", "Final BBIR Value")
+                            if "|" in new_txt:
+                                new_txt = new_txt.split("|")[0].strip()
+                            ws.cell(r, 1, value=new_txt)
+                            try: ws.unmerge_cells(f"A{r}:F{r}")
+                            except: pass
                             try: ws.unmerge_cells(f"A{r}:E{r}")
                             except: pass
-                            ws.merge_cells(f"A{r}:F{r}")
+                            ws.merge_cells(f"A{r}:E{r}")
+                            break
+
+                    ws.freeze_panes = "A5"
+                    modified = True
+
+                # Case 2: 5-column dashboard Excel with BBI Value at col 5 and no VIX
+                elif len(headers_row4) >= 5 and headers_row4[3] == "Running Value" and headers_row4[4] == "BBI Value":
+                    ws.delete_cols(5)
+                    ws.insert_cols(4)
+                    ws.cell(row=4, column=4, value="Volatility Index (VIX)")
+                    hdr_vix = ws.cell(row=4, column=4)
+                    hdr_vix.font = HDR_FONT
+                    hdr_vix.fill = HDR_FILL
+                    hdr_vix.alignment = center
+                    hdr_vix.border = Border(left=thin, right=thin, top=Side(style="medium", color="02A3FE"), bottom=Side(style="medium", color="02A3FE"))
+                    ws.column_dimensions["D"].width = 22
+
+                    ws.cell(row=4, column=5, value="BBIR Value")
+                    ws.cell(row=4, column=5).font = HDR_FONT
+                    ws.cell(row=4, column=5).fill = HDR_FILL
+                    ws.cell(row=4, column=5).alignment = center
+                    ws.column_dimensions["E"].width = 18
+
+                    for r in range(5, ws.max_row + 1):
+                        val_a = ws.cell(r, 1).value
+                        if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a)):
+                            try: ws.unmerge_cells(f"A{r}:E{r}")
+                            except: pass
+                            ws.merge_cells(f"A{r}:E{r}")
+                            curr_val = str(val_a).replace("Final Running Value", "Final BBIR Value").replace("Current Running Value", "Final BBIR Value")
+                            if "|" in curr_val:
+                                curr_val = curr_val.split("|")[0].strip()
+                            ws.cell(r, 1, value=curr_val)
                             break
 
                         vix_cell = ws.cell(row=r, column=4)
@@ -3815,34 +3861,42 @@ def upgrade_all_vps_excel_files():
 
                     try: ws.unmerge_cells("A1:E1")
                     except: pass
-                    ws.merge_cells("A1:F1")
+                    ws.merge_cells("A1:E1")
                     try: ws.unmerge_cells("A2:E2")
                     except: pass
-                    ws.merge_cells("A2:F2")
+                    ws.merge_cells("A2:E2")
                     ws.freeze_panes = "A5"
+                    modified = True
 
-                    wb.save(filepath)
-                    upgraded_count += 1
-
-                # Case 2: 4-column dashboard Excel
-                # ["DateTime", "Strike", "Sensex (Index LTP)", "Running Value"]
-                elif len(headers_row4) >= 4 and headers_row4[0] == "DateTime" and headers_row4[2] == "Sensex (Index LTP)" and headers_row4[3] == "Running Value":
+                # Case 3: 4-column dashboard Excel (missing VIX and named Running Value)
+                elif len(headers_row4) >= 4 and headers_row4[3] == "Running Value" and "Volatility Index (VIX)" not in headers_row4:
                     ws.insert_cols(4)
                     ws.cell(row=4, column=4, value="Volatility Index (VIX)")
-                    
-                    hdr_cell = ws.cell(row=4, column=4)
-                    hdr_cell.font = HDR_FONT
-                    hdr_cell.fill = HDR_FILL
-                    hdr_cell.alignment = center
-                    hdr_cell.border = Border(left=thin, right=thin, top=Side(style="medium", color="02A3FE"), bottom=Side(style="medium", color="02A3FE"))
+                    hdr_vix = ws.cell(row=4, column=4)
+                    hdr_vix.font = HDR_FONT
+                    hdr_vix.fill = HDR_FILL
+                    hdr_vix.alignment = center
+                    hdr_vix.border = Border(left=thin, right=thin, top=Side(style="medium", color="02A3FE"), bottom=Side(style="medium", color="02A3FE"))
                     ws.column_dimensions["D"].width = 22
+
+                    ws.cell(row=4, column=5, value="BBIR Value")
+                    ws.cell(row=4, column=5).font = HDR_FONT
+                    ws.cell(row=4, column=5).fill = HDR_FILL
+                    ws.cell(row=4, column=5).alignment = center
+                    ws.column_dimensions["E"].width = 18
 
                     for r in range(5, ws.max_row + 1):
                         val_a = ws.cell(r, 1).value
-                        if val_a and "Final Running Value" in str(val_a):
+                        if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a)):
                             try: ws.unmerge_cells(f"A{r}:D{r}")
                             except: pass
+                            try: ws.unmerge_cells(f"A{r}:E{r}")
+                            except: pass
                             ws.merge_cells(f"A{r}:E{r}")
+                            curr_val = str(val_a).replace("Final Running Value", "Final BBIR Value").replace("Current Running Value", "Final BBIR Value")
+                            if "|" in curr_val:
+                                curr_val = curr_val.split("|")[0].strip()
+                            ws.cell(r, 1, value=curr_val)
                             break
 
                         vix_cell = ws.cell(row=r, column=4)
@@ -3858,7 +3912,22 @@ def upgrade_all_vps_excel_files():
                     except: pass
                     ws.merge_cells("A2:E2")
                     ws.freeze_panes = "A5"
+                    modified = True
 
+                # Case 4: 5-column dashboard Excel with VIX at col 4 but col 5 is "Running Value"
+                elif len(headers_row4) >= 5 and "Volatility Index" in str(headers_row4[3]) and headers_row4[4] == "Running Value":
+                    ws.cell(row=4, column=5, value="BBIR Value")
+                    for r in range(5, ws.max_row + 1):
+                        val_a = ws.cell(r, 1).value
+                        if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a)):
+                            curr_val = str(val_a).replace("Final Running Value", "Final BBIR Value").replace("Current Running Value", "Final BBIR Value")
+                            if "|" in curr_val:
+                                curr_val = curr_val.split("|")[0].strip()
+                            ws.cell(r, 1, value=curr_val)
+                            break
+                    modified = True
+
+                if modified:
                     wb.save(filepath)
                     upgraded_count += 1
 
@@ -3866,7 +3935,7 @@ def upgrade_all_vps_excel_files():
                 print(f"⚠️ Error upgrading file {filepath}: {fe}")
 
         if upgraded_count > 0:
-            print(f"✅ Upgraded {upgraded_count} existing VPS Excel files with VIX column.")
+            print(f"✅ Upgraded {upgraded_count} existing VPS Excel files to 5-column BBIR format.")
 
     except Exception as e:
         print(f"⚠️ Error in upgrade_all_vps_excel_files: {e}")
