@@ -3511,8 +3511,8 @@ def is_plan_active(plan: str, expiry_str: str) -> bool:
 # ── SAVE DAILY EXCEL ────────────────────────────────────────────────────
 def save_daily_excel():
     """
-    Save today's dashboard data to a simple 5-column .xlsx:
-    DateTime | Strike | Sensex (Index LTP) | Volatility Index (VIX) | BBI(R) Value
+    Save today's dashboard data to a 6-column .xlsx:
+    DateTime | Strike | Sensex (Index LTP) | Volatility Index (VIX) | BBI(R) Value | BBI(VIX) Value
     This matches exactly what is visible on the dashboard.
     """
     global LIVE_RUNNING_RECORDS
@@ -3552,32 +3552,6 @@ def save_daily_excel():
             except:
                 return None
 
-        # --- BBI Calculation (Commented Out) ---
-        # bbi_acc = 0.0
-        # prev_bbi = None
-        # prev_running = None
-        # records_with_bbi = []
-        # for i, r in enumerate(sorted_records):
-        #     r_copy = dict(r)
-        #     r_val = safe_num(r_copy.get("running")) or 0.0
-        #     if i == 0:
-        #         r_copy["bbi"] = None
-        #         prev_running = r_val
-        #     elif 1 <= i <= 6:
-        #         bbi_acc += r_val
-        #         r_copy["bbi"] = None
-        #         if i == 6:
-        #             avg = bbi_acc / 6.0
-        #             r_copy["bbi"] = avg
-        #             prev_bbi = avg
-        #         prev_running = r_val
-        #     else:
-        #         current_bbi = prev_bbi + r_val - prev_running
-        #         r_copy["bbi"] = current_bbi
-        #         prev_bbi = current_bbi
-        #         prev_running = r_val
-        #     records_with_bbi.append(r_copy)
-
         now      = datetime.now(IST)
         date_str = now.strftime("%Y-%m-%d")
         day_name = now.strftime("%A")
@@ -3595,16 +3569,23 @@ def save_daily_excel():
         POS_FILL   = PatternFill("solid", fgColor="00291F")
         NEG_FILL   = PatternFill("solid", fgColor="2D0010")
 
-        # Fonts for other columns
+        # Fonts for standard columns
         NORMAL_F = Font(name="Arial", color="E8EAF0", size=10)
         ORANGE_F = Font(name="Arial", color="FF6B35", size=10)
         BLUE_F   = Font(name="Arial", color="02A3FE", bold=True, size=10)
         GOLD_F   = Font(name="Arial", color="F5A623", bold=True, size=10)
 
-        # BBI(R) Value fonts matching dashboard.html BBI styling (bold, standard size, bright colors)
+        # BBI(VIX) Value fonts (Bright Green & Red)
         BBI_POS_F  = Font(name="Arial", color="00D4AA", bold=True, size=10)
         BBI_NEG_F  = Font(name="Arial", color="FF4D6D", bold=True, size=10)
         BBI_ZERO_F = Font(name="Arial", color="7A8099", bold=False, size=10)
+
+        # BBI(R) Value fonts (Grey shades for +ve and -ve)
+        BBIR_POS_F = Font(name="Arial", color="E8EAF0", bold=True, size=10)
+        BBIR_POS_FILL = PatternFill("solid", fgColor="282838")
+        BBIR_NEG_F = Font(name="Arial", color="7A8099", bold=False, size=10)
+        BBIR_NEG_FILL = PatternFill("solid", fgColor="181824")
+        BBIR_ZERO_F = Font(name="Arial", color="555A6E", bold=False, size=10)
 
         thin = Side(style="thin", color="1A1A35")
 
@@ -3613,12 +3594,12 @@ def save_daily_excel():
 
         center = Alignment(horizontal="center", vertical="center")
 
-        # ── 5 columns ──────────────────────────────────────
-        headers = ["DateTime", "Strike", "Sensex (Index LTP)", "Volatility Index (VIX)", "BBI(R) Value"]
-        num_cols = 5
+        # ── 6 columns ──────────────────────────────────────
+        headers = ["DateTime", "Strike", "Sensex (Index LTP)", "Volatility Index (VIX)", "BBI(R) Value", "BBI(VIX) Value"]
+        num_cols = 6
 
         # ── Row 1: Title ────────────────────────────────────
-        ws.merge_cells("A1:E1")
+        ws.merge_cells("A1:F1")
         ws["A1"] = f"TraderBro — Black-Box-Engine Dashboard  |  {date_str}  ({day_name})"
         ws["A1"].font      = Font(name="Arial", color="FFFFFF", bold=True, size=13)
         ws["A1"].fill      = TITLE_FILL
@@ -3626,7 +3607,7 @@ def save_daily_excel():
         ws.row_dimensions[1].height = 26
 
         # ── Row 2: Subtitle ─────────────────────────────────
-        ws.merge_cells("A2:E2")
+        ws.merge_cells("A2:F2")
         ws["A2"] = "Market Session: 09:15 AM → 02:00 PM IST  |  traderbro.in"
         ws["A2"].font      = Font(name="Arial", color="E8EAF0", size=10, italic=True)
         ws["A2"].fill      = HDR_FILL
@@ -3637,7 +3618,7 @@ def save_daily_excel():
         ws.row_dimensions[3].height = 6
 
         # ── Row 4: Column headers ────────────────────────────
-        col_widths = [22, 10, 20, 22, 18]
+        col_widths = [22, 10, 20, 22, 18, 18]
         for col_idx, hdr in enumerate(headers, start=1):
             cell = ws.cell(row=4, column=col_idx, value=hdr)
             cell.font      = Font(name="Arial", color="02A3FE", bold=True, size=10)
@@ -3657,19 +3638,33 @@ def save_daily_excel():
             index_ltp   = safe_num(r.get("index_ltp"))
             vix_val     = safe_num(r.get("vix"))
 
+            # BBI(VIX): if vix_val < 11.50, multiply BBI(R) value by -1
+            bbi_vix_val = (running_val * -1.0) if (vix_val is not None and vix_val < 11.50) else running_val
+
             # Alternating row background for a clean layout
             row_fill = ODD_FILL if row_idx % 2 == 1 else EVEN_FILL
 
-            # Determine BBI(R) font and cell fill using BBI styling
+            # Determine BBI(R) styling (grey shade)
             if running_val > 0:
-                bbir_font = BBI_POS_F
-                bbir_cell_fill = POS_FILL
+                bbir_font = BBIR_POS_F
+                bbir_cell_fill = BBIR_POS_FILL
             elif running_val < 0:
-                bbir_font = BBI_NEG_F
-                bbir_cell_fill = NEG_FILL
+                bbir_font = BBIR_NEG_F
+                bbir_cell_fill = BBIR_NEG_FILL
             else:
-                bbir_font = BBI_ZERO_F
+                bbir_font = BBIR_ZERO_F
                 bbir_cell_fill = row_fill
+
+            # Determine BBI(VIX) styling (bright green & red)
+            if bbi_vix_val > 0:
+                bbivix_font = BBI_POS_F
+                bbivix_cell_fill = POS_FILL
+            elif bbi_vix_val < 0:
+                bbivix_font = BBI_NEG_F
+                bbivix_cell_fill = NEG_FILL
+            else:
+                bbivix_font = BBI_ZERO_F
+                bbivix_cell_fill = row_fill
 
             values = [
                 r.get("datetime", ""),                                  # DateTime
@@ -3677,6 +3672,7 @@ def save_daily_excel():
                 round(index_ltp, 2) if index_ltp is not None else "",   # Sensex
                 round(vix_val, 2) if vix_val is not None else "—",      # Volatility Index (VIX)
                 round(running_val, 2),                                  # BBI(R) Value
+                round(bbi_vix_val, 2),                                  # BBI(VIX) Value
             ]
 
             for col_idx, val in enumerate(values, start=1):
@@ -3696,10 +3692,13 @@ def save_daily_excel():
                     cell.fill = row_fill
                 elif col_idx == 4:
                     cell.font = GOLD_F
-                    cell.fill = row_fill  # Volatility Index (VIX) gets GOLD font
+                    cell.fill = row_fill  # Volatility Index (VIX)
                 elif col_idx == 5:
                     cell.font = bbir_font
-                    cell.fill = bbir_cell_fill  # BBI(R) cell gets its colored fill
+                    cell.fill = bbir_cell_fill  # BBI(R) cell
+                elif col_idx == 6:
+                    cell.font = bbivix_font
+                    cell.fill = bbivix_cell_fill  # BBI(VIX) cell
 
             ws.row_dimensions[row_idx].height = 16
 
@@ -3707,14 +3706,17 @@ def save_daily_excel():
         last_row      = 4 + len(sorted_records) + 1
         last_rec      = sorted_records[-1] if sorted_records else {}
         total_running = round(last_rec.get("running", 0) if last_rec else 0, 2)
+        last_vix      = safe_num(last_rec.get("vix"))
+        total_bbi_vix = round((total_running * -1.0) if (last_vix is not None and last_vix < 11.50) else total_running, 2)
 
         sign_run      = '+' if total_running > 0 else ''
+        sign_vix      = '+' if total_bbi_vix > 0 else ''
 
-        ws.merge_cells(f"A{last_row}:E{last_row}")
-        ws[f"A{last_row}"] = f"Final BBI(R) Value: {sign_run}{total_running}"
+        ws.merge_cells(f"A{last_row}:F{last_row}")
+        ws[f"A{last_row}"] = f"Final BBI(R) Value: {sign_run}{total_running}  |  Final BBI(VIX) Value: {sign_vix}{total_bbi_vix}"
 
-        fill_col = "00291F" if total_running > 0 else ("2D0010" if total_running < 0 else "1A1A35")
-        txt_col  = "00D4AA" if total_running > 0 else ("FF4D6D" if total_running < 0 else "F5A623")
+        fill_col = "00291F" if total_bbi_vix > 0 else ("2D0010" if total_bbi_vix < 0 else "1A1A35")
+        txt_col  = "00D4AA" if total_bbi_vix > 0 else ("FF4D6D" if total_bbi_vix < 0 else "F5A623")
         ws[f"A{last_row}"].font      = Font(name="Arial", color=txt_col, bold=True, size=12)
         ws[f"A{last_row}"].fill      = PatternFill("solid", fgColor=fill_col)
         ws[f"A{last_row}"].alignment = center
@@ -3724,7 +3726,7 @@ def save_daily_excel():
         ws.freeze_panes = "A5"
 
         wb.save(dest)
-        print(f"✅ Daily Excel saved: {dest}  ({len(sorted_records)} rows, 5 columns)")
+        print(f"✅ Daily Excel saved: {dest}  ({len(sorted_records)} rows, 6 columns)")
 
     except Exception as e:
         print(f"❌ save_daily_excel ERROR: {e}")
@@ -3756,8 +3758,7 @@ def schedule_daily_excel_save():
 def upgrade_all_vps_excel_files():
     """
     Scans EXCEL_DIR on server startup and upgrades any existing Excel files 
-    to 5 columns: DateTime, Strike, Sensex (Index LTP), Volatility Index (VIX), BBI(R) Value.
-    Removes old BBI Value column if present.
+    to 6 columns: DateTime, Strike, Sensex (Index LTP), Volatility Index (VIX), BBI(R) Value, BBI(VIX) Value.
     """
     try:
         if not os.path.exists(EXCEL_DIR):
@@ -3773,6 +3774,18 @@ def upgrade_all_vps_excel_files():
         thin_border = Border(left=thin, right=thin, top=thin, bottom=thin)
         center = Alignment(horizontal="center", vertical="center")
 
+        POS_FILL   = PatternFill("solid", fgColor="00291F")
+        NEG_FILL   = PatternFill("solid", fgColor="2D0010")
+        BBI_POS_F  = Font(name="Arial", color="00D4AA", bold=True, size=10)
+        BBI_NEG_F  = Font(name="Arial", color="FF4D6D", bold=True, size=10)
+        BBI_ZERO_F = Font(name="Arial", color="7A8099", bold=False, size=10)
+
+        BBIR_POS_F = Font(name="Arial", color="E8EAF0", bold=True, size=10)
+        BBIR_POS_FILL = PatternFill("solid", fgColor="282838")
+        BBIR_NEG_F = Font(name="Arial", color="7A8099", bold=False, size=10)
+        BBIR_NEG_FILL = PatternFill("solid", fgColor="181824")
+        BBIR_ZERO_F = Font(name="Arial", color="555A6E", bold=False, size=10)
+
         files = sorted(glob.glob(os.path.join(EXCEL_DIR, "*.xlsx")))
         upgraded_count = 0
 
@@ -3787,145 +3800,104 @@ def upgrade_all_vps_excel_files():
                 if not headers_row4 or headers_row4[0] != "DateTime":
                     continue
 
+                # If it already has 6 columns and col 6 is BBI(VIX) Value, skip
+                if len(headers_row4) >= 6 and headers_row4[5] == "BBI(VIX) Value":
+                    continue
+
                 modified = False
 
-                # Case 1: 6-column dashboard Excel with BBI Value (col 6)
-                if len(headers_row4) >= 6 and (headers_row4[5] == "BBI Value" or "BBI" in str(headers_row4[5])):
-                    ws.delete_cols(6)
+                # Ensure Col 4 is VIX and Col 5 is BBI(R) Value
+                if len(headers_row4) >= 5 and "Volatility Index" in str(headers_row4[3]) and headers_row4[4] in ("Running Value", "BBIR Value", "BBI Value"):
                     ws.cell(row=4, column=5, value="BBI(R) Value")
-                    ws.cell(row=4, column=5).font = HDR_FONT
-                    ws.cell(row=4, column=5).fill = HDR_FILL
-                    ws.cell(row=4, column=5).alignment = center
-                    ws.column_dimensions["E"].width = 18
 
-                    try: ws.unmerge_cells("A1:F1")
+                # Add Col 6 header: BBI(VIX) Value
+                ws.cell(row=4, column=6, value="BBI(VIX) Value")
+                hdr_c6 = ws.cell(row=4, column=6)
+                hdr_c6.font = HDR_FONT
+                hdr_c6.fill = HDR_FILL
+                hdr_c6.alignment = center
+                hdr_c6.border = Border(left=thin, right=thin, top=Side(style="medium", color="02A3FE"), bottom=Side(style="medium", color="02A3FE"))
+                ws.column_dimensions["F"].width = 18
+
+                try: ws.unmerge_cells("A1:E1")
+                except: pass
+                try: ws.unmerge_cells("A1:F1")
+                except: pass
+                ws.merge_cells("A1:F1")
+
+                try: ws.unmerge_cells("A2:E2")
+                except: pass
+                try: ws.unmerge_cells("A2:F2")
+                except: pass
+                ws.merge_cells("A2:F2")
+
+                last_bbir = 0.0
+                last_vix = None
+
+                for r in range(5, ws.max_row + 1):
+                    val_a = ws.cell(r, 1).value
+                    if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a) or "BBI(R) Value" in str(val_a) or "Final BBI" in str(val_a)):
+                        # Summary row
+                        sign_run = '+' if last_bbir > 0 else ''
+                        last_bbi_vix = round((last_bbir * -1.0) if (last_vix is not None and last_vix < 11.50) else last_bbir, 2)
+                        sign_vix = '+' if last_bbi_vix > 0 else ''
+                        new_summary = f"Final BBI(R) Value: {sign_run}{last_bbir}  |  Final BBI(VIX) Value: {sign_vix}{last_bbi_vix}"
+
+                        ws.cell(r, 1, value=new_summary)
+                        try: ws.unmerge_cells(f"A{r}:E{r}")
+                        except: pass
+                        try: ws.unmerge_cells(f"A{r}:F{r}")
+                        except: pass
+                        ws.merge_cells(f"A{r}:F{r}")
+                        break
+
+                    # Data row
+                    vix_cell_val = ws.cell(r, 4).value
+                    bbir_cell_val = ws.cell(r, 5).value
+
+                    vix_num = None
+                    try:
+                        if vix_cell_val is not None and str(vix_cell_val).strip() not in ("—", "-", ""):
+                            vix_num = float(vix_cell_val)
                     except: pass
-                    ws.merge_cells("A1:E1")
-                    try: ws.unmerge_cells("A2:F2")
+
+                    bbir_num = 0.0
+                    try:
+                        if bbir_cell_val is not None and str(bbir_cell_val).strip() not in ("—", "-", ""):
+                            bbir_num = float(bbir_cell_val)
                     except: pass
-                    ws.merge_cells("A2:E2")
 
-                    for r in range(5, ws.max_row + 1):
-                        val_a = ws.cell(r, 1).value
-                        if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a) or "BBI(R) Value" in str(val_a)):
-                            curr_val = str(val_a)
-                            new_txt = curr_val.replace("Final Running Value", "Final BBI(R) Value").replace("Current Running Value", "Final BBI(R) Value").replace("Final BBIR Value", "Final BBI(R) Value")
-                            if "|" in new_txt:
-                                new_txt = new_txt.split("|")[0].strip()
-                            ws.cell(r, 1, value=new_txt)
-                            try: ws.unmerge_cells(f"A{r}:F{r}")
-                            except: pass
-                            try: ws.unmerge_cells(f"A{r}:E{r}")
-                            except: pass
-                            ws.merge_cells(f"A{r}:E{r}")
-                            break
+                    last_bbir = bbir_num
+                    last_vix = vix_num
 
-                    ws.freeze_panes = "A5"
-                    modified = True
+                    bbi_vix_num = (bbir_num * -1.0) if (vix_num is not None and vix_num < 11.50) else bbir_num
 
-                # Case 2: 5-column dashboard Excel with BBI Value at col 5 and no VIX
-                elif len(headers_row4) >= 5 and headers_row4[3] == "Running Value" and headers_row4[4] == "BBI Value":
-                    ws.delete_cols(5)
-                    ws.insert_cols(4)
-                    ws.cell(row=4, column=4, value="Volatility Index (VIX)")
-                    hdr_vix = ws.cell(row=4, column=4)
-                    hdr_vix.font = HDR_FONT
-                    hdr_vix.fill = HDR_FILL
-                    hdr_vix.alignment = center
-                    hdr_vix.border = Border(left=thin, right=thin, top=Side(style="medium", color="02A3FE"), bottom=Side(style="medium", color="02A3FE"))
-                    ws.column_dimensions["D"].width = 22
+                    # Style col 5 BBI(R) (grey shade)
+                    if bbir_num > 0:
+                        ws.cell(r, 5).font = BBIR_POS_F
+                        ws.cell(r, 5).fill = BBIR_POS_FILL
+                    elif bbir_num < 0:
+                        ws.cell(r, 5).font = BBIR_NEG_F
+                        ws.cell(r, 5).fill = BBIR_NEG_FILL
+                    else:
+                        ws.cell(r, 5).font = BBIR_ZERO_F
 
-                    ws.cell(row=4, column=5, value="BBI(R) Value")
-                    ws.cell(row=4, column=5).font = HDR_FONT
-                    ws.cell(row=4, column=5).fill = HDR_FILL
-                    ws.cell(row=4, column=5).alignment = center
-                    ws.column_dimensions["E"].width = 18
+                    # Fill col 6 BBI(VIX) (green & red)
+                    c6 = ws.cell(r, 6)
+                    c6.value = round(bbi_vix_num, 2)
+                    c6.alignment = center
+                    c6.border = thin_border
+                    if bbi_vix_num > 0:
+                        c6.font = BBI_POS_F
+                        c6.fill = POS_FILL
+                    elif bbi_vix_num < 0:
+                        c6.font = BBI_NEG_F
+                        c6.fill = NEG_FILL
+                    else:
+                        c6.font = BBI_ZERO_F
 
-                    for r in range(5, ws.max_row + 1):
-                        val_a = ws.cell(r, 1).value
-                        if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a) or "BBI(R) Value" in str(val_a)):
-                            try: ws.unmerge_cells(f"A{r}:E{r}")
-                            except: pass
-                            ws.merge_cells(f"A{r}:E{r}")
-                            curr_val = str(val_a).replace("Final Running Value", "Final BBI(R) Value").replace("Current Running Value", "Final BBI(R) Value").replace("Final BBIR Value", "Final BBI(R) Value")
-                            if "|" in curr_val:
-                                curr_val = curr_val.split("|")[0].strip()
-                            ws.cell(r, 1, value=curr_val)
-                            break
-
-                        vix_cell = ws.cell(row=r, column=4)
-                        vix_cell.value = "—"
-                        vix_cell.font = GOLD_F
-                        vix_cell.alignment = center
-                        vix_cell.border = thin_border
-
-                    try: ws.unmerge_cells("A1:E1")
-                    except: pass
-                    ws.merge_cells("A1:E1")
-                    try: ws.unmerge_cells("A2:E2")
-                    except: pass
-                    ws.merge_cells("A2:E2")
-                    ws.freeze_panes = "A5"
-                    modified = True
-
-                # Case 3: 4-column dashboard Excel (missing VIX and named Running Value)
-                elif len(headers_row4) >= 4 and headers_row4[3] == "Running Value" and "Volatility Index (VIX)" not in headers_row4:
-                    ws.insert_cols(4)
-                    ws.cell(row=4, column=4, value="Volatility Index (VIX)")
-                    hdr_vix = ws.cell(row=4, column=4)
-                    hdr_vix.font = HDR_FONT
-                    hdr_vix.fill = HDR_FILL
-                    hdr_vix.alignment = center
-                    hdr_vix.border = Border(left=thin, right=thin, top=Side(style="medium", color="02A3FE"), bottom=Side(style="medium", color="02A3FE"))
-                    ws.column_dimensions["D"].width = 22
-
-                    ws.cell(row=4, column=5, value="BBI(R) Value")
-                    ws.cell(row=4, column=5).font = HDR_FONT
-                    ws.cell(row=4, column=5).fill = HDR_FILL
-                    ws.cell(row=4, column=5).alignment = center
-                    ws.column_dimensions["E"].width = 18
-
-                    for r in range(5, ws.max_row + 1):
-                        val_a = ws.cell(r, 1).value
-                        if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a) or "BBI(R) Value" in str(val_a)):
-                            try: ws.unmerge_cells(f"A{r}:D{r}")
-                            except: pass
-                            try: ws.unmerge_cells(f"A{r}:E{r}")
-                            except: pass
-                            ws.merge_cells(f"A{r}:E{r}")
-                            curr_val = str(val_a).replace("Final Running Value", "Final BBI(R) Value").replace("Current Running Value", "Final BBI(R) Value").replace("Final BBIR Value", "Final BBI(R) Value")
-                            if "|" in curr_val:
-                                curr_val = curr_val.split("|")[0].strip()
-                            ws.cell(r, 1, value=curr_val)
-                            break
-
-                        vix_cell = ws.cell(row=r, column=4)
-                        vix_cell.value = "—"
-                        vix_cell.font = GOLD_F
-                        vix_cell.alignment = center
-                        vix_cell.border = thin_border
-
-                    try: ws.unmerge_cells("A1:D1")
-                    except: pass
-                    ws.merge_cells("A1:E1")
-                    try: ws.unmerge_cells("A2:D2")
-                    except: pass
-                    ws.merge_cells("A2:E2")
-                    ws.freeze_panes = "A5"
-                    modified = True
-
-                # Case 4: 5-column dashboard Excel with VIX at col 4 but col 5 is "Running Value" or "BBIR Value"
-                elif len(headers_row4) >= 5 and "Volatility Index" in str(headers_row4[3]) and headers_row4[4] in ("Running Value", "BBIR Value"):
-                    ws.cell(row=4, column=5, value="BBI(R) Value")
-                    for r in range(5, ws.max_row + 1):
-                        val_a = ws.cell(r, 1).value
-                        if val_a and ("Running Value" in str(val_a) or "BBIR Value" in str(val_a) or "BBI(R) Value" in str(val_a)):
-                            curr_val = str(val_a).replace("Final Running Value", "Final BBI(R) Value").replace("Current Running Value", "Final BBI(R) Value").replace("Final BBIR Value", "Final BBI(R) Value")
-                            if "|" in curr_val:
-                                curr_val = curr_val.split("|")[0].strip()
-                            ws.cell(r, 1, value=curr_val)
-                            break
-                    modified = True
+                ws.freeze_panes = "A5"
+                modified = True
 
                 if modified:
                     wb.save(filepath)
@@ -3935,7 +3907,7 @@ def upgrade_all_vps_excel_files():
                 print(f"⚠️ Error upgrading file {filepath}: {fe}")
 
         if upgraded_count > 0:
-            print(f"✅ Upgraded {upgraded_count} existing VPS Excel files to 5-column BBI(R) format.")
+            print(f"✅ Upgraded {upgraded_count} existing VPS Excel files to 6-column BBI(VIX) format.")
 
     except Exception as e:
         print(f"⚠️ Error in upgrade_all_vps_excel_files: {e}")
