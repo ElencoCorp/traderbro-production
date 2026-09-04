@@ -2327,18 +2327,18 @@
       color: var(--red) !important;
     }
 
-    /* BBI Grayscale Theme matching the Running Index style */
+    /* BBI(VIX) Bright Colors (Green & Red) */
     .val-pill.bbi-pos {
       background: var(--green-bg);
       color: var(--green);
-      border: 1px solid rgba(232, 234, 240, 0.25);
+      border: 1px solid rgba(0, 212, 170, 0.25);
       font-weight: 700;
     }
 
     .val-pill.bbi-neg {
       background: var(--red-bg);
       color: var(--red);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 77, 109, 0.25);
       font-weight: 700;
     }
 
@@ -2346,6 +2346,27 @@
       background: rgba(40, 40, 50, 0.5);
       color: #7a8099;
       border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* BBI(R) Grayscale Theme - Opposite grey shade for +ve and -ve */
+    .val-pill.bbir-pos {
+      background: rgba(255, 255, 255, 0.12);
+      color: #e8eaf0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-weight: 700;
+    }
+
+    .val-pill.bbir-neg {
+      background: rgba(25, 25, 35, 0.6);
+      color: #7a8099;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-weight: 700;
+    }
+
+    .val-pill.bbir-zero {
+      background: rgba(20, 20, 28, 0.4);
+      color: #555a6e;
+      border: 1px solid rgba(255, 255, 255, 0.04);
     }
   </style>
 </head>
@@ -2481,7 +2502,7 @@
     <div class="left-panel">
       <div class="panel-header">
         <div class="panel-header-top" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-          <div class="panel-title">Black-Box-Engine</div>
+          <div class="panel-title">BLACK-BOX-ENGINE<sup style="font-size: 10px; font-weight: 600; vertical-align: super; line-height: 0; margin-left: 2px;">©</sup></div>
           <button id="admin-live-excel-btn" onclick="downloadAdminLiveExcel()" title="Download current live session data up to this moment (Admin Only)" style="display: none; background: linear-gradient(135deg, #7c3aed, #6d28d9); border: 1px solid rgba(124,58,237,0.5); border-radius: 8px; color: #fff; font-size: 11px; font-weight: 700; padding: 6px 14px; cursor: pointer; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(124,58,237,0.35); transition: all 0.2s;">
             <i class="fas fa-file-excel"></i> ⚡ Live Excel Export (Admin)
           </button>
@@ -3293,16 +3314,16 @@ font-weight:600;
 
             if (minEl) {
               minEl.textContent = (minBbir > 0 ? "+" : "") + minBbir.toFixed(2);
-              minEl.className = "val-pill " + (minBbir > 0 ? "bbi-pos" : minBbir < 0 ? "bbi-neg" : "bbi-zero");
+              minEl.className = "val-pill " + (minBbir > 0 ? "bbir-pos" : minBbir < 0 ? "bbir-neg" : "bbir-zero");
             }
             if (maxEl) {
               maxEl.textContent = (maxBbir > 0 ? "+" : "") + maxBbir.toFixed(2);
-              maxEl.className = "val-pill " + (maxBbir > 0 ? "bbi-pos" : maxBbir < 0 ? "bbi-neg" : "bbi-zero");
+              maxEl.className = "val-pill " + (maxBbir > 0 ? "bbir-pos" : maxBbir < 0 ? "bbir-neg" : "bbir-zero");
             }
           } else {
             if (runLabel) runLabel.textContent = "Waiting for BBI(R)...";
-            if (minEl) { minEl.textContent = "—"; minEl.className = "val-pill bbi-zero"; }
-            if (maxEl) { maxEl.textContent = "—"; maxEl.className = "val-pill bbi-zero"; }
+            if (minEl) { minEl.textContent = "—"; minEl.className = "val-pill bbir-zero"; }
+            if (maxEl) { maxEl.textContent = "—"; maxEl.className = "val-pill bbir-zero"; }
           }
 
           // ── Filter out stale zero-value rows on weekends ──
@@ -3316,12 +3337,13 @@ font-weight:600;
 
           const displayRows = [...displayableRows].reverse();
 
-          // --- INJECT BBI(R) HEADER ---
+          // --- INJECT BBI(R) & BBI(VIX) HEADER ---
           let html = `
                 <div style="display: flex; justify-content: space-between; padding: 0 14px 8px; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
                     <span>Time & Sensex / VI</span>
                     <div style="display: flex; gap: 6px; text-align: center;">
-                        <span style="width: 80px; color: var(--primary);">BBI(R)</span>
+                        <span style="width: 80px; color: var(--text-dim);">BBI(R)</span>
+                        <span style="width: 80px; color: var(--primary);">BBI(VIX)</span>
                     </div>
                 </div>
             `;
@@ -3329,23 +3351,36 @@ font-weight:600;
           displayRows.forEach(r => {
             const dt = (r.datetime || "").split(" ");
             const isSkipped = r.running === "-" || r.isSkipped;
-            let valStr = "—";
-            let bbiCls = "bbi-zero";
+            let bbirValStr = "—";
+            let bbivixValStr = "—";
+            let bbirCls = "bbir-zero";
+            let bbivixCls = "bbi-zero";
             let rcls = "row-zero";
 
+            const rowVix = (r.vix !== undefined && r.vix !== null) ? r.vix : ((d && d.vix !== undefined && d.vix !== null) ? d.vix : null);
+            const parsedVix = (rowVix !== null && rowVix !== undefined && !isNaN(parseFloat(rowVix))) ? parseFloat(rowVix) : null;
+            const vixStr = parsedVix !== null ? parsedVix.toFixed(2) : "—";
+
             if (isSkipped) {
-              valStr = "-";
-              bbiCls = "bbi-zero";
+              bbirValStr = "-";
+              bbivixValStr = "-";
+              bbirCls = "bbir-zero";
+              bbivixCls = "bbi-zero";
               rcls = "row-zero";
             } else {
               const val = parseFloat(r.running || 0);
-              valStr = (val > 0 ? "+" : "") + val.toFixed(2);
-              bbiCls = val > 0 ? "bbi-pos" : val < 0 ? "bbi-neg" : "bbi-zero";
+              bbirValStr = (val > 0 ? "+" : "") + val.toFixed(2);
+              bbirCls = val > 0 ? "bbir-pos" : val < 0 ? "bbir-neg" : "bbir-zero";
               rcls = val > 0 ? "row-pos" : val < 0 ? "row-neg" : "row-zero";
-            }
 
-            const rowVix = (r.vix !== undefined && r.vix !== null) ? r.vix : ((d && d.vix !== undefined && d.vix !== null) ? d.vix : null);
-            const vixStr = (rowVix !== null && rowVix !== undefined && !isNaN(parseFloat(rowVix))) ? parseFloat(rowVix).toFixed(2) : "—";
+              // BBI(VIX): if VIX < 11.50, multiply BBI(R) value by -1
+              let vixVal = val;
+              if (parsedVix !== null && parsedVix < 11.50) {
+                vixVal = val * -1;
+              }
+              bbivixValStr = (vixVal > 0 ? "+" : "") + vixVal.toFixed(2);
+              bbivixCls = vixVal > 0 ? "bbi-pos" : vixVal < 0 ? "bbi-neg" : "bbi-zero";
+            }
 
             html += `
 				    <div class="data-row ${rcls}">
@@ -3354,8 +3389,11 @@ font-weight:600;
 				            <span class="row-sensex">Sensex: ${parseFloat(r.index_ltp || 0).toFixed(2)} <span style="margin:0 3px;opacity:0.4;">|</span> <span style="color:var(--gold);font-weight:600">VIX: ${vixStr}</span></span>
 				        </div>
 				        <div style="display: flex; gap: 6px;">
-				            <div class="val-pill ${bbiCls}" title="BBI(R) Value">
-				                ${valStr}
+				            <div class="val-pill ${bbirCls}" title="BBI(R) Value">
+				                ${bbirValStr}
+				            </div>
+				            <div class="val-pill ${bbivixCls}" title="BBI(VIX) Value">
+				                ${bbivixValStr}
 				            </div>
 				        </div>
    					 </div>`;
@@ -3644,13 +3682,14 @@ font-weight:600;
         const dayName = ist.toLocaleDateString("en-IN", { weekday: "long" });
         const fileName = `TraderBro_Live_Session_${dateStr}_${timeFileName}.xlsx`;
 
-        // 5 columns matching server-side export format
+        // 6 columns matching server-side export format
         const headers = [
           "DateTime",
           "Strike",
           "Sensex (Index LTP)",
           "Volatility Index (VIX)",
-          "BBI(R) Value"
+          "BBI(R) Value",
+          "BBI(VIX) Value"
         ];
 
         const titleRow = [`TraderBro — Black-Box-Engine Dashboard  |  ${dateStr}  (${dayName})`];
@@ -3668,19 +3707,33 @@ font-weight:600;
           const runVal = isSkipped ? '-' : (r.running !== undefined && r.running !== null ? fmtNum(r.running) : '');
           const vixVal = (r.vix !== null && r.vix !== undefined) ? fmtNum(r.vix) : '—';
 
+          let bbiVixVal = isSkipped ? '-' : '';
+          if (typeof runVal === 'number') {
+            const parsedVix = parseFloat(r.vix);
+            if (!isNaN(parsedVix) && parsedVix < 11.50) {
+              bbiVixVal = runVal * -1;
+            } else {
+              bbiVixVal = runVal;
+            }
+          }
+
           return [
             r.datetime ?? '',
             r.strike ?? '',
             fmtNum(r.index_ltp),
             vixVal,
-            runVal
+            runVal,
+            bbiVixVal
           ];
         });
 
         const lastSettled = rowsToExport.length ? rowsToExport[rowsToExport.length - 1] : null;
         const finalRunning = lastSettled ? Number(lastSettled.running || 0) : 0;
+        const lastVix = lastSettled ? Number(lastSettled.vix || 0) : 0;
+        const finalBbiVix = (lastVix > 0 && lastVix < 11.50) ? (finalRunning * -1) : finalRunning;
         const fv = finalRunning.toFixed(2);
-        const summaryRow = [`Final BBI(R) Value: ${finalRunning > 0 ? "+" : ""}${fv}`];
+        const fvVix = finalBbiVix.toFixed(2);
+        const summaryRow = [`Final BBI(R) Value: ${finalRunning > 0 ? "+" : ""}${fv}  |  Final BBI(VIX) Value: ${finalBbiVix > 0 ? "+" : ""}${fvVix}`];
 
         const wsData = [titleRow, subRow, blankRow, headers, ...dataRows, blankRow, summaryRow];
 
@@ -3688,13 +3741,13 @@ font-weight:600;
         const ws = XLSX.utils.aoa_to_sheet(wsData);
 
         ws["!cols"] = [
-          { wch: 22 }, { wch: 10 }, { wch: 20 }, { wch: 22 }, { wch: 18 }
+          { wch: 22 }, { wch: 10 }, { wch: 20 }, { wch: 22 }, { wch: 18 }, { wch: 18 }
         ];
 
         ws["!merges"] = [
-          { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } },
-          { s: { r: 1, c: 0 }, e: { r: 1, c: 4 } },
-          { s: { r: wsData.length - 1, c: 0 }, e: { r: wsData.length - 1, c: 4 } },
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
+          { s: { r: wsData.length - 1, c: 0 }, e: { r: wsData.length - 1, c: 5 } },
         ];
 
         // Append worksheet to workbook before saving
