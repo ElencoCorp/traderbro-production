@@ -685,6 +685,46 @@
       animation: fadeInUp .5s ease;
     }
 
+    .dynamic-calendar-badge {
+      width: 68px;
+      height: 72px;
+      margin: 0 auto 16px auto;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #ffffff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .dynamic-calendar-badge .cal-header {
+      width: 100%;
+      background: linear-gradient(135deg, #eb4201, #e53e3e);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 4px 0;
+      text-align: center;
+      letter-spacing: 1.5px;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .dynamic-calendar-badge .cal-body {
+      width: 100%;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1;
+      font-family: 'Poppins', sans-serif;
+    }
+
     @keyframes fadeInUp {
       from {
         opacity: 0;
@@ -3107,21 +3147,26 @@ font-weight:600;
       const marketOpen = 9 * 60 + 16;
       const marketClose = 14 * 60;
 
+      const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+      const currentMonth = monthNames[ist.getMonth()];
+      const currentDate = String(ist.getDate()).padStart(2, '0');
+      const calBadge = `<div class="dynamic-calendar-badge"><div class="cal-header">${currentMonth}</div><div class="cal-body">${currentDate}</div></div>`;
+
       let icon, title, desc, time;
 
       if (_closedReason) {
         // API told us exactly why
-        icon = _closedReason.icon;
+        icon = (_closedReason.icon === "📅") ? calBadge : _closedReason.icon;
         title = _closedReason.title;
         desc = _closedReason.desc;
         time = _closedReason.time;
       } else if (day === 6) {
-        icon = "📅";
+        icon = calBadge;
         title = "Market Closed — Saturday";
         desc = "NSE is closed on weekends. No live values are generated today.";
         time = "Next session: <b>Monday at 9:16 AM IST</b>";
       } else if (day === 0) {
-        icon = "📅";
+        icon = calBadge;
         title = "Market Closed — Sunday";
         desc = "NSE is closed on weekends. No live values are generated today.";
         time = "Next session: <b>Monday at 9:16 AM IST</b>";
@@ -3911,11 +3956,17 @@ font-weight:600;
       if (!grid) return;
       if (grid.querySelector(".data-row") || (_dashboardRows && _dashboardRows.length > 0)) return;   // real data already there
 
+      const ist = getIST();
+      const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+      const currentMonth = monthNames[ist.getMonth()];
+      const currentDate = String(ist.getDate()).padStart(2, '0');
+      const calBadge = `<div class="dynamic-calendar-badge"><div class="cal-header">${currentMonth}</div><div class="cal-body">${currentDate}</div></div>`;
+
       // Store the reason so buildClosedBox() can use it
       if (accessData.is_weekend) {
         const dayName = accessData.weekday_name || "Weekend";
         _closedReason = {
-          icon: "📅",
+          icon: calBadge,
           title: `Market Closed — ${dayName}`,
           desc: "NSE is closed on weekends. No live values are generated today.",
           time: `Next session: <b>${accessData.next_trading_day || "Monday"}</b>`,
@@ -3923,7 +3974,7 @@ font-weight:600;
         grid.innerHTML = buildClosedBox();
       } else if (accessData.is_holiday) {
         _closedReason = {
-          icon: "🏖️",
+          icon: calBadge,
           title: `Market Holiday — ${accessData.holiday_reason}`,
           desc: `NSE is closed today for <b>${accessData.holiday_reason}</b>. No live values are generated.`,
           time: `Next session: <b>${accessData.next_trading_day}</b>`,
