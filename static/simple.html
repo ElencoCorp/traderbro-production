@@ -5,6 +5,7 @@
   <title>Live Running Tracker</title>
   <link rel="icon" type="image/png" href="/static/finlab/Frontend/xhtml/images/Logo-traderbro-bgremove.png">
   <script src="/static/js/xlsx.full.min.js"></script>
+  <script src="/static/finlab/vendor/chart-js/chart.bundle.min.js"></script>
   <script src="/static/js/admin-error-popup.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
@@ -112,6 +113,223 @@
       border-radius: 12px;
       font-size: 14px;
       font-weight: 700;
+    }
+
+    .btn-download-space {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      padding: 12px 22px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    /* ── GRAPH COMPARISON ── */
+    .graph-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .graph-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #60a5fa;
+    }
+
+    .graph-subtitle {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .graph-selectors {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .select-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .select-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .graph-select {
+      background: #0f172a;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .col-1-select {
+      border-color: #3b82f6;
+      color: #60a5fa;
+    }
+
+    .col-2-select {
+      border-color: #10b981;
+      color: #34d399;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      width: 100%;
+      height: 340px;
+    }
+
+    /* ── MODALS ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(5, 8, 22, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 28px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      text-align: center;
+    }
+
+    .modal-card.modal-lg {
+      max-width: 680px;
+      text-align: left;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .modal-close:hover {
+      color: #fff;
+    }
+
+    .modal-icon {
+      font-size: 48px;
+      margin-bottom: 14px;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-bottom: 8px;
+    }
+
+    .modal-desc {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+    }
+
+    .dl-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 380px;
+      overflow-y: auto;
+    }
+
+    .dl-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 14px 18px;
+      transition: .2s;
+    }
+
+    .dl-item:hover {
+      background: rgba(37, 99, 235, 0.08);
+      border-color: rgba(37, 99, 235, 0.3);
+    }
+
+    .dl-item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .dl-item-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+
+    .dl-item-sub {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .dl-btn {
+      background: linear-gradient(135deg, #10b981, #059669);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: white;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dl-btn:hover {
+      opacity: 0.9;
     }
 
     /* ── STATUS BAR ── */
@@ -236,7 +454,10 @@
       <div class="title">📊 Live Running (ATM)</div>
       <div class="subtitle">TraderBro Live Market Recorder</div>
     </div>
-    <button class="btn-admin" onclick="window.location.href='/admin'">⚙ Admin Panel</button>
+    <div style="display:flex; gap:10px;">
+      <button class="btn-download-space" onclick="openDownloadSpace()">📁 Download Space</button>
+      <button class="btn-admin" onclick="window.location.href='/admin'">⚙ Admin Panel</button>
+    </div>
   </div>
 
   <div class="card">
@@ -281,6 +502,146 @@
         </thead>
         <tbody id="tbl"></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- ── GRAPH COMPARISON CARD ── -->
+  <div class="card graph-card" style="margin-top: 24px;">
+    <div class="graph-header">
+      <div>
+        <div class="graph-title">📈 Real-Time Column Comparison Graph</div>
+        <div class="graph-subtitle">Select columns & axis step differences to compare data points and quantitative trends</div>
+      </div>
+      <div class="graph-selectors">
+        <div class="select-group">
+          <label for="colSelect1">Left Column (Line 1):</label>
+          <select id="colSelect1" class="graph-select col-1-select" onchange="updateComparisonChart()">
+            <option value="ce_ltp" selected>CE LTP</option>
+            <option value="ce_delta">CE Δ</option>
+            <option value="ce_gamma">CE Γ</option>
+            <option value="ce_theta">CE Θ</option>
+            <option value="ce_vega">CE V</option>
+            <option value="strike">STRIKE</option>
+            <option value="pe_ltp">PE LTP</option>
+            <option value="pe_delta">PE Δ</option>
+            <option value="pe_gamma">PE Γ</option>
+            <option value="pe_theta">PE Θ</option>
+            <option value="pe_vega">PE V</option>
+            <option value="delta_ratio">Delta Ratio</option>
+            <option value="index_ltp">Index LTP</option>
+            <option value="reference">Reference</option>
+            <option value="stretched">Stretched</option>
+            <option value="difference">Difference</option>
+            <option value="diff_prev">Diff Prev</option>
+            <option value="running">Running</option>
+          </select>
+        </div>
+        <div class="select-group">
+          <label for="stepSelect1">Left Step / Diff:</label>
+          <select id="stepSelect1" class="graph-select col-1-select" onchange="updateComparisonChart()">
+            <option value="auto" selected>Auto (Smart)</option>
+            <option value="0.01">0.01</option>
+            <option value="0.05">0.05</option>
+            <option value="0.1">0.1</option>
+            <option value="0.25">0.25</option>
+            <option value="0.5">0.5</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="250">250</option>
+            <option value="500">500</option>
+            <option value="1000">1,000</option>
+            <option value="2500">2,500</option>
+            <option value="5000">5,000</option>
+            <option value="10000">10,000</option>
+          </select>
+        </div>
+        <div class="select-group">
+          <label for="colSelect2">Right Column (Line 2):</label>
+          <select id="colSelect2" class="graph-select col-2-select" onchange="updateComparisonChart()">
+            <option value="ce_ltp">CE LTP</option>
+            <option value="ce_delta">CE Δ</option>
+            <option value="ce_gamma">CE Γ</option>
+            <option value="ce_theta">CE Θ</option>
+            <option value="ce_vega">CE V</option>
+            <option value="strike">STRIKE</option>
+            <option value="pe_ltp" selected>PE LTP</option>
+            <option value="pe_delta">PE Δ</option>
+            <option value="pe_gamma">PE Γ</option>
+            <option value="pe_theta">PE Θ</option>
+            <option value="pe_vega">PE V</option>
+            <option value="delta_ratio">Delta Ratio</option>
+            <option value="index_ltp">Index LTP</option>
+            <option value="reference">Reference</option>
+            <option value="stretched">Stretched</option>
+            <option value="difference">Difference</option>
+            <option value="diff_prev">Diff Prev</option>
+            <option value="running">Running</option>
+          </select>
+        </div>
+        <div class="select-group">
+          <label for="stepSelect2">Right Step / Diff:</label>
+          <select id="stepSelect2" class="graph-select col-2-select" onchange="updateComparisonChart()">
+            <option value="auto" selected>Auto (Smart)</option>
+            <option value="0.01">0.01</option>
+            <option value="0.05">0.05</option>
+            <option value="0.1">0.1</option>
+            <option value="0.25">0.25</option>
+            <option value="0.5">0.5</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="250">250</option>
+            <option value="500">500</option>
+            <option value="1000">1,000</option>
+            <option value="2500">2,500</option>
+            <option value="5000">5,000</option>
+            <option value="10000">10,000</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="chart-wrapper">
+      <canvas id="comparisonChart" height="320"></canvas>
+    </div>
+  </div>
+
+  <!-- ── MARKET CLOSE AUTO-SAVE POPUP MODAL ── -->
+  <div id="marketCloseModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-icon">⏰</div>
+      <h3 class="modal-title">Market Session Ended</h3>
+      <p class="modal-desc">All simple recorder data for today has been automatically saved to Excel! You can view and download all historical market Excel files in the Download Space.</p>
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="openDownloadSpace(); closeMarketCloseModal();">📁 Open Download Space</button>
+        <button class="btn-secondary" onclick="closeMarketCloseModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DOWNLOAD SPACE MODAL ── -->
+  <div id="downloadSpaceModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">📁 Download Space — Saved Excel Files</h3>
+          <p class="modal-desc" style="margin-bottom:0;">Access and download all market session Excel files</p>
+        </div>
+        <button class="modal-close" onclick="closeDownloadSpace()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="simple-dl-list" class="dl-grid">
+          <div style="text-align:center; color:#9db0c7; padding:20px;">Loading available files…</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -331,13 +692,15 @@
       _marketCloseSaved = true;
       console.log('⏰ Market closed — triggering auto-save…');
 
-      // 1. Trigger server-side Excel save (so /api/downloads gets the file)
+      // 1. Trigger server-side Excel save for simple recorder (stores to simple_excel_exports)
       try {
-        await fetch('/api/admin/trigger-excel-save', {
+        await fetch('/api/admin/trigger-simple-excel-save', {
           method: 'POST',
           credentials: 'include'
         });
-        console.log('✅ Server-side Excel save triggered.');
+        console.log('✅ Server-side Simple Excel save triggered.');
+        // 2. Open market close notification pop-up
+        openMarketCloseModal();
       } catch (e) {
         console.log('Server save attempted:', e.message);
       }
@@ -500,6 +863,9 @@
           tr.innerHTML = buildRow(r, idx === records.length - 1);
           tbody.appendChild(tr);
         });
+
+        // Update comparison chart with latest records
+        updateComparisonChart();
 
       } catch (e) { console.error("loadLiveData:", e); }
     }
@@ -743,10 +1109,322 @@
     ════════════════════════════════════════════ */
     window.addEventListener("load", async () => {
       await loadInterval();
+      initComparisonChart();
       restartTimer();
       // Also check market-close every minute
       setInterval(checkMarketCloseAutoSave, 60000);
     });
+
+    /* ════════════════════════════════════════════
+       GRAPH COMPARISON ENGINE (Chart.js)
+    ════════════════════════════════════════════ */
+    let comparisonChart = null;
+
+    const COLUMN_META = {
+      datetime: { label: "Date Time", key: "datetime" },
+      expiry: { label: "Expiry", key: "expiry" },
+      ce_ltp: { label: "CE LTP", key: "ce_ltp" },
+      ce_delta: { label: "CE Δ", key: "ce_delta" },
+      ce_gamma: { label: "CE Γ", key: "ce_gamma" },
+      ce_theta: { label: "CE Θ", key: "ce_theta" },
+      ce_vega: { label: "CE V", key: "ce_vega" },
+      strike: { label: "STRIKE", key: "strike" },
+      pe_ltp: { label: "PE LTP", key: "pe_ltp" },
+      pe_delta: { label: "PE Δ", key: "pe_delta" },
+      pe_gamma: { label: "PE Γ", key: "pe_gamma" },
+      pe_theta: { label: "PE Θ", key: "pe_theta" },
+      pe_vega: { label: "PE V", key: "pe_vega" },
+      delta_ratio: { label: "Delta Ratio", key: "delta_ratio" },
+      index_ltp: { label: "Index LTP", key: "index_ltp" },
+      reference: { label: "Reference", key: "reference" },
+      stretched: { label: "Stretched", key: "stretched" },
+      difference: { label: "Difference", key: "difference" },
+      diff_prev: { label: "Diff Prev", key: "diff_prev" },
+      running: { label: "Running", key: "running" }
+    };
+
+    function formatFinancialTick(val) {
+      if (val === null || val === undefined || isNaN(val)) return '';
+      const abs = Math.abs(val);
+      if (abs >= 100000) {
+        return (val / 100000).toFixed(2) + 'L';
+      }
+      if (abs >= 1000) {
+        return val.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+      }
+      if (abs >= 10) {
+        return val.toFixed(2);
+      }
+      if (abs >= 1) {
+        return val.toFixed(2);
+      }
+      if (abs > 0) {
+        return val.toFixed(4);
+      }
+      return '0';
+    }
+
+    function calculateSmartStep(minVal, maxVal) {
+      const diff = Math.abs(maxVal - minVal);
+      if (diff === 0) return 1;
+      const rawStep = diff / 5;
+      const steps = [0.001, 0.005, 0.01, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 25000, 50000];
+      for (let s of steps) {
+        if (s >= rawStep) return s;
+      }
+      return Math.pow(10, Math.floor(Math.log10(rawStep)));
+    }
+
+    function initComparisonChart() {
+      const ctx = document.getElementById('comparisonChart');
+      if (!ctx) return;
+
+      comparisonChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: 'Column 1 (Left Axis)',
+              data: [],
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderWidth: 2,
+              pointRadius: 3,
+              pointHoverRadius: 6,
+              yAxisID: 'y1',
+              tension: 0.2,
+              fill: false
+            },
+            {
+              label: 'Column 2 (Right Axis)',
+              data: [],
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderWidth: 2,
+              pointRadius: 3,
+              pointHoverRadius: 6,
+              yAxisID: 'y2',
+              tension: 0.2,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              labels: {
+                color: '#e2e8f0',
+                font: { family: 'Poppins', size: 12, weight: 'bold' }
+              }
+            },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleColor: '#60a5fa',
+              bodyColor: '#e2e8f0',
+              borderColor: 'rgba(255, 255, 255, 0.15)',
+              borderWidth: 1,
+              padding: 12,
+              callbacks: {
+                label: function(context) {
+                  const val = context.parsed.y;
+                  return ` ${context.dataset.label}: ${formatFinancialTick(val)} (${val})`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#94a3b8', font: { size: 10 } }
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: {
+                color: '#60a5fa',
+                font: { size: 11, weight: 'bold' },
+                callback: function(value) { return formatFinancialTick(value); }
+              },
+              title: { display: true, color: '#60a5fa', font: { size: 12, weight: 'bold' } }
+            },
+            y2: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              grid: { drawOnChartArea: false },
+              ticks: {
+                color: '#34d399',
+                font: { size: 11, weight: 'bold' },
+                callback: function(value) { return formatFinancialTick(value); }
+              },
+              title: { display: true, color: '#34d399', font: { size: 12, weight: 'bold' } }
+            }
+          }
+        }
+      });
+    }
+
+    function updateComparisonChart() {
+      if (!comparisonChart) initComparisonChart();
+      if (!comparisonChart) return;
+
+      const col1Key = document.getElementById('colSelect1').value;
+      const col2Key = document.getElementById('colSelect2').value;
+      const step1Sel = document.getElementById('stepSelect1').value;
+      const step2Sel = document.getElementById('stepSelect2').value;
+
+      const col1Meta = COLUMN_META[col1Key] || { label: col1Key, key: col1Key };
+      const col2Meta = COLUMN_META[col2Key] || { label: col2Key, key: col2Key };
+
+      const labels = [];
+      const data1 = [];
+      const data2 = [];
+
+      const activeRecords = (records && records.length > 0) ? records : [];
+
+      activeRecords.forEach(r => {
+        let timeLbl = r.datetime || '';
+        if (timeLbl.includes(' ')) timeLbl = timeLbl.split(' ')[1] || timeLbl;
+        labels.push(timeLbl);
+
+        const v1 = parseFloat(r[col1Key]);
+        data1.push(isNaN(v1) ? null : v1);
+
+        const v2 = parseFloat(r[col2Key]);
+        data2.push(isNaN(v2) ? null : v2);
+      });
+
+      // Filter valid numeric values
+      const validData1 = data1.filter(v => v !== null && !isNaN(v));
+      const validData2 = data2.filter(v => v !== null && !isNaN(v));
+
+      // Calculate Left Axis Bounds (y1)
+      if (validData1.length > 0) {
+        let min1 = Math.min(...validData1);
+        let max1 = Math.max(...validData1);
+        if (min1 === max1) {
+          min1 = min1 > 0 ? min1 * 0.95 : min1 - 1;
+          max1 = max1 > 0 ? max1 * 1.05 : max1 + 1;
+        }
+        const span1 = max1 - min1;
+        let padMin1 = min1 - span1 * 0.05;
+        let padMax1 = max1 + span1 * 0.05;
+
+        let step1 = (step1Sel === 'auto') ? calculateSmartStep(padMin1, padMax1) : parseFloat(step1Sel);
+        if (isNaN(step1) || step1 <= 0) step1 = calculateSmartStep(padMin1, padMax1);
+
+        comparisonChart.options.scales.y1.min = Math.floor(padMin1 / step1) * step1;
+        comparisonChart.options.scales.y1.max = Math.ceil(padMax1 / step1) * step1;
+        comparisonChart.options.scales.y1.ticks.stepSize = step1;
+      } else {
+        delete comparisonChart.options.scales.y1.min;
+        delete comparisonChart.options.scales.y1.max;
+        delete comparisonChart.options.scales.y1.ticks.stepSize;
+      }
+
+      // Calculate Right Axis Bounds (y2)
+      if (validData2.length > 0) {
+        let min2 = Math.min(...validData2);
+        let max2 = Math.max(...validData2);
+        if (min2 === max2) {
+          min2 = min2 > 0 ? min2 * 0.95 : min2 - 1;
+          max2 = max2 > 0 ? max2 * 1.05 : max2 + 1;
+        }
+        const span2 = max2 - min2;
+        let padMin2 = min2 - span2 * 0.05;
+        let padMax2 = max2 + span2 * 0.05;
+
+        let step2 = (step2Sel === 'auto') ? calculateSmartStep(padMin2, padMax2) : parseFloat(step2Sel);
+        if (isNaN(step2) || step2 <= 0) step2 = calculateSmartStep(padMin2, padMax2);
+
+        comparisonChart.options.scales.y2.min = Math.floor(padMin2 / step2) * step2;
+        comparisonChart.options.scales.y2.max = Math.ceil(padMax2 / step2) * step2;
+        comparisonChart.options.scales.y2.ticks.stepSize = step2;
+      } else {
+        delete comparisonChart.options.scales.y2.min;
+        delete comparisonChart.options.scales.y2.max;
+        delete comparisonChart.options.scales.y2.ticks.stepSize;
+      }
+
+      comparisonChart.data.labels = labels;
+      comparisonChart.data.datasets[0].label = `${col1Meta.label} (Left Axis)`;
+      comparisonChart.data.datasets[0].data = data1;
+
+      comparisonChart.data.datasets[1].label = `${col2Meta.label} (Right Axis)`;
+      comparisonChart.data.datasets[1].data = data2;
+
+      comparisonChart.options.scales.y1.title.text = col1Meta.label;
+      comparisonChart.options.scales.y2.title.text = col2Meta.label;
+
+      comparisonChart.update();
+    }
+
+    /* ════════════════════════════════════════════
+       DOWNLOAD SPACE & MARKET CLOSE POPUP
+    ════════════════════════════════════════════ */
+    function openMarketCloseModal() {
+      document.getElementById('marketCloseModal').style.display = 'flex';
+    }
+
+    function closeMarketCloseModal() {
+      document.getElementById('marketCloseModal').style.display = 'none';
+    }
+
+    function openDownloadSpace() {
+      document.getElementById('downloadSpaceModal').style.display = 'flex';
+      loadSimpleDownloads();
+    }
+
+    function closeDownloadSpace() {
+      document.getElementById('downloadSpaceModal').style.display = 'none';
+    }
+
+    async function loadSimpleDownloads() {
+      const container = document.getElementById('simple-dl-list');
+      if (!container) return;
+      container.innerHTML = `<div style="text-align:center; color:#9db0c7; padding:20px;">Fetching Excel files…</div>`;
+
+      try {
+        const res = await fetch('/api/simple-downloads', { credentials: 'include' });
+        if (!res.ok) {
+          container.innerHTML = `<div style="text-align:center; color:#ef4444; padding:20px;">Failed to load files (${res.status}). Please login to access files.</div>`;
+          return;
+        }
+        const data = await res.json();
+        const files = data.files || [];
+
+        if (!files.length) {
+          container.innerHTML = `<div style="text-align:center; color:#94a3b8; padding:20px;">No historical Excel files found. Files are saved automatically after each market session.</div>`;
+          return;
+        }
+
+        container.innerHTML = '';
+        files.forEach(f => {
+          const item = document.createElement('div');
+          item.className = 'dl-item';
+          item.innerHTML = `
+            <div class="dl-item-info">
+              <div class="dl-item-name">📊 TraderBro Live Data — ${f.display_date || f.name}</div>
+              <div class="dl-item-sub">File: <code>${f.name}</code></div>
+            </div>
+            <a href="${f.url}" download class="dl-btn">⬇ Download Excel</a>
+          `;
+          container.appendChild(item);
+        });
+      } catch (e) {
+        console.error('loadSimpleDownloads error:', e);
+        container.innerHTML = `<div style="text-align:center; color:#ef4444; padding:20px;">Error loading files.</div>`;
+      }
+    }
 
     /* ── Heartbeat so admin can see simple.html users too ── */
     (function () {
