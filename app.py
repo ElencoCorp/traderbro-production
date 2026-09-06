@@ -3479,6 +3479,9 @@ import glob
 EXCEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "excel_exports")
 os.makedirs(EXCEL_DIR, exist_ok=True)
 
+SIMPLE_EXCEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "simple_excel_exports")
+os.makedirs(SIMPLE_EXCEL_DIR, exist_ok=True)
+
 
 # ── HELPER: get user plan from DB ───────────────────────────────────────
 def get_user_plan(username: str):
@@ -3732,10 +3735,239 @@ def save_daily_excel():
         print(f"❌ save_daily_excel ERROR: {e}")
         import traceback
         traceback.print_exc()
+# ── SAVE SIMPLE RECORDER DAILY EXCEL (21 COLUMNS) ──────────────────────
+def save_simple_daily_excel():
+    """
+    Save today's simple recorder data to a 21-column .xlsx in SIMPLE_EXCEL_DIR:
+    DateTime | Expiry | CE LTP | CE Delta | CE Gamma | CE Theta | CE Vega | Strike |
+    PE LTP | PE Delta | PE Gamma | PE Theta | PE Vega | Delta Ratio | Index LTP |
+    Volatility Index (VIX) | Reference | Stretched | Difference | Diff Prev | Running
+    Matches the exact 21 columns of simple.html table.
+    """
+    global LIVE_RUNNING_RECORDS
+
+    _now = datetime.now(IST)
+    if _now.weekday() >= 5:
+        print(f"⛔ save_simple_daily_excel: skipped — {_now.strftime('%A')} is a weekend")
+        return
+    if is_market_holiday(_now):
+        print(f"⛔ save_simple_daily_excel: skipped — {get_holiday_reason(_now)} (holiday)")
+        return
+
+    try:
+        date_str_today = datetime.now(IST).strftime("%Y-%m-%d")
+        records = [
+            r for r in LIVE_RUNNING_RECORDS
+            if str(r.get("datetime", "")).startswith(date_str_today)
+        ]
+
+        if not records:
+            print("⚠️ save_simple_daily_excel: no records for today.")
+            return
+
+        sorted_records = sorted(records, key=lambda x: str(x.get("datetime", "")))
+
+        def safe_num(v):
+            try:
+                if v is None or v == '' or v == '-':
+                    return None
+                import math as _m
+                f = float(v)
+                return None if (_m.isnan(f) or _m.isinf(f)) else f
+            except:
+                return None
+
+        now      = datetime.now(IST)
+        date_str = now.strftime("%Y-%m-%d")
+        day_name = now.strftime("%A")
+        dest     = os.path.join(SIMPLE_EXCEL_DIR, f"{date_str}.xlsx")
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = date_str
+
+        TITLE_FILL = PatternFill("solid", fgColor="EB4201")
+        HDR_FILL   = PatternFill("solid", fgColor="090915")
+        ODD_FILL   = PatternFill("solid", fgColor="0A0A18")
+        EVEN_FILL  = PatternFill("solid", fgColor="13132A")
+        POS_FILL   = PatternFill("solid", fgColor="00291F")
+        NEG_FILL   = PatternFill("solid", fgColor="2D0010")
+
+        NORMAL_F = Font(name="Arial", color="E8EAF0", size=10)
+        ORANGE_F = Font(name="Arial", color="FF6B35", size=10)
+        BLUE_F   = Font(name="Arial", color="02A3FE", bold=True, size=10)
+        GOLD_F   = Font(name="Arial", color="F5A623", bold=True, size=10)
+        POS_F    = Font(name="Arial", color="00D4AA", bold=True, size=10)
+        NEG_F    = Font(name="Arial", color="FF4D6D", bold=True, size=10)
+
+        thin = Side(style="thin", color="1A1A35")
+        def thin_border():
+            return Border(left=thin, right=thin, top=thin, bottom=thin)
+
+        center = Alignment(horizontal="center", vertical="center")
+
+        headers = [
+            "DateTime", "Expiry",
+            "CE LTP", "CE Delta", "CE Gamma", "CE Theta", "CE Vega",
+            "Strike",
+            "PE LTP", "PE Delta", "PE Gamma", "PE Theta", "PE Vega",
+            "Delta Ratio", "Index LTP", "Volatility Index (VIX)", "Reference", "Stretched", "Difference",
+            "Diff Prev", "Running"
+        ]
+
+        # Row 1: Title
+        ws.merge_cells("A1:U1")
+        ws["A1"] = f"TraderBro — Simple Live Market Recorder  |  {date_str}  ({day_name})"
+        ws["A1"].font      = Font(name="Arial", color="FFFFFF", bold=True, size=13)
+        ws["A1"].fill      = TITLE_FILL
+        ws["A1"].alignment = center
+        ws.row_dimensions[1].height = 26
+
+        # Row 2: Subtitle
+        ws.merge_cells("A2:U2")
+        ws["A2"] = "Market Session: 09:16 AM → 02:00 PM IST  |  traderbro.in"
+        ws["A2"].font      = Font(name="Arial", color="E8EAF0", size=10, italic=True)
+        ws["A2"].fill      = HDR_FILL
+        ws["A2"].alignment = center
+        ws.row_dimensions[2].height = 16
+
+        # Row 3: blank
+        ws.row_dimensions[3].height = 6
+
+        # Row 4: Column headers
+        col_widths = [22, 13, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 12, 12, 20, 12, 12, 12, 12, 12]
+        for col_idx, hdr in enumerate(headers, start=1):
+            cell = ws.cell(row=4, column=col_idx, value=hdr)
+            cell.font      = Font(name="Arial", color="02A3FE", bold=True, size=10)
+            cell.fill      = HDR_FILL
+            cell.alignment = center
+            cell.border    = Border(
+                left=thin, right=thin,
+                top=Side(style="medium", color="02A3FE"),
+                bottom=Side(style="medium", color="02A3FE")
+            )
+            ws.column_dimensions[get_column_letter(col_idx)].width = col_widths[col_idx - 1]
+        ws.row_dimensions[4].height = 20
+
+        # Process running values same as simple.html table
+        start_idx = -1
+        for i, r in enumerate(sorted_records):
+            diff = safe_num(r.get("difference"))
+            if diff is not None and ((diff >= -40 and diff <= -20) or (diff >= 20 and diff <= 40)):
+                start_idx = i
+                break
+
+        running_vals = []
+        diff_prev_vals = []
+        if start_idx == -1:
+            running_vals = ["-"] * len(sorted_records)
+            diff_prev_vals = [0.0] * len(sorted_records)
+        else:
+            for i in range(start_idx):
+                running_vals.append("-")
+                diff_prev_vals.append(0.0)
+            running_vals.append(0.0)
+            diff_prev_vals.append(0.0)
+
+            accum = 0.0
+            for i in range(start_idx + 1, len(sorted_records)):
+                prev_diff = safe_num(sorted_records[i-1].get("difference")) or 0.0
+                curr_diff = safe_num(sorted_records[i].get("difference")) or 0.0
+                diff_change = curr_diff - prev_diff
+                accum += diff_change
+                diff_prev_vals.append(round(diff_change, 2))
+                running_vals.append(round(accum, 2))
+
+        # Data rows
+        for idx, r in enumerate(sorted_records):
+            row_idx = 5 + idx
+            is_pending = (idx == len(sorted_records) - 1)
+            row_fill = ODD_FILL if row_idx % 2 == 1 else EVEN_FILL
+
+            run_val = running_vals[idx] if not is_pending else ""
+            diff_prev_val = diff_prev_vals[idx] if not is_pending else ""
+
+            row_data = [
+                r.get("datetime", ""),
+                r.get("expiry", ""),
+                safe_num(r.get("ce_ltp")),
+                safe_num(r.get("ce_delta")),
+                safe_num(r.get("ce_gamma")),
+                safe_num(r.get("ce_theta")),
+                safe_num(r.get("ce_vega")),
+                r.get("strike", ""),
+                safe_num(r.get("pe_ltp")),
+                safe_num(r.get("pe_delta")),
+                safe_num(r.get("pe_gamma")),
+                safe_num(r.get("pe_theta")),
+                safe_num(r.get("pe_vega")),
+                safe_num(r.get("delta_ratio")),
+                safe_num(r.get("index_ltp")),
+                safe_num(r.get("vix")),
+                safe_num(r.get("reference")),
+                safe_num(r.get("stretched")),
+                safe_num(r.get("difference")),
+                diff_prev_val,
+                run_val
+            ]
+
+            for c_idx, val in enumerate(row_data, start=1):
+                cell = ws.cell(row=row_idx, column=c_idx, value=val if val is not None else "")
+                cell.alignment = center
+                cell.border = thin_border()
+                cell.font = NORMAL_F
+                cell.fill = row_fill
+
+                if c_idx == 1:
+                    cell.font = ORANGE_F
+                elif c_idx == 8:
+                    cell.font = BLUE_F
+                elif c_idx == 16:
+                    cell.font = GOLD_F
+                elif c_idx == 21 and isinstance(val, (int, float)):
+                    if val > 0:
+                        cell.font = POS_F
+                        cell.fill = POS_FILL
+                    elif val < 0:
+                        cell.font = NEG_F
+                        cell.fill = NEG_FILL
+
+            ws.row_dimensions[row_idx].height = 16
+
+        # Summary row
+        last_row = 4 + len(sorted_records) + 2
+        final_run = 0.0
+        for rv in reversed(running_vals):
+            if isinstance(rv, (int, float)):
+                final_run = rv
+                break
+
+        sign_run = '+' if final_run > 0 else ''
+        ws.merge_cells(f"A{last_row}:U{last_row}")
+        ws[f"A{last_row}"] = f"Final Running Value: {sign_run}{final_run:.2f}"
+
+        fill_col = "00291F" if final_run > 0 else ("2D0010" if final_run < 0 else "1A1A35")
+        txt_col  = "00D4AA" if final_run > 0 else ("FF4D6D" if final_run < 0 else "F5A623")
+        ws[f"A{last_row}"].font      = Font(name="Arial", color=txt_col, bold=True, size=12)
+        ws[f"A{last_row}"].fill      = PatternFill("solid", fgColor=fill_col)
+        ws[f"A{last_row}"].alignment = center
+        ws.row_dimensions[last_row].height = 22
+
+        ws.freeze_panes = "A5"
+
+        wb.save(dest)
+        print(f"✅ Simple Daily Excel saved: {dest} ({len(sorted_records)} rows, 21 columns)")
+
+    except Exception as e:
+        print(f"❌ save_simple_daily_excel ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+
 # ── SCHEDULE DAILY EXCEL SAVE ────────────────────────────────────────────
 def schedule_daily_excel_save():
     try:
         scheduler.remove_job("daily_excel_save")
+        scheduler.remove_job("simple_daily_excel_save")
     except Exception:
         pass
 
@@ -3751,7 +3983,19 @@ def schedule_daily_excel_save():
         max_instances=1,
         coalesce=True,
     )
-    print("✅ DAILY EXCEL EXPORT SCHEDULED at 2:01 PM IST")
+    scheduler.add_job(
+        save_simple_daily_excel,
+        "cron",
+        hour=14,
+        minute=1,
+        second=0,
+        timezone=IST,
+        id="simple_daily_excel_save",
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+    )
+    print("✅ DAILY EXCEL EXPORTS SCHEDULED at 2:01 PM IST (Dashboard & Simple Recorder)")
 
 
 # ── AUTOMATIC VPS EXCEL FILE UPGRADER ──────────────────────────────────
@@ -4036,6 +4280,83 @@ def download_excel(filename: str, request: Request):
 def admin_trigger_excel(request: Request):
     save_daily_excel()
     return JSONResponse({"success": True, "message": "Excel saved."})
+
+@app.post("/api/admin/trigger-simple-excel-save")
+def admin_trigger_simple_excel(request: Request):
+    username = request.session.get("user") or request.session.get("admin")
+    is_admin = request.session.get("role") == "admin"
+    if not username or not is_admin:
+        return JSONResponse({"error": "Unauthorized. Admin access required."}, status_code=401)
+    save_simple_daily_excel()
+    return JSONResponse({"success": True, "message": "Simple recorder Excel saved."})
+
+# ═══════════════════════════════════════════════════════════════════════
+# API — SIMPLE RECORDER EXCEL DOWNLOADS (Admin Only)
+# ═══════════════════════════════════════════════════════════════════════
+@app.get("/api/simple-downloads")
+def api_simple_downloads(request: Request):
+    username = request.session.get("user") or request.session.get("admin")
+    is_admin = request.session.get("role") == "admin"
+
+    if not username or not is_admin:
+        return JSONResponse({"error": "Unauthorized. Admin access required."}, status_code=401)
+
+    files = sorted(
+        glob.glob(os.path.join(SIMPLE_EXCEL_DIR, "*.xlsx")),
+        reverse=True
+    )
+
+    result = []
+    for f in files:
+        name = os.path.basename(f)
+        date_part = name.replace(".xlsx", "")
+        try:
+            dt = datetime.strptime(date_part, "%Y-%m-%d")
+            display = dt.strftime("%d %b %Y — %A")
+        except:
+            display = date_part
+
+        result.append({
+            "name": name,
+            "display_date": display,
+            "url": f"/api/download-simple-excel/{name}",
+            "can_download": True,
+            "plan": "admin"
+        })
+
+    return JSONResponse({
+        "plan": "admin",
+        "files": result
+    })
+
+@app.get("/api/download-simple-excel/{filename}")
+def download_simple_excel(filename: str, request: Request):
+    username = request.session.get("user") or request.session.get("admin")
+    is_admin = request.session.get("role") == "admin"
+
+    if not username or not is_admin:
+        raise HTTPException(status_code=401, detail="Unauthorized. Admin access required.")
+
+    safe_name = os.path.basename(filename)
+    if not safe_name.endswith(".xlsx") or "/" in safe_name or "\\" in safe_name:
+        raise HTTPException(status_code=400, detail="Invalid filename.")
+
+    filepath = os.path.join(SIMPLE_EXCEL_DIR, safe_name)
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="File not found.")
+
+    date_part = safe_name.replace(".xlsx", "")
+    try:
+        dt = datetime.strptime(date_part, "%Y-%m-%d")
+        download_name = dt.strftime("TraderBro_SimpleLiveRunning_%Y-%m-%d_%A.xlsx")
+    except:
+        download_name = safe_name
+
+    return FileResponse(
+        filepath,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        filename=download_name,
+    )
 
 @app.post("/api/admin/upgrade-excel-files")
 def admin_upgrade_excel_endpoint(request: Request):
