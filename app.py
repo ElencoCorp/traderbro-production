@@ -102,12 +102,60 @@ def get_interval():
 
 
 def set_interval(val):
-
+    data = {}
+    try:
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, "r") as f:
+                data = json.load(f)
+    except Exception:
+        pass
+    data["interval"] = val
     with open(CONFIG_FILE, "w") as f:
+        json.dump(data, f)
 
-        json.dump({
-            "interval": val
-        }, f)
+def get_button_mode():
+    try:
+        with open(CONFIG_FILE, "r") as f:
+            data = json.load(f)
+            return data.get("button_mode", "off")
+    except Exception:
+        return "off"
+
+def get_button_mode_history():
+    try:
+        with open(CONFIG_FILE, "r") as f:
+            data = json.load(f)
+            history = data.get("button_mode_history", [])
+            if not history:
+                return [{"mode": "off", "timestamp": "2026-01-01 00:00:00"}]
+            return history
+    except Exception:
+        return [{"mode": "off", "timestamp": "2026-01-01 00:00:00"}]
+
+def set_button_mode(val):
+    data = {}
+    try:
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, "r") as f:
+                data = json.load(f)
+    except Exception:
+        pass
+    
+    now_str = datetime.now(IST).strftime("%Y-%m-%d %H:%M:%S")
+    history = data.get("button_mode_history", [])
+    if not history:
+        history = [{"mode": "off", "timestamp": "2026-01-01 00:00:00"}]
+    
+    history.append({
+        "mode": val,
+        "timestamp": now_str
+    })
+    
+    data["button_mode"] = val
+    data["button_mode_history"] = history
+    
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(data, f)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -1540,6 +1588,18 @@ def admin_panel(request: Request):
     with open(path, "r", encoding="utf-8") as f:
         return HTMLResponse(f.read())
 
+@app.get("/admin-button", response_class=HTMLResponse)
+@app.get("/admin-button.html", response_class=HTMLResponse)
+def admin_button_panel(request: Request):
+
+    if request.session.get("role") != "admin":
+        return RedirectResponse("/admin-login", status_code=302)
+
+    path = os.path.join(STATIC_DIR, "admin-button.html")
+
+    with open(path, "r", encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+
 # USER LOGIN PAGE
 @app.get("/user-login", response_class=HTMLResponse)
 def login_page():
@@ -1796,6 +1856,68 @@ def dashboard_page(request: Request):
     # DO NOT redirect here — let the frontend handle it gracefully
 
     path = os.path.join(STATIC_DIR, "dashboard.html")
+    with open(path, "r", encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+
+
+@app.get("/dashboard-button", response_class=HTMLResponse)
+@app.get("/dashboard-button.html", response_class=HTMLResponse)
+def dashboard_button_page(request: Request):
+
+    # ADMIN ALWAYS ALLOWED — no plan check needed
+    if "admin" in request.session:
+        path = os.path.join(STATIC_DIR, "dashboard-button.html")
+        with open(path, "r", encoding="utf-8") as f:
+            return HTMLResponse(f.read())
+
+    # USER LOGIN CHECK
+    if "user" not in request.session:
+        return RedirectResponse("/user-login")
+
+    if not validate_user_session(request):
+        request.session.clear()
+        return RedirectResponse("/user-login")
+
+    username = request.session["user"]
+
+    process_subscription_queue()
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("""
+        SELECT plan, plan_start, plan_expiry
+        FROM users
+        WHERE username=?
+    """, (username,))
+    row = c.fetchone()
+    conn.close()
+
+    if not row:
+        return RedirectResponse("/trading-plan")
+
+    plan, plan_start, plan_expiry = row
+
+    # No plan at all
+    if not plan or plan == "free":
+        return RedirectResponse("/trading-plan")
+
+    # No expiry set
+    if not plan_expiry:
+        return RedirectResponse("/trading-plan")
+
+    # Check expiry — use IST, handle timezone-naive stored values
+    try:
+        now = datetime.now(IST)
+        expiry = datetime.fromisoformat(plan_expiry)
+        if expiry.tzinfo is None:
+            expiry = IST.localize(expiry)
+        if now > expiry:
+            return RedirectResponse("/trading-plan?expired=1")
+    except Exception as e:
+        print(f"dashboard_button_page expiry parse error for {username}: {e}")
+        pass
+
+    path = os.path.join(STATIC_DIR, "dashboard-button.html")
     with open(path, "r", encoding="utf-8") as f:
         return HTMLResponse(f.read())
 
@@ -2700,6 +2822,30 @@ async def api_set_interval(request: Request):
 @app.get("/api/get-interval")
 def api_get_interval():
     return {"interval": get_interval()}
+
+@app.get("/api/button-mode")
+def api_get_button_mode():
+    return {
+        "mode": get_button_mode(),
+        "history": get_button_mode_history()
+    }
+
+@app.post("/api/admin/set-button-mode")
+async def api_set_button_mode(request: Request):
+    if "admin" not in request.session and request.session.get("role") != "admin":
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+
+    mode = str(data.get("mode", "off")).strip().lower()
+    if mode not in ["red", "green", "grey", "off"]:
+        mode = "off"
+
+    set_button_mode(mode)
+    return {"success": True, "mode": mode}
 
 @app.get("/admin/token-manager", response_class=HTMLResponse)
 @app.get("/admin-token-manager", response_class=HTMLResponse)
